@@ -1,0 +1,14 @@
+- Frederic Chateau <frederic.chateau@cea.fr>
+  original CUDA implementation of the 2D Godunov scheme from Fortran
+
+- Pierre Kestener <pierre.kestener@cea.fr>
+  code refactoring to remove Fortran: autumn 2009
+  implementation of other numerical schemes (Lax-Liu, Kurganov-Tadmor): January 2010 
+  implementation of a GLUT-based GUI and a QT-based GUI: March 2010
+  update the Godunov scheme to 3D (both CPU and GPU): September 2010
+  implementation of a CUDA+MPI version: October 2010
+  implementation of a MHD solver (based on original code DUMSES provided by S. Fromang) : April 2011
+  implementation of shearing box setup for MHD; MRI simulation : April 2012
+
+- Sebastien Fromang
+  MHD solver code

@@ -1,0 +1,89 @@
+#! /bin/sh
+
+##
+# \file test_run.sh
+# \brief Shell script to automate performance comparison study between CPU and GPU.
+# \author P. Kestener
+
+basedir=@abs_top_builddir@/test
+
+# get executable names
+if test -z "$1"
+then
+    echo "########################################"
+    echo "Starting test of Godunov Euler solver..."
+    echo "########################################"
+    cpuExe=@abs_top_builddir@/src/euler_cpu
+    gpuExe=@abs_top_builddir@/src/euler_gpu
+    runDir=run_godunov
+else
+    echo "########################################"
+    echo "Starting test of $1 Euler solver..."
+    echo "########################################"
+    cpuExe="@abs_top_builddir@/src/euler_cpu --scheme $1"
+    gpuExe="@abs_top_builddir@/src/euler_gpu --scheme $1"
+    runDir=run_$1
+fi
+
+# generic function to run simulation; argument can be either cpuExe or gpuExe
+function runSimul {
+    $1 --param ./conf.ini | tee report.txt
+    totalTime=`awk '/^Euler/ {print $5}' report.txt | head -1`
+    ioTime=`awk '/^Euler/ {print $5}' report.txt | tail -1`
+    timingRatio=$(echo "scale=3; $ioTime/$totalTime" | bc -l)
+    echo $nx $totalTime $ioTime $timingRatio >> results.txt
+}
+
+# make directories for results
+mkdir -p $basedir/$runDir/cpu $basedir/$runDir/gpu
+
+noutput=50
+nstepmax=2000
+
+# loop over simulation domain size
+for nx in 50 100;
+do
+    ny=$nx
+    
+    makeConf='@abs_top_builddir@/test/makeConfigHydro --nx $nx --ny $ny --noutput $noutput --nstepmax $nstepmax'
+    # use time full path to avoid bash built-in time
+    #cpuCmd=`printf "/usr/bin/time -f \"%d %%e\" -o results.txt -a %s --param ./conf.ini" $nx $cpuExe`
+    #gpuCmd=`printf "/usr/bin/time -f \"%d %%e\" -o results.txt -a %s --param ./conf.ini" $nx $gpuExe`
+
+    # run GPU version
+    echo "################################"
+    echo "GPU : `basename $gpuExe` $nx $ny"
+    echo "################################"    
+    cd $basedir/$runDir/gpu
+    eval $makeConf > conf.ini
+    runSimul "$gpuExe"
+
+    # run cpu version
+    echo "################################"
+    echo "CPU : `basename $cpuExe` $nx $ny"
+    echo "################################"    
+    cd $basedir/$runDir/cpu
+    eval $makeConf > conf.ini
+    runSimul "$cpuExe"
+
+    echo
+    echo "compare CPU/GPU results: relative L2 norm"
+    cd $basedir
+    for cpuFile in $( ls ./$runDir/cpu/riemann_d*.xsm ); 
+    do
+	baseFile=`basename $cpuFile`
+	gpuFile=./$runDir/gpu/$baseFile
+	python computeL2relatif.py $cpuFile $gpuFile
+	rm $cpuFile $gpuFile
+    done
+
+    echo
+    echo
+done
+cd $basedir
+
+echo "you may look at timing results in $runDir/cpu/results.txt"
+echo "                           and in $runDir/gpu/results.txt"
+
+echo "you can plot results by running the python script:"
+echo "python ./plotCpuGpuComparaison.py"

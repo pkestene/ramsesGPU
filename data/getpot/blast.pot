@@ -1,0 +1,65 @@
+# -*- getpot -*- GetPot mode activation for emacs
+#
+# Hydro 2D example parameter file; jet simulation
+#
+# Converted from a fortran namelist containing
+# various input parameters for HYDRO runs
+
+[run]
+tend=0.4
+noutput=100
+nstepmax=9000
+[]
+
+[mesh]
+nx=400
+ny=600
+nz=1
+# BoundaryConditionType :
+# BC_UNDEFINED=0
+# BC_DIRICHLET=1
+# BC_NEUMANN=2 
+# BC_PERIODIC=3
+boundary_xmin=3
+boundary_xmax=3
+boundary_ymin=3
+boundary_ymax=3
+boundary_zmin=3
+boundary_zmax=3
+[]
+
+[hydro]
+problem='blast'
+courant_factor=0.8
+niter_riemann=10
+iorder=1
+slope_type=2
+scheme='muscl'
+# valid Riemann config number are integer between 0 and 18
+riemann_config_number=0
+XLAMBDA=0.25
+YLAMBDA=0.25
+ALPHA_KT=1.4
+cfl=0.31
+[]
+
+[blast]
+radius = 80
+density_in = 1
+density_out = 1
+pressure_in = 10.0
+pressure_out = 0.1
+[]
+
+[visu]
+minvar=0.0
+maxvar=8.0
+manualContrast=1
+[]
+
+latexAnimation='no'
+outputMode='binary'
+outputPrefix='blast'
+colorPng='no'
+outputVtk='yes'
+outputHdf5='no'

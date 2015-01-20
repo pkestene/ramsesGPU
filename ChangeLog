@@ -1,0 +1,103 @@
+2014-11-3 Pierre Kestener
+	* Version 1.2 : bug fixes and minor improvements
+
+	* turbulence simulation can now output structure functions computation on-line
+
+	* add numpy file format to dump structure function computation results (easy
+	to reload in python)
+
+	* add Fourier power spectrum compution for turbulence simulation analysis
+
+	* update CUDA kernel to use read-only data cache (const restrict)
+
+	* add new initial condition for stratified shearing box problems
+
+	* minor improvements in example parameter files
+	
+2013-8-27 Pierre Kestener
+	* Version 1.1 : bug fixes and features implementation
+
+	* major bug fix: in both CPU / GPU version of the MHD numerical
+	scheme, there was a problem in the computation of the
+	electromotive force (see file riemann_mhd.h, routine compute_emf)
+
+	* new major feature: refactoring numerical scheme to reduce memory
+	footprint. See C++ class suffixed by "ZSlab"; this new
+	implementation is the one that must be used for very large
+	simulation (ex. 2000^3 for MHD turbulence simulation on Keeneland)
+
+	* new major feature: output using PNetCDF library; restart can
+	load a NetCDF file; minor feature: one can output optionnally
+	output data on external faces for making movies (output at much
+	high frequency than regular output of the entire 3D domain).
+
+	* new feature: new init condition for hydro and MHD turbulence
+	application; implementation of a simple forcing term
+
+	* new feature: implement history routine for computing on-line
+	analysis quantities (ex: alpha in MRI simulations, Mach number in
+	turbulence simulation, ...)
+
+	* new feature: analysis directory containing simple
+	post-processing tools adapted to large data files (PNetCDF):
+	Fourier power spectrum, slice extraction
+
+	* new minor feature: simple MPI app to convert large file from
+	parallel HDF5 to PNetCDF
+
+	* new minor feature: small utility to save data in python numpy files (.npy)
+
+	* new minor feature: some python script for post-processing analysis
+	(for data up to 1000^3); for larger data, use tools in the
+	analysis sub-directory.
+
+	* fix typo in slope_mhd.h: routine slope_unsplit_hydro_3d for
+	slope type = 3
+
+	* new feature: add Riemann solver LLF (Local Lax-Friedrich)
+
+	* new feature: add 2D magnetic Riemann solvers HLLA, HLLF and LLF
+
+2012-8-27 Pierre Kestener
+	* Version 1.0.1 : bug fixes and minor improvements
+
+	* major bug fix: in the CUDA version of the code, when running the MRI problem, total mass inside box was slightly increasing with time. The bug was fixed in the kernel_mhd_flux_update_hydro_v4_shear CUDA kernel.
+
+	* bug fix: this bug only affects MPI/CUDA version for the RMI problem (wrong index in remapping formula in shear border condition). This bug was causing the simulation run to stop after several 1000's of time steps
+
+	* bug fix in viscosity tensor: affect both CPU/GPU: only one term was slightly false (almost neutral bug)
+
+	* new feature: now GPU memory array can be allocated using pitched or linear memory (before pitched was the default). On new hardware, pitch memory is not anymore a must. Linear memory gives the same performane (thanks to cache improvements). Besides, for a given problem, the amouint of required memory is almost twice smaller when using linear memory, so linear memory is now the default choice.
+
+	* fix MRI history method for MPI run: output was wrong
+
+	* improvement: much better restart procedure; now one can read an HDF5 file at a twice smaller resolution and perform an upscale. This is usefull for MRI problem to restart a job by increasing resolution with a factor of 2.
+
+2012-5-23 Pierre Kestener
+	* Version 1.0; package name is not RAMSES-GPU with a dedicated website :
+	http://www.maisondelasimulation.fr/projects/RAMSES-GPU/html/
+
+	* MRI with both viscous/resistive terms working
+
+2012-3-14 Pierre Kestener
+
+	* Version 0.4.0 is the first version with 3D MHD on CPU/GPU and
+	with MHD shearing box capabilities
+
+	* fix bug in MHD time step computation routine (could
+	only be seen on large spatial domain causing memory fault)
+
+	* backport unsplit scheme into pure hydro routines
+
+	* improve HDF5/VTK output routines
+
+
+2011-4-20 Pierre Kestener
+
+	* ChangeLog file was never filled. Let's start !
+
+	* SoftwareName : As 2D MHD solver has been implemented on GPU, let's take the
+	opportunity to change the name of the software package from
+	HybridHydro to PANAME (PArallel Numerical Algorithms for MHD).
+	* Version 0.3.0 is the first version with MHD capabilities (for
+	now only 2D on both CPU / GPU has been tested).

@@ -1,0 +1,30 @@
+RPM_BUILD_DIR=$(abs_top_builddir)/rpm_build
+
+# The Needed Files for the Packages Creation
+DEB_FOLDER=$(top_srcdir)/pkg/debian
+RPM_FOLDER=$(top_srcdir)/pkg/rpm
+
+# DEB #
+pkg-deb: pkg-deb-clean
+	$(MAKE) dist; \
+	$(MAKE) distdir; \
+	mv $(distdir).tar.gz lib$(PACKAGE_TARNAME)_$(PACKAGE_VERSION).orig.tar.gz; \
+	mkdir $(distdir)/debian; \
+	cp $(DEB_FOLDER)/* $(distdir)/debian; \
+	cd $(distdir); \
+	debuild -us -uc
+
+pkg-deb-clean:
+	rm -rf lib$(PACKAGE_TARNAME)_$(PACKAGE_VERSION)* $(distdir)/
+
+# RPM # - The first line set the .rpmmacros file to point to the 'rpm build dir'. 
+pkg-rpm: pkg-rpm-clean
+	echo '%_topdir' $(RPM_BUILD_DIR) > ~/.rpmmacros; \
+	mkdir -p $(RPM_BUILD_DIR)/{BUILD,RPMS,SOURCES,SRPMS,SPECS}; \
+	$(MAKE) dist ; \
+	cp $(RPM_FOLDER)/*.spec $(RPM_BUILD_DIR)/SPECS ; \
+	cp $(distdir).tar.gz  $(RPM_BUILD_DIR)/SOURCES/ ; \
+	rpmbuild -ba --clean --rmsource  $(RPM_BUILD_DIR)/SPECS/$(PACKAGE_TARNAME).spec
+
+pkg-rpm-clean:
+	rm -rf *.rpm $(distdir).tar.gz $(RPM_BUILD_DIR)/

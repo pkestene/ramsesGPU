@@ -1,0 +1,27 @@
+# This file shall be included at the beginning of each Makefile.am to enable cppcheck execution
+# with a "make cppcheck" command from the root makefile.
+#
+# Normally, it must be included in every Makefile.am of the project, otherwise errors will occur.
+# Alternatively, if you do not want analysis in some specific makefile, you should not include
+# this file but provide an empty "cppcheck:" rule.
+#
+# Preprocessor flags (-I -D) shall be added to AM_CPPFLAGS, CPPFLAGS or INCLUDES. Other flags will be ignored.
+#
+# The CPPCHECK_JOBS environment variable may be defined with an integer value in order to
+# specify the number of parallel threads to run.
+#
+# Author: Frederic Chateau
+#
+
+cppcheck-recursive:
+	@list='$(SUBDIRS)'; for subdir in $$list; do \
+	(cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) cppcheck); \
+	done
+
+cppcheck: cppcheck-recursive
+	@(if [ -n "$(DIST_SOURCES)" ]; \
+	then \
+	cd $(srcdir) && \
+	cppcheck -j $${CPPCHECK_JOBS:=1} --enable=all --xml \
+	$(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(DIST_SOURCES) 2> $(abs_builddir)/cppcheck-result.xml; \
+	fi)

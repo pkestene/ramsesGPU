@@ -1,0 +1,24 @@
+
+if VXWORKS_KERNEL
+# When building a kernel module, there is a recursive dependency
+# problem if using $(SOURCES) as a dependency because of *_ctdt.c
+# file (munching file).
+# Indeed ctdt.c is included in SOURCES, so building the partial
+# image requires to generate genbuildinfo.h which depend on
+# ctdt.c. This is impossible because the partial image is needed
+# to build the ctdt.c.
+# A solution would be to use the "filter-out" function, but this is
+# a GNU extension. eg:
+# BUILDINFO_DEPS = Makefile $(filter-out %_ctdt.c, $(SOURCES)) $(HEADERS)
+# So we are using systematic rebuild of the genbuildinfo.h as a
+# fallback.
+BUILDINFO_DEPS = FORCE
+else
+BUILDINFO_DEPS = Makefile $(SOURCES) $(HEADERS)
+endif
+
+genbuildinfo.h: $(BUILDINFO_DEPS)
+	@REV=`svnversion -n $(abs_top_srcdir)`; \
+	echo "#define SVN_REVISION \"$$REV\"" > $@
+
+FORCE:

@@ -1,0 +1,5 @@
+- convert_netcdf2vtr.py
+This script is usefull for convert NetCDF files (3D or 2D faces) into VTR (VTK rectilinear) file format for later use e.g. batch paraview post-processing.
+
+- h5extract.py
+A simple utility script to dump into a seperate hdf5 file one of the dataset from input hdf5 file.

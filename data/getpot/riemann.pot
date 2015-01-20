@@ -1,0 +1,62 @@
+# -*- getpot -*- GetPot mode activation for emacs
+#
+# Hydro 2D example parameter file; 2D Riemann problem initialization
+#
+
+[run]
+tend=0.2
+noutput=100
+nstepmax=2000
+[]
+
+[mesh]
+nx=400
+ny=400
+nz=1
+# BoundaryConditionType :
+# BC_UNDEFINED=0
+# BC_DIRICHLET=1
+# BC_NEUMANN=2 
+# BC_PERIODIC=3
+boundary_xmin=2
+boundary_xmax=2
+boundary_ymin=2
+boundary_ymax=2
+boundary_zmin=2
+boundary_zmax=2
+[]
+
+[hydro]
+problem='riemann2d'
+cfl=0.8
+niter_riemann=10
+iorder=1
+slope_type=2
+scheme='muscl'
+# valid Riemann config number are integer between 0 and 18
+riemann_config_number=0
+XLAMBDA=0.025
+YLAMBDA=0.025
+[]
+
+[jet]
+enableJet=0
+ijet=10
+djet=1.
+ujet=300.
+pjet=1.
+[]
+
+[visu]
+minvar=0.0
+maxvar=1.0
+manualContrast=0
+[]
+
+
+latexAnimation='no'
+outputMode='binary'
+outputPrefix='riemann'
+colorPng='no'
+outputVtk='yes'
+outputHdf5='no'

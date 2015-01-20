@@ -1,0 +1,21 @@
+# Init Inno Setup Compiler
+WIN_BUILD_DIR=$(top_builddir)/_pkgbuild
+WIN_INSTALL_DIR=$(top_builddir)/_pkginst
+
+# The Needed Files for the Packages Creation
+WIN_FOLDER=$(top_srcdir)/pkg/win
+
+# Windows # - Cross compile and create the Windows installer using InnoSetupCompiler
+pkg-win:
+	mkdir -p $(WIN_BUILD_DIR); \
+	mkdir -p $(WIN_INSTALL_DIR); \
+	cd $(WIN_BUILD_DIR); \
+	$(top_srcdir)/configure --prefix=$(WIN_INSTALL_DIR) $(DISTCHECK_CONFIGURE_FLAGS); \
+	make install; \
+	cp $(WIN_FOLDER)/*.iss .; \
+	$(SETUP_EXE) /Q /O$(top_builddir) $(PACKAGE_TARNAME).iss; \
+	mv $(top_builddir)/setup.exe $(top_builddir)/$(distdir)_$(host_cpu).exe; \
+	rm -rf $(PACKAGE_TARNAME).iss $(WIN_INSTALL_DIR) $(WIN_BUILD_DIR)
+
+pkg-win-clean:
+	rm -rf $(WIN_BUILD_DIR)/ $(WIN_INSTALL_DIR)/

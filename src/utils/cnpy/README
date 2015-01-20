@@ -1,0 +1,7 @@
+Simple utility class to dump data array into a .npy file
+readable by numpy/python.
+
+This utility is written by Carl Rogers: https://github.com/rogersce/cnpy
+
+
+

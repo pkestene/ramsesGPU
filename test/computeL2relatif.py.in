@@ -1,0 +1,61 @@
+#!/usr/bin/env python
+
+##
+# \file computeL2relatif.py
+# \brief Compute L2 norm of the difference between two data array read from 
+# XSM files given on the command line
+#\author P. Kestener
+
+import sys
+from pylab import *
+import numpy as np
+
+# read binary/XSM data
+if (len(sys.argv) > 2):
+    cpuFile=open(sys.argv[1])
+    header=cpuFile.readline()
+    nx,ny = header.split()[2].split('x')
+    nx = int(nx)
+    ny = int(ny)
+    dataType = header.split()[3].split('(')[1]
+    if dataType == '4':
+        cpuData = np.fromfile(file=cpuFile, dtype=np.float32).reshape((ny,nx))
+    elif dataType == '8':
+        cpuData = np.fromfile(file=cpuFile, dtype=np.float64).reshape((ny,nx))
+    else:
+        print 'Unknow data type, neither float or double !!'
+
+    gpuFile=open(sys.argv[2])
+    header=gpuFile.readline()
+    nx,ny = header.split()[2].split('x')
+    nx = int(nx)
+    ny = int(ny)
+    dataType = header.split()[3].split('(')[1]
+    if dataType == '4':
+        gpuData = np.fromfile(file=gpuFile, dtype=np.float32).reshape((ny,nx))
+    elif dataType == '8':
+        gpuData = np.fromfile(file=gpuFile, dtype=np.float64).reshape((ny,nx))
+    else:
+        print 'Unknow data type, neither float or double !!'
+else:
+    print "You must provide data filename."
+
+diffData=cpuData-gpuData
+diffData2=diffData*diffData
+cpuData2=cpuData*cpuData
+
+L2relatif=diffData2.sum()/cpuData2.sum()
+L2relatif=sqrt(L2relatif)
+
+print sys.argv[1]+" "+sys.argv[2]+" "+str(L2relatif)
+
+if 0==1:
+    dpi = rcParams['figure.dpi']
+    figsize = ny/dpi, nx/dpi
+
+    figure(figsize=figsize)
+    ax = axes([0,0,1,1], frameon=False)
+    ax.set_axis_off()
+    im = imshow(diffData, origin='lower')
+    
+    show()

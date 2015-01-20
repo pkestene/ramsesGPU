@@ -1,0 +1,38 @@
+#!/usr/bin/env python
+
+##
+# \file plotXsm.py
+# \brief A simple python script to plot XSM data file using the matplotlib package.
+# \author P. Kestener
+
+import sys
+from pylab import *
+import numpy as np
+
+# read binary/XSM data
+if (len(sys.argv) > 1):
+    xsmFile=open(sys.argv[1])
+    header=xsmFile.readline()
+    nx,ny = header.split()[2].split('x')
+    nx = int(nx)
+    ny = int(ny)
+    dataType = header.split()[3].split('(')[1]
+    if int(dataType) == 4:
+        xsmData = np.fromfile(file=xsmFile, dtype=np.float32).reshape((ny,nx))
+    elif int(dataType) == 8:
+        xsmData = np.fromfile(file=xsmFile, dtype=np.float64).reshape((ny,nx))
+    else:
+        print 'Unknow data type : '+dataType+', neither float or double !!'
+else:
+    print "You must provide data filename."
+
+if 1==1:
+    dpi = rcParams['figure.dpi']
+    figsize = ny/dpi, nx/dpi
+
+    figure(figsize=figsize)
+    ax = axes([0,0,1,1], frameon=False)
+    ax.set_axis_off()
+    im = imshow(xsmData, origin='lower')
+    
+    show()

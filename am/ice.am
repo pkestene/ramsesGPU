@@ -1,0 +1,9 @@
+# Support for silent build rules
+slice2cpp_verbose = $(rcc_verbose_$(V))
+slice2cpp_verbose_ = $(rcc_verbose__$(AM_DEFAULT_VERBOSITY))
+slice2cpp_verbose_0 = @echo "  SLICE2CPP $@";
+
+.ice.cpp:
+	$(slice2cpp_verbose)$(SLICE2CPP) $(SXXFLAGS) $(SPPFLAGS) --output-dir `dirname $@` $<
+.ice.h:
+	$(slice2cpp_verbose)$(SLICE2CPP) $(SXXFLAGS) $(SPPFLAGS) --output-dir `dirname $@` $<

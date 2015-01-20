@@ -1,0 +1,97 @@
+# Makerules.
+# This file is part of AutoTroll.
+# Copyright (C) 2006  Benoit Sigoure.
+#
+# AutoTroll is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,
+# USA.
+
+ # ------------- #
+ # DOCUMENTATION #
+ # ------------- #
+
+# See autotroll.m4 :)
+
+
+SUFFIXES = .moc.cpp .moc.cc .moc.cxx .moc.C .h .hh \
+           .ui .ui.h .ui.hh \
+           .qrc .qrc.cpp .qrc.cc .qrc.cxx .qrc.C
+
+# --- #
+# MOC #
+# --- #
+
+# Support for silent build rules
+moc_verbose = $(moc_verbose_$(V))
+moc_verbose_ = $(moc_verbose_$(AM_DEFAULT_VERBOSITY))
+moc_verbose_0 = @echo "  MOC    $@";
+
+.hh.moc.cpp:
+	$(moc_verbose)$(MOC) $(QT_CPPFLAGS) $< -o $@
+.h.moc.cpp:
+	$(moc_verbose)$(MOC) $(QT_CPPFLAGS) $< -o $@
+
+.hh.moc.cc:
+	$(moc_verbose)$(MOC) $(QT_CPPFLAGS) $< -o $@
+.h.moc.cc:
+	$(moc_verbose)$(MOC) $(QT_CPPFLAGS) $< -o $@
+
+.hh.moc.cxx:
+	$(moc_verbose)$(MOC) $(QT_CPPFLAGS) $< -o $@
+.h.moc.cxx:
+	$(moc_verbose)$(MOC) $(QT_CPPFLAGS) $< -o $@
+
+.hh.moc.C:
+	$(moc_verbose)$(MOC) $(QT_CPPFLAGS) $< -o $@
+.h.moc.C:
+	$(moc_verbose)$(MOC) $(QT_CPPFLAGS) $< -o $@
+
+# --- #
+# UIC #
+# --- #
+
+# Support for silent build rules
+uic_verbose = $(uic_verbose_$(V))
+uic_verbose_ = $(uic_verbose_$(AM_DEFAULT_VERBOSITY))
+uic_verbose_0 = @echo "  UIC    $@";
+
+.ui.ui.hh:
+	$(uic_verbose)$(UIC) $< -o $@
+
+.ui.ui.h:
+	$(uic_verbose)$(UIC) $< -o $@
+
+# --- #
+# RCC #
+# --- #
+
+# Support for silent build rules
+rcc_verbose = $(rcc_verbose_$(V))
+rcc_verbose_ = $(rcc_verbose_$(AM_DEFAULT_VERBOSITY))
+rcc_verbose_0 = @echo "  RCC    $@";
+
+.qrc.qrc.cpp:
+	$(rcc_verbose)$(RCC) -name `echo "$<" | sed 's#\([^/]*/\)*\([^/]*\)\.qrc#\2#'` $< -o $@ # sed extracts the filename from the path
+
+.qrc.qrc.cc:
+	$(rcc_verbose)$(RCC) -name `echo "$<" | sed 's#\([^/]*/\)*\([^/]*\)\.qrc#\2#'` $< -o $@
+
+.qrc.qrc.cxx:
+	$(rcc_verbose)$(RCC) -name `echo "$<" | sed 's#\([^/]*/\)*\([^/]*\)\.qrc#\2#'` $< -o $@
+
+.qrc.qrc.C:
+	$(rcc_verbose)$(RCC) -name `echo "$<" | sed 's#\([^/]*/\)*\([^/]*\)\.qrc#\2#'` $< -o $@
+
+DISTCLEANFILES = $(BUILT_SOURCES)
+CLEANFILES = $(BUILT_SOURCES)

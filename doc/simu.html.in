@@ -1,0 +1,45 @@
+<h1>Hydrodynamics simulations animations</h1>
+
+<!-- 
+voir la page suivante pour savoir comment embarquer une video dans du
+   html:
+http://joliclic.free.fr/html/object-tag/object-video.html
+-->
+
+<table border="0" align="left" cellspacing="10" cellpadding="1" WIDTH="100%">
+<tr>
+<!-- Godunov 2D -->
+<td>
+<object data="@abs_top_srcdir@/doc/jet2d_godunov.avi" type="video/x-msvideo" width="100" height="400">
+  <param name="src" value="@abs_top_srcdir@/doc/jet2d_godunov.avi">
+  <param name="autoStart" value="0">
+  alt : <a href="@abs_top_srcdir@/doc/jet2d_godunov.avi">jet2d_godunov.avi</a>
+</object>
+</td>
+<!-- Kurganov 2D -->
+<td> 
+<object data="@abs_top_srcdir@/doc/jet2d_kurganov.avi" type="video/x-msvideo" width="100" height="400">
+  <param name="src" value="@abs_top_srcdir@/doc/jet2d_kurganov.avi">
+  <param name="autoStart" value="0">
+  alt : <a href="@abs_top_srcdir@/doc/jet2d_kurganov.avi">jet2d_kurganov.avi</a>
+</object>
+</td>
+<!-- Godunov 3D -->
+<td> 
+<object data="@abs_top_srcdir@/doc/jet3d_godunov.mpg" type="video/mpeg" width="400" height="400">
+  <param name="src" value="@abs_top_srcdir@/doc/jet3d_godunov.mpg">
+  <param name="autoStart" value="1">
+  alt : <a href="@abs_top_srcdir@/doc/jet3d_godunov.mpg">jet3d_godunov.mpg</a>
+</object>
+</td>
+</tr>
+<tr>
+<td> 2D Godunov scheme (density field, jet simulation)</td>
+<td> 2D Kurganov scheme (density field, jet simulation)</td>
+<td> 3D Godunov scheme (density field, jet simulation)</td>
+</tr>
+</table>
+
+
+
+<hr>

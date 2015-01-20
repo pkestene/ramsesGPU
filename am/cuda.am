@@ -1,0 +1,36 @@
+# NOTE:
+# SUFFIXES is moved outside this file
+# so that one can issue a SUFFIXES += .cu
+# in case SUFFIXES is already defined (like for example
+# in autotroll.am)
+#SUFFIXES = .cu
+
+# these are default values for the maximun register count parameter
+# passed to nvcc compiler (you might need to change it sometimes; all you need
+# is to set is as an environment variable).
+MAX_REG_COUNT_SINGLE ?=48
+MAX_REG_COUNT_DOUBLE ?=48
+NVCCFLAGS_DOUBLE = --compiler-options -DUSE_DOUBLE
+
+
+.cu.o:
+	$(NVCC) $(NVCCFLAGS) -maxrregcount=$(MAX_REG_COUNT_SINGLE) -o $@ -c $<
+%-double.o : %.cu
+	$(NVCC) $(NVCCFLAGS) -maxrregcount=$(MAX_REG_COUNT_DOUBLE) $(NVCCFLAGS_DOUBLE) -o $@ -c $<
+
+
+.cu.lo:
+	$(top_srcdir)/am/cudalt.py $@ $(NVCC) $(NVCCFLAGS) -maxrregcount=$(MAX_REG_COUNT_SINGLE) -c $<
+%-double.lo : %.cu
+	$(top_srcdir)/am/cudalt.py $@ $(NVCC) $(NVCCFLAGS) -maxrregcount=$(MAX_REG_COUNT_DOUBLE) $(NVCCFLAGS_DOUBLE) -c $<
+
+
+
+%.cu : %.cpp
+	cp $< $@
+%.cu : %.c
+	cp $< $@
+%-double.cu : %.cpp
+	cp $< $@
+
+
