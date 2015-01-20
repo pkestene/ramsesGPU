@@ -67,12 +67,14 @@ void process(vtkMultiProcessController* controller, void* arg)
   // Create ImageData object and fill with dummy data
   vtkSmartPointer<vtkImageData> imageData = 
     vtkSmartPointer<vtkImageData>::New();
-  imageData->SetDimensions(NX, NY, NZ);
+  //imageData->SetDimensions(NX, NY, NZ);
+  imageData->SetExtent(0,NX-1,0,NY-1,0,NZ-1);
   imageData->SetOrigin(0.0, 0.0, 0.0);
   imageData->SetSpacing(1.0,1.0,1.0);
-  imageData->SetNumberOfScalarComponents(1);
-  imageData->SetScalarTypeToFloat();
-  imageData->AllocateScalars();
+  // imageData->SetNumberOfScalarComponents(1);
+  // imageData->SetScalarTypeToFloat();
+  // imageData->AllocateScalars();
+  imageData->AllocateScalars(VTK_FLOAT, 3);
   for(int j= 0; j < NY; j++)
     for(int i = 0; i < NX; i++) {
       float* tmp = static_cast<float*>( imageData->GetScalarPointer(i,j,0) );
@@ -108,7 +110,7 @@ void process(vtkMultiProcessController* controller, void* arg)
 
   image_writer->SetFileName(out_file_name ); 
   image_writer->SetNumberOfPieces( pieces ); 
-  image_writer->SetInput( imageData );
+  image_writer->SetInputData( imageData );
   image_writer->SetByteOrderToLittleEndian();
   image_writer->SetStartPiece( start_piece ); 
   image_writer->SetEndPiece( end_piece );      

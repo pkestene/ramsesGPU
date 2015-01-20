@@ -56,20 +56,42 @@ AC_DEFUN([AX_VTK],
 		then
 			# a path to vtk installation location was provided
 			VTK_PREFIX="${with_vtk}"
-			if test -f "${VTK_PREFIX}/include/vtk${vtk_suffix}/vtkCommonInstantiator.h"
+			if test -f "${VTK_PREFIX}/include/vtk${vtk_suffix}/vtkCommonInstantiator.h" || test -f "${VTK_PREFIX}/include/vtk${vtk_suffix}/vtkCommonCoreModule.h"
 			then
 				VTK_INCLUDE_PATH="${VTK_PREFIX}/include/vtk${vtk_suffix}"
-				VTK_LIBRARY_PATH="${VTK_PREFIX}/lib/vtk${vtk_suffix}"
+
+				# on Ubuntu, vtk libs for version < 6.0
+				# are located in a subfolder of /usr/lib
+				if test -d "${VTK_PREFIX}/lib/vtk${vtk_suffix}"
+				then
+					VTK_LIBRARY_PATH="${VTK_PREFIX}/lib/vtk${vtk_suffix}"
+				fi
+
+				if test -d "${VTK_PREFIX}/lib/x86_64-linux-gnu"
+				then
+					VTK_LIBRARY_PATH="${VTK_PREFIX}/lib/x86_64-linux-gnu"
+				fi
 				have_vtk="yes"
 			fi
 		else
 			#otherwise, try to find VTK in some standard locations
 			for VTK_PREFIX_TMP in /usr /usr/local
 			do
-				if test -f "${VTK_PREFIX_TMP}/include/vtk${vtk_suffix}/vtkCommonInstantiator.h"
+				if test -f "${VTK_PREFIX_TMP}/include/vtk${vtk_suffix}/vtkCommonInstantiator.h" || test -f "${VTK_PREFIX_TMP}/include/vtk${vtk_suffix}/vtkCommonCoreModule.h"
 				then
 					VTK_INCLUDE_PATH="${VTK_PREFIX_TMP}/include/vtk$vtk_suffix"
-					VTK_LIBRARY_PATH="${VTK_PREFIX_TMP}/lib/vtk$vtk_suffix"
+					# on Ubuntu, vtk libs for version < 6.0
+					# are located in a subfolder of /usr/lib
+					if test -d "${VTK_PREFIX_TMP}/lib/vtk${vtk_suffix}"
+					then 
+						VTK_LIBRARY_PATH="${VTK_PREFIX_TMP}/lib/vtk$vtk_suffix"
+					fi
+
+					if test -d "${VTK_PREFIX_TMP}/lib/x86_64-linux-gnu"
+					then
+
+						VTK_LIBRARY_PATH="${VTK_PREFIX_TMP}/lib/x86_64-linux-gnu"
+					fi
 					have_vtk="yes"
 					break;
 				fi	
@@ -122,7 +144,7 @@ AC_DEFUN([AX_VTK],
 				#if VTK_MAJOR_VERSION < $maj
                 		#error Installed VTK is too old !
                 		#endif
-                		#if VTK_MINOR_VERSION < $min
+                		#if VTK_MAJOR_VERSION == $maj && VTK_MINOR_VERSION < $min
                 		#error Installed VTK is too old !
                 		#endif
                 		#if VTK_BUILD_VERSION < $rel
@@ -153,6 +175,60 @@ AC_DEFUN([AX_VTK],
 				AC_MSG_RESULT([yes])
 				$2
 			fi
+
+			AC_MSG_CHECKING([for vtk library version >= 6.0])
+
+ 			# Compare required version of VTK against installed version:
+			#
+			# Note that in order to be able to compile the following
+		        # test program, we need to add to the current flags, 
+		        # the VTK settings...
+			OLD_CFLAGS=$CFLAGS
+			OLD_CXXFLAGS=$CXXFLAGS
+			OLD_LDFLAGS=$LDFLAGS
+			OLd_LIBS=$LIBS
+			CFLAGS="$VTK_CPPFLAGS $CFLAGS"
+			CXXFLAGS="$VTK_CPPFLAGS $CXXFLAGS"
+			LDFLAGS="$VTK_LDFLAGS $LDFLAGS"
+			LIBS="$VTK_LIBS $LIBS"
+        		#
+			# check if the installed VTK is greater or not
+			AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+				[
+				#include <vtkConfigure.h>
+				#include <stdio.h>
+				],
+              			[
+                		printf("VTK version is: %d.%d.%d", VTK_MAJOR_VERSION, VTK_MINOR_VERSION, VTK_BUILD_VERSION);
+				#if VTK_MAJOR_VERSION > 5
+                		#error Installed VTK 6
+                		#endif
+              			])
+        			], 
+				[vtkVersion6="KO"])
+			 #
+			 # restore all flags without VTK values
+			 CFLAGS=$OLD_CFLAGS
+			 CXXFLAGS=$OLD_CXXFLAGS
+			 LDFLAGS=$OLD_LDFLAGS
+			 LIBS=$OLD_LIBS
+			 
+			 #
+			 # if VTK 6 detected
+			 # 
+        		 if [[ "$vtkVersion6" = "K0" ]]; then
+			       	AC_MSG_RESULT([no])
+          			VTK6_FOUND="no"
+        		 else
+				AC_MSG_RESULT([yes])
+          			VTK6_FOUND="yes"          			
+				# modify VTK_LIBS
+				VTK_LIBS="-lvtkCommonCore-6.0 -lvtkCommonDataModel-6.0 -lvtkDICOMParser-6.0 -lvtkFiltersCore-6.0 -lvtkftgl-6.0 -lvtkalglib-6.0 -lvtksys-6.0 -lvtkImagingCore-6.0 -lvtkIOCore-6.0 -lvtkRenderingCore-6.0 -lvtkIOXML-6.0 -lvtkParallelCore-6.0 -lvtkParallelCore-6.0 -lvtkParallelMPI-6.0"
+
+        		 fi
+
+
+
 		fi
 
 		if test "$have_vtk" = "yes"
@@ -161,7 +237,13 @@ AC_DEFUN([AX_VTK],
 			AC_SUBST(VTK_CPPFLAGS)
 			AC_SUBST(VTK_LDFLAGS)
 			AC_SUBST(VTK_LIBS)
+			AC_SUBST(VTK6_FOUND)
 			AC_DEFINE(HAVE_VTK, 1, [Define if you have Vtk library])
+			if test "$VTK6_FOUND" == "yes"
+			then
+				AC_DEFINE(HAVE_VTK6, 1, [Define if you have Vtk6 library])
+			fi
+
 		fi
 
 	else # !want_vtk
