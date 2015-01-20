@@ -67,14 +67,22 @@ void process(vtkMultiProcessController* controller, void* arg)
   // Create ImageData object and fill with dummy data
   vtkSmartPointer<vtkImageData> imageData = 
     vtkSmartPointer<vtkImageData>::New();
-  //imageData->SetDimensions(NX, NY, NZ);
+#if HAVE_VTK6
   imageData->SetExtent(0,NX-1,0,NY-1,0,NZ-1);
+#else
+  imageData->SetDimensions(NX, NY, NZ);
+#endif 
+
   imageData->SetOrigin(0.0, 0.0, 0.0);
   imageData->SetSpacing(1.0,1.0,1.0);
-  // imageData->SetNumberOfScalarComponents(1);
-  // imageData->SetScalarTypeToFloat();
-  // imageData->AllocateScalars();
+
+#if HAVE_VTK6
   imageData->AllocateScalars(VTK_FLOAT, 3);
+#else
+  imageData->SetNumberOfScalarComponents(1);
+  imageData->SetScalarTypeToFloat();
+  imageData->AllocateScalars();
+#endif
   for(int j= 0; j < NY; j++)
     for(int i = 0; i < NX; i++) {
       float* tmp = static_cast<float*>( imageData->GetScalarPointer(i,j,0) );
@@ -110,7 +118,11 @@ void process(vtkMultiProcessController* controller, void* arg)
 
   image_writer->SetFileName(out_file_name ); 
   image_writer->SetNumberOfPieces( pieces ); 
+#if HAVE_VTK6
   image_writer->SetInputData( imageData );
+#else
+  image_writer->SetInput( imageData );
+#endif
   image_writer->SetByteOrderToLittleEndian();
   image_writer->SetStartPiece( start_piece ); 
   image_writer->SetEndPiece( end_piece );      
@@ -131,8 +143,13 @@ int main( int argc, char* argv[] )
   controller->Initialize(&argc, &argv); 
 
   if (argc<3) {
-    std::cerr << "Usage:\n";
-    std::cerr << "  mpirun -n nMpiProcs ./testVtkXMLPImageDataWriter filename.pvti nbOfPieces\n";
+    if (controller->GetLocalProcessId() == 0) {
+      std::cerr << "Usage:\n";
+      std::cerr << "  mpirun -n nMpiProcs ./testVtkXMLPImageDataWriter filename.pvti nbOfPieces\n";
+    }
+    controller->Finalize(); 
+    controller->Delete(); 
+    return 1;
   }
 
   args_tmp args; 

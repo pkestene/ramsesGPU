@@ -509,7 +509,8 @@ AC_MSG_RESULT([
 	* CUDA tools version     : $NVCC_VERSION (NVCCFLAGS = $NVCCFLAGS)
 	* GLUT-based GUI enable  : $GLUT_ENABLE
 	* QT-based GUI enable    : $enable_qtgui
-	* VTK enabled            : $have_vtk
+	* VTK enabled            : $have_vtk ($VTK_LIBRARY_PATH)
+	*                        : vtk libs: $VTK_LIBS
 	* HDF5 enabled           : $with_hdf5 ($HDF5_VERSION)
 	* NETCDF4 enabled        : $with_netcdf4 ($NETCDF_VERSION)
 	* Parallel-NetCDF        : $with_pnetcdf ($PNETCDF_VERSION)

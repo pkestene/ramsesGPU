@@ -16,13 +16,19 @@
 #        - want_vtk  : yes or no
 #        - with_vtk  : PATH to vtk library
 #
+# This macro tries to set variables VTK_CPPFLAGS, VTK_LDFLAGS and VTK_LIBS
+# and uses env variables VTK_INC_DIR / VTK_LIB_DIR as make default values.
+#
 # NOTE: [minimum-version] must be in the form [X.Y.Z]
+#
+# this macro could be strongly improved / simplified
+# see also : https://github.com/markcmiller86/libmesh_silo/blob/master/m4/vtk.m4
 #
 AC_DEFUN([AX_VTK],
 [
 	AC_ARG_WITH([vtk],
 		[AC_HELP_STRING([--with-vtk],
-		[The prefix where VTK is installed (default is /usr)])],
+		[The prefix where VTK is installed (default is /usr). You can also set environment variable VTK_INC_DIR / VTK_LIB_DIR. You can also pass a list of vtk libs to link with (usefull for vtk-6 where names have changed)])],
               	[
 			if test "$withval" = "no"
 			then
@@ -47,12 +53,29 @@ AC_DEFUN([AX_VTK],
     		[vtk_suffix=$withval],
 		[vtk_suffix="-5.2"])
 
-	# try to find a valid vtk location (and set have_vtk to yes in that case)
+	# try to see if a list of vtk libs is avail
+	# as an env variable: "-lvtkImaging ..."
+	if test "xVTK_LINK_LIBS" != x
+	then
+		VTK_LIBS=$VTK_LINK_LIBS 
+	fi
+
+	# try to find a valid vtk location
+	# (and set have_vtk to yes in that case)
 	have_vtk="no"
 	if test "$want_vtk" = "yes"
 	then
+
+		# if env variable VTK_INC_DIR / VTK_LIB_DIR are set, use them
+		# and no cross-check done
+		if test "x$VTK_INC_DIR" != x && test "x$VTK_LIB_DIR" != x
+		then
+			have_vtk="yes"
+		   	VTK_INCLUDE_PATH="$VTK_INC_DIR"
+		   	VTK_LIBRARY_PATH="$VTK_LIB_DIR"
+
 		# if the configure switch is used to define the VTK path
-		if test -n "$with_vtk"
+		elif test -n "$with_vtk"
 		then
 			# a path to vtk installation location was provided
 			VTK_PREFIX="${with_vtk}"
@@ -98,11 +121,15 @@ AC_DEFUN([AX_VTK],
 			done
 		fi
 
+
 		if test "$have_vtk" = "yes"
 		then
 			VTK_CPPFLAGS="-I${VTK_INCLUDE_PATH}"
 			VTK_LDFLAGS="-L${VTK_LIBRARY_PATH}"
-			VTK_LIBS="-lvtkCommon -lvtkDICOMParser -lvtkFiltering -lvtkftgl -lvtkGraphics -lvtkHybrid -lvtkImaging -lvtkIO -lvtkRendering -lvtkParallel "
+			if test "x$VTK_LIBS" = x
+			then 
+			     VTK_LIBS="-lvtkCommon -lvtkDICOMParser -lvtkFiltering -lvtkftgl -lvtkGraphics -lvtkHybrid -lvtkImaging -lvtkIO -lvtkRendering -lvtkParallel "
+			fi
 
 			AC_MSG_CHECKING([for vtk library])
 
@@ -216,14 +243,18 @@ AC_DEFUN([AX_VTK],
 			 #
 			 # if VTK 6 detected
 			 # 
-        		 if [[ "$vtkVersion6" = "K0" ]]; then
-			       	AC_MSG_RESULT([no])
+        		 if [[ "x$vtkVersion6" = "xKO" ]]; then
+			       	AC_MSG_RESULT([no $vtkVersion6])
           			VTK6_FOUND="no"
         		 else
 				AC_MSG_RESULT([yes])
           			VTK6_FOUND="yes"          			
-				# modify VTK_LIBS
-				VTK_LIBS="-lvtkCommonCore-6.0 -lvtkCommonDataModel-6.0 -lvtkDICOMParser-6.0 -lvtkFiltersCore-6.0 -lvtkftgl-6.0 -lvtkalglib-6.0 -lvtksys-6.0 -lvtkImagingCore-6.0 -lvtkIOCore-6.0 -lvtkRenderingCore-6.0 -lvtkIOXML-6.0 -lvtkParallelCore-6.0 -lvtkParallelCore-6.0 -lvtkParallelMPI-6.0"
+				# modify VTK_LIBS if not already set
+				# by env variable VTK_LINK_LIBS
+				if test "x$VTK_LIBS" = x
+				then 
+					VTK_LIBS="-lvtkCommonCore-6.0 -lvtkCommonDataModel-6.0 -lvtkDICOMParser-6.0 -lvtkFiltersCore-6.0 -lvtkftgl-6.0 -lvtkalglib-6.0 -lvtksys-6.0 -lvtkImagingCore-6.0 -lvtkIOCore-6.0 -lvtkRenderingCore-6.0 -lvtkIOXML-6.0 -lvtkParallelCore-6.0 -lvtkParallelCore-6.0 -lvtkParallelMPI-6.0"
+				fi
 
         		 fi
 
@@ -239,9 +270,11 @@ AC_DEFUN([AX_VTK],
 			AC_SUBST(VTK_LIBS)
 			AC_SUBST(VTK6_FOUND)
 			AC_DEFINE(HAVE_VTK, 1, [Define if you have Vtk library])
-			if test "$VTK6_FOUND" == "yes"
+			if test "x$VTK6_FOUND" = "xyes"
 			then
-				AC_DEFINE(HAVE_VTK6, 1, [Define if you have Vtk6 library])
+				AC_DEFINE(HAVE_VTK6, [1], [Define if you have Vtk6 library])
+			else
+				AC_DEFINE(HAVE_VTK6, [0], [Define if you have Vtk6 library])
 			fi
 
 		fi
