@@ -251,7 +251,7 @@ AC_DEFUN([AX_VTK],
           			VTK6_FOUND="yes"          			
 				# modify VTK_LIBS if not already set
 				# by env variable VTK_LINK_LIBS
-				if test "x$VTK_LIBS" = x
+				if test "x$VTK_LINK_LIBS" = x
 				then 
 					VTK_LIBS="-lvtkCommonCore-6.0 -lvtkCommonDataModel-6.0 -lvtkDICOMParser-6.0 -lvtkFiltersCore-6.0 -lvtkftgl-6.0 -lvtkalglib-6.0 -lvtksys-6.0 -lvtkImagingCore-6.0 -lvtkIOCore-6.0 -lvtkRenderingCore-6.0 -lvtkIOXML-6.0 -lvtkParallelCore-6.0 -lvtkParallelCore-6.0 -lvtkParallelMPI-6.0"
 				fi
