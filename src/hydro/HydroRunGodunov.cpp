@@ -1496,508 +1496,7 @@ void HydroRunGodunov::godunov_unsplit_cpu(HostArray<real_t>& h_UOld,
 
   } else if (unsplitVersion == 1) {
 
-    if (dimType == TWO_D) {
-      
-      // call trace computation routine
-      TIMER_START(timerSlopeTrace);
-#ifdef _OPENMP
-#pragma omp parallel default(shared)
-#pragma omp for collapse(2) schedule(auto)
-#endif // _OPENMP
-      for (int j=1; j<jsize-1; j++) {
-	for (int i=1; i<isize-1; i++) {
-	  
-	  real_t q[NVAR_2D];
-	  real_t qPlusX  [NVAR_2D], qMinusX [NVAR_2D],
-	    qPlusY  [NVAR_2D], qMinusY [NVAR_2D];
-	  real_t dq[2][NVAR_2D];
-
-	  real_t qm[TWO_D][NVAR_2D];
-	  real_t qp[TWO_D][NVAR_2D];
-	  
-	  // get primitive variables state vector
-	  for (int iVar=0; iVar<NVAR_2D; iVar++) {
-	    q      [iVar] = h_Q(i  ,j  ,iVar);
-	    qPlusX [iVar] = h_Q(i+1,j  ,iVar);
-	    qMinusX[iVar] = h_Q(i-1,j  ,iVar);
-	    qPlusY [iVar] = h_Q(i  ,j+1,iVar);
-	    qMinusY[iVar] = h_Q(i  ,j-1,iVar);
-	  }
-	  
-	  // get hydro slopes dq
-	  slope_unsplit_hydro_2d(q, 
-				 qPlusX, qMinusX,
-				 qPlusY, qMinusY,
-				 dq);
-
-	  // compute qm, qp
-	  trace_unsplit_hydro_2d(q, dq,
-				 dtdx, dtdy, 
-				 qm, qp);
-
-	  // gravity predictor
-	  if (gravityEnabled) { 
-	    qm[0][IU] += HALF_F * dt * h_gravity(i,j,IX);
-	    qm[0][IV] += HALF_F * dt * h_gravity(i,j,IY);
-
-	    qp[0][IU] += HALF_F * dt * h_gravity(i,j,IX);
-	    qp[0][IV] += HALF_F * dt * h_gravity(i,j,IY);
-
-	    qm[1][IU] += HALF_F * dt * h_gravity(i,j,IX);
-	    qm[1][IV] += HALF_F * dt * h_gravity(i,j,IY);
-
-	    qp[1][IU] += HALF_F * dt * h_gravity(i,j,IX);
-	    qp[1][IV] += HALF_F * dt * h_gravity(i,j,IY);
-	  }
-
-	  // store qm, qp : only what is really needed
-	  for (int ivar=0; ivar<NVAR_2D; ivar++) {
-	    h_qm_x(i,j,ivar) = qm[0][ivar];
-	    h_qp_x(i,j,ivar) = qp[0][ivar];
-	    h_qm_y(i,j,ivar) = qm[1][ivar];
-	    h_qp_y(i,j,ivar) = qp[1][ivar];
-	  } // end for ivar	
-	  
-	} // end for i
-      } // end for j
-      TIMER_STOP(timerSlopeTrace);
-
-      if (dumpDataForDebugEnabled) {
-	outputVtkDebug(h_qm_x, "qm_x_", nStep, true);
-	outputVtkDebug(h_qm_y, "qm_y_", nStep, true);
-	outputVtkDebug(h_qp_x, "qp_x_", nStep, true);
-	outputVtkDebug(h_qp_y, "qp_y_", nStep, true);
-      }
-      
-      TIMER_START(timerUpdate);
-      // Finally compute fluxes from rieman solvers, and update
-#ifdef _OPENMP
-#pragma omp parallel default(shared)
-#pragma omp for collapse(2) schedule(auto)
-#endif // _OPENMP
-      for (int j=ghostWidth; j<jsize-ghostWidth+1; j++) {
-	for (int i=ghostWidth; i<isize-ghostWidth+1; i++) {
-	  
-	  real_riemann_t qleft[NVAR_2D];
-	  real_riemann_t qright[NVAR_2D];
-	  real_riemann_t flux_x[NVAR_2D];
-	  real_riemann_t flux_y[NVAR_2D];
-	  real_t qgdnv[NVAR_2D];
-
-	  /*
-	   * Solve Riemann problem at X-interfaces and compute
-	   * X-fluxes
-	   */
-	  qleft[ID]   = h_qm_x(i-1,j,ID);
-	  qleft[IP]   = h_qm_x(i-1,j,IP);
-	  qleft[IU]   = h_qm_x(i-1,j,IU);
-	  qleft[IV]   = h_qm_x(i-1,j,IV);
-  
-	  qright[ID]  = h_qp_x(i  ,j,ID);
-	  qright[IP]  = h_qp_x(i  ,j,IP);
-	  qright[IU]  = h_qp_x(i  ,j,IU);
-	  qright[IV]  = h_qp_x(i  ,j,IV);
-	  
-	  // compute hydro flux_x
-	  riemann<NVAR_2D>(qleft,qright,qgdnv,flux_x);
-
-	  /*
-	   * Solve Riemann problem at Y-interfaces and compute Y-fluxes
-	   */
-	  qleft[ID]   = h_qm_y(i,j-1,ID);
-	  qleft[IP]   = h_qm_y(i,j-1,IP);
-	  qleft[IU]   = h_qm_y(i,j-1,IV); // watchout IU, IV permutation
-	  qleft[IV]   = h_qm_y(i,j-1,IU); // watchout IU, IV permutation
-	  
-	  qright[ID]  = h_qp_y(i,j  ,ID);
-	  qright[IP]  = h_qp_y(i,j  ,IP);
-	  qright[IU]  = h_qp_y(i,j  ,IV); // watchout IU, IV permutation
-	  qright[IV]  = h_qp_y(i,j  ,IU); // watchout IU, IV permutation
-	  
-	  // compute hydro flux_y
-	  riemann<NVAR_2D>(qleft,qright,qgdnv,flux_y);
-
-	  /*
-	   * update hydro array
-	   */
-
-	  /*
-	   * update with flux_x
-	   */
-	  if ( i > ghostWidth       and 
-	       j < jsize-ghostWidth ) {
-	    h_UNew(i-1,j  ,ID) -= flux_x[ID]*dtdx;
-	    h_UNew(i-1,j  ,IP) -= flux_x[IP]*dtdx;
-	    h_UNew(i-1,j  ,IU) -= flux_x[IU]*dtdx;
-	    h_UNew(i-1,j  ,IV) -= flux_x[IV]*dtdx;
-	  }
-	  
-	  if ( i < isize-ghostWidth and 
-	       j < jsize-ghostWidth ) {
-	    h_UNew(i  ,j  ,ID) += flux_x[ID]*dtdx;
-	    h_UNew(i  ,j  ,IP) += flux_x[IP]*dtdx;
-	    h_UNew(i  ,j  ,IU) += flux_x[IU]*dtdx;
-	    h_UNew(i  ,j  ,IV) += flux_x[IV]*dtdx;
-	  }
-	  
-	  /*
-	   * update with flux_y
-	   */
-	  if ( i < isize-ghostWidth and
-	       j > ghostWidth       ) {
-	    h_UNew(i  ,j-1,ID) -= flux_y[ID]*dtdy;
-	    h_UNew(i  ,j-1,IP) -= flux_y[IP]*dtdy;
-	    h_UNew(i  ,j-1,IU) -= flux_y[IV]*dtdy; // watchout IU and IV swapped
-	    h_UNew(i  ,j-1,IV) -= flux_y[IU]*dtdy; // watchout IU and IV swapped
-	  }
-	  
-	  if ( i < isize-ghostWidth and 
-	       j < jsize-ghostWidth ) {
-	    h_UNew(i  ,j  ,ID) += flux_y[ID]*dtdy;
-	    h_UNew(i  ,j  ,IP) += flux_y[IP]*dtdy;
-	    h_UNew(i  ,j  ,IU) += flux_y[IV]*dtdy; // watchout IU and IV swapped
-	    h_UNew(i  ,j  ,IV) += flux_y[IU]*dtdy; // watchout IU and IV swapped
-	  }
-
-	} // end for i
-      } // end for j
-
-      // gravity source term
-      if (gravityEnabled) {
-	compute_gravity_source_term(h_UNew, h_UOld, dt);
-      }
-
-      TIMER_STOP(timerUpdate);
-
-      /*
-       * DISSIPATIVE TERMS (i.e. viscosity)
-       */
-      TIMER_START(timerDissipative);
-      real_t &nu = _gParams.nu;
-      if (nu>0) {
-	// update boundaries before dissipative terms computations
-	make_all_boundaries(h_UNew);
-      }
-
-      // compute viscosity forces
-      if (nu>0) {
-	// re-use h_qm_x and h_qm_y
-	HostArray<real_t> &flux_x = h_qm_x;
-	HostArray<real_t> &flux_y = h_qm_y;
-
-	compute_viscosity_flux(h_UNew, flux_x, flux_y, dt);
-	compute_hydro_update  (h_UNew, flux_x, flux_y);
-
-      } // end compute viscosity force / update
-      TIMER_STOP(timerDissipative);
-      
-      /*
-       * random forcing
-       */
-      if (randomForcingEnabled) {
-	
-	real_t norm = compute_random_forcing_normalization(h_UNew, dt);
-
-	add_random_forcing(h_UNew, dt, norm);
-	
-      }
-      if (randomForcingOrnsteinUhlenbeckEnabled) {
-	
-	// add forcing field in real space
-	pForcingOrnsteinUhlenbeck->add_forcing_field(h_UNew, dt);
-
-      }
-
-    } else { // THREE_D - unsplit version 1
-
-      TIMER_START(timerSlopeTrace);
-      // call trace computation routine
-#ifdef _OPENMP
-#pragma omp parallel default(shared)
-#pragma omp for collapse(3) schedule(auto)
-#endif // _OPENMP
-      for (int k=1; k<ksize-1; k++) {
-	for (int j=1; j<jsize-1; j++) {
-	  for (int i=1; i<isize-1; i++) {
-	    
-	    real_t q[NVAR_3D];
-	    real_t qPlusX  [NVAR_3D], qMinusX [NVAR_3D],
-	      qPlusY  [NVAR_3D], qMinusY [NVAR_3D],
-	      qPlusZ  [NVAR_3D], qMinusZ [NVAR_3D];
-	    real_t dq[3][NVAR_3D];
-	    
-	    real_t qm[THREE_D][NVAR_3D];
-	    real_t qp[THREE_D][NVAR_3D];
-	    
-	    // get primitive variables state vector
-	    for (int iVar=0; iVar<NVAR_3D; iVar++) {
-	      q      [iVar] = h_Q(i  ,j  ,k  , iVar);
-	      qPlusX [iVar] = h_Q(i+1,j  ,k  , iVar);
-	      qMinusX[iVar] = h_Q(i-1,j  ,k  , iVar);
-	      qPlusY [iVar] = h_Q(i  ,j+1,k  , iVar);
-	      qMinusY[iVar] = h_Q(i  ,j-1,k  , iVar);
-	      qPlusZ [iVar] = h_Q(i  ,j  ,k+1, iVar);
-	      qMinusZ[iVar] = h_Q(i  ,j  ,k-1, iVar);
-	    }
-
-	    // get hydro slopes dq
-	    slope_unsplit_3d(q, 
-			     qPlusX, qMinusX, 
-			     qPlusY, qMinusY, 
-			     qPlusZ, qMinusZ,
-			     dq);
-	    /*slope_unsplit_3d_v1(q, qPlusX, qMinusX, dq[0]);
-	    slope_unsplit_3d_v1(q, qPlusY, qMinusY, dq[1]);
-	    slope_unsplit_3d_v1(q, qPlusZ, qMinusZ, dq[2]);*/
-
-	    // compute qm, qp
-	    trace_unsplit_hydro_3d(q, dq, 
-				   dtdx, dtdy, dtdz,
-				   qm, qp);
-	    
-	    // gravity predictor / modify velocity components
-	    if (gravityEnabled) { 
-	      real_t grav_x = HALF_F * dt * h_gravity(i,j,k,IX);
-	      real_t grav_y = HALF_F * dt * h_gravity(i,j,k,IY);
-	      real_t grav_z = HALF_F * dt * h_gravity(i,j,k,IZ);
-
-	      qm[0][IU] += grav_x;
-	      qm[0][IV] += grav_y;
-	      qm[0][IW] += grav_z;
-	      
-	      qp[0][IU] += grav_x;
-	      qp[0][IV] += grav_y;
-	      qp[0][IW] += grav_z;
-	      
-	      qm[1][IU] += grav_x;
-	      qm[1][IV] += grav_y;
-	      qm[1][IW] += grav_z;
-	      
-	      qp[1][IU] += grav_x;
-	      qp[1][IV] += grav_y;
-	      qp[1][IW] += grav_z;
-
-	      qm[2][IU] += grav_x;
-	      qm[2][IV] += grav_y;
-	      qm[2][IW] += grav_z;
-	      
-	      qp[2][IU] += grav_x;
-	      qp[2][IV] += grav_y;
-	      qp[2][IW] += grav_z;
-	    } // end gravityEnabled
-	    
-	    // store qm, qp : only what is really needed
-	    for (int ivar=0; ivar<NVAR_3D; ivar++) {
-	      h_qm_x(i,j,k,ivar) = qm[0][ivar];
-	      h_qp_x(i,j,k,ivar) = qp[0][ivar];
-	      h_qm_y(i,j,k,ivar) = qm[1][ivar];
-	      h_qp_y(i,j,k,ivar) = qp[1][ivar];
-	      h_qm_z(i,j,k,ivar) = qm[2][ivar];
-	      h_qp_z(i,j,k,ivar) = qp[2][ivar];	      
-	    } // end for ivar
-
-	  } // end for i
-	} // end for j
-      } // end for k
-      TIMER_STOP(timerSlopeTrace);
-
-      TIMER_START(timerUpdate);
-      // Finally compute fluxes from rieman solvers, and update
-#ifdef _OPENMP
-#pragma omp parallel default(shared)
-#pragma omp for collapse(3) schedule(auto)
-#endif // _OPENMP
-      for (int k=ghostWidth; k<ksize-ghostWidth+1; k++) {
-	for (int j=ghostWidth; j<jsize-ghostWidth+1; j++) {
-	  for (int i=ghostWidth; i<isize-ghostWidth+1; i++) {
-	    
-	    real_riemann_t qleft[NVAR_3D];
-	    real_riemann_t qright[NVAR_3D];
-	    real_riemann_t flux_x[NVAR_3D];
-	    real_riemann_t flux_y[NVAR_3D];
-	    real_riemann_t flux_z[NVAR_3D];
-	    real_riemann_t qgdnv[NVAR_3D];
-
-	    /*
-	     * Solve Riemann problem at X-interfaces and compute
-	     * X-fluxes
-	     */
-	    qleft[ID]   = h_qm_x(i-1,j,k,ID);
-	    qleft[IP]   = h_qm_x(i-1,j,k,IP);
-	    qleft[IU]   = h_qm_x(i-1,j,k,IU);
-	    qleft[IV]   = h_qm_x(i-1,j,k,IV);
-	    qleft[IW]   = h_qm_x(i-1,j,k,IW);
-	    
-	    qright[ID]  = h_qp_x(i  ,j,k,ID);
-	    qright[IP]  = h_qp_x(i  ,j,k,IP);
-	    qright[IU]  = h_qp_x(i  ,j,k,IU);
-	    qright[IV]  = h_qp_x(i  ,j,k,IV);
-	    qright[IW]  = h_qp_x(i  ,j,k,IW);
-	    
-	    // compute hydro flux_x
-	    riemann<NVAR_3D>(qleft,qright,qgdnv,flux_x);
-	    
-	    /*
-	     * Solve Riemann problem at Y-interfaces and compute Y-fluxes
-	     */
-	    qleft[ID]   = h_qm_y(i,j-1,k,ID);
-	    qleft[IP]   = h_qm_y(i,j-1,k,IP);
-	    qleft[IU]   = h_qm_y(i,j-1,k,IV); // watchout IU, IV permutation
-	    qleft[IV]   = h_qm_y(i,j-1,k,IU); // watchout IU, IV permutation
-	    qleft[IW]   = h_qm_y(i,j-1,k,IW);
-	    
-	    qright[ID]  = h_qp_y(i,j  ,k,ID);
-	    qright[IP]  = h_qp_y(i,j  ,k,IP);
-	    qright[IU]  = h_qp_y(i,j  ,k,IV); // watchout IU, IV permutation
-	    qright[IV]  = h_qp_y(i,j  ,k,IU); // watchout IU, IV permutation
-	    qright[IW]  = h_qp_y(i,j  ,k,IW);
-	    
-	    // compute hydro flux_y
-	    riemann<NVAR_3D>(qleft,qright,qgdnv,flux_y);
-	    
-	    /*
-	     * Solve Riemann problem at Z-interfaces and compute
-	     * Z-fluxes
-	     */
-	    qleft[ID]   = h_qm_z(i,j,k-1,ID);
-	    qleft[IP]   = h_qm_z(i,j,k-1,IP);
-	    qleft[IU]   = h_qm_z(i,j,k-1,IW); // watchout IU, IW permutation
-	    qleft[IV]   = h_qm_z(i,j,k-1,IV);
-	    qleft[IW]   = h_qm_z(i,j,k-1,IU); // watchout IU, IW permutation
-	    
-	    qright[ID]  = h_qp_z(i,j,k  ,ID);
-	    qright[IP]  = h_qp_z(i,j,k  ,IP);
-	    qright[IU]  = h_qp_z(i,j,k  ,IW); // watchout IU, IW permutation
-	    qright[IV]  = h_qp_z(i,j,k  ,IV);
-	    qright[IW]  = h_qp_z(i,j,k  ,IU); // watchout IU, IW permutation
-	    
-	    // compute hydro flux_z
-	    riemann<NVAR_3D>(qleft,qright,qgdnv,flux_z);
-
-	    /*
-	     * update hydro array
-	     */
-
-	    /*
-	     * update with flux_x
-	     */
-	    if ( i > ghostWidth       and 
-		 j < jsize-ghostWidth and 
-		 k < ksize-ghostWidth ) {
-	      h_UNew(i-1,j  ,k  ,ID) -= flux_x[ID]*dtdx;
-	      h_UNew(i-1,j  ,k  ,IP) -= flux_x[IP]*dtdx;
-	      h_UNew(i-1,j  ,k  ,IU) -= flux_x[IU]*dtdx;
-	      h_UNew(i-1,j  ,k  ,IV) -= flux_x[IV]*dtdx;
-	      h_UNew(i-1,j  ,k  ,IW) -= flux_x[IW]*dtdx;
-	    }
-	    
-	    if ( i < isize-ghostWidth and 
-		 j < jsize-ghostWidth and 
-		 k < ksize-ghostWidth ) {
-	      h_UNew(i  ,j  ,k  ,ID) += flux_x[ID]*dtdx;
-	      h_UNew(i  ,j  ,k  ,IP) += flux_x[IP]*dtdx;
-	      h_UNew(i  ,j  ,k  ,IU) += flux_x[IU]*dtdx;
-	      h_UNew(i  ,j  ,k  ,IV) += flux_x[IV]*dtdx;
-	      h_UNew(i  ,j  ,k  ,IW) += flux_x[IW]*dtdx;
-	    }
-
-	    /*
-	     * update with flux_y
-	     */
-	    if ( i < isize-ghostWidth and
-		 j > ghostWidth       and
-		 k < ksize-ghostWidth ) {
-	      h_UNew(i  ,j-1,k  ,ID) -= flux_y[ID]*dtdy;
-	      h_UNew(i  ,j-1,k  ,IP) -= flux_y[IP]*dtdy;
-	      h_UNew(i  ,j-1,k  ,IU) -= flux_y[IV]*dtdy; // watchout IU and IV swapped
-	      h_UNew(i  ,j-1,k  ,IV) -= flux_y[IU]*dtdy; // watchout IU and IV swapped
-	      h_UNew(i  ,j-1,k  ,IW) -= flux_y[IW]*dtdy;
-	    }
-	    
-	    if ( i < isize-ghostWidth and 
-		 j < jsize-ghostWidth and 
-		 k < ksize-ghostWidth ) {
-	      h_UNew(i  ,j  ,k  ,ID) += flux_y[ID]*dtdy;
-	      h_UNew(i  ,j  ,k  ,IP) += flux_y[IP]*dtdy;
-	      h_UNew(i  ,j  ,k  ,IU) += flux_y[IV]*dtdy; // watchout IU and IV swapped
-	      h_UNew(i  ,j  ,k  ,IV) += flux_y[IU]*dtdy; // watchout IU and IV swapped
-	      h_UNew(i  ,j  ,k  ,IW) += flux_y[IW]*dtdy;
-	    }
-
-	    /*
-	     * update with flux_z
-	     */
-	    if ( i < isize-ghostWidth and 
-		 j < jsize-ghostWidth and
-		 k > ghostWidth ) {
-	      h_UNew(i  ,j  ,k-1,ID) -= flux_z[ID]*dtdz;
-	      h_UNew(i  ,j  ,k-1,IP) -= flux_z[IP]*dtdz;
-	      h_UNew(i  ,j  ,k-1,IU) -= flux_z[IW]*dtdz; // watchout IU and IW swapped
-	      h_UNew(i  ,j  ,k-1,IV) -= flux_z[IV]*dtdz;
-	      h_UNew(i  ,j  ,k-1,IW) -= flux_z[IU]*dtdz; // watchout IU and IW swapped
-	    }
-
-	    if ( i < isize-ghostWidth and 
-		 j < jsize-ghostWidth and 
-		 k < ksize-ghostWidth ) {
-	      h_UNew(i  ,j  ,k  ,ID) += flux_z[ID]*dtdz;
-	      h_UNew(i  ,j  ,k  ,IP) += flux_z[IP]*dtdz;
-	      h_UNew(i  ,j  ,k  ,IU) += flux_z[IW]*dtdz; // watchout IU and IW swapped
-	      h_UNew(i  ,j  ,k  ,IV) += flux_z[IV]*dtdz;
-	      h_UNew(i  ,j  ,k  ,IW) += flux_z[IU]*dtdz; // watchout IU and IW swapped
-	    }
-	  } // end for i
-	} // end for j
-      } // end for k
-
-      // gravity source term
-      if (gravityEnabled) {
-	compute_gravity_source_term(h_UNew, h_UOld, dt);
-      }
-
-      TIMER_STOP(timerUpdate);
-
-      /*
-       * DISSIPATIVE TERMS (i.e. viscosity)
-       */
-      TIMER_START(timerDissipative);
-      real_t &nu = _gParams.nu;
-      if (nu>0) {
-	// update boundaries before dissipative terms computations
-	make_all_boundaries(h_UNew);
-      }
-
-      // compute viscosity forces
-      if (nu>0) {
-	// re-use h_qm_x and h_qm_y
-	HostArray<real_t> &flux_x = h_qm_x;
-	HostArray<real_t> &flux_y = h_qm_y;
-	HostArray<real_t> &flux_z = h_qm_z;
-
-	compute_viscosity_flux(h_UNew, flux_x, flux_y, flux_z, dt);
-	compute_hydro_update  (h_UNew, flux_x, flux_y, flux_z);
-
-      } // end compute viscosity force / update
-      TIMER_STOP(timerDissipative);
-
-      /*
-       * random forcing
-       */
-      if (randomForcingEnabled) {
-	
-	real_t norm = compute_random_forcing_normalization(h_UNew, dt);
-
-	add_random_forcing(h_UNew, dt, norm);
-	
-      }
-      if (randomForcingOrnsteinUhlenbeckEnabled) {
-	
-	// add forcing field in real space
-	pForcingOrnsteinUhlenbeck->add_forcing_field(h_UNew, dt);
-
-      }
-
-    } // end THREE_D  unsplit version 1
+    godunov_unsplit_cpu_v1(h_UOld, h_UNew, dt, nStep);
     
   } else if (unsplitVersion == 2) {
 
@@ -2996,6 +2495,522 @@ void HydroRunGodunov::godunov_unsplit_cpu_v0(HostArray<real_t>& h_UOld,
     } // end THREE_D - Implementation version 0
 
 } // HydroRunGodunov::godunov_unsplit_cpu_v0
+
+// =======================================================
+// =======================================================
+void HydroRunGodunov::godunov_unsplit_cpu_v1(HostArray<real_t>& h_UOld, 
+					     HostArray<real_t>& h_UNew, 
+					     real_t dt, int nStep)
+{
+
+  real_t dtdx = dt/dx;
+  real_t dtdy = dt/dy;
+  real_t dtdz = dt/dz;
+
+  if (dimType == TWO_D) {
+    
+    // call trace computation routine
+    TIMER_START(timerSlopeTrace);
+#ifdef _OPENMP
+#pragma omp parallel default(shared)
+#pragma omp for collapse(2) schedule(auto)
+#endif // _OPENMP
+    for (int j=1; j<jsize-1; j++) {
+      for (int i=1; i<isize-1; i++) {
+	
+	real_t q[NVAR_2D];
+	real_t qPlusX  [NVAR_2D], qMinusX [NVAR_2D],
+	  qPlusY  [NVAR_2D], qMinusY [NVAR_2D];
+	real_t dq[2][NVAR_2D];
+	
+	real_t qm[TWO_D][NVAR_2D];
+	real_t qp[TWO_D][NVAR_2D];
+	
+	// get primitive variables state vector
+	for (int iVar=0; iVar<NVAR_2D; iVar++) {
+	  q      [iVar] = h_Q(i  ,j  ,iVar);
+	  qPlusX [iVar] = h_Q(i+1,j  ,iVar);
+	  qMinusX[iVar] = h_Q(i-1,j  ,iVar);
+	  qPlusY [iVar] = h_Q(i  ,j+1,iVar);
+	  qMinusY[iVar] = h_Q(i  ,j-1,iVar);
+	}
+	
+	// get hydro slopes dq
+	slope_unsplit_hydro_2d(q, 
+			       qPlusX, qMinusX,
+			       qPlusY, qMinusY,
+			       dq);
+	
+	// compute qm, qp
+	trace_unsplit_hydro_2d(q, dq,
+			       dtdx, dtdy, 
+			       qm, qp);
+	
+	// gravity predictor
+	if (gravityEnabled) { 
+	  qm[0][IU] += HALF_F * dt * h_gravity(i,j,IX);
+	  qm[0][IV] += HALF_F * dt * h_gravity(i,j,IY);
+	  
+	  qp[0][IU] += HALF_F * dt * h_gravity(i,j,IX);
+	  qp[0][IV] += HALF_F * dt * h_gravity(i,j,IY);
+	  
+	  qm[1][IU] += HALF_F * dt * h_gravity(i,j,IX);
+	  qm[1][IV] += HALF_F * dt * h_gravity(i,j,IY);
+	  
+	  qp[1][IU] += HALF_F * dt * h_gravity(i,j,IX);
+	  qp[1][IV] += HALF_F * dt * h_gravity(i,j,IY);
+	}
+	
+	// store qm, qp : only what is really needed
+	for (int ivar=0; ivar<NVAR_2D; ivar++) {
+	  h_qm_x(i,j,ivar) = qm[0][ivar];
+	  h_qp_x(i,j,ivar) = qp[0][ivar];
+	  h_qm_y(i,j,ivar) = qm[1][ivar];
+	  h_qp_y(i,j,ivar) = qp[1][ivar];
+	} // end for ivar	
+	
+      } // end for i
+    } // end for j
+    TIMER_STOP(timerSlopeTrace);
+    
+    if (dumpDataForDebugEnabled) {
+      outputVtkDebug(h_qm_x, "qm_x_", nStep, true);
+      outputVtkDebug(h_qm_y, "qm_y_", nStep, true);
+      outputVtkDebug(h_qp_x, "qp_x_", nStep, true);
+      outputVtkDebug(h_qp_y, "qp_y_", nStep, true);
+    }
+    
+    TIMER_START(timerUpdate);
+    // Finally compute fluxes from rieman solvers, and update
+#ifdef _OPENMP
+#pragma omp parallel default(shared)
+#pragma omp for collapse(2) schedule(auto)
+#endif // _OPENMP
+    for (int j=ghostWidth; j<jsize-ghostWidth+1; j++) {
+      for (int i=ghostWidth; i<isize-ghostWidth+1; i++) {
+	
+	real_riemann_t qleft[NVAR_2D];
+	real_riemann_t qright[NVAR_2D];
+	real_riemann_t flux_x[NVAR_2D];
+	real_riemann_t flux_y[NVAR_2D];
+	real_t qgdnv[NVAR_2D];
+	
+	/*
+	 * Solve Riemann problem at X-interfaces and compute
+	 * X-fluxes
+	 */
+	qleft[ID]   = h_qm_x(i-1,j,ID);
+	qleft[IP]   = h_qm_x(i-1,j,IP);
+	qleft[IU]   = h_qm_x(i-1,j,IU);
+	qleft[IV]   = h_qm_x(i-1,j,IV);
+	
+	qright[ID]  = h_qp_x(i  ,j,ID);
+	qright[IP]  = h_qp_x(i  ,j,IP);
+	qright[IU]  = h_qp_x(i  ,j,IU);
+	qright[IV]  = h_qp_x(i  ,j,IV);
+	
+	// compute hydro flux_x
+	riemann<NVAR_2D>(qleft,qright,qgdnv,flux_x);
+	
+	/*
+	 * Solve Riemann problem at Y-interfaces and compute Y-fluxes
+	 */
+	qleft[ID]   = h_qm_y(i,j-1,ID);
+	qleft[IP]   = h_qm_y(i,j-1,IP);
+	qleft[IU]   = h_qm_y(i,j-1,IV); // watchout IU, IV permutation
+	qleft[IV]   = h_qm_y(i,j-1,IU); // watchout IU, IV permutation
+	
+	qright[ID]  = h_qp_y(i,j  ,ID);
+	qright[IP]  = h_qp_y(i,j  ,IP);
+	qright[IU]  = h_qp_y(i,j  ,IV); // watchout IU, IV permutation
+	qright[IV]  = h_qp_y(i,j  ,IU); // watchout IU, IV permutation
+	
+	// compute hydro flux_y
+	riemann<NVAR_2D>(qleft,qright,qgdnv,flux_y);
+	
+	/*
+	 * update hydro array
+	 */
+	
+	/*
+	 * update with flux_x
+	 */
+	if ( i > ghostWidth       and 
+	     j < jsize-ghostWidth ) {
+	  h_UNew(i-1,j  ,ID) -= flux_x[ID]*dtdx;
+	  h_UNew(i-1,j  ,IP) -= flux_x[IP]*dtdx;
+	  h_UNew(i-1,j  ,IU) -= flux_x[IU]*dtdx;
+	  h_UNew(i-1,j  ,IV) -= flux_x[IV]*dtdx;
+	}
+	
+	if ( i < isize-ghostWidth and 
+	     j < jsize-ghostWidth ) {
+	  h_UNew(i  ,j  ,ID) += flux_x[ID]*dtdx;
+	  h_UNew(i  ,j  ,IP) += flux_x[IP]*dtdx;
+	  h_UNew(i  ,j  ,IU) += flux_x[IU]*dtdx;
+	  h_UNew(i  ,j  ,IV) += flux_x[IV]*dtdx;
+	}
+	
+	/*
+	 * update with flux_y
+	 */
+	if ( i < isize-ghostWidth and
+	     j > ghostWidth       ) {
+	  h_UNew(i  ,j-1,ID) -= flux_y[ID]*dtdy;
+	  h_UNew(i  ,j-1,IP) -= flux_y[IP]*dtdy;
+	  h_UNew(i  ,j-1,IU) -= flux_y[IV]*dtdy; // watchout IU and IV swapped
+	  h_UNew(i  ,j-1,IV) -= flux_y[IU]*dtdy; // watchout IU and IV swapped
+	}
+	
+	if ( i < isize-ghostWidth and 
+	     j < jsize-ghostWidth ) {
+	  h_UNew(i  ,j  ,ID) += flux_y[ID]*dtdy;
+	  h_UNew(i  ,j  ,IP) += flux_y[IP]*dtdy;
+	  h_UNew(i  ,j  ,IU) += flux_y[IV]*dtdy; // watchout IU and IV swapped
+	  h_UNew(i  ,j  ,IV) += flux_y[IU]*dtdy; // watchout IU and IV swapped
+	}
+	
+      } // end for i
+    } // end for j
+    
+    // gravity source term
+    if (gravityEnabled) {
+      compute_gravity_source_term(h_UNew, h_UOld, dt);
+    }
+    
+    TIMER_STOP(timerUpdate);
+    
+    /*
+     * DISSIPATIVE TERMS (i.e. viscosity)
+     */
+    TIMER_START(timerDissipative);
+    real_t &nu = _gParams.nu;
+    if (nu>0) {
+      // update boundaries before dissipative terms computations
+      make_all_boundaries(h_UNew);
+    }
+    
+    // compute viscosity forces
+    if (nu>0) {
+      // re-use h_qm_x and h_qm_y
+      HostArray<real_t> &flux_x = h_qm_x;
+      HostArray<real_t> &flux_y = h_qm_y;
+      
+      compute_viscosity_flux(h_UNew, flux_x, flux_y, dt);
+      compute_hydro_update  (h_UNew, flux_x, flux_y);
+      
+    } // end compute viscosity force / update
+    TIMER_STOP(timerDissipative);
+    
+    /*
+     * random forcing
+     */
+    if (randomForcingEnabled) {
+      
+      real_t norm = compute_random_forcing_normalization(h_UNew, dt);
+      
+      add_random_forcing(h_UNew, dt, norm);
+      
+    }
+    if (randomForcingOrnsteinUhlenbeckEnabled) {
+      
+      // add forcing field in real space
+      pForcingOrnsteinUhlenbeck->add_forcing_field(h_UNew, dt);
+      
+    }
+    
+  } else { // THREE_D - unsplit version 1
+    
+    TIMER_START(timerSlopeTrace);
+    // call trace computation routine
+#ifdef _OPENMP
+#pragma omp parallel default(shared)
+#pragma omp for collapse(3) schedule(auto)
+#endif // _OPENMP
+    for (int k=1; k<ksize-1; k++) {
+      for (int j=1; j<jsize-1; j++) {
+	for (int i=1; i<isize-1; i++) {
+	  
+	  real_t q[NVAR_3D];
+	  real_t qPlusX  [NVAR_3D], qMinusX [NVAR_3D],
+	    qPlusY  [NVAR_3D], qMinusY [NVAR_3D],
+	    qPlusZ  [NVAR_3D], qMinusZ [NVAR_3D];
+	  real_t dq[3][NVAR_3D];
+	  
+	  real_t qm[THREE_D][NVAR_3D];
+	  real_t qp[THREE_D][NVAR_3D];
+	  
+	  // get primitive variables state vector
+	  for (int iVar=0; iVar<NVAR_3D; iVar++) {
+	    q      [iVar] = h_Q(i  ,j  ,k  , iVar);
+	    qPlusX [iVar] = h_Q(i+1,j  ,k  , iVar);
+	    qMinusX[iVar] = h_Q(i-1,j  ,k  , iVar);
+	    qPlusY [iVar] = h_Q(i  ,j+1,k  , iVar);
+	    qMinusY[iVar] = h_Q(i  ,j-1,k  , iVar);
+	    qPlusZ [iVar] = h_Q(i  ,j  ,k+1, iVar);
+	    qMinusZ[iVar] = h_Q(i  ,j  ,k-1, iVar);
+	  }
+	  
+	  // get hydro slopes dq
+	  slope_unsplit_3d(q, 
+			   qPlusX, qMinusX, 
+			   qPlusY, qMinusY, 
+			   qPlusZ, qMinusZ,
+			   dq);
+	  /*slope_unsplit_3d_v1(q, qPlusX, qMinusX, dq[0]);
+	    slope_unsplit_3d_v1(q, qPlusY, qMinusY, dq[1]);
+	    slope_unsplit_3d_v1(q, qPlusZ, qMinusZ, dq[2]);*/
+	  
+	  // compute qm, qp
+	  trace_unsplit_hydro_3d(q, dq, 
+				 dtdx, dtdy, dtdz,
+				 qm, qp);
+	  
+	  // gravity predictor / modify velocity components
+	  if (gravityEnabled) { 
+	    real_t grav_x = HALF_F * dt * h_gravity(i,j,k,IX);
+	    real_t grav_y = HALF_F * dt * h_gravity(i,j,k,IY);
+	    real_t grav_z = HALF_F * dt * h_gravity(i,j,k,IZ);
+	    
+	    qm[0][IU] += grav_x;
+	    qm[0][IV] += grav_y;
+	    qm[0][IW] += grav_z;
+	    
+	    qp[0][IU] += grav_x;
+	    qp[0][IV] += grav_y;
+	    qp[0][IW] += grav_z;
+	    
+	    qm[1][IU] += grav_x;
+	    qm[1][IV] += grav_y;
+	    qm[1][IW] += grav_z;
+	    
+	    qp[1][IU] += grav_x;
+	    qp[1][IV] += grav_y;
+	    qp[1][IW] += grav_z;
+	    
+	    qm[2][IU] += grav_x;
+	    qm[2][IV] += grav_y;
+	    qm[2][IW] += grav_z;
+	    
+	    qp[2][IU] += grav_x;
+	    qp[2][IV] += grav_y;
+	    qp[2][IW] += grav_z;
+	  } // end gravityEnabled
+	  
+	  // store qm, qp : only what is really needed
+	  for (int ivar=0; ivar<NVAR_3D; ivar++) {
+	    h_qm_x(i,j,k,ivar) = qm[0][ivar];
+	    h_qp_x(i,j,k,ivar) = qp[0][ivar];
+	    h_qm_y(i,j,k,ivar) = qm[1][ivar];
+	    h_qp_y(i,j,k,ivar) = qp[1][ivar];
+	    h_qm_z(i,j,k,ivar) = qm[2][ivar];
+	    h_qp_z(i,j,k,ivar) = qp[2][ivar];	      
+	  } // end for ivar
+	  
+	} // end for i
+      } // end for j
+    } // end for k
+    TIMER_STOP(timerSlopeTrace);
+    
+    TIMER_START(timerUpdate);
+    // Finally compute fluxes from rieman solvers, and update
+#ifdef _OPENMP
+#pragma omp parallel default(shared)
+#pragma omp for collapse(3) schedule(auto)
+#endif // _OPENMP
+    for (int k=ghostWidth; k<ksize-ghostWidth+1; k++) {
+      for (int j=ghostWidth; j<jsize-ghostWidth+1; j++) {
+	for (int i=ghostWidth; i<isize-ghostWidth+1; i++) {
+	  
+	  real_riemann_t qleft[NVAR_3D];
+	  real_riemann_t qright[NVAR_3D];
+	  real_riemann_t flux_x[NVAR_3D];
+	  real_riemann_t flux_y[NVAR_3D];
+	  real_riemann_t flux_z[NVAR_3D];
+	  real_riemann_t qgdnv[NVAR_3D];
+	  
+	  /*
+	   * Solve Riemann problem at X-interfaces and compute
+	   * X-fluxes
+	   */
+	  qleft[ID]   = h_qm_x(i-1,j,k,ID);
+	  qleft[IP]   = h_qm_x(i-1,j,k,IP);
+	  qleft[IU]   = h_qm_x(i-1,j,k,IU);
+	  qleft[IV]   = h_qm_x(i-1,j,k,IV);
+	  qleft[IW]   = h_qm_x(i-1,j,k,IW);
+	  
+	  qright[ID]  = h_qp_x(i  ,j,k,ID);
+	  qright[IP]  = h_qp_x(i  ,j,k,IP);
+	  qright[IU]  = h_qp_x(i  ,j,k,IU);
+	  qright[IV]  = h_qp_x(i  ,j,k,IV);
+	  qright[IW]  = h_qp_x(i  ,j,k,IW);
+	  
+	  // compute hydro flux_x
+	  riemann<NVAR_3D>(qleft,qright,qgdnv,flux_x);
+	  
+	  /*
+	   * Solve Riemann problem at Y-interfaces and compute Y-fluxes
+	   */
+	  qleft[ID]   = h_qm_y(i,j-1,k,ID);
+	  qleft[IP]   = h_qm_y(i,j-1,k,IP);
+	  qleft[IU]   = h_qm_y(i,j-1,k,IV); // watchout IU, IV permutation
+	  qleft[IV]   = h_qm_y(i,j-1,k,IU); // watchout IU, IV permutation
+	  qleft[IW]   = h_qm_y(i,j-1,k,IW);
+	  
+	  qright[ID]  = h_qp_y(i,j  ,k,ID);
+	  qright[IP]  = h_qp_y(i,j  ,k,IP);
+	  qright[IU]  = h_qp_y(i,j  ,k,IV); // watchout IU, IV permutation
+	  qright[IV]  = h_qp_y(i,j  ,k,IU); // watchout IU, IV permutation
+	  qright[IW]  = h_qp_y(i,j  ,k,IW);
+	  
+	  // compute hydro flux_y
+	  riemann<NVAR_3D>(qleft,qright,qgdnv,flux_y);
+	  
+	  /*
+	   * Solve Riemann problem at Z-interfaces and compute
+	   * Z-fluxes
+	   */
+	  qleft[ID]   = h_qm_z(i,j,k-1,ID);
+	  qleft[IP]   = h_qm_z(i,j,k-1,IP);
+	  qleft[IU]   = h_qm_z(i,j,k-1,IW); // watchout IU, IW permutation
+	  qleft[IV]   = h_qm_z(i,j,k-1,IV);
+	  qleft[IW]   = h_qm_z(i,j,k-1,IU); // watchout IU, IW permutation
+	  
+	  qright[ID]  = h_qp_z(i,j,k  ,ID);
+	  qright[IP]  = h_qp_z(i,j,k  ,IP);
+	  qright[IU]  = h_qp_z(i,j,k  ,IW); // watchout IU, IW permutation
+	  qright[IV]  = h_qp_z(i,j,k  ,IV);
+	  qright[IW]  = h_qp_z(i,j,k  ,IU); // watchout IU, IW permutation
+	  
+	  // compute hydro flux_z
+	  riemann<NVAR_3D>(qleft,qright,qgdnv,flux_z);
+	  
+	  /*
+	   * update hydro array
+	   */
+	  
+	  /*
+	   * update with flux_x
+	   */
+	  if ( i > ghostWidth       and 
+	       j < jsize-ghostWidth and 
+	       k < ksize-ghostWidth ) {
+	    h_UNew(i-1,j  ,k  ,ID) -= flux_x[ID]*dtdx;
+	    h_UNew(i-1,j  ,k  ,IP) -= flux_x[IP]*dtdx;
+	    h_UNew(i-1,j  ,k  ,IU) -= flux_x[IU]*dtdx;
+	    h_UNew(i-1,j  ,k  ,IV) -= flux_x[IV]*dtdx;
+	    h_UNew(i-1,j  ,k  ,IW) -= flux_x[IW]*dtdx;
+	  }
+	  
+	  if ( i < isize-ghostWidth and 
+	       j < jsize-ghostWidth and 
+	       k < ksize-ghostWidth ) {
+	    h_UNew(i  ,j  ,k  ,ID) += flux_x[ID]*dtdx;
+	    h_UNew(i  ,j  ,k  ,IP) += flux_x[IP]*dtdx;
+	    h_UNew(i  ,j  ,k  ,IU) += flux_x[IU]*dtdx;
+	    h_UNew(i  ,j  ,k  ,IV) += flux_x[IV]*dtdx;
+	    h_UNew(i  ,j  ,k  ,IW) += flux_x[IW]*dtdx;
+	  }
+	  
+	  /*
+	   * update with flux_y
+	   */
+	  if ( i < isize-ghostWidth and
+	       j > ghostWidth       and
+	       k < ksize-ghostWidth ) {
+	    h_UNew(i  ,j-1,k  ,ID) -= flux_y[ID]*dtdy;
+	    h_UNew(i  ,j-1,k  ,IP) -= flux_y[IP]*dtdy;
+	    h_UNew(i  ,j-1,k  ,IU) -= flux_y[IV]*dtdy; // watchout IU and IV swapped
+	    h_UNew(i  ,j-1,k  ,IV) -= flux_y[IU]*dtdy; // watchout IU and IV swapped
+	    h_UNew(i  ,j-1,k  ,IW) -= flux_y[IW]*dtdy;
+	  }
+	  
+	  if ( i < isize-ghostWidth and 
+	       j < jsize-ghostWidth and 
+	       k < ksize-ghostWidth ) {
+	    h_UNew(i  ,j  ,k  ,ID) += flux_y[ID]*dtdy;
+	    h_UNew(i  ,j  ,k  ,IP) += flux_y[IP]*dtdy;
+	    h_UNew(i  ,j  ,k  ,IU) += flux_y[IV]*dtdy; // watchout IU and IV swapped
+	    h_UNew(i  ,j  ,k  ,IV) += flux_y[IU]*dtdy; // watchout IU and IV swapped
+	    h_UNew(i  ,j  ,k  ,IW) += flux_y[IW]*dtdy;
+	  }
+	  
+	  /*
+	   * update with flux_z
+	   */
+	  if ( i < isize-ghostWidth and 
+	       j < jsize-ghostWidth and
+	       k > ghostWidth ) {
+	    h_UNew(i  ,j  ,k-1,ID) -= flux_z[ID]*dtdz;
+	    h_UNew(i  ,j  ,k-1,IP) -= flux_z[IP]*dtdz;
+	    h_UNew(i  ,j  ,k-1,IU) -= flux_z[IW]*dtdz; // watchout IU and IW swapped
+	    h_UNew(i  ,j  ,k-1,IV) -= flux_z[IV]*dtdz;
+	    h_UNew(i  ,j  ,k-1,IW) -= flux_z[IU]*dtdz; // watchout IU and IW swapped
+	  }
+	  
+	  if ( i < isize-ghostWidth and 
+	       j < jsize-ghostWidth and 
+	       k < ksize-ghostWidth ) {
+	    h_UNew(i  ,j  ,k  ,ID) += flux_z[ID]*dtdz;
+	    h_UNew(i  ,j  ,k  ,IP) += flux_z[IP]*dtdz;
+	    h_UNew(i  ,j  ,k  ,IU) += flux_z[IW]*dtdz; // watchout IU and IW swapped
+	    h_UNew(i  ,j  ,k  ,IV) += flux_z[IV]*dtdz;
+	    h_UNew(i  ,j  ,k  ,IW) += flux_z[IU]*dtdz; // watchout IU and IW swapped
+	  }
+	} // end for i
+      } // end for j
+    } // end for k
+    
+    // gravity source term
+    if (gravityEnabled) {
+      compute_gravity_source_term(h_UNew, h_UOld, dt);
+    }
+    
+    TIMER_STOP(timerUpdate);
+    
+    /*
+     * DISSIPATIVE TERMS (i.e. viscosity)
+     */
+    TIMER_START(timerDissipative);
+    real_t &nu = _gParams.nu;
+    if (nu>0) {
+      // update boundaries before dissipative terms computations
+      make_all_boundaries(h_UNew);
+    }
+    
+    // compute viscosity forces
+    if (nu>0) {
+      // re-use h_qm_x and h_qm_y
+      HostArray<real_t> &flux_x = h_qm_x;
+      HostArray<real_t> &flux_y = h_qm_y;
+      HostArray<real_t> &flux_z = h_qm_z;
+      
+      compute_viscosity_flux(h_UNew, flux_x, flux_y, flux_z, dt);
+      compute_hydro_update  (h_UNew, flux_x, flux_y, flux_z);
+      
+    } // end compute viscosity force / update
+    TIMER_STOP(timerDissipative);
+    
+    /*
+     * random forcing
+     */
+    if (randomForcingEnabled) {
+      
+      real_t norm = compute_random_forcing_normalization(h_UNew, dt);
+      
+      add_random_forcing(h_UNew, dt, norm);
+      
+    }
+    if (randomForcingOrnsteinUhlenbeckEnabled) {
+      
+      // add forcing field in real space
+      pForcingOrnsteinUhlenbeck->add_forcing_field(h_UNew, dt);
+      
+    }
+    
+  } // end THREE_D  unsplit version 1
+  
+} // HydroRunGodunov::godunov_unsplit_cpu_v1
 
 // =======================================================
 // =======================================================
