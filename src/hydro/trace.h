@@ -130,7 +130,7 @@ void trace(real_t q[NVAR], real_t qPlus[NVAR], real_t qMinus[NVAR],
 
 
 /**
- * Trace computations for unsplit Godunov scheme.
+ * Compute slopes and then perform trace for unsplit Godunov scheme.
  *
  * \note Note that this routine uses global variables iorder, scheme and
  * slope_type.
@@ -314,8 +314,8 @@ void trace_unsplit(real_t q[NVAR], real_t qNeighbors[2*NDIM][NVAR],
 } // trace_unsplit
 
 /**
- * This another implementation of trace computations for 2D data; it
- * is used when unsplitVersion = 1
+ * This another implementation of trace computations for 2D data;
+ * slopes are computed outside; it is used when unsplitVersion = 1
  *
  * Note that :
  * - hydro slopes computations are done outside this routine
@@ -412,6 +412,113 @@ void trace_unsplit_hydro_2d(real_t q[NVAR_2D],
   qm[1][IP] = FMAX(smallp * qm[1][ID], qm[1][IP]);
   
 } // trace_unsplit_hydro_2d
+
+/**
+ * This another implementation of trace computations for 2D data;
+ * slopes are computed outside; it is used when unsplitVersion = 0
+ *
+ * Note that :
+ * - hydro slopes computations are done outside this routine
+ *
+ * \param[in]  q  primitive variable state vector
+ * \param[in]  dq primitive variable slopes
+ * \param[in]  dtdx dt divided by dx
+ * \param[in]  dtdy dt divided by dy
+ * \param[in]  faceId identify which cell face is to be reconstructed
+ * \param[out] qface the reconstructed state
+ *
+ */
+__DEVICE__
+void trace_unsplit_hydro_2d_by_direction(real_t q[NVAR_2D],
+					 real_t dq[2][NVAR_2D],
+					 real_t dtdx,
+					 real_t dtdy,
+					 int faceId,
+					 real_t (&qface)[NVAR_2D])
+{
+  
+  // some aliases
+  real_t &smallR = ::gParams.smallr;
+  real_t &smallp = ::gParams.smallp;
+  real_t &gamma  = ::gParams.gamma0;
+
+  // Cell centered values
+  real_t r = q[ID];
+  real_t p = q[IP];
+  real_t u = q[IU];
+  real_t v = q[IV];
+
+  // Cell centered TVD slopes in X direction
+  real_t drx = HALF_F*dq[IX][ID];
+  real_t dpx = HALF_F*dq[IX][IP];
+  real_t dux = HALF_F*dq[IX][IU];
+  real_t dvx = HALF_F*dq[IX][IV];
+  
+  // Cell centered TVD slopes in Y direction
+  real_t dry = HALF_F*dq[IY][ID];
+  real_t dpy = HALF_F*dq[IY][IP];
+  real_t duy = HALF_F*dq[IY][IU];
+  real_t dvy = HALF_F*dq[IY][IV];
+
+  // Source terms (including transverse derivatives)
+  real_t sr0, su0, sv0, sp0;
+
+  if (true /*cartesian*/) {
+
+    sr0 = (-u*drx-dux*r)      *dtdx + (-v*dry-dvy*r)      *dtdy;
+    su0 = (-u*dux-dpx/r)      *dtdx + (-v*duy      )      *dtdy;
+    sv0 = (-u*dvx      )      *dtdx + (-v*dvy-dpy/r)      *dtdy;
+    sp0 = (-u*dpx-dux*gamma*p)*dtdx + (-v*dpy-dvy*gamma*p)*dtdy;
+	
+  } // end cartesian
+
+  // Update in time the  primitive variables
+  r = r + sr0;
+  u = u + su0;
+  v = v + sv0;
+  p = p + sp0;
+
+  if (faceId == FACE_XMIN) {
+    // Face averaged right state at left interface
+    qface[ID] = r - drx;
+    qface[IU] = u - dux;
+    qface[IV] = v - dvx;
+    qface[IP] = p - dpx;
+    qface[ID] = FMAX(smallR,  qface[ID]);
+    qface[IP] = FMAX(smallp * qface[ID], qface[IP]);
+  }
+
+  if (faceId == FACE_XMAX) {
+    // Face averaged left state at right interface
+    qface[ID] = r + drx;
+    qface[IU] = u + dux;
+    qface[IV] = v + dvx;
+    qface[IP] = p + dpx;
+    qface[ID] = FMAX(smallR,  qface[ID]);
+    qface[IP] = FMAX(smallp * qface[ID], qface[IP]);
+  }
+
+  if (faceId == FACE_YMIN) {
+    // Face averaged top state at bottom interface
+    qface[ID] = r - dry;
+    qface[IU] = u - duy;
+    qface[IV] = v - dvy;
+    qface[IP] = p - dpy;
+    qface[ID] = FMAX(smallR,  qface[ID]);
+    qface[IP] = FMAX(smallp * qface[ID], qface[IP]);
+  }
+  
+  if (faceId == FACE_YMAX) {
+    // Face averaged bottom state at top interface
+    qface[ID] = r + dry;
+    qface[IU] = u + duy;
+    qface[IV] = v + dvy;
+    qface[IP] = p + dpy;
+    qface[ID] = FMAX(smallR,  qface[ID]);
+    qface[IP] = FMAX(smallp * qface[ID], qface[IP]);
+  }
+
+} // trace_unsplit_hydro_2d_by_direction
 
 /**
  * This another implementation of trace computations for 3D data; it

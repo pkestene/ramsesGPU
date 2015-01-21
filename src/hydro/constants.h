@@ -60,6 +60,17 @@ enum ComponentIndex {
   IC=7  /*!< Z component of magnetic field */
 };
 
+//! face index
+enum FaceIdType {
+  FACE_XMIN=0,
+  FACE_XMAX=1,
+  FACE_YMIN=2,
+  FACE_YMAX=3,
+  FACE_ZMIN=4,
+  FACE_ZMAX=5
+};
+
+
 //! enum used in shearing box computations
 enum ShearRemapIndex {
   I_DENS=0,

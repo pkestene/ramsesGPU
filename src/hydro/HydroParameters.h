@@ -539,4 +539,14 @@ inline void HydroParameters::copyToSymbolMemory()
 
 } // HydroParameters::copyToSymbolMemory
 
+void inline swapValues(real_t *a, real_t *b)
+{
+  real_t tmp = *a;
+  
+  *a = *b;
+  *b = tmp;
+
+} // swapValues
+
+
 #endif /*HYDROPARAMETERS_H_*/
