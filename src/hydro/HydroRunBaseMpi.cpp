@@ -4331,12 +4331,15 @@ namespace hydroSimu {
       //imageData->SetDimensions(nx, ny, nz);
       imageData->SetOrigin(0.0, 0.0, 0.0);
       imageData->SetSpacing(1.0,1.0,1.0);
+#if HAVE_VTK6
+#else
       imageData->SetNumberOfScalarComponents(nbVar);
       if (useDouble)
 	imageData->SetScalarTypeToDouble();
       else
 	imageData->SetScalarTypeToFloat();
       //imageData->AllocateScalars();
+#endif
 
       int xmin,xmax,ymin,ymax,zmin,zmax;
       if (dimType == TWO_D) {
@@ -4527,7 +4530,11 @@ namespace hydroSimu {
       // create image writer
       vtkSmartPointer<vtkXMLImageDataWriter> writer = 
 	vtkSmartPointer<vtkXMLImageDataWriter>::New();
+#if HAVE_VTK6
+      writer->SetInputData(imageData);
+#else
       writer->SetInput(imageData);
+#endif
       writer->SetFileName(dataFilenameFull.c_str());
       if (outputAscii)
 	writer->SetDataModeToAscii();
