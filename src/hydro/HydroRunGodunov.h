@@ -119,6 +119,15 @@ namespace hydroSimu {
     void godunov_unsplit_cpu(HostArray<real_t>& h_UOld, 
 			     HostArray<real_t>& h_UNew, 
 			     real_t dt, int nStep);
+
+    //! unplitVersion = 0
+    //! memory footprint is very low
+    //! nothing is stored globally except h_Q
+    //! some redundancy in trace computation
+    void godunov_unsplit_cpu_v0(HostArray<real_t>& h_UOld, 
+				HostArray<real_t>& h_UNew, 
+				real_t dt, int nStep);
+
 #endif // __CUDAC__
 
   public:

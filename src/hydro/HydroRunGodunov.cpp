@@ -1469,15 +1469,12 @@ void HydroRunGodunov::godunov_unsplit_cpu(HostArray<real_t>& h_UOld,
   real_t dtdy = dt/dy;
   real_t dtdz = dt/dz;
 
-  //int ijkSize = h_Q.section();
-
 #ifdef USE_PAPI
       // PAPI FLOPS counter
       papiFlops_total.start();
 #endif // USE_PAPI      
 
   TIMER_START(timerGodunov);
-
 
   /*
    * Whatever implementation version, start by computing primitive variables
@@ -1494,461 +1491,8 @@ void HydroRunGodunov::godunov_unsplit_cpu(HostArray<real_t>& h_UOld,
   }
 
   if (unsplitVersion == 0) {
-    
-    if (dimType == TWO_D) {
-      
-// #ifdef _OPENMP
-// #pragma omp parallel default(shared) private(qm_x,qm_y,qp_x,qp_y)
-// #pragma omp for collapse(2) schedule(auto)
-// #endif // _OPENMP
-      for (int j=2; j<jsize-1; j++) {
-	for (int i=2; i<isize-1; i++) {
 
-	  // primitive variables (global array)
-	  //real_t *Qdata = h_Q.data();
-
-	  // primitive variables (local array)
-	  real_t qLoc[NVAR_2D];
-	  real_t qLocNeighbor[NVAR_2D];
-	  real_t qNeighbors[2*TWO_D][NVAR_2D];
-	  
-	  // slopes
-	  real_t dq[TWO_D][NVAR_2D];
-	  real_t dqNeighbor[TWO_D][NVAR_2D];
-
-	  // reconstructed state on cell faces
-	  // aka riemann solver input
-	  real_t qleft[NVAR_2D];
-	  real_t qright[NVAR_2D];
-
-	  // riemann solver output
-	  real_t qgdnv[NVAR_2D];
-	  real_t flux_x[NVAR_2D];
-	  real_t flux_y[NVAR_2D];
-
-	  //int indexBase = i  + isize * j;
-
-	  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	  // deal with left interface along X !
-	  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-	  // get primitive variables state vector
-	  for ( int iVar=0; iVar<nbVar; iVar++ ) {
-
-	    qLoc[iVar]          = h_Q(i  ,j  ,iVar);
-	    qNeighbors[0][iVar] = h_Q(i+1,j  ,iVar);
-	    qNeighbors[1][iVar] = h_Q(i-1,j  ,iVar);
-	    qNeighbors[2][iVar] = h_Q(i  ,j+1,iVar);
-	    qNeighbors[3][iVar] = h_Q(i  ,j-1,iVar);
-
-	  } // end for iVar
-
-	  // compute slopes in current cell
-	  slope_unsplit_hydro_2d(qLoc, 
-				 qNeighbors[0],
-				 qNeighbors[1],
-				 qNeighbors[2],
-				 qNeighbors[3],
-				 dq);
-
-	  // get primitive variables state vector in left neighbor along X
-	  for ( int iVar=0; iVar<nbVar; iVar++ ) {
-
-	    qLocNeighbor[iVar]  = h_Q(i-1,j  ,iVar);
-	    qNeighbors[0][iVar] = h_Q(i  ,j  ,iVar);
-	    qNeighbors[1][iVar] = h_Q(i-2,j  ,iVar);
-	    qNeighbors[2][iVar] = h_Q(i-1,j+1,iVar);
-	    qNeighbors[3][iVar] = h_Q(i-1,j-1,iVar);
-
-	  } // end for iVar
-
-	  // compute slopes in left neighbor along X
-	  slope_unsplit_hydro_2d(qLocNeighbor, 
-				 qNeighbors[0],
-				 qNeighbors[1],
-				 qNeighbors[2],
-				 qNeighbors[3],
-				 dqNeighbor);
-
-	  //
-	  // Compute reconstructed states at left interface along X in current cell
-	  //
-
-	  // left interface : right state
-	  trace_unsplit_hydro_2d_by_direction(qLoc, 
-					      dq, 
-					      dtdx, dtdy, 
-					      FACE_XMIN, 
-					      qright);
-	  
-	  // left interface : left state
-	  trace_unsplit_hydro_2d_by_direction(qLocNeighbor,
-					      dqNeighbor,
-					      dtdx, dtdy,
-					      FACE_XMAX, 
-					      qleft);
-	  
-	  if (gravityEnabled) { 
-	    // we need to modify input to flux computation with
-	    // gravity predictor (half time step)
-	    
-	    qleft[IU]  += HALF_F * dt * h_gravity(i,j,IX);
-	    qleft[IV]  += HALF_F * dt * h_gravity(i,j,IY);
-	    
-	    qright[IU] += HALF_F * dt * h_gravity(i,j,IX);
-	    qright[IV] += HALF_F * dt * h_gravity(i,j,IY);
-	    
-	  } // end gravityEnabled
-	  
-	  // Solve Riemann problem at X-interfaces and compute X-fluxes
-	  riemann<NVAR_2D>(qleft,qright,qgdnv,flux_x);
-
-	  /*
-	   * update with flux_x
-	   */
-	  if ( i > ghostWidth       and 
-	       j < jsize-ghostWidth ) {
-	    h_UNew(i-1,j  ,ID) -= flux_x[ID]*dtdx;
-	    h_UNew(i-1,j  ,IP) -= flux_x[IP]*dtdx;
-	    h_UNew(i-1,j  ,IU) -= flux_x[IU]*dtdx;
-	    h_UNew(i-1,j  ,IV) -= flux_x[IV]*dtdx;
-	  }
-
-	  if ( i < isize-ghostWidth and 
-	       j < jsize-ghostWidth ) {
-	    h_UNew(i  ,j  ,ID) += flux_x[ID]*dtdx;
-	    h_UNew(i  ,j  ,IP) += flux_x[IP]*dtdx;
-	    h_UNew(i  ,j  ,IU) += flux_x[IU]*dtdx;
-	    h_UNew(i  ,j  ,IV) += flux_x[IV]*dtdx;
-	  }
-	  
-	  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	  // deal with left interface along Y !
-	  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	  
-	  // get primitive variables state vector in left neighbor along Y
-	  for ( int iVar=0; iVar<nbVar; iVar++ ) {
-
-	    qLocNeighbor[iVar]  = h_Q(i  ,j-1,iVar);
-	    qNeighbors[0][iVar] = h_Q(i+1,j-1,iVar);
-	    qNeighbors[1][iVar] = h_Q(i-1,j-1,iVar);
-	    qNeighbors[2][iVar] = h_Q(i  ,j  ,iVar);
-	    qNeighbors[3][iVar] = h_Q(i  ,j-2,iVar);
-
-	  } // end for iVar
-
-	  // compute slopes in left neighbor along Y
-	  slope_unsplit_hydro_2d(qLocNeighbor, 
-				 qNeighbors[0],
-				 qNeighbors[1],
-				 qNeighbors[2],
-				 qNeighbors[3],
-				 dqNeighbor);
-	  
-	  //
-	  // Compute reconstructed states at left interface along Y in current cell
-	  //
-
-	  // left interface : right state
-	  trace_unsplit_hydro_2d_by_direction(qLoc, 
-					      dq, 
-					      dtdx, dtdy, 
-					      FACE_YMIN, 
-					      qright);
-	  
-	  // left interface : left state
-	  trace_unsplit_hydro_2d_by_direction(qLocNeighbor,
-					      dqNeighbor,
-					      dtdx, dtdy,
-					      FACE_YMAX, 
-					      qleft);
-	  
-	  if (gravityEnabled) { 
-	    // we need to modify input to flux computation with
-	    // gravity predictor (half time step)
-	    
-	    qleft[IU]  += HALF_F * dt * h_gravity(i,j,IX);
-	    qleft[IV]  += HALF_F * dt * h_gravity(i,j,IY);
-	    
-	    qright[IU] += HALF_F * dt * h_gravity(i,j,IX);
-	    qright[IV] += HALF_F * dt * h_gravity(i,j,IY);
-	    
-	  } // end gravityEnabled
-
-	  // Solve Riemann problem at Y-interfaces and compute Y-fluxes	  
-	  swapValues(&(qleft[IU]) ,&(qleft[IV]) );
-	  swapValues(&(qright[IU]),&(qright[IV]));
-	  riemann<NVAR_2D>(qleft,qright,qgdnv,flux_y);
-	  
-	  /*
-	   * update with flux_y
-	   */
-	  if ( i < isize-ghostWidth and
-	       j > ghostWidth       ) {
-	    h_UNew(i  ,j-1,ID) -= flux_y[ID]*dtdy;
-	    h_UNew(i  ,j-1,IP) -= flux_y[IP]*dtdy;
-	    h_UNew(i  ,j-1,IU) -= flux_y[IV]*dtdy; // watchout IU and IV swapped
-	    h_UNew(i  ,j-1,IV) -= flux_y[IU]*dtdy; // watchout IU and IV swapped
-	  }
-	  
-	  if ( i < isize-ghostWidth and 
-	       j < jsize-ghostWidth ) {
-	    h_UNew(i  ,j  ,ID) += flux_y[ID]*dtdy;
-	    h_UNew(i  ,j  ,IP) += flux_y[IP]*dtdy;
-	    h_UNew(i  ,j  ,IU) += flux_y[IV]*dtdy; // watchout IU and IV swapped
-	    h_UNew(i  ,j  ,IV) += flux_y[IU]*dtdy; // watchout IU and IV swapped
-	  }
-	  
-	} // end for j
-      } // end for i
-
-      // gravity source term
-      if (gravityEnabled) {
-	compute_gravity_source_term(h_UNew, h_UOld, dt);
-      }
-      
-    } else { // THREE_D - Implementation version 0
-
-      // we need to store qm/qp for current position and x-1, y-1 and z-1
-      // that is 1+3=4 positions in total
-      real_t qm_x[1+THREE_D][NVAR_3D];
-      real_t qm_y[1+THREE_D][NVAR_3D];
-      real_t qm_z[1+THREE_D][NVAR_3D];
-      
-      real_t qp_x[1+THREE_D][NVAR_3D];
-      real_t qp_y[1+THREE_D][NVAR_3D];
-      real_t qp_z[1+THREE_D][NVAR_3D];
-      
-#ifdef _OPENMP
-#pragma omp parallel default(shared) private(qm_x,qm_y,qm_z,qp_x,qp_y,qp_z)
-#pragma omp for collapse(3) schedule(auto)
-#endif // _OPENMP
-      for (int k=2; k<ksize-1; k++) {
-	for (int j=2; j<jsize-1; j++) {
-	  for (int i=2; i<isize-1; i++) {
-	    
-	    //int index = i + j*isize + k*isize*jsize;
-	    real_t q[NVAR_3D];
-	    real_t qNeighbors[2*THREE_D][NVAR_3D];
-	    real_t (&qXplus)[NVAR_3D]  = qNeighbors[0];
-	    real_t (&qXminus)[NVAR_3D] = qNeighbors[1]; 
-	    real_t (&qYplus)[NVAR_3D]  = qNeighbors[2];
-	    real_t (&qYminus)[NVAR_3D] = qNeighbors[3]; 
-	    real_t (&qZplus)[NVAR_3D]  = qNeighbors[4];
-	    real_t (&qZminus)[NVAR_3D] = qNeighbors[5]; 
-	    real_t qm[THREE_D][NVAR_3D], qp[THREE_D][NVAR_3D];
-	    real_t c, cPlus, cMinus;
-	    
-	    // compute qm, qp for the 1+3 positions
-	    for (int pos=0; pos<(1+THREE_D); pos++) {
-	      
-	      int ii=i;
-	      int jj=j;
-	      int kk=k;
-	      if (pos==1)
-		ii = i-1;
-	      if (pos==2)
-		jj = j-1;
-	      if (pos==3)
-		kk = k-1;
-	      
-	      int index2 = ii + jj*isize + kk*isize*jsize;;
-	      computePrimitives_3D_0(h_UOld.data(), h_UOld.section(), index2      , c     , q);
-	      computePrimitives_3D_0(h_UOld.data(), h_UOld.section(), index2+1    , cPlus , qXplus);
-	      computePrimitives_3D_0(h_UOld.data(), h_UOld.section(), index2-1    , cMinus, qXminus);
-	      computePrimitives_3D_0(h_UOld.data(), h_UOld.section(), index2+isize, cPlus , qYplus);
-	      computePrimitives_3D_0(h_UOld.data(), h_UOld.section(), index2-isize, cMinus, qYminus);
-	      computePrimitives_3D_0(h_UOld.data(), h_UOld.section(), index2+isize*jsize, cPlus , qZplus);
-	      computePrimitives_3D_0(h_UOld.data(), h_UOld.section(), index2-isize*jsize, cMinus, qZminus);
-	      
-	      // compute qm, qp
-	      trace_unsplit<THREE_D,NVAR_3D>(q, qNeighbors, c, dtdx, qm, qp);
-	      
-	      // store qm, qp
-	      for (int ivar=0; ivar<NVAR_3D; ivar++) {
-		qm_x[pos][ivar] = qm[0][ivar];
-		qp_x[pos][ivar] = qp[0][ivar];
-		qm_y[pos][ivar] = qm[1][ivar];
-		qp_y[pos][ivar] = qp[1][ivar];
-		qm_z[pos][ivar] = qm[2][ivar];
-		qp_z[pos][ivar] = qp[2][ivar];
-	      } // end for ivar
-	    } // end for pos
-	    
-	    if (gravityEnabled) { 
-	      // we need to modify input to flux computation with
-	      // gravity predictor (half time step)
-	      
-	      for (int pos=0; pos<(1+THREE_D); pos++) {
-		
-		int ii=i;
-		int jj=j;
-		int kk=k;
-		if (pos==1)
-		  ii = i-1;
-		if (pos==2)
-		  jj = j-1;
-		if (pos==3)
-		  kk = k-1;
-		
-		qm_x[pos][IU] += HALF_F * dt * h_gravity(ii,jj,kk,IX);
-		qm_x[pos][IV] += HALF_F * dt * h_gravity(ii,jj,kk,IY);
-		qm_x[pos][IW] += HALF_F * dt * h_gravity(ii,jj,kk,IZ);
-		
-		qp_x[pos][IU] += HALF_F * dt * h_gravity(ii,jj,kk,IX);
-		qp_x[pos][IV] += HALF_F * dt * h_gravity(ii,jj,kk,IY);
-		qp_x[pos][IW] += HALF_F * dt * h_gravity(ii,jj,kk,IZ);
-		
-		qm_y[pos][IU] += HALF_F * dt * h_gravity(ii,jj,kk,IX);
-		qm_y[pos][IV] += HALF_F * dt * h_gravity(ii,jj,kk,IY);
-		qm_y[pos][IW] += HALF_F * dt * h_gravity(ii,jj,kk,IZ);
-		
-		qp_y[pos][IU] += HALF_F * dt * h_gravity(ii,jj,kk,IX);
-		qp_y[pos][IV] += HALF_F * dt * h_gravity(ii,jj,kk,IY);
-		qp_y[pos][IW] += HALF_F * dt * h_gravity(ii,jj,kk,IZ);
-		
-		qm_z[pos][IU] += HALF_F * dt * h_gravity(ii,jj,kk,IX);
-		qm_z[pos][IV] += HALF_F * dt * h_gravity(ii,jj,kk,IY);
-		qm_z[pos][IW] += HALF_F * dt * h_gravity(ii,jj,kk,IZ);
-		
-		qp_z[pos][IU] += HALF_F * dt * h_gravity(ii,jj,kk,IX);
-		qp_z[pos][IV] += HALF_F * dt * h_gravity(ii,jj,kk,IY);
-		qp_z[pos][IW] += HALF_F * dt * h_gravity(ii,jj,kk,IZ);
-	      } // end for pos
-	    } // end gravityEnabled
-	    
-	    real_t qleft[NVAR_3D];
-	    real_t qright[NVAR_3D];
-	    real_t qgdnv[NVAR_3D];
-	    real_t flux_x[NVAR_3D], flux_y[NVAR_3D], flux_z[NVAR_3D];
-	    
-	    // Solve Riemann problem at X-interfaces and compute X-fluxes
-	    qleft[ID]   = qm_x[1][ID];
-	    qleft[IP]   = qm_x[1][IP];
-	    qleft[IU]   = qm_x[1][IU];
-	    qleft[IV]   = qm_x[1][IV];
-	    qleft[IW]   = qm_x[1][IW];
-	    
-	    qright[ID]  = qp_x[0][ID];
-	    qright[IP]  = qp_x[0][IP];
-	    qright[IU]  = qp_x[0][IU];
-	    qright[IV]  = qp_x[0][IV];
-	    qright[IW]  = qp_x[0][IW];
-	    
-	    riemann<NVAR_3D>(qleft,qright,qgdnv,flux_x);
-	    
-	    // Solve Riemann problem at Y-interfaces and compute Y-fluxes
-	    qleft[ID]   = qm_y[2][ID];
-	    qleft[IP]   = qm_y[2][IP];
-	    qleft[IU]   = qm_y[2][IV]; // watchout IU, IV permutation
-	    qleft[IV]   = qm_y[2][IU]; // watchout IU, IV permutation
-	    qleft[IW]   = qm_y[2][IW];
-	    
-	    qright[ID]  = qp_y[0][ID];
-	    qright[IP]  = qp_y[0][IP];
-	    qright[IU]  = qp_y[0][IV]; // watchout IU, IV permutation
-	    qright[IV]  = qp_y[0][IU]; // watchout IU, IV permutation
-	    qright[IW]  = qp_y[0][IW];
-	    
-	    riemann<NVAR_3D>(qleft,qright,qgdnv,flux_y);
-	    
-	    // Solve Riemann problem at Y-interfaces and compute Z-fluxes
-	    qleft[ID]   = qm_z[3][ID];
-	    qleft[IP]   = qm_z[3][IP];
-	    qleft[IU]   = qm_z[3][IW]; // watchout IU, IW permutation
-	    qleft[IV]   = qm_z[3][IV];
-	    qleft[IW]   = qm_z[3][IU]; // watchout IU, IW permutation
-	    
-	    qright[ID]  = qp_z[0][ID];
-	    qright[IP]  = qp_z[0][IP];
-	    qright[IU]  = qp_z[0][IW]; // watchout IU, IW permutation
-	    qright[IV]  = qp_z[0][IV];
-	    qright[IW]  = qp_z[0][IU]; // watchout IU, IW permutation
-	    
-	    riemann<NVAR_3D>(qleft,qright,qgdnv,flux_z);
-	    
-	    /*
-	     * update hydro array
-	     */
-
-	    /*
-	     * update with flux_x
-	     */
-	    if ( i  > ghostWidth           and 
-		 j  < jsize-ghostWidth     and
-		 k  < ksize-ghostWidth ) {
-	      h_UNew(i-1,j  ,k  ,ID) -= flux_x[ID]*dtdx;
-	      h_UNew(i-1,j  ,k  ,IP) -= flux_x[IP]*dtdx;
-	      h_UNew(i-1,j  ,k  ,IU) -= flux_x[IU]*dtdx;
-	      h_UNew(i-1,j  ,k  ,IV) -= flux_x[IV]*dtdx;
-	      h_UNew(i-1,j  ,k  ,IW) -= flux_x[IW]*dtdx;
-	    }
-	    
-	    if ( i  < isize-ghostWidth     and 
-		 j  < jsize-ghostWidth     and
-		 k  < ksize-ghostWidth ) {
-	      h_UNew(i  ,j  ,k  ,ID) += flux_x[ID]*dtdx;
-	      h_UNew(i  ,j  ,k  ,IP) += flux_x[IP]*dtdx;
-	      h_UNew(i  ,j  ,k  ,IU) += flux_x[IU]*dtdx;
-	      h_UNew(i  ,j  ,k  ,IV) += flux_x[IV]*dtdx;
-	      h_UNew(i  ,j  ,k  ,IW) += flux_x[IW]*dtdx;
-	    }
-
-	    /*
-	     * update with flux_y
-	     */
-	    if ( i  < isize-ghostWidth     and 
-		 j  > ghostWidth           and
-		 k  < ksize-ghostWidth ) {
-	      h_UNew(i  ,j-1,k  ,ID) -= flux_y[ID]*dtdx;
-	      h_UNew(i  ,j-1,k  ,IP) -= flux_y[IP]*dtdx;
-	      h_UNew(i  ,j-1,k  ,IU) -= flux_y[IV]*dtdx; // watchout IU and IV swapped
-	      h_UNew(i  ,j-1,k  ,IV) -= flux_y[IU]*dtdx; // watchout IU and IV swapped
-	      h_UNew(i  ,j-1,k  ,IW) -= flux_y[IW]*dtdx;
-	    }
-	    
-	    if ( i  < isize-ghostWidth     and
-		 j  < jsize-ghostWidth     and
-		 k  < ksize-ghostWidth     ) {
-	      h_UNew(i  ,j  ,k  ,ID) += flux_y[ID]*dtdx;
-	      h_UNew(i  ,j  ,k  ,IP) += flux_y[IP]*dtdx;
-	      h_UNew(i  ,j  ,k  ,IU) += flux_y[IV]*dtdx; // watchout IU and IV swapped
-	      h_UNew(i  ,j  ,k  ,IV) += flux_y[IU]*dtdx; // watchout IU and IV swapped
-	      h_UNew(i  ,j  ,k  ,IW) += flux_y[IW]*dtdx;
-	    }
-	    
-	    /*
-	     * update with flux_z
-	     */
-	    if ( i  < isize-ghostWidth     and 
-		 j  < jsize-ghostWidth     and
-		 k  > ghostWidth ) {
-	      h_UNew(i  ,j  ,k-1,ID) -= flux_z[ID]*dtdx;
-	      h_UNew(i  ,j  ,k-1,IP) -= flux_z[IP]*dtdx;
-	      h_UNew(i  ,j  ,k-1,IU) -= flux_z[IW]*dtdx; // watchout IU and IW swapped
-	      h_UNew(i  ,j  ,k-1,IV) -= flux_z[IV]*dtdx;
-	      h_UNew(i  ,j  ,k-1,IW) -= flux_z[IU]*dtdx; // watchout IU and IW swapped
-	    }
-	    
-	    if ( i  < isize-ghostWidth     and 
-		 j  < jsize-ghostWidth     and
-		 k  < ksize-ghostWidth ) {
-	      h_UNew(i  ,j  ,k  ,ID) += flux_z[ID]*dtdx;
-	      h_UNew(i  ,j  ,k  ,IP) += flux_z[IP]*dtdx;
-	      h_UNew(i  ,j  ,k  ,IU) += flux_z[IW]*dtdx; // watchout IU and IW swapped
-	      h_UNew(i  ,j  ,k  ,IV) += flux_z[IV]*dtdx;
-	      h_UNew(i  ,j  ,k  ,IW) += flux_z[IU]*dtdx; // watchout IU and IW swapped
-	    }
-	  } // end for i
-	} // end for j
-      } // end for k
-
-      // gravity source term
-      if (gravityEnabled) {
-	compute_gravity_source_term(h_UNew, h_UOld, dt);
-      }
-
-    } // end THREE_D - Implementation version 0
+    godunov_unsplit_cpu_v0(h_UOld, h_UNew, dt, nStep);
 
   } else if (unsplitVersion == 1) {
 
@@ -2900,6 +2444,558 @@ void HydroRunGodunov::godunov_unsplit_cpu(HostArray<real_t>& h_UOld,
 } // HydroRunGodunov::godunov_unsplit_cpu
 
 #endif // __CUDACC__
+
+// =======================================================
+// =======================================================
+void HydroRunGodunov::godunov_unsplit_cpu_v0(HostArray<real_t>& h_UOld,
+					     HostArray<real_t>& h_UNew,
+					     real_t dt,
+					     int nStep)
+{
+
+  real_t dtdx = dt/dx;
+  real_t dtdy = dt/dy;
+  real_t dtdz = dt/dz;
+
+  if (dimType == TWO_D) {
+    
+// #ifdef _OPENMP
+// #pragma omp parallel default(shared) private(qm_x,qm_y,qp_x,qp_y)
+// #pragma omp for collapse(2) schedule(auto)
+// #endif // _OPENMP
+    for (int j=2; j<jsize-1; j++) {
+      for (int i=2; i<isize-1; i++) {
+	
+	// primitive variables (local array)
+	real_t qLoc[NVAR_2D];
+	real_t qLocNeighbor[NVAR_2D];
+	real_t qNeighbors[2*TWO_D][NVAR_2D];
+	
+	// slopes
+	real_t dq[TWO_D][NVAR_2D];
+	real_t dqNeighbor[TWO_D][NVAR_2D];
+	
+	// reconstructed state on cell faces
+	// aka riemann solver input
+	real_t qleft[NVAR_2D];
+	real_t qright[NVAR_2D];
+	
+	// riemann solver output
+	real_t qgdnv[NVAR_2D];
+	real_t flux_x[NVAR_2D];
+	real_t flux_y[NVAR_2D];
+	
+	//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	// deal with left interface along X !
+	//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	
+	// get primitive variables state vector
+	for ( int iVar=0; iVar<nbVar; iVar++ ) {
+	  
+	  qLoc[iVar]          = h_Q(i  ,j  ,iVar);
+	  qNeighbors[0][iVar] = h_Q(i+1,j  ,iVar);
+	  qNeighbors[1][iVar] = h_Q(i-1,j  ,iVar);
+	  qNeighbors[2][iVar] = h_Q(i  ,j+1,iVar);
+	  qNeighbors[3][iVar] = h_Q(i  ,j-1,iVar);
+	  
+	} // end for iVar
+	
+	// compute slopes in current cell
+	slope_unsplit_hydro_2d(qLoc, 
+			       qNeighbors[0],
+			       qNeighbors[1],
+			       qNeighbors[2],
+			       qNeighbors[3],
+			       dq);
+	
+	// get primitive variables state vector in left neighbor along X
+	for ( int iVar=0; iVar<nbVar; iVar++ ) {
+	  
+	  qLocNeighbor[iVar]  = h_Q(i-1,j  ,iVar);
+	  qNeighbors[0][iVar] = h_Q(i  ,j  ,iVar);
+	  qNeighbors[1][iVar] = h_Q(i-2,j  ,iVar);
+	  qNeighbors[2][iVar] = h_Q(i-1,j+1,iVar);
+	  qNeighbors[3][iVar] = h_Q(i-1,j-1,iVar);
+	  
+	} // end for iVar
+	
+	// compute slopes in left neighbor along X
+	slope_unsplit_hydro_2d(qLocNeighbor, 
+			       qNeighbors[0],
+			       qNeighbors[1],
+			       qNeighbors[2],
+			       qNeighbors[3],
+			       dqNeighbor);
+	
+	//
+	// Compute reconstructed states at left interface along X in current cell
+	//
+
+	// left interface : right state
+	trace_unsplit_hydro_2d_by_direction(qLoc, 
+					    dq, 
+					    dtdx, dtdy, 
+					    FACE_XMIN, 
+					    qright);
+	
+	// left interface : left state
+	trace_unsplit_hydro_2d_by_direction(qLocNeighbor,
+					    dqNeighbor,
+					    dtdx, dtdy,
+					    FACE_XMAX, 
+					    qleft);
+	
+	if (gravityEnabled) { 
+	  
+	  // we need to modify input to flux computation with
+	  // gravity predictor (half time step)
+	  
+	  qleft[IU]  += HALF_F * dt * h_gravity(i,j,IX);
+	  qleft[IV]  += HALF_F * dt * h_gravity(i,j,IY);
+	  
+	  qright[IU] += HALF_F * dt * h_gravity(i,j,IX);
+	  qright[IV] += HALF_F * dt * h_gravity(i,j,IY);
+	  
+	} // end gravityEnabled
+	
+	// Solve Riemann problem at X-interfaces and compute X-fluxes
+	riemann<NVAR_2D>(qleft,qright,qgdnv,flux_x);
+
+	/*
+	 * update with flux_x
+	 */
+	if ( i > ghostWidth       and 
+	     j < jsize-ghostWidth ) {
+	  h_UNew(i-1,j  ,ID) -= flux_x[ID]*dtdx;
+	  h_UNew(i-1,j  ,IP) -= flux_x[IP]*dtdx;
+	  h_UNew(i-1,j  ,IU) -= flux_x[IU]*dtdx;
+	  h_UNew(i-1,j  ,IV) -= flux_x[IV]*dtdx;
+	}
+	
+	if ( i < isize-ghostWidth and 
+	     j < jsize-ghostWidth ) {
+	  h_UNew(i  ,j  ,ID) += flux_x[ID]*dtdx;
+	  h_UNew(i  ,j  ,IP) += flux_x[IP]*dtdx;
+	  h_UNew(i  ,j  ,IU) += flux_x[IU]*dtdx;
+	  h_UNew(i  ,j  ,IV) += flux_x[IV]*dtdx;
+	}
+	  
+	//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	// deal with left interface along Y !
+	//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	
+	// get primitive variables state vector in left neighbor along Y
+	for ( int iVar=0; iVar<nbVar; iVar++ ) {
+	  
+	  qLocNeighbor[iVar]  = h_Q(i  ,j-1,iVar);
+	  qNeighbors[0][iVar] = h_Q(i+1,j-1,iVar);
+	  qNeighbors[1][iVar] = h_Q(i-1,j-1,iVar);
+	  qNeighbors[2][iVar] = h_Q(i  ,j  ,iVar);
+	  qNeighbors[3][iVar] = h_Q(i  ,j-2,iVar);
+	  
+	} // end for iVar
+	
+	  // compute slopes in left neighbor along Y
+	slope_unsplit_hydro_2d(qLocNeighbor, 
+			       qNeighbors[0],
+			       qNeighbors[1],
+			       qNeighbors[2],
+			       qNeighbors[3],
+			       dqNeighbor);
+	
+	//
+	// Compute reconstructed states at left interface along Y in current cell
+	//
+	
+	// left interface : right state
+	trace_unsplit_hydro_2d_by_direction(qLoc, 
+					    dq, 
+					    dtdx, dtdy, 
+					    FACE_YMIN, 
+					    qright);
+	
+	// left interface : left state
+	trace_unsplit_hydro_2d_by_direction(qLocNeighbor,
+					    dqNeighbor,
+					    dtdx, dtdy,
+					    FACE_YMAX, 
+					    qleft);
+	
+	if (gravityEnabled) { 
+	  // we need to modify input to flux computation with
+	  // gravity predictor (half time step)
+	  
+	  qleft[IU]  += HALF_F * dt * h_gravity(i,j,IX);
+	  qleft[IV]  += HALF_F * dt * h_gravity(i,j,IY);
+	  
+	  qright[IU] += HALF_F * dt * h_gravity(i,j,IX);
+	  qright[IV] += HALF_F * dt * h_gravity(i,j,IY);
+	  
+	} // end gravityEnabled
+	
+	// Solve Riemann problem at Y-interfaces and compute Y-fluxes	  
+	swapValues(&(qleft[IU]) ,&(qleft[IV]) );
+	swapValues(&(qright[IU]),&(qright[IV]));
+	riemann<NVAR_2D>(qleft,qright,qgdnv,flux_y);
+	
+	/*
+	 * update with flux_y
+	 */
+	if ( i < isize-ghostWidth and
+	     j > ghostWidth       ) {
+	  h_UNew(i  ,j-1,ID) -= flux_y[ID]*dtdy;
+	  h_UNew(i  ,j-1,IP) -= flux_y[IP]*dtdy;
+	  h_UNew(i  ,j-1,IU) -= flux_y[IV]*dtdy; // watchout IU and IV swapped
+	  h_UNew(i  ,j-1,IV) -= flux_y[IU]*dtdy; // watchout IU and IV swapped
+	}
+	
+	if ( i < isize-ghostWidth and 
+	     j < jsize-ghostWidth ) {
+	  h_UNew(i  ,j  ,ID) += flux_y[ID]*dtdy;
+	  h_UNew(i  ,j  ,IP) += flux_y[IP]*dtdy;
+	  h_UNew(i  ,j  ,IU) += flux_y[IV]*dtdy; // watchout IU and IV swapped
+	  h_UNew(i  ,j  ,IV) += flux_y[IU]*dtdy; // watchout IU and IV swapped
+	}
+	
+      } // end for j
+    } // end for i
+
+    // gravity source term
+    if (gravityEnabled) {
+      compute_gravity_source_term(h_UNew, h_UOld, dt);
+    }
+    
+    } else { // THREE_D - Implementation version 0
+    
+// #ifdef _OPENMP
+// #pragma omp parallel default(shared) private(qm_x,qm_y,qm_z,qp_x,qp_y,qp_z)
+// #pragma omp for collapse(3) schedule(auto)
+// #endif // _OPENMP
+      for (int k=2; k<ksize-1; k++) {
+	for (int j=2; j<jsize-1; j++) {
+	  for (int i=2; i<isize-1; i++) {
+	    
+	    // primitive variables (local array)
+	    real_t qLoc[NVAR_3D];
+	    real_t qLocNeighbor[NVAR_3D];
+	    real_t qNeighbors[2*THREE_D][NVAR_3D];
+	    
+	    // slopes
+	    real_t dq[THREE_D][NVAR_3D];
+	    real_t dqNeighbor[THREE_D][NVAR_3D];
+
+	    // reconstructed state on cell faces
+	    // aka riemann solver input
+	    real_t qleft[NVAR_3D];
+	    real_t qright[NVAR_3D];
+	    
+	    // riemann solver output
+	    real_t qgdnv[NVAR_3D];
+	    real_t flux[NVAR_3D];
+	    real_t (&flux_x)[NVAR_3D] = flux;
+	    real_t (&flux_y)[NVAR_3D] = flux;
+	    real_t (&flux_z)[NVAR_3D] = flux;
+
+	    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	    // deal with left interface along X !
+	    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	    
+	    // get primitive variables state vector
+	    for ( int iVar=0; iVar<nbVar; iVar++ ) {
+	      
+	      qLoc[iVar]          = h_Q(i  ,j  ,k  ,iVar);
+
+	      qNeighbors[0][iVar] = h_Q(i+1,j  ,k  ,iVar);
+	      qNeighbors[1][iVar] = h_Q(i-1,j  ,k  ,iVar);
+	      qNeighbors[2][iVar] = h_Q(i  ,j+1,k  ,iVar);
+	      qNeighbors[3][iVar] = h_Q(i  ,j-1,k  ,iVar);
+	      qNeighbors[4][iVar] = h_Q(i  ,j  ,k+1,iVar);
+	      qNeighbors[5][iVar] = h_Q(i  ,j  ,k-1,iVar);
+	  
+	    } // end for iVar
+	
+	    // compute slopes in current cell
+	    slope_unsplit_3d(qLoc, 
+			     qNeighbors[0],
+			     qNeighbors[1],
+			     qNeighbors[2],
+			     qNeighbors[3],
+			     qNeighbors[4],
+			     qNeighbors[5],
+			     dq);
+	
+	    // get primitive variables state vector in left neighbor along X
+	    for ( int iVar=0; iVar<nbVar; iVar++ ) {
+	      
+	      qLocNeighbor[iVar]  = h_Q(i-1,j  ,k  ,iVar);
+
+	      qNeighbors[0][iVar] = h_Q(i  ,j  ,k  ,iVar);
+	      qNeighbors[1][iVar] = h_Q(i-2,j  ,k  ,iVar);
+	      qNeighbors[2][iVar] = h_Q(i-1,j+1,k  ,iVar);
+	      qNeighbors[3][iVar] = h_Q(i-1,j-1,k  ,iVar);
+	      qNeighbors[4][iVar] = h_Q(i-1,j  ,k+1,iVar);
+	      qNeighbors[5][iVar] = h_Q(i-1,j  ,k-1,iVar);
+	  
+	    } // end for iVar
+	
+	    // compute slopes in left neighbor along X
+	    slope_unsplit_3d(qLocNeighbor, 
+			     qNeighbors[0],
+			     qNeighbors[1],
+			     qNeighbors[2],
+			     qNeighbors[3],
+			     qNeighbors[4],
+			     qNeighbors[5],
+			     dqNeighbor);
+	    
+	    //
+	    // Compute reconstructed states at left interface along X
+	    // in current cell
+	    //
+	    
+	    // left interface : right state
+	    trace_unsplit_hydro_3d_by_direction(qLoc, 
+						dq, 
+						dtdx, dtdy, dtdz,
+						FACE_XMIN, 
+						qright);
+	    
+	    // left interface : left state
+	    trace_unsplit_hydro_3d_by_direction(qLocNeighbor,
+						dqNeighbor,
+						dtdx, dtdy, dtdz,
+						FACE_XMAX, 
+						qleft);
+	    
+	    if (gravityEnabled) { 
+	      
+	      // we need to modify input to flux computation with
+	      // gravity predictor (half time step)
+	      
+	      qleft[IU] += HALF_F * dt * h_gravity(i,j,k,IX);
+	      qleft[IV] += HALF_F * dt * h_gravity(i,j,k,IY);
+	      qleft[IW] += HALF_F * dt * h_gravity(i,j,k,IZ);
+	      
+	      qright[IU] += HALF_F * dt * h_gravity(i,j,k,IX);
+	      qright[IV] += HALF_F * dt * h_gravity(i,j,k,IY);
+	      qright[IW] += HALF_F * dt * h_gravity(i,j,k,IZ);
+	      
+	    } // end gravityEnabled
+	    
+	    // Solve Riemann problem at X-interfaces and compute X-fluxes    
+	    riemann<NVAR_3D>(qleft,qright,qgdnv,flux_x);
+	    
+	    /*
+	     * update with flux_x
+	     */
+	    if ( i  > ghostWidth           and 
+		 j  < jsize-ghostWidth     and
+		 k  < ksize-ghostWidth ) {
+	      h_UNew(i-1,j  ,k  ,ID) -= flux_x[ID]*dtdx;
+	      h_UNew(i-1,j  ,k  ,IP) -= flux_x[IP]*dtdx;
+	      h_UNew(i-1,j  ,k  ,IU) -= flux_x[IU]*dtdx;
+	      h_UNew(i-1,j  ,k  ,IV) -= flux_x[IV]*dtdx;
+	      h_UNew(i-1,j  ,k  ,IW) -= flux_x[IW]*dtdx;
+	    }
+	    
+	    if ( i  < isize-ghostWidth     and 
+		 j  < jsize-ghostWidth     and
+		 k  < ksize-ghostWidth ) {
+	      h_UNew(i  ,j  ,k  ,ID) += flux_x[ID]*dtdx;
+	      h_UNew(i  ,j  ,k  ,IP) += flux_x[IP]*dtdx;
+	      h_UNew(i  ,j  ,k  ,IU) += flux_x[IU]*dtdx;
+	      h_UNew(i  ,j  ,k  ,IV) += flux_x[IV]*dtdx;
+	      h_UNew(i  ,j  ,k  ,IW) += flux_x[IW]*dtdx;
+	    }
+
+	    
+	    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	    // deal with left interface along Y !
+	    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	    
+	    // get primitive variables state vector in left neighbor along Y
+	    for ( int iVar=0; iVar<nbVar; iVar++ ) {
+	      
+	      qLocNeighbor[iVar]  = h_Q(i  ,j-1,k  ,iVar);
+	      qNeighbors[0][iVar] = h_Q(i+1,j-1,k  ,iVar);
+	      qNeighbors[1][iVar] = h_Q(i-1,j-1,k  ,iVar);
+	      qNeighbors[2][iVar] = h_Q(i  ,j  ,k  ,iVar);
+	      qNeighbors[3][iVar] = h_Q(i  ,j-2,k  ,iVar);
+	      qNeighbors[4][iVar] = h_Q(i  ,j-1,k+1,iVar);
+	      qNeighbors[5][iVar] = h_Q(i  ,j-1,k-1,iVar);
+	      
+	    } // end for iVar
+	    
+	    // compute slopes in left neighbor along Y
+	    slope_unsplit_3d(qLocNeighbor, 
+			     qNeighbors[0],
+			     qNeighbors[1],
+			     qNeighbors[2],
+			     qNeighbors[3],
+			     qNeighbors[4],
+			     qNeighbors[5],
+			     dqNeighbor);
+	    
+	    //
+	    // Compute reconstructed states at left interface along Y 
+	    // in current cell
+	    //
+	    
+	    // left interface : right state
+	    trace_unsplit_hydro_3d_by_direction(qLoc, 
+						dq, 
+						dtdx, dtdy, dtdz,
+						FACE_YMIN, 
+						qright);
+	    
+	    // left interface : left state
+	    trace_unsplit_hydro_3d_by_direction(qLocNeighbor,
+						dqNeighbor,
+						dtdx, dtdy, dtdz,
+						FACE_YMAX, 
+						qleft);
+	    
+	    if (gravityEnabled) { 
+	      // we need to modify input to flux computation with
+	      // gravity predictor (half time step)
+	      
+	      qleft[IU]  += HALF_F * dt * h_gravity(i,j,k,IX);
+	      qleft[IV]  += HALF_F * dt * h_gravity(i,j,k,IY);
+	      qleft[IW]  += HALF_F * dt * h_gravity(i,j,k,IZ);
+	      
+	      qright[IU] += HALF_F * dt * h_gravity(i,j,k,IX);
+	      qright[IV] += HALF_F * dt * h_gravity(i,j,k,IY);
+	      qright[IW] += HALF_F * dt * h_gravity(i,j,k,IZ);
+	      
+	    } // end gravityEnabled
+	    
+	    // Solve Riemann problem at Y-interfaces and compute Y-fluxes
+	    swapValues(&(qleft[IU]) ,&(qleft[IV]) );
+	    swapValues(&(qright[IU]),&(qright[IV]));
+	    riemann<NVAR_3D>(qleft,qright,qgdnv,flux_y);
+	    
+	    /*
+	     * update with flux_y
+	     */
+	    if ( i  < isize-ghostWidth     and 
+		 j  > ghostWidth           and
+		 k  < ksize-ghostWidth ) {
+	      h_UNew(i  ,j-1,k  ,ID) -= flux_y[ID]*dtdx;
+	      h_UNew(i  ,j-1,k  ,IP) -= flux_y[IP]*dtdx;
+	      h_UNew(i  ,j-1,k  ,IU) -= flux_y[IV]*dtdx; // watchout IU and IV swapped
+	      h_UNew(i  ,j-1,k  ,IV) -= flux_y[IU]*dtdx; // watchout IU and IV swapped
+	      h_UNew(i  ,j-1,k  ,IW) -= flux_y[IW]*dtdx;
+	    }
+	    
+	    if ( i  < isize-ghostWidth     and
+		 j  < jsize-ghostWidth     and
+		 k  < ksize-ghostWidth     ) {
+	      h_UNew(i  ,j  ,k  ,ID) += flux_y[ID]*dtdx;
+	      h_UNew(i  ,j  ,k  ,IP) += flux_y[IP]*dtdx;
+	      h_UNew(i  ,j  ,k  ,IU) += flux_y[IV]*dtdx; // watchout IU and IV swapped
+	      h_UNew(i  ,j  ,k  ,IV) += flux_y[IU]*dtdx; // watchout IU and IV swapped
+	      h_UNew(i  ,j  ,k  ,IW) += flux_y[IW]*dtdx;
+	    }
+	    
+	    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	    // deal with left interface along Z !
+	    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	    
+	    // get primitive variables state vector in left neighbor along Z
+	    for ( int iVar=0; iVar<nbVar; iVar++ ) {
+	      
+	      qLocNeighbor[iVar]  = h_Q(i  ,j  ,k-1,iVar);
+	      qNeighbors[0][iVar] = h_Q(i+1,j  ,k-1,iVar);
+	      qNeighbors[1][iVar] = h_Q(i-1,j  ,k-1,iVar);
+	      qNeighbors[2][iVar] = h_Q(i  ,j+1,k-1,iVar);
+	      qNeighbors[3][iVar] = h_Q(i  ,j-1,k-1,iVar);
+	      qNeighbors[4][iVar] = h_Q(i  ,j  ,k  ,iVar);
+	      qNeighbors[5][iVar] = h_Q(i  ,j  ,k-2,iVar);
+	      
+	    } // end for iVar
+	    
+	    // compute slopes in left neighbor along Z
+	    slope_unsplit_3d(qLocNeighbor, 
+			     qNeighbors[0],
+			     qNeighbors[1],
+			     qNeighbors[2],
+			     qNeighbors[3],
+			     qNeighbors[4],
+			     qNeighbors[5],
+			     dqNeighbor);
+
+	    //
+	    // Compute reconstructed states at left interface along Z
+	    // in current cell
+	    //
+	    
+	    // left interface : right state
+	    trace_unsplit_hydro_3d_by_direction(qLoc, 
+						dq, 
+						dtdx, dtdy, dtdz,
+						FACE_ZMIN, 
+						qright);
+	    
+	    // left interface : left state
+	    trace_unsplit_hydro_3d_by_direction(qLocNeighbor,
+						dqNeighbor,
+						dtdx, dtdy, dtdz,
+						FACE_ZMAX, 
+						qleft);
+	    
+	    if (gravityEnabled) { 
+	      // we need to modify input to flux computation with
+	      // gravity predictor (half time step)
+	      
+	      qleft[IU]  += HALF_F * dt * h_gravity(i,j,k,IX);
+	      qleft[IV]  += HALF_F * dt * h_gravity(i,j,k,IY);
+	      qleft[IW]  += HALF_F * dt * h_gravity(i,j,k,IZ);
+	      
+	      qright[IU] += HALF_F * dt * h_gravity(i,j,k,IX);
+	      qright[IV] += HALF_F * dt * h_gravity(i,j,k,IY);
+	      qright[IW] += HALF_F * dt * h_gravity(i,j,k,IZ);
+	      
+	    } // end gravityEnabled
+	    
+	    // Solve Riemann problem at Y-interfaces and compute Z-fluxes
+	    swapValues(&(qleft[IU]) ,&(qleft[IW]) );
+	    swapValues(&(qright[IU]),&(qright[IW]));
+	    riemann<NVAR_3D>(qleft,qright,qgdnv,flux_z);
+
+	    /*
+	     * update with flux_z
+	     */
+	    if ( i  < isize-ghostWidth     and 
+		 j  < jsize-ghostWidth     and
+		 k  > ghostWidth ) {
+	      h_UNew(i  ,j  ,k-1,ID) -= flux_z[ID]*dtdx;
+	      h_UNew(i  ,j  ,k-1,IP) -= flux_z[IP]*dtdx;
+	      h_UNew(i  ,j  ,k-1,IU) -= flux_z[IW]*dtdx; // watchout IU and IW swapped
+	      h_UNew(i  ,j  ,k-1,IV) -= flux_z[IV]*dtdx;
+	      h_UNew(i  ,j  ,k-1,IW) -= flux_z[IU]*dtdx; // watchout IU and IW swapped
+	    }
+	    
+	    if ( i  < isize-ghostWidth     and 
+		 j  < jsize-ghostWidth     and
+		 k  < ksize-ghostWidth ) {
+	      h_UNew(i  ,j  ,k  ,ID) += flux_z[ID]*dtdx;
+	      h_UNew(i  ,j  ,k  ,IP) += flux_z[IP]*dtdx;
+	      h_UNew(i  ,j  ,k  ,IU) += flux_z[IW]*dtdx; // watchout IU and IW swapped
+	      h_UNew(i  ,j  ,k  ,IV) += flux_z[IV]*dtdx;
+	      h_UNew(i  ,j  ,k  ,IW) += flux_z[IU]*dtdx; // watchout IU and IW swapped
+	    }
+	  } // end for i
+	} // end for j
+      } // end for k
+
+      // gravity source term
+      if (gravityEnabled) {
+	compute_gravity_source_term(h_UNew, h_UOld, dt);
+      }
+
+    } // end THREE_D - Implementation version 0
+
+} // HydroRunGodunov::godunov_unsplit_cpu_v0
 
 // =======================================================
 // =======================================================

@@ -660,4 +660,155 @@ void trace_unsplit_hydro_3d(real_t q[NVAR_3D],
 
 } // trace_unsplit_hydro_3d
 
+/**
+ * This another implementation of trace computations for 3D data; it
+ * is used when unsplitVersion = 1
+ *
+ * Note that :
+ * - hydro slopes computations are done outside this routine
+ *
+ *
+ * \note There is a MHD version of this routine in file trace_mhd.h
+ * named trace_unsplit_mhd_3d_simpler
+ *
+ * \param[in]  q  primitive variable state vector
+ * \param[in]  dq primitive variable slopes
+ * \param[in]  dtdx dt divided by dx
+ * \param[in]  dtdy dt divided by dy
+ * \param[in]  dtdz dt divided by dz
+ * \param[out] qm
+ * \param[out] qp
+ *
+ */
+__DEVICE__
+void trace_unsplit_hydro_3d_by_direction(real_t q[NVAR_3D],
+					 real_t dq[3][NVAR_3D],
+					 real_t dtdx,
+					 real_t dtdy,
+					 real_t dtdz,
+					 int faceId,
+					 real_t (&qface)[NVAR_3D])
+{
+  
+  // some aliases
+  real_t &smallR = ::gParams.smallr;
+  real_t &smallp = ::gParams.smallp;
+  real_t &gamma  = ::gParams.gamma0;
+
+  // Cell centered values
+  real_t r = q[ID];
+  real_t p = q[IP];
+  real_t u = q[IU];
+  real_t v = q[IV];
+  real_t w = q[IW];            
+
+  // Cell centered TVD slopes in X direction
+  real_t drx = dq[IX][ID] * HALF_F;
+  real_t dpx = dq[IX][IP] * HALF_F;
+  real_t dux = dq[IX][IU] * HALF_F;
+  real_t dvx = dq[IX][IV] * HALF_F;
+  real_t dwx = dq[IX][IW] * HALF_F;
+  
+  // Cell centered TVD slopes in Y direction
+  real_t dry = dq[IY][ID] * HALF_F;
+  real_t dpy = dq[IY][IP] * HALF_F;
+  real_t duy = dq[IY][IU] * HALF_F;
+  real_t dvy = dq[IY][IV] * HALF_F;
+  real_t dwy = dq[IY][IW] * HALF_F;
+
+  // Cell centered TVD slopes in Z direction
+  real_t drz = dq[IZ][ID] * HALF_F;
+  real_t dpz = dq[IZ][IP] * HALF_F;
+  real_t duz = dq[IZ][IU] * HALF_F;
+  real_t dvz = dq[IZ][IV] * HALF_F;
+  real_t dwz = dq[IZ][IW] * HALF_F;
+
+  // Source terms (including transverse derivatives)
+  real_t sr0, su0, sv0, sw0, sp0;
+
+  if (true /*cartesian*/) {
+
+    sr0 = (-u*drx-dux*r)*dtdx + (-v*dry-dvy*r)*dtdy + (-w*drz-dwz*r)*dtdz;
+    su0 = (-u*dux-dpx/r)*dtdx + (-v*duy      )*dtdy + (-w*duz      )*dtdz; 
+    sv0 = (-u*dvx      )*dtdx + (-v*dvy-dpy/r)*dtdy + (-w*dvz      )*dtdz;
+    sw0 = (-u*dwx      )*dtdx + (-v*dwy      )*dtdy + (-w*dwz-dpz/r)*dtdz; 
+    sp0 = (-u*dpx-dux*gamma*p)*dtdx + (-v*dpy-dvy*gamma*p)*dtdy + (-w*dpz-dwz*gamma*p)*dtdz;
+
+  } // end cartesian
+
+  // Update in time the  primitive variables
+  r = r + sr0;
+  u = u + su0;
+  v = v + sv0;
+  w = w + sw0;
+  p = p + sp0;
+  
+  if (faceId == FACE_XMIN) {
+    // Face averaged right state at left interface
+    qface[ID] = r - drx;
+    qface[IU] = u - dux;
+    qface[IV] = v - dvx;
+    qface[IW] = w - dwx;
+    qface[IP] = p - dpx;
+    qface[ID] = FMAX(smallR,  qface[ID]);
+    qface[IP] = FMAX(smallp * qface[ID], qface[IP]);
+  }
+  
+  if (faceId == FACE_XMAX) {
+    // Face averaged left state at right interface
+    qface[ID] = r + drx;
+    qface[IU] = u + dux;
+    qface[IV] = v + dvx;
+    qface[IW] = w + dwx;
+    qface[IP] = p + dpx;
+    qface[ID] = FMAX(smallR,  qface[ID]);
+    qface[IP] = FMAX(smallp * qface[ID], qface[IP]);
+  }
+
+  if (faceId == FACE_YMIN) {
+    // Face averaged top state at bottom interface
+    qface[ID] = r - dry;
+    qface[IU] = u - duy;
+    qface[IV] = v - dvy;
+    qface[IW] = w - dwy;
+    qface[IP] = p - dpy;
+    qface[ID] = FMAX(smallR,  qface[ID]);
+    qface[IP] = FMAX(smallp * qface[ID], qface[IP]);
+  }
+  
+  if (faceId == FACE_YMAX) {
+    // Face averaged bottom state at top interface
+    qface[ID] = r + dry;
+    qface[IU] = u + duy;
+    qface[IV] = v + dvy;
+    qface[IW] = w + dwy;
+    qface[IP] = p + dpy;
+    qface[ID] = FMAX(smallR,  qface[ID]);
+    qface[IP] = FMAX(smallp * qface[ID], qface[IP]);
+  }
+  
+  if (faceId == FACE_ZMIN) {
+    // Face averaged front state at back interface
+    qface[ID] = r - drz;
+    qface[IU] = u - duz;
+    qface[IV] = v - dvz;
+    qface[IW] = w - dwz;
+    qface[IP] = p - dpz;
+    qface[ID] = FMAX(smallR,  qface[ID]);
+    qface[IP] = FMAX(smallp * qface[ID], qface[IP]);
+  }
+  
+  if (faceId == FACE_ZMAX) {
+    // Face averaged back state at front interface
+    qface[ID] = r + drz;
+    qface[IU] = u + duz;
+    qface[IV] = v + dvz;
+    qface[IW] = w + dwz;
+    qface[IP] = p + dpz;
+    qface[ID] = FMAX(smallR,  qface[ID]);
+    qface[IP] = FMAX(smallp * qface[ID], qface[IP]);
+  }
+
+} // trace_unsplit_hydro_3d_by_direction
+
 #endif /*TRACE_H_*/
