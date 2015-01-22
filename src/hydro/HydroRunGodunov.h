@@ -138,8 +138,7 @@ namespace hydroSimu {
 
     //! unplitVersion = 2
     //! memory footprint is larger than unplitVersion 2
-    //! slopes are stored and reconstructed (trace) states computed
-    //! as needed
+    //! slopes are stored and only 1 pair of reconstructed (trace) states
     void godunov_unsplit_cpu_v2(HostArray<real_t>& h_UOld, 
 				HostArray<real_t>& h_UNew, 
 				real_t dt, int nStep);
@@ -190,6 +189,12 @@ namespace hydroSimu {
     DeviceArray<real_t> d_qp_x; //!< GPU array for qp state along X
     DeviceArray<real_t> d_qp_y; //!< GPU array for qp state along Y
     DeviceArray<real_t> d_qp_z; //!< GPU array for qp state along Z
+
+    DeviceArray<real_t> d_qm;      //!< only for unsplit version 2
+    DeviceArray<real_t> d_qp;      //!< only for unsplit version 2
+    DeviceArray<real_t> d_slope_x; //!< only for unsplit version 2
+    DeviceArray<real_t> d_slope_y; //!< only for unsplit version 2
+    DeviceArray<real_t> d_slope_z; //!< only for unsplit version 2
 #else
     HostArray<real_t> h_qm_x;
     HostArray<real_t> h_qm_y;
@@ -198,6 +203,12 @@ namespace hydroSimu {
     HostArray<real_t> h_qp_x;
     HostArray<real_t> h_qp_y;
     HostArray<real_t> h_qp_z;
+
+    HostArray<real_t> h_qm;      //!< only for unsplit version 2
+    HostArray<real_t> h_qp;      //!< only for unsplit version 2
+    HostArray<real_t> h_slope_x; //!< only for unsplit version 2
+    HostArray<real_t> h_slope_y; //!< only for unsplit version 2
+    HostArray<real_t> h_slope_z; //!< only for unsplit version 2
 #endif // __CUDACC__
     /*@}*/
 

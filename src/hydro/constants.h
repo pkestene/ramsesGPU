@@ -211,6 +211,11 @@ enum ArrayList {
   A_QP_X,
   A_QP_Y,
   A_QP_Z,
+  A_QM,
+  A_QP,
+  A_SLOPE_X,
+  A_SLOPE_Y,
+  A_SLOPE_Z,
   A_QEDGE_RT,
   A_QEDGE_RB,
   A_QEDGE_LT,
@@ -232,7 +237,7 @@ enum ArrayList {
 };
 
 // above enum should not have more than ARRAY_LIST_MAX items
-#define ARRAY_LIST_MAX (32)
+#define ARRAY_LIST_MAX (37)
 
 /**
  * \brief A simple structure designed to gather all parameters that

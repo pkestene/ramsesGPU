@@ -3537,6 +3537,14 @@ namespace hydroSimu {
 
     (void) status;
 
+#else
+
+    (void) U;
+    (void) nStep;
+    (void) ghostIncluded;
+
+    std::cerr << "[HydroRunBase::outputHdf5] Hdf5 not enabled !!!\n";
+
 #endif // USE_HDF5
   } // HydroRunBase::outputHdf5
 
@@ -3723,7 +3731,16 @@ namespace hydroSimu {
 
     (void) status;
 
+#else
+
+    (void) data;
+    (void) suffix;
+    (void) nStep;
+
+    std::cerr << "[HydroRunBase::outputHdf5Debug] Hdf5 not enabled !!!\n";
+
 #endif // USE_HDF5
+
   } // HydroRunBase::outputHdf5Debug
 
   // =======================================================
@@ -3978,8 +3995,16 @@ namespace hydroSimu {
     xdmfFile << " </Domain>" << std::endl;
     xdmfFile << "</Xdmf>"    << std::endl;
 
+#else
+
+    (void) totalNumberOfSteps;
+    (void) singleStep;
+    (void) ghostIncluded;
+
+    std::cerr << "[HydroRunBase::writeXdmfForHdf5Wrapper] Hdf5 not enabled !!!\n";
 
 #endif // USE_HDF5
+
   } // HydroRunBase::writeXdmfForHdf5Wrapper
 
   
@@ -4379,7 +4404,7 @@ namespace hydroSimu {
 
     (void) U;
     (void) nStep;
-    std::cerr << "Not implemented, TODO !!!" << std::endl;
+    std::cerr << "[outputFacesHdf5] Not implemented, TODO !!!" << std::endl;
 
   } // HydroRunBase::outputFacesHdf5
 
@@ -5051,6 +5076,10 @@ namespace hydroSimu {
 
 #else
 
+    (void) U;
+    (void) filename;
+    (void) halfResolution;
+
     std::cerr << "HDF5 library is not available ! You can't load a data file for restarting the simulation run !!!" << std::endl;
     std::cerr << "Please install HDF5 library !!!" << std::endl;
 
@@ -5592,7 +5621,7 @@ namespace hydroSimu {
   
       for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
 	real_t yPos = yMin + (yMax-yMin)*j/jsize;
-	
+
 	for (int i=ghostWidth; i<isize-ghostWidth; i++) {
 	  real_t xPos = xMin + (xMax-xMin)*j/jsize;
 	  
@@ -5648,7 +5677,7 @@ namespace hydroSimu {
 	real_t zPos = zMin + (zMax-zMin)*k/ksize;
 
 	for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
-	  real_t yPos = yMin + (yMax-yMin)*j/jsize;
+	  //real_t yPos = yMin + (yMax-yMin)*j/jsize;
 
 	  for (int i=ghostWidth; i<isize-ghostWidth; i++) {
 	    real_t xPos = xMin + (xMax-xMin)*j/jsize;
@@ -5919,7 +5948,7 @@ namespace hydroSimu {
     real_t &yMax = _gParams.yMax;
     real_t &zMax = _gParams.zMax;
 
-    real_t Lx = xMax-xMin;
+    //real_t Lx = xMax-xMin;
     real_t Ly = yMax-yMin;
     real_t Lz = zMax-zMin;
 
