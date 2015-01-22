@@ -128,8 +128,6 @@ public:
   /** total allocated memory in bytes */
   static unsigned long int totalAllocMemoryInKB;
 
-
-
 }; // class HostArray
 
   template<typename T> unsigned long int HostArray<T>::totalAllocMemoryInKB = 0;
@@ -245,14 +243,19 @@ public:
   /** other methods */
   void reset();
 
-  /** total allocated memory in bytes on GPU device */
-  static unsigned long int totalAllocMemoryInKB;
-
 private:
   T*	_data;
   uint4	_dim;
   uint	_pitch;
   bool  _usePitchedMemory;
+
+public:
+  /** is memory allocated ? */
+  bool isAllocated;
+
+  /** total allocated memory in bytes on GPU device */
+  static unsigned long int totalAllocMemoryInKB;
+
 }; // class DeviceArray
 
   template<typename T> unsigned long int DeviceArray<T>::totalAllocMemoryInKB = 0;
@@ -320,6 +323,7 @@ HostArray<T>::~HostArray()
 #endif // __CUDACC__
     
     isAllocated = true;
+
     totalAllocMemoryInKB += (length * numVar * sizeof(T) / 1024);   
 
   } // HostArray<T>::allocate for 1D data
@@ -568,7 +572,7 @@ HostArray<T> &HostArray<T>::operator/=(const HostArray<T> &operand)
 #ifdef __CUDACC__
 template<typename T>
 DeviceArray<T>::DeviceArray()
-  : _data(0), _dim(make_uint4(0, 0, 0, 0)), _pitch(0), _usePitchedMemory(true), , isAllocated(false)
+  : _data(0), _dim(make_uint4(0, 0, 0, 0)), _pitch(0), _usePitchedMemory(true), isAllocated(false)
 {
 }
 

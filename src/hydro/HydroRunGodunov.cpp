@@ -1580,6 +1580,7 @@ void HydroRunGodunov::godunov_unsplit_cpu(HostArray<real_t>& h_UOld,
 
 #endif // __CUDACC__
 
+#ifndef __CUDACC__
 // =======================================================
 // =======================================================
 void HydroRunGodunov::godunov_unsplit_cpu_v0(HostArray<real_t>& h_UOld,
@@ -2132,7 +2133,9 @@ void HydroRunGodunov::godunov_unsplit_cpu_v0(HostArray<real_t>& h_UOld,
     } // end THREE_D - Implementation version 0
 
 } // HydroRunGodunov::godunov_unsplit_cpu_v0
+#endif // __CUDACC__
 
+#ifndef __CUDACC__
 // =======================================================
 // =======================================================
 void HydroRunGodunov::godunov_unsplit_cpu_v1(HostArray<real_t>& h_UOld, 
@@ -2648,7 +2651,9 @@ void HydroRunGodunov::godunov_unsplit_cpu_v1(HostArray<real_t>& h_UOld,
   } // end THREE_D  unsplit version 1
   
 } // HydroRunGodunov::godunov_unsplit_cpu_v1
+#endif // __CUDACC__
 
+#ifndef __CUDACC__
 // =======================================================
 // =======================================================
 void HydroRunGodunov::godunov_unsplit_cpu_v2(HostArray<real_t>& h_UOld, 
@@ -3436,6 +3441,7 @@ void HydroRunGodunov::godunov_unsplit_cpu_v2(HostArray<real_t>& h_UOld,
   } // end THREE_D  unsplit version 2
 
 } // HydroRunGodunov::godunov_unsplit_cpu_v2
+#endif // __CUDACC__
 
 // =======================================================
 // =======================================================
