@@ -51,6 +51,7 @@ public:
   void allocate(uint3 dim, HostMemoryAllocType memAllocType=PAGEABLE);
   /** memory allocation for 3D data */
   void allocate(uint4 dim, HostMemoryAllocType memAllocType=PAGEABLE);
+  /** memory free */
   void free();
 
   /** copy from another array (make a call to allocate and then copy data) */
@@ -115,13 +116,20 @@ public:
       _data[idx] = value;
   };
 
-  /** total allocated memory in bytes */
-  static unsigned long int totalAllocMemoryInKB;
-
 private:
   T*	_data;
   uint4	_dim;
   bool  _usePinnedMemory;
+
+public:
+  /** is memory allocated ? */
+  bool isAllocated;
+
+  /** total allocated memory in bytes */
+  static unsigned long int totalAllocMemoryInKB;
+
+
+
 }; // class HostArray
 
   template<typename T> unsigned long int HostArray<T>::totalAllocMemoryInKB = 0;
@@ -261,7 +269,7 @@ private:
   // =======================================================
 template<typename T>
 HostArray<T>::HostArray()
-  : _data(0), _dim(make_uint4(0, 0, 0, 0)), _usePinnedMemory(false)
+  : _data(0), _dim(make_uint4(0, 0, 0, 0)), _usePinnedMemory(false), isAllocated(false)
 {
 }
 
@@ -311,6 +319,7 @@ HostArray<T>::~HostArray()
     
 #endif // __CUDACC__
     
+    isAllocated = true;
     totalAllocMemoryInKB += (length * numVar * sizeof(T) / 1024);   
 
   } // HostArray<T>::allocate for 1D data
@@ -350,6 +359,8 @@ HostArray<T>::~HostArray()
 
 #endif // __CUDACC__
 
+  isAllocated = true;
+
   totalAllocMemoryInKB += (dim.x * dim.y * dim.z * sizeof(T) / 1024);
 
 } // void HostArray<T>::allocate for 2D data
@@ -383,6 +394,8 @@ void HostArray<T>::allocate(uint4 dim, HostMemoryAllocType memAllocType)
 
 #endif // __CUDACC__
 
+  isAllocated = true;
+
   totalAllocMemoryInKB += (dim.x * dim.y * dim.z * dim.w * sizeof(T) / 1024);
 
 } // void HostArray<T>::allocate for 3D data
@@ -405,6 +418,9 @@ void HostArray<T>::free()
   delete[] _data;
 
 #endif // __CUDACC__
+
+  isAllocated = false;
+
 } // HostArray<T>::free
 
   // =======================================================
@@ -552,7 +568,7 @@ HostArray<T> &HostArray<T>::operator/=(const HostArray<T> &operand)
 #ifdef __CUDACC__
 template<typename T>
 DeviceArray<T>::DeviceArray()
-  : _data(0), _dim(make_uint4(0, 0, 0, 0)), _pitch(0), _usePitchedMemory(true)
+  : _data(0), _dim(make_uint4(0, 0, 0, 0)), _pitch(0), _usePitchedMemory(true), , isAllocated(false)
 {
 }
 
@@ -595,6 +611,8 @@ void DeviceArray<T>::allocate(int length,
     _pitch = pitchBytes / sizeof(T);
   }
 
+  isAllocated = true;
+
   totalAllocMemoryInKB += (_pitch * _dim.y * _dim.z * _dim.w * sizeof(T) / 1024);
   //std::cout << "Device memory allocated : " << totalAllocMemoryInKB/1000 << "MB\n";
 
@@ -628,6 +646,8 @@ void DeviceArray<T>::allocate(uint3 dim, DeviceMemoryAllocType memAllocType)
     _pitch = pitchBytes / sizeof(T);
   }
 
+  isAllocated = true;
+
   totalAllocMemoryInKB += (_pitch * _dim.y * _dim.z * _dim.w * sizeof(T) / 1024);
   //std::cout << "Device memory allocated : " << totalAllocMemoryInKB/1000 << "MB\n";
 
@@ -658,6 +678,8 @@ void DeviceArray<T>::allocate(uint4 dim, DeviceMemoryAllocType memAllocType)
     _pitch = pitchBytes / sizeof(T);
   }
 
+  isAllocated = true;
+
   totalAllocMemoryInKB += (_pitch * _dim.y * _dim.z * _dim.w * sizeof(T) / 1024);
   //std::cout << "Device memory allocated : " << totalAllocMemoryInKB/1000 << "MB\n";
 
@@ -667,6 +689,8 @@ template<typename T>
 void DeviceArray<T>::free()
 {
   cutilSafeCall( cudaFree(_data) );
+
+  isAllocated = false;
 } // DeviceArray<T>::free
 
   /**
