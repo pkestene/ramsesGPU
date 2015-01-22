@@ -8317,7 +8317,7 @@ namespace hydroSimu {
     real_t &yMin = _gParams.yMin;
     real_t &zMin = _gParams.zMin;
 
-    real_t &xMax = _gParams.xMax;
+    //real_t &xMax = _gParams.xMax;
     real_t &yMax = _gParams.yMax;
     real_t &zMax = _gParams.zMax;
 
@@ -8384,8 +8384,8 @@ namespace hydroSimu {
 	real_t zPos = zMin + dz/2 + (kk-ghostWidth)*dz;
 
 	for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
-	  int      jj = j + ny*myMpiPos[1];
-	  real_t yPos = yMin + dy/2 + (jj-ghostWidth)*dy;
+	  //int      jj = j + ny*myMpiPos[1];
+	  //real_t yPos = yMin + dy/2 + (jj-ghostWidth)*dy;
 
 	  for (int i=ghostWidth; i<isize-ghostWidth; i++) {
 	    int      ii = i + nx*myMpiPos[0];
@@ -8665,7 +8665,7 @@ namespace hydroSimu {
     real_t &yMax = _gParams.yMax;
     real_t &zMax = _gParams.zMax;
 
-    real_t Lx = xMax-xMin;
+    //real_t Lx = xMax-xMin;
     real_t Ly = yMax-yMin;
     real_t Lz = zMax-zMin;
 
@@ -8744,15 +8744,15 @@ namespace hydroSimu {
       // hydrostatic equilibrium for pressure P = P0 - 0.1*\rho*y
       for (int k=0; k<ksize; k++) {
 	int   kk = k + nz*myMpiPos[2];
-	real_t z = zMin + dz/2 + (k-ghostWidth)*dz;
+	real_t z = zMin + dz/2 + (kk-ghostWidth)*dz;
 	
 	for (int j=0; j<jsize; j++) {
 	  int   jj = j + ny*myMpiPos[1];
-	  real_t y = yMin + dy/2 + (j-ghostWidth)*dy;
+	  real_t y = yMin + dy/2 + (jj-ghostWidth)*dy;
 	  
 	  for (int i=0; i<isize; i++) {
 	    int   ii = i + nx*myMpiPos[0];
-	    real_t x = xMin + dx/2 + (i-ghostWidth)*dx;
+	    real_t x = xMin + dx/2 + (ii-ghostWidth)*dx;
 	    
 	    if ( z < zMin + 0.3*Lz ) {
 	      h_U(i,j,ID) = d0;

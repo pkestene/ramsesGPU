@@ -2838,11 +2838,11 @@ namespace hydroSimu {
 
     real_t &xMin = _gParams.xMin;
     real_t &yMin = _gParams.yMin;
-    real_t &zMin = _gParams.zMin;
+    //real_t &zMin = _gParams.zMin;
 
     real_t &xMax = _gParams.xMax;
     real_t &yMax = _gParams.yMax;
-    real_t &zMax = _gParams.zMax;
+    //real_t &zMax = _gParams.zMax;
 
     if (dimType == TWO_D) {
 

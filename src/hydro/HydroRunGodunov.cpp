@@ -77,8 +77,7 @@ HydroRunGodunov::HydroRunGodunov(ConfigMap &_configMap)
 	std::cerr << "##################################################" << std::endl;
 	std::cerr << "WARNING : you should review your parameter file   " << std::endl;
 	std::cerr << "and set hydro/unsplitVersion to a valid number :  " << std::endl;
-	std::cerr << " - 0 and 1 are currently available for 2D/3D      " << std::endl;
-	std::cerr << " - 2 is available in 3D simulations only          " << std::endl;
+	std::cerr << " - 0, 1 and 2 are currently available for 2D/3D   " << std::endl;
 	std::cerr << "Fall back to the default value : 1                " << std::endl;
 	std::cerr << "##################################################" << std::endl;
 	unsplitVersion = 1;
@@ -133,6 +132,7 @@ HydroRunGodunov::HydroRunGodunov(ConfigMap &_configMap)
 	_gParams.arrayList[A_QP_Y] = d_qp_y.data();
 
       } else { // THREE_D
+
 	d_qm_x.allocate(make_uint4(isize, jsize, ksize, nbVar), gpuMemAllocType);
 	d_qm_y.allocate(make_uint4(isize, jsize, ksize, nbVar), gpuMemAllocType);
 	d_qm_z.allocate(make_uint4(isize, jsize, ksize, nbVar), gpuMemAllocType);
@@ -147,8 +147,9 @@ HydroRunGodunov::HydroRunGodunov(ConfigMap &_configMap)
 	_gParams.arrayList[A_QP_X] = d_qp_x.data();
 	_gParams.arrayList[A_QP_Y] = d_qp_y.data();
 	_gParams.arrayList[A_QP_Z] = d_qp_z.data();
+
       }
-#else
+#else // CPU version
       if (dimType == TWO_D) {
 
 	h_qm_x.allocate(make_uint3(isize, jsize, nbVar));
@@ -248,7 +249,6 @@ HydroRunGodunov::HydroRunGodunov(ConfigMap &_configMap)
 
       }
 #endif // __CUDACC__
-
 
     } // end unsplitVersion == 2
 

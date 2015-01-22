@@ -189,12 +189,6 @@ namespace hydroSimu {
     DeviceArray<real_t> d_qp_x; //!< GPU array for qp state along X
     DeviceArray<real_t> d_qp_y; //!< GPU array for qp state along Y
     DeviceArray<real_t> d_qp_z; //!< GPU array for qp state along Z
-
-    DeviceArray<real_t> d_qm;      //!< only for unsplit version 2
-    DeviceArray<real_t> d_qp;      //!< only for unsplit version 2
-    DeviceArray<real_t> d_slope_x; //!< only for unsplit version 2
-    DeviceArray<real_t> d_slope_y; //!< only for unsplit version 2
-    DeviceArray<real_t> d_slope_z; //!< only for unsplit version 2
 #else
     HostArray<real_t> h_qm_x;
     HostArray<real_t> h_qm_y;
@@ -203,7 +197,18 @@ namespace hydroSimu {
     HostArray<real_t> h_qp_x;
     HostArray<real_t> h_qp_y;
     HostArray<real_t> h_qp_z;
+#endif // __CUDACC__
+    /*@}*/
 
+    /** \defgroup implementation1 */
+    /*@{*/
+#ifdef __CUDACC__
+    DeviceArray<real_t> d_qm;      //!< only for unsplit version 2
+    DeviceArray<real_t> d_qp;      //!< only for unsplit version 2
+    DeviceArray<real_t> d_slope_x; //!< only for unsplit version 2
+    DeviceArray<real_t> d_slope_y; //!< only for unsplit version 2
+    DeviceArray<real_t> d_slope_z; //!< only for unsplit version 2
+#else
     HostArray<real_t> h_qm;      //!< only for unsplit version 2
     HostArray<real_t> h_qp;      //!< only for unsplit version 2
     HostArray<real_t> h_slope_x; //!< only for unsplit version 2

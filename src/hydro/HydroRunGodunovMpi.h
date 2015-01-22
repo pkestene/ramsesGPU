@@ -53,6 +53,29 @@ namespace hydroSimu {
     //! see godunov_unsplit_gpu or godunov_unsplit_cpu.
     void godunov_unsplit(int nStep, real_t dt);
 
+    //! unplitVersion = 0
+    //! memory footprint is very low
+    //! nothing is stored globally except h_Q
+    //! some redundancy in trace computation
+    void godunov_unsplit_cpu_v0(HostArray<real_t>& h_UOld, 
+				HostArray<real_t>& h_UNew, 
+				real_t dt, int nStep);
+
+    //! unplitVersion = 1
+    //! memory footprint is medium
+    //! reconstructed (trace) states are stored
+    //! then perform Riemann flux computation and update
+    void godunov_unsplit_cpu_v1(HostArray<real_t>& h_UOld, 
+				HostArray<real_t>& h_UNew, 
+				real_t dt, int nStep);
+
+    //! unplitVersion = 2
+    //! memory footprint is larger than unplitVersion 2
+    //! slopes are stored and only 1 pair of reconstructed (trace) states
+    void godunov_unsplit_cpu_v2(HostArray<real_t>& h_UOld, 
+				HostArray<real_t>& h_UNew, 
+				real_t dt, int nStep);
+
   private:
 #ifdef __CUDACC__
     //! Actual computation of the godunov integration on GPU using
@@ -136,6 +159,23 @@ namespace hydroSimu {
     HostArray<real_t> h_qp_x;
     HostArray<real_t> h_qp_y;
     HostArray<real_t> h_qp_z;
+#endif // __CUDACC__
+    /*@}*/
+
+    /** \defgroup implementation2 */
+    /*@{*/
+#ifdef __CUDACC__
+    DeviceArray<real_t> d_qm;      //!< only for unsplit version 2
+    DeviceArray<real_t> d_qp;      //!< only for unsplit version 2
+    DeviceArray<real_t> d_slope_x; //!< only for unsplit version 2
+    DeviceArray<real_t> d_slope_y; //!< only for unsplit version 2
+    DeviceArray<real_t> d_slope_z; //!< only for unsplit version 2
+#else
+    HostArray<real_t> h_qm;      //!< only for unsplit version 2
+    HostArray<real_t> h_qp;      //!< only for unsplit version 2
+    HostArray<real_t> h_slope_x; //!< only for unsplit version 2
+    HostArray<real_t> h_slope_y; //!< only for unsplit version 2
+    HostArray<real_t> h_slope_z; //!< only for unsplit version 2
 #endif // __CUDACC__
     /*@}*/
 
