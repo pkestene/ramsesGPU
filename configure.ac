@@ -428,7 +428,24 @@ fi
 if test "x$no_glew" = "xyes"; then
    GLUT_ENABLE=no
 fi
-AM_CONDITIONAL(HAVE_GLUT, test "$GLUT_ENABLE" = "yes")
+
+# define flag to enable / disable glut gui
+AC_ARG_ENABLE([glutgui],
+   AS_HELP_STRING([--enable-glutgui], [Turn on GLUT GUI]),
+   [case "${enableval}" in
+      yes) enable_glutgui=yes ;;
+      no)  enable_glutgui=no ;;
+      *)   AC_MSG_ERROR([bad value ${enableval} for --enable-glutgui]) ;;
+   esac],
+   [enable_glutgui=yes]
+)
+
+GLUT_AM_COND=no
+if test "$GLUT_ENABLE" = "yes" && test "$enable_glutgui" = "yes"
+then
+	GLUT_AM_COND=yes
+fi
+AM_CONDITIONAL(HAVE_GLUT, test "$GLUT_AM_COND" = "yes")
 
 
 # ------------------------------------------------------------------------------
@@ -507,7 +524,7 @@ AC_MSG_RESULT([
 
 	* GPU/CUDA enabled       : $want_cuda
 	* CUDA tools version     : $NVCC_VERSION (NVCCFLAGS = $NVCCFLAGS)
-	* GLUT-based GUI enable  : $GLUT_ENABLE
+	* GLUT-based GUI enable  : $GLUT_AM_COND
 	* QT-based GUI enable    : $enable_qtgui
 	* VTK enabled            : $have_vtk ($VTK_LIBRARY_PATH)
 	*                        : vtk libs: $VTK_LIBS

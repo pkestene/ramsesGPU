@@ -70,6 +70,10 @@ AM_FCFLAGS  = -fno-underscoring
 #AM_CPPFLAGS += -DUSE_MPI
 #endif
 
+# the following makes sure that some of the macros defined by autoconf/automake
+# are also passed to nvcc
+NVCCFLAGS += $(filter -DHAVE%, $(DEFS))
+
 NVCCFLAGS += --ptxas-options -v
 NVCCFLAGS += --compiler-options -I$(srcdir) --compiler-options $(CONFIG_CPPFLAGS) 
 NVCCFLAGS += --compiler-options -I$(srcdir)/glutGui
