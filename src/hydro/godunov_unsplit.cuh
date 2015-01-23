@@ -442,6 +442,214 @@ __global__ void kernel_godunov_unsplit_2d(const real_t * __restrict__ Uin,
       
 } // kernel_godunov_unsplit_2d
 
+
+// 2D-kernel block dimensions
+#ifdef USE_DOUBLE
+#define UNSPLIT_BLOCK_DIMX_2D_V0	16
+#define UNSPLIT_BLOCK_INNER_DIMX_2D_V0	(UNSPLIT_BLOCK_DIMX_2D_V0-4)
+#define UNSPLIT_BLOCK_DIMY_2D_V0	12
+#define UNSPLIT_BLOCK_INNER_DIMY_2D_V0	(UNSPLIT_BLOCK_DIMY_2D_V0-4)
+#else // simple precision
+#define UNSPLIT_BLOCK_DIMX_2D_V0	16
+#define UNSPLIT_BLOCK_INNER_DIMX_2D_V0  (UNSPLIT_BLOCK_DIMX_2D_V0-4)
+#define UNSPLIT_BLOCK_DIMY_2D_V0	24
+#define UNSPLIT_BLOCK_INNER_DIMY_2D_V0  (UNSPLIT_BLOCK_DIMY_2D_V0-4)
+#endif // USE_DOUBLE
+
+/**
+ * Unsplit Godunov kernel for 2D data (version 0).
+ * 
+ * Primitive variables are assumed to have been already computed. 
+ *
+ * This kernel doesn't eat so much shared memory, but to the price of
+ * more computations...
+ * We recompute what is needed by each thread.
+ *
+ */
+__global__ void kernel_godunov_unsplit_2d_v0(const real_t * __restrict__ Uin, 
+					     real_t       *Uout,
+					     int pitch, 
+					     int imax, 
+					     int jmax,
+					     real_t dtdx, 
+					     real_t dtdy, 
+					     real_t dt,
+					     bool gravityEnabled)
+{
+  // Block index
+  const int bx = blockIdx.x;
+  const int by = blockIdx.y;
+  
+  // Thread index
+  const int tx = threadIdx.x;
+  const int ty = threadIdx.y;
+  
+  const int i = __mul24(bx, UNSPLIT_BLOCK_INNER_DIMX_2D_V0) + tx;
+  const int j = __mul24(by, UNSPLIT_BLOCK_INNER_DIMY_2D_V0) + ty;
+  
+  const int arraySize  = __umul24(pitch, jmax);
+  const int elemOffset = __umul24(pitch, j   ) + i;
+
+  __shared__ real_t    q[UNSPLIT_BLOCK_DIMX_2D_V0][UNSPLIT_BLOCK_DIMY_2D_V0][NVAR_2D];
+  __shared__ real_t uOut[UNSPLIT_BLOCK_DIMX_2D_V0][UNSPLIT_BLOCK_DIMY_2D_V0][NVAR_2D];
+
+  // primitive variables (local array)
+  //real_t qLoc[NVAR_2D];
+  //real_t qLocN[NVAR_2D];
+	
+  // slopes
+  real_t dq[TWO_D][NVAR_2D];
+  real_t dqN[TWO_D][NVAR_2D];
+  real_t qNeighbors[2*TWO_D][NVAR_2D];
+
+  // reconstructed state on cell faces
+  // aka riemann solver input
+  real_t qleft[NVAR_2D];
+  real_t qright[NVAR_2D];
+  
+  // riemann solver output
+  real_t qgdnv[NVAR_2D];
+  real_t flux_x[NVAR_2D];
+  real_t flux_y[NVAR_2D];
+	
+  // conservative variables
+  real_t uIn[NVAR_2D];
+  real_t uOut[NVAR_2D];
+  real_t c;
+
+  real_t *gravin = gParams.arrayList[A_GRAV];
+  real_t *qData  = gParams.arrayList[A_Q];
+
+  // load U and convert to primitive variables
+  if(i >= 0 and i < imax and 
+     j >= 0 and j < jmax)
+    {
+      
+      // read conservative variables
+      int offset = elemOffset;
+      q[tx][ty][ID] = qData[offset];  offset += arraySize;
+      q[tx][ty][IP] = qData[offset];  offset += arraySize;
+      q[tx][ty][IU] = qData[offset];  offset += arraySize;
+      q[tx][ty][IV] = qData[offset];
+      
+      // read conservative variables
+      offset = elemOffset;
+      uIn[ID] = Uin[offset]; offset += arraySize;
+      uIn[IP] = Uin[offset]; offset += arraySize;
+      uIn[IU] = Uin[offset]; offset += arraySize;
+      uIn[IV] = Uin[offset]; 
+
+      // copy input state into uOut that will become output state
+      uOut[ID] = uIn[ID];
+      uOut[IP] = uIn[IP];
+      uOut[IU] = uIn[IU];
+      uOut[IV] = uIn[IV];
+
+    }
+  __syncthreads();
+
+  // current cell slope
+  if(i > 0 and i < imax-1 and 
+     j > 0 and j < jmax-1 )
+    {
+
+      int offset = elemOffset;
+ 
+      // load neighborhood
+      for (int iVar=0; iVar<NVAR_2D; iVar++) {
+	qLoc[iVar]          = q[tx  ][ty  ][iVar];
+	qNeighbors[0][iVar] = q[tx+1][ty  ][iVar];
+	qNeighbors[1][iVar] = q[tx-1][ty  ][iVar];
+	qNeighbors[2][iVar] = q[tx  ][ty+1][iVar];
+	qNeighbors[3][iVar] = q[tx  ][ty-1][iVar];
+	offset += arraySize;
+      }	
+
+      // compute slopes in current cell
+      slope_unsplit_hydro_2d(qLoc, 
+			     qNeighbors[0],
+			     qNeighbors[1],
+			     qNeighbors[2],
+			     qNeighbors[3],
+			     dq);
+    }
+
+  // slopes in left neighbor along X
+  if(i > 1 and i < imax and 
+     j > 0 and j < jmax-1 )
+    {
+
+      int offset = elemOffset;
+
+      // get primitive variables state vector in left neighbor along X
+      for ( int iVar=0; iVar<nbVar; iVar++ ) {
+	
+	qLocN[iVar]         = q[tx-1][ty  ][iVar];
+	qNeighbors[0][iVar] = q[tx  ][ty  ][iVar];
+	qNeighbors[1][iVar] = q[tx-2][ty  ][iVar];
+	qNeighbors[2][iVar] = q[tx-1][ty+1][iVar];
+	qNeighbors[3][iVar] = q[tx-1][ty-1][iVar];
+	
+      } // end for iVar
+      
+      // compute slopes in left neighbor along X
+      slope_unsplit_hydro_2d(qLocN, 
+			     qNeighbors[0],
+			     qNeighbors[1],
+			     qNeighbors[2],
+			     qNeighbors[3],
+			     dqN);
+    }
+
+  //
+  // Compute reconstructed states at left interface along X in current cell
+  //
+  if(i > 1 and i < imax-1 and 
+     j > 1 and j < jmax-1 )
+
+    {
+
+      //trace_unsplit<TWO_D, NVAR_2D>(q[tx][ty], qNeighbors, c, dtdx, qm, qp0);
+      
+      // left interface : right state
+      trace_unsplit_hydro_2d_by_direction(qLoc, 
+					  dq, 
+					  dtdx, dtdy, 
+					  FACE_XMIN, 
+					  qright);
+      
+      // left interface : left state
+      trace_unsplit_hydro_2d_by_direction(qLocN,
+					  dqN,
+					  dtdx, dtdy,
+					  FACE_XMAX, 
+					  qleft);
+
+      // gravity predictor on velocity component of qp0's
+      if (gravityEnabled) {
+	qleft[IU] += HALF_F * dt * gravin[elemOffset+IX*arraySize];
+	qleft[IV] += HALF_F * dt * gravin[elemOffset+IY*arraySize];
+
+	qright[IU] += HALF_F * dt * gravin[elemOffset+IX*arraySize];
+	qright[IV] += HALF_F * dt * gravin[elemOffset+IY*arraySize];
+      }
+
+      // Solve Riemann problem at X-interfaces and compute X-fluxes
+      riemann<NVAR_2D>(qleft,qright,qgdnv,flux_x);
+
+
+
+      // actually perform update on external device memory
+      int offset = elemOffset;
+      Uout[offset] = uOut[ID];  offset += arraySize;
+      Uout[offset] = uOut[IP];  offset += arraySize;
+      Uout[offset] = uOut[IU];  offset += arraySize;
+      Uout[offset] = uOut[IV];
+
+    }
+      
+} // kernel_godunov_unsplit_2d_v0
+
 /*****************************************
  *** *** GODUNOV UNSPLIT 3D KERNEL *** ***
  *****************************************/
