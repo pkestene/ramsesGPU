@@ -466,8 +466,8 @@ __global__ void kernel_godunov_unsplit_2d(const real_t * __restrict__ Uin,
  * We recompute what is needed by each thread.
  *
  */
-__global__ void kernel_godunov_unsplit_2d_v0(const real_t * __restrict__ Uin, 
-					     real_t       *Uout,
+__global__ void kernel_godunov_unsplit_2d_v0(real_t *Uout,
+					     real_t *qData,
 					     int pitch, 
 					     int imax, 
 					     int jmax,
@@ -490,16 +490,14 @@ __global__ void kernel_godunov_unsplit_2d_v0(const real_t * __restrict__ Uin,
   const int arraySize  = __umul24(pitch, jmax);
   const int elemOffset = __umul24(pitch, j   ) + i;
 
-  __shared__ real_t    q[UNSPLIT_BLOCK_DIMX_2D_V0][UNSPLIT_BLOCK_DIMY_2D_V0][NVAR_2D];
-  __shared__ real_t uOut[UNSPLIT_BLOCK_DIMX_2D_V0][UNSPLIT_BLOCK_DIMY_2D_V0][NVAR_2D];
+  __shared__ real_t      q[UNSPLIT_BLOCK_DIMX_2D_V0][UNSPLIT_BLOCK_DIMY_2D_V0][NVAR_2D];
+  __shared__ real_t deltaU[UNSPLIT_BLOCK_DIMX_2D_V0][UNSPLIT_BLOCK_DIMY_2D_V0][NVAR_2D];
 
   // primitive variables (local array)
-  //real_t qLoc[NVAR_2D];
-  //real_t qLocN[NVAR_2D];
+  real_t qLoc[NVAR_2D];
 	
   // slopes
   real_t dq[TWO_D][NVAR_2D];
-  real_t dqN[TWO_D][NVAR_2D];
   real_t qNeighbors[2*TWO_D][NVAR_2D];
 
   // reconstructed state on cell faces
@@ -512,13 +510,7 @@ __global__ void kernel_godunov_unsplit_2d_v0(const real_t * __restrict__ Uin,
   real_t flux_x[NVAR_2D];
   real_t flux_y[NVAR_2D];
 	
-  // conservative variables
-  real_t uIn[NVAR_2D];
-  real_t uOut[NVAR_2D];
-  real_t c;
-
   real_t *gravin = gParams.arrayList[A_GRAV];
-  real_t *qData  = gParams.arrayList[A_Q];
 
   // load U and convert to primitive variables
   if(i >= 0 and i < imax and 
@@ -532,28 +524,18 @@ __global__ void kernel_godunov_unsplit_2d_v0(const real_t * __restrict__ Uin,
       q[tx][ty][IU] = qData[offset];  offset += arraySize;
       q[tx][ty][IV] = qData[offset];
       
-      // read conservative variables
-      offset = elemOffset;
-      uIn[ID] = Uin[offset]; offset += arraySize;
-      uIn[IP] = Uin[offset]; offset += arraySize;
-      uIn[IU] = Uin[offset]; offset += arraySize;
-      uIn[IV] = Uin[offset]; 
-
-      // copy input state into uOut that will become output state
-      uOut[ID] = uIn[ID];
-      uOut[IP] = uIn[IP];
-      uOut[IU] = uIn[IU];
-      uOut[IV] = uIn[IV];
+      deltaU[tx][ty][ID] = 0;
+      deltaU[tx][ty][IP] = 0;
+      deltaU[tx][ty][IU] = 0;
+      deltaU[tx][ty][IV] = 0;
 
     }
   __syncthreads();
 
-  // current cell slope
-  if(i > 0 and i < imax-1 and 
-     j > 0 and j < jmax-1 )
+  // along X
+  if(i > 1 and i < imax-1 and tx > 1 and tx < UNSPLIT_BLOCK_DIMX_2D_V0-1 and
+     j > 1 and j < jmax-1 and ty > 1 and ty < UNSPLIT_BLOCK_DIMY_2D_V0-1)
     {
-
-      int offset = elemOffset;
  
       // load neighborhood
       for (int iVar=0; iVar<NVAR_2D; iVar++) {
@@ -562,8 +544,7 @@ __global__ void kernel_godunov_unsplit_2d_v0(const real_t * __restrict__ Uin,
 	qNeighbors[1][iVar] = q[tx-1][ty  ][iVar];
 	qNeighbors[2][iVar] = q[tx  ][ty+1][iVar];
 	qNeighbors[3][iVar] = q[tx  ][ty-1][iVar];
-	offset += arraySize;
-      }	
+      }
 
       // compute slopes in current cell
       slope_unsplit_hydro_2d(qLoc, 
@@ -572,79 +553,179 @@ __global__ void kernel_godunov_unsplit_2d_v0(const real_t * __restrict__ Uin,
 			     qNeighbors[2],
 			     qNeighbors[3],
 			     dq);
-    }
 
-  // slopes in left neighbor along X
-  if(i > 1 and i < imax and 
-     j > 0 and j < jmax-1 )
-    {
-
-      int offset = elemOffset;
-
-      // get primitive variables state vector in left neighbor along X
-      for ( int iVar=0; iVar<nbVar; iVar++ ) {
-	
-	qLocN[iVar]         = q[tx-1][ty  ][iVar];
-	qNeighbors[0][iVar] = q[tx  ][ty  ][iVar];
-	qNeighbors[1][iVar] = q[tx-2][ty  ][iVar];
-	qNeighbors[2][iVar] = q[tx-1][ty+1][iVar];
-	qNeighbors[3][iVar] = q[tx-1][ty-1][iVar];
-	
-      } // end for iVar
-      
-      // compute slopes in left neighbor along X
-      slope_unsplit_hydro_2d(qLocN, 
-			     qNeighbors[0],
-			     qNeighbors[1],
-			     qNeighbors[2],
-			     qNeighbors[3],
-			     dqN);
-    }
-
-  //
-  // Compute reconstructed states at left interface along X in current cell
-  //
-  if(i > 1 and i < imax-1 and 
-     j > 1 and j < jmax-1 )
-
-    {
-
-      //trace_unsplit<TWO_D, NVAR_2D>(q[tx][ty], qNeighbors, c, dtdx, qm, qp0);
-      
       // left interface : right state
       trace_unsplit_hydro_2d_by_direction(qLoc, 
 					  dq, 
 					  dtdx, dtdy, 
 					  FACE_XMIN, 
 					  qright);
-      
+
+      // get primitive variables state vector in left neighbor along X
+      for (int iVar=0; iVar<NVAR_2D; iVar++) {
+	qLoc[iVar]          = q[tx-1][ty  ][iVar];
+	qNeighbors[0][iVar] = q[tx  ][ty  ][iVar];
+	qNeighbors[1][iVar] = q[tx-2][ty  ][iVar];
+	qNeighbors[2][iVar] = q[tx-1][ty+1][iVar];
+	qNeighbors[3][iVar] = q[tx-1][ty-1][iVar];
+      }
+
+      // compute slopes in left neighbor along X
+      slope_unsplit_hydro_2d(qLoc, 
+			     qNeighbors[0],
+			     qNeighbors[1],
+			     qNeighbors[2],
+			     qNeighbors[3],
+			     dq);
+
       // left interface : left state
-      trace_unsplit_hydro_2d_by_direction(qLocN,
-					  dqN,
+      trace_unsplit_hydro_2d_by_direction(qLoc,
+					  dq,
 					  dtdx, dtdy,
 					  FACE_XMAX, 
 					  qleft);
 
-      // gravity predictor on velocity component of qp0's
-      if (gravityEnabled) {
-	qleft[IU] += HALF_F * dt * gravin[elemOffset+IX*arraySize];
-	qleft[IV] += HALF_F * dt * gravin[elemOffset+IY*arraySize];
+      if (gravityEnabled) { 
+	
+	// we need to modify input to flux computation with
+	// gravity predictor (half time step)
+	qleft[IU]  += HALF_F * dt * gravin[elemOffset+IX*arraySize];
+	qleft[IV]  += HALF_F * dt * gravin[elemOffset+IY*arraySize];
 
 	qright[IU] += HALF_F * dt * gravin[elemOffset+IX*arraySize];
 	qright[IV] += HALF_F * dt * gravin[elemOffset+IY*arraySize];
-      }
 
+      } // end gravityEnabled
+      
       // Solve Riemann problem at X-interfaces and compute X-fluxes
       riemann<NVAR_2D>(qleft,qright,qgdnv,flux_x);
 
+      deltaU[tx  ][ty  ][ID] += flux_x[ID]*dtdx;
+      deltaU[tx  ][ty  ][IP] += flux_x[IP]*dtdx;
+      deltaU[tx  ][ty  ][IU] += flux_x[IU]*dtdx;
+      deltaU[tx  ][ty  ][IV] += flux_x[IV]*dtdx;
+
+    }
+  __syncthreads();
+
+  if(i > 1 and i < imax-1 and tx > 1 and tx < UNSPLIT_BLOCK_DIMX_2D_V0-1 and
+     j > 1 and j < jmax-1 and ty > 1 and ty < UNSPLIT_BLOCK_DIMY_2D_V0-1)
+    {
+
+      deltaU[tx-1][ty  ][ID] -= flux_x[ID]*dtdx;
+      deltaU[tx-1][ty  ][IP] -= flux_x[IP]*dtdx;
+      deltaU[tx-1][ty  ][IU] -= flux_x[IU]*dtdx;
+      deltaU[tx-1][ty  ][IV] -= flux_x[IV]*dtdx;
+
+    }
+  __syncthreads();
 
 
-      // actually perform update on external device memory
+  // along Y
+  if(i > 1 and i < imax-1 and tx > 1 and tx < UNSPLIT_BLOCK_DIMX_2D_V0-1 and
+     j > 1 and j < jmax-1 and ty > 1 and ty < UNSPLIT_BLOCK_DIMY_2D_V0-1)
+    {
+ 
+      // load neighborhood
+      for (int iVar=0; iVar<NVAR_2D; iVar++) {
+	qLoc[iVar]          = q[tx  ][ty  ][iVar];
+	qNeighbors[0][iVar] = q[tx+1][ty  ][iVar];
+	qNeighbors[1][iVar] = q[tx-1][ty  ][iVar];
+	qNeighbors[2][iVar] = q[tx  ][ty+1][iVar];
+	qNeighbors[3][iVar] = q[tx  ][ty-1][iVar];
+      }
+
+      // compute slopes in current cell
+      slope_unsplit_hydro_2d(qLoc, 
+			     qNeighbors[0],
+			     qNeighbors[1],
+			     qNeighbors[2],
+			     qNeighbors[3],
+			     dq);
+
+      // left interface : right state
+      trace_unsplit_hydro_2d_by_direction(qLoc, 
+					  dq, 
+					  dtdx, dtdy, 
+					  FACE_YMIN, 
+					  qright);
+
+      // get primitive variables state vector in left neighbor along Y
+      for (int iVar=0; iVar<NVAR_2D; iVar++) {
+	qLoc[iVar]          = q[tx  ][ty-1][iVar];
+	qNeighbors[0][iVar] = q[tx+1][ty-1][iVar];
+	qNeighbors[1][iVar] = q[tx-1][ty-1][iVar];
+	qNeighbors[2][iVar] = q[tx  ][ty  ][iVar];
+	qNeighbors[3][iVar] = q[tx  ][ty-2][iVar];
+      }
+
+      // compute slopes in left neighbor along X
+      slope_unsplit_hydro_2d(qLoc, 
+			     qNeighbors[0],
+			     qNeighbors[1],
+			     qNeighbors[2],
+			     qNeighbors[3],
+			     dq);
+
+      // left interface : left state
+      trace_unsplit_hydro_2d_by_direction(qLoc,
+					  dq,
+					  dtdx, dtdy,
+					  FACE_YMAX, 
+					  qleft);
+
+      if (gravityEnabled) { 
+	
+	// we need to modify input to flux computation with
+	// gravity predictor (half time step)
+	qleft[IU]  += HALF_F * dt * gravin[elemOffset+IX*arraySize];
+	qleft[IV]  += HALF_F * dt * gravin[elemOffset+IY*arraySize];
+
+	qright[IU] += HALF_F * dt * gravin[elemOffset+IX*arraySize];
+	qright[IV] += HALF_F * dt * gravin[elemOffset+IY*arraySize];
+
+      } // end gravityEnabled
+      
+      // Solve Riemann problem at X-interfaces and compute Y-fluxes
+      swap_value(qleft[IU] ,qleft[IV]);
+      swap_value(qright[IU],qright[IV]);
+      riemann<NVAR_2D>(qleft,qright,qgdnv,flux_y);
+
+      // watchout IU / IV are swapped
+      deltaU[tx  ][ty  ][ID] += flux_y[ID]*dtdy;
+      deltaU[tx  ][ty  ][IP] += flux_y[IP]*dtdy;
+      deltaU[tx  ][ty  ][IU] += flux_y[IV]*dtdy;
+      deltaU[tx  ][ty  ][IV] += flux_y[IU]*dtdy;
+    }
+  __syncthreads();
+
+  if(i > 1 and i < imax-1 and tx > 1 and tx < UNSPLIT_BLOCK_DIMX_2D_V0-1 and
+     j > 1 and j < jmax-1 and ty > 1 and ty < UNSPLIT_BLOCK_DIMY_2D_V0-1)
+    {
+
+      // watchout IU / IV are swapped
+      deltaU[tx  ][ty-1][ID] -= flux_y[ID]*dtdy;
+      deltaU[tx  ][ty-1][IP] -= flux_y[IP]*dtdy;
+      deltaU[tx  ][ty-1][IU] -= flux_y[IV]*dtdy;
+      deltaU[tx  ][ty-1][IV] -= flux_y[IU]*dtdy;
+
+    }
+  __syncthreads();
+
+  //
+  // Update on external memory
+  //
+  if(i > 1 and i < imax-2 and tx > 1 and tx < UNSPLIT_BLOCK_DIMX_2D_V0-2 and
+     j > 1 and j < jmax-2 and ty > 1 and ty < UNSPLIT_BLOCK_DIMY_2D_V0-2)
+
+    {
+
+     // actually perform update on external device memory
       int offset = elemOffset;
-      Uout[offset] = uOut[ID];  offset += arraySize;
-      Uout[offset] = uOut[IP];  offset += arraySize;
-      Uout[offset] = uOut[IU];  offset += arraySize;
-      Uout[offset] = uOut[IV];
+      Uout[offset] += deltaU[tx][ty][ID];  offset += arraySize;
+      Uout[offset] += deltaU[tx][ty][IP];  offset += arraySize;
+      Uout[offset] += deltaU[tx][ty][IU];  offset += arraySize;
+      Uout[offset] += deltaU[tx][ty][IV];
 
     }
       
