@@ -1140,16 +1140,16 @@ __global__ void kernel_godunov_unsplit_3d(const real_t * __restrict__ Uin,
  *
  */
 
-/*******************************************************
- *** COMPUTE PRIMITIVE VARIABLES 2D KERNEL version 1 ***
- *******************************************************/
+/*********************************************
+ *** COMPUTE PRIMITIVE VARIABLES 2D KERNEL ***
+ *********************************************/
 
 #ifdef USE_DOUBLE
-#define PRIM_VAR_BLOCK_DIMX_2D_V1	16
-#define PRIM_VAR_BLOCK_DIMY_2D_V1	16
+#define PRIM_VAR_BLOCK_DIMX_2D	16
+#define PRIM_VAR_BLOCK_DIMY_2D	16
 #else // simple precision
-#define PRIM_VAR_BLOCK_DIMX_2D_V1	16
-#define PRIM_VAR_BLOCK_DIMY_2D_V1	16
+#define PRIM_VAR_BLOCK_DIMX_2D	16
+#define PRIM_VAR_BLOCK_DIMY_2D	16
 #endif // USE_DOUBLE
 
 /**
@@ -1173,8 +1173,8 @@ __global__ void kernel_hydro_compute_primitive_variables_2D(const real_t * __res
   const int tx = threadIdx.x;
   const int ty = threadIdx.y;
   
-  const int i = __mul24(bx, PRIM_VAR_BLOCK_DIMX_2D_V1) + tx;
-  const int j = __mul24(by, PRIM_VAR_BLOCK_DIMY_2D_V1) + ty;
+  const int i = __mul24(bx, PRIM_VAR_BLOCK_DIMX_2D) + tx;
+  const int j = __mul24(by, PRIM_VAR_BLOCK_DIMY_2D) + ty;
   
   const int arraySize    = pitch * jmax;
 
@@ -1208,16 +1208,16 @@ __global__ void kernel_hydro_compute_primitive_variables_2D(const real_t * __res
 
 } // kernel_hydro_compute_primitive_variables_2D
 
-/*******************************************************
- *** COMPUTE PRIMITIVE VARIABLES 3D KERNEL version 1 ***
- *******************************************************/
+/*********************************************
+ *** COMPUTE PRIMITIVE VARIABLES 3D KERNEL ***
+ *********************************************/
 
 #ifdef USE_DOUBLE
-#define PRIM_VAR_BLOCK_DIMX_3D_V1	16
-#define PRIM_VAR_BLOCK_DIMY_3D_V1	16
+#define PRIM_VAR_BLOCK_DIMX_3D	16
+#define PRIM_VAR_BLOCK_DIMY_3D	16
 #else // simple precision
-#define PRIM_VAR_BLOCK_DIMX_3D_V1	16
-#define PRIM_VAR_BLOCK_DIMY_3D_V1	16
+#define PRIM_VAR_BLOCK_DIMX_3D	16
+#define PRIM_VAR_BLOCK_DIMY_3D	16
 #endif // USE_DOUBLE
 
 /**
@@ -1242,8 +1242,8 @@ __global__ void kernel_hydro_compute_primitive_variables_3D(const real_t * __res
   const int tx = threadIdx.x;
   const int ty = threadIdx.y;
   
-  const int i = __mul24(bx, PRIM_VAR_BLOCK_DIMX_3D_V1) + tx;
-  const int j = __mul24(by, PRIM_VAR_BLOCK_DIMY_3D_V1) + ty;
+  const int i = __mul24(bx, PRIM_VAR_BLOCK_DIMX_3D) + tx;
+  const int j = __mul24(by, PRIM_VAR_BLOCK_DIMY_3D) + ty;
   
   const int arraySize    = pitch * jmax * kmax;
 

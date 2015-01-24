@@ -655,6 +655,15 @@ void HydroRunGodunov::godunov_unsplit_gpu(DeviceArray<real_t>& d_UOld,
   // inner domain integration
   TIMER_START(timerGodunov);
 
+  /*
+   * Whatever implementation version, start by computing primitive variables
+   *   
+   * convert conservative to primitive variables (and source term predictor)
+   * put results in h_Q object
+   *
+   */
+  convertToPrimitives( d_UOld.data() );
+
   if (dimType == TWO_D) {
 
     if (unsplitVersion == 0) {
@@ -674,21 +683,6 @@ void HydroRunGodunov::godunov_unsplit_gpu(DeviceArray<real_t>& d_UOld,
       // checkCudaError("HydroRunGodunov :: kernel_godunov_unsplit_2d error");
 
 
-      {
-	// 2D primitive variables computation kernel    
-	dim3 dimBlock(PRIM_VAR_BLOCK_DIMX_2D_V1,
-		      PRIM_VAR_BLOCK_DIMY_2D_V1);
-	dim3 dimGrid(blocksFor(isize, PRIM_VAR_BLOCK_DIMX_2D_V1), 
-		     blocksFor(jsize, PRIM_VAR_BLOCK_DIMY_2D_V1));
-	kernel_hydro_compute_primitive_variables_2D<<<dimGrid, 
-	  dimBlock>>>(d_UOld.data(), 
-		      d_Q.data(),
-		      d_UOld.pitch(),
-		      d_UOld.dimx(),
-		      d_UOld.dimy());
-	checkCudaError("HydroRunGodunov :: kernel_hydro_compute_primitive_variables_2D error");
-
-      } // end compute primitive variables 2d kernel
 
       {
       	dim3 dimBlock(UNSPLIT_BLOCK_DIMX_2D_V0,
@@ -708,34 +702,13 @@ void HydroRunGodunov::godunov_unsplit_gpu(DeviceArray<real_t>& d_UOld,
 	checkCudaError("HydroRunGodunov :: kernel_godunov_unsplit_2d_v0 error");
 
       } // end compute unsplit v0
+
+      // gravity source term
+      if (gravityEnabled) {
+	compute_gravity_source_term(d_UNew, d_UOld, dt);
+      }
 		      
-					    
-
     } else if (unsplitVersion == 1) {
-
-      TIMER_START(timerPrimVar);
-      {
-	// 2D primitive variables computation kernel    
-	dim3 dimBlock(PRIM_VAR_BLOCK_DIMX_2D_V1,
-		      PRIM_VAR_BLOCK_DIMY_2D_V1);
-	dim3 dimGrid(blocksFor(isize, PRIM_VAR_BLOCK_DIMX_2D_V1), 
-		     blocksFor(jsize, PRIM_VAR_BLOCK_DIMY_2D_V1));
-	kernel_hydro_compute_primitive_variables_2D<<<dimGrid, 
-	  dimBlock>>>(d_UOld.data(), 
-		      d_Q.data(),
-		      d_UOld.pitch(),
-		      d_UOld.dimx(),
-		      d_UOld.dimy());
-	checkCudaError("HydroRunGodunov :: kernel_hydro_compute_primitive_variables_2D error");
-
-	if (dumpDataForDebugEnabled) {
-	  d_Q.copyToHost(h_debug);
-	  outputVtkDebug(h_debug, "prim_", nStep, true);
-	}
-
-      } // end compute primitive variables 2d kernel
-      TIMER_STOP(timerPrimVar);
-
 
       TIMER_START(timerSlopeTrace);
       {
@@ -860,25 +833,6 @@ void HydroRunGodunov::godunov_unsplit_gpu(DeviceArray<real_t>& d_UOld,
 
     } else if (unsplitVersion == 1) {
 
-      TIMER_START(timerPrimVar);
-      {
-	// 3D primitive variables computation kernel    
-	dim3 dimBlock(PRIM_VAR_BLOCK_DIMX_3D_V1,
-		      PRIM_VAR_BLOCK_DIMY_3D_V1);
-	dim3 dimGrid(blocksFor(isize, PRIM_VAR_BLOCK_DIMX_3D_V1), 
-		     blocksFor(jsize, PRIM_VAR_BLOCK_DIMY_3D_V1));
-	kernel_hydro_compute_primitive_variables_3D<<<dimGrid, 
-	  dimBlock>>>(d_UOld.data(), 
-		      d_Q.data(),
-		      d_UOld.pitch(),
-		      d_UOld.dimx(),
-		      d_UOld.dimy(),
-		      d_UOld.dimz());
-	checkCudaError("HydroRunGodunov :: kernel_hydro_compute_primitive_variables_3D error");
-	
-      } // end compute primitive variables 3d kernel
-      TIMER_STOP(timerPrimVar);
-
       TIMER_START(timerSlopeTrace);
       {
 	// 3D slope / trace computation kernel
@@ -999,25 +953,6 @@ void HydroRunGodunov::godunov_unsplit_gpu(DeviceArray<real_t>& d_UOld,
 
 
     } else if (unsplitVersion == 2) {
-
-      TIMER_START(timerPrimVar);
-      {
-	// 3D primitive variables computation kernel    
-	dim3 dimBlock(PRIM_VAR_BLOCK_DIMX_3D_V1,
-		      PRIM_VAR_BLOCK_DIMY_3D_V1);
-	dim3 dimGrid(blocksFor(isize, PRIM_VAR_BLOCK_DIMX_3D_V1), 
-		     blocksFor(jsize, PRIM_VAR_BLOCK_DIMY_3D_V1));
-	kernel_hydro_compute_primitive_variables_3D<<<dimGrid, 
-	  dimBlock>>>(d_UOld.data(), 
-		      d_Q.data(),
-		      d_UOld.pitch(),
-		      d_UOld.dimx(),
-		      d_UOld.dimy(),
-		      d_UOld.dimz());
-	checkCudaError("HydroRunGodunov :: kernel_hydro_compute_primitive_variables_3D error");
-	
-      } // end compute primitive variables 3d kernel
-      TIMER_STOP(timerPrimVar);
 
       TIMER_START(timerSlopeTrace);
       {
@@ -3769,9 +3704,53 @@ void HydroRunGodunov::oneStepIntegration(int& nStep, real_t& t, real_t& dt) {
 void HydroRunGodunov::convertToPrimitives(real_t *U)
 {
 
-  // this is a CPU-only routine    
-#ifndef __CUDACC__
+#ifdef __CUDACC__
+
+  if (dimType == TWO_D) {
+
+    TIMER_START(timerPrimVar);
+    {
+      // 2D primitive variables computation kernel    
+      dim3 dimBlock(PRIM_VAR_BLOCK_DIMX_2D,
+		    PRIM_VAR_BLOCK_DIMY_2D);
+      dim3 dimGrid(blocksFor(isize, PRIM_VAR_BLOCK_DIMX_2D), 
+		   blocksFor(jsize, PRIM_VAR_BLOCK_DIMY_2D));
+      kernel_hydro_compute_primitive_variables_2D<<<dimGrid, 
+	dimBlock>>>(U, 
+		    d_Q.data(),
+		    d_Q.pitch(),
+		    d_Q.dimx(),
+		    d_Q.dimy());
+      checkCudaError("HydroRunGodunov :: kernel_hydro_compute_primitive_variables_2D error");
+      
+    } // end compute primitive variables 2d kernel
+    TIMER_STOP(timerPrimVar);
+
+  } else { // THREE_D
+
+    TIMER_START(timerPrimVar);
+    {
+      // 3D primitive variables computation kernel    
+      dim3 dimBlock(PRIM_VAR_BLOCK_DIMX_3D,
+		    PRIM_VAR_BLOCK_DIMY_3D);
+      dim3 dimGrid(blocksFor(isize, PRIM_VAR_BLOCK_DIMX_3D), 
+		   blocksFor(jsize, PRIM_VAR_BLOCK_DIMY_3D));
+      kernel_hydro_compute_primitive_variables_3D<<<dimGrid, 
+	dimBlock>>>(U, 
+		    d_Q.data(),
+		    d_Q.pitch(),
+		    d_Q.dimx(),
+		    d_Q.dimy(),
+		    d_Q.dimz());
+      checkCudaError("HydroRunGodunov :: kernel_hydro_compute_primitive_variables_3D error");
+      
+    } // end compute primitive variables 3d kernel
+    TIMER_STOP(timerPrimVar);
+
+  } // end THREE_D
   
+#else // CPU version
+
   if (dimType == TWO_D) {
         
     // primitive variable domain array
