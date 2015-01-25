@@ -690,10 +690,10 @@ namespace hydroSimu {
 	TIMER_START(timerPrimVar);
 	{
 	  // 2D primitive variables computation kernel    
-	  dim3 dimBlock(PRIM_VAR_BLOCK_DIMX_2D_V1,
-			PRIM_VAR_BLOCK_DIMY_2D_V1);
-	  dim3 dimGrid(blocksFor(isize, PRIM_VAR_BLOCK_DIMX_2D_V1), 
-		       blocksFor(jsize, PRIM_VAR_BLOCK_DIMY_2D_V1));
+	  dim3 dimBlock(PRIM_VAR_BLOCK_DIMX_2D,
+			PRIM_VAR_BLOCK_DIMY_2D);
+	  dim3 dimGrid(blocksFor(isize, PRIM_VAR_BLOCK_DIMX_2D), 
+		       blocksFor(jsize, PRIM_VAR_BLOCK_DIMY_2D));
 	  kernel_hydro_compute_primitive_variables_2D<<<dimGrid, 
 	    dimBlock>>>(d_UOld.data(), 
 			d_Q.data(),
@@ -817,10 +817,10 @@ namespace hydroSimu {
 	TIMER_START(timerPrimVar);
 	{
 	  // 3D primitive variables computation kernel    
-	  dim3 dimBlock(PRIM_VAR_BLOCK_DIMX_3D_V1,
-			PRIM_VAR_BLOCK_DIMY_3D_V1);
-	  dim3 dimGrid(blocksFor(isize, PRIM_VAR_BLOCK_DIMX_3D_V1), 
-		       blocksFor(jsize, PRIM_VAR_BLOCK_DIMY_3D_V1));
+	  dim3 dimBlock(PRIM_VAR_BLOCK_DIMX_3D,
+			PRIM_VAR_BLOCK_DIMY_3D);
+	  dim3 dimGrid(blocksFor(isize, PRIM_VAR_BLOCK_DIMX_3D), 
+		       blocksFor(jsize, PRIM_VAR_BLOCK_DIMY_3D));
 	  kernel_hydro_compute_primitive_variables_3D<<<dimGrid, 
 	    dimBlock>>>(d_UOld.data(), 
 			d_Q.data(),

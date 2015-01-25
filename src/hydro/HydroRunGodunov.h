@@ -105,6 +105,30 @@ namespace hydroSimu {
     void godunov_unsplit_gpu(DeviceArray<real_t>& d_UOld, 
 			     DeviceArray<real_t>& d_UNew,
 			     real_t dt, int nStep);
+
+    //! unplitVersion = 0
+    //! memory footprint is very low
+    //! nothing is stored globally except h_Q
+    //! some redundancy in trace computation
+    void godunov_unsplit_gpu_v0(DeviceArray<real_t>& d_UOld, 
+				DeviceArray<real_t>& d_UNew, 
+				real_t dt, int nStep);
+
+    //! unplitVersion = 1
+    //! memory footprint is medium
+    //! reconstructed (trace) states are stored
+    //! then perform Riemann flux computation and update
+    void godunov_unsplit_gpu_v1(DeviceArray<real_t>& d_UOld, 
+				DeviceArray<real_t>& d_UNew, 
+				real_t dt, int nStep);
+
+    //! unplitVersion = 2
+    //! memory footprint is larger than unplitVersion 2
+    //! slopes are stored and only 1 pair of reconstructed (trace) states
+    void godunov_unsplit_gpu_v2(DeviceArray<real_t>& d_UOld, 
+				DeviceArray<real_t>& d_UNew, 
+				real_t dt, int nStep);
+
 #else
     //! Actual computation of the godunov integration on CPU using
     //! directionally split scheme. 
