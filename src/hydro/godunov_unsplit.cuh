@@ -512,7 +512,7 @@ __global__ void kernel_godunov_unsplit_2d_v0(real_t *Uout,
 	
   real_t *gravin = gParams.arrayList[A_GRAV];
 
-  // load U and convert to primitive variables
+  // load primitive variables
   if(i >= 0 and i < imax and 
      j >= 0 and j < jmax)
     {
@@ -1201,14 +1201,14 @@ __global__ void kernel_godunov_unsplit_3d_v0(const real_t * __restrict__ qData,
   top=3;
 
   // primitive variables
-  real_t qLoc[NVAR_3D];
+  //real_t qLoc[NVAR_3D];
 
   // slopes
   real_t dq[THREE_D][NVAR_3D];
   real_t dqN[THREE_D][NVAR_3D];
 
   // qNeighbors is used for trace computations
-  real_t qNeighbors[2*THREE_D][NVAR_3D];
+  //real_t qNeighbors[2*THREE_D][NVAR_3D];
   
   // reconstructed state on cell faces
   // aka riemann solver input
@@ -1987,20 +1987,444 @@ __global__ void kernel_hydro_compute_trace_unsplit_3d_v1(const real_t * __restri
 
 } // kernel_hydro_compute_trace_unsplit_3d_v1
 
+/******************************************
+ *** COMPUTE SLOPES 2D KERNEL version 2 ***
+ ******************************************/
+
+// 2D-kernel block dimensions
+#ifdef USE_DOUBLE
+#define SLOPES_BLOCK_DIMX_2D_V2	16
+#define SLOPES_BLOCK_INNER_DIMX_2D_V2	(SLOPES_BLOCK_DIMX_2D_V2-2)
+#define SLOPES_BLOCK_DIMY_2D_V2	16
+#define SLOPES_BLOCK_INNER_DIMY_2D_V2	(SLOPES_BLOCK_DIMY_2D_V2-2)
+#else // simple precision
+#define SLOPES_BLOCK_DIMX_2D_V2	16
+#define SLOPES_BLOCK_INNER_DIMX_2D_V2  (SLOPES_BLOCK_DIMX_2D_V2-2)
+#define SLOPES_BLOCK_DIMY_2D_V2	24
+#define SLOPES_BLOCK_INNER_DIMY_2D_V2  (SLOPES_BLOCK_DIMY_2D_V2-2)
+#endif // USE_DOUBLE
+
+/**
+ * Unsplit Godunov kernel : computes slopes for 2D data (version 2).
+ * 
+ * Primitive variables are assumed to have been already computed. 
+ *
+ */
+__global__ void kernel_godunov_slopes_2d_v2(const real_t * __restrict__ qData,
+					    real_t * d_slope_x,
+					    real_t * d_slope_y,
+					    int pitch, 
+					    int imax, 
+					    int jmax)
+{
+  // Block index
+  const int bx = blockIdx.x;
+  const int by = blockIdx.y;
+  
+  // Thread index
+  const int tx = threadIdx.x;
+  const int ty = threadIdx.y;
+  
+  const int i = __mul24(bx, SLOPES_BLOCK_INNER_DIMX_2D_V2) + tx;
+  const int j = __mul24(by, SLOPES_BLOCK_INNER_DIMY_2D_V2) + ty;
+  
+  const int arraySize  = __umul24(pitch, jmax);
+  const int elemOffset = __umul24(pitch, j   ) + i;
+
+  __shared__ real_t      q[SLOPES_BLOCK_DIMX_2D_V2][SLOPES_BLOCK_DIMY_2D_V2][NVAR_2D];
+
+  // primitive variables (local array)
+  real_t qLoc[NVAR_2D];
+	
+  // slopes
+  real_t dq[TWO_D][NVAR_2D];
+  real_t qNeighbors[2*TWO_D][NVAR_2D];
+
+  // load primitive variables
+  if(i >= 0 and i < imax and 
+     j >= 0 and j < jmax)
+    {
+      
+      // read conservative variables
+      int offset = elemOffset;
+      q[tx][ty][ID] = qData[offset];  offset += arraySize;
+      q[tx][ty][IP] = qData[offset];  offset += arraySize;
+      q[tx][ty][IU] = qData[offset];  offset += arraySize;
+      q[tx][ty][IV] = qData[offset];
+      
+    }
+  __syncthreads();
+
+  // slopes along X
+  if(i > 0 and i < imax-1 and tx > 0 and tx < SLOPES_BLOCK_DIMX_2D_V2-1 and
+     j > 0 and j < jmax-1 and ty > 0 and ty < SLOPES_BLOCK_DIMY_2D_V2-1)
+    {
+ 
+      // load neighborhood
+      for (int iVar=0; iVar<NVAR_2D; iVar++) {
+	qLoc[iVar]          = q[tx  ][ty  ][iVar];
+	qNeighbors[0][iVar] = q[tx+1][ty  ][iVar];
+	qNeighbors[1][iVar] = q[tx-1][ty  ][iVar];
+	qNeighbors[2][iVar] = q[tx  ][ty+1][iVar];
+	qNeighbors[3][iVar] = q[tx  ][ty-1][iVar];
+      }
+
+      // compute slopes in current cell
+      slope_unsplit_hydro_2d(qLoc, 
+			     qNeighbors[0],
+			     qNeighbors[1],
+			     qNeighbors[2],
+			     qNeighbors[3],
+			     dq);
+    }
+  __syncthreads();
+
+  if(i > 0 and i < imax-1 and tx > 0 and tx < SLOPES_BLOCK_DIMX_2D_V2-1 and
+     j > 0 and j < jmax-1 and ty > 0 and ty < SLOPES_BLOCK_DIMY_2D_V2-1)
+    {
+
+      // write slopes on global memory
+      int offset = elemOffset;
+      d_slope_x[offset] = dq[0][ID];
+      d_slope_y[offset] = dq[1][ID];  offset += arraySize;
+      
+      d_slope_x[offset] = dq[0][IP];
+      d_slope_y[offset] = dq[1][IP];  offset += arraySize;
+      
+      d_slope_x[offset] = dq[0][IU];
+      d_slope_y[offset] = dq[1][IU];  offset += arraySize;
+      
+      d_slope_x[offset] = dq[0][IV];
+      d_slope_y[offset] = dq[1][IV];  offset += arraySize;     
+    }
+
+} // kernel_godunov_slopes_2d_v2
+
+/*****************************************
+ *** COMPUTE TRACE 2D KERNEL version 2 ***
+ *****************************************/
+
+// 2D-kernel block dimensions
+#ifdef USE_DOUBLE
+#define TRACE_BLOCK_DIMX_2D_V2	16
+#define TRACE_BLOCK_DIMY_2D_V2	16
+#else // simple precision
+#define TRACE_BLOCK_DIMX_2D_V2	16
+#define TRACE_BLOCK_DIMY_2D_V2	16
+#endif // USE_DOUBLE
+
+/**
+ * Compute trace for hydro 3D by direction (implementation version 2).
+ *
+ * Output are all that is needed to compute fluxes.
+ * \see kernel_hydro_flux_update_unsplit_3d_v2
+ *
+ * All we do here is call :
+ * - trace_unsplit_hydro_2d_by_direction to get output : qleft, right.
+ *
+ * \param[in] d_slope_x input slopes array
+ * \param[in] d_slope_y input slopes array
+ * \param[out] d_qm qm state along dir
+ * \param[out] d_qp qp state along dir
+ */
+__global__ void kernel_godunov_trace_by_dir_2d_v2(const real_t * __restrict__ d_Q,
+						  const real_t * __restrict__ d_slope_x,
+						  const real_t * __restrict__ d_slope_y,
+						  real_t * d_qm,
+						  real_t * d_qp,
+						  int pitch, 
+						  int imax, 
+						  int jmax,
+						  real_t dt,
+						  real_t dtdx,
+						  real_t dtdy,
+						  bool gravityEnabled,
+						  int direction)
+{
+  // Block index
+  const int bx = blockIdx.x;
+  const int by = blockIdx.y;
+  
+  // Thread index
+  const int tx = threadIdx.x;
+  const int ty = threadIdx.y;
+  
+  const int i = __mul24(bx, TRACE_BLOCK_DIMX_2D_V2) + tx;
+  const int j = __mul24(by, TRACE_BLOCK_DIMY_2D_V2) + ty;
+  
+  const int arraySize  = __umul24(pitch, jmax);
+  const int elemOffset = __umul24(pitch, j   ) + i;
+
+  real_t qLoc[NVAR_2D];
+  real_t dq[TWO_D][NVAR_2D];
+
+  // reconstructed state on cell faces
+  // aka riemann solver input
+  real_t qleft[NVAR_2D];
+  real_t qright[NVAR_2D];
+
+  real_t *gravin = gParams.arrayList[A_GRAV];
+
+  int dir_min, dir_max;
+  
+  if (direction == IX) {
+    dir_min = FACE_XMIN;
+    dir_max = FACE_XMAX;
+  } else if (direction == IY) {
+    dir_min = FACE_YMIN;
+    dir_max = FACE_YMAX;
+  }
+
+  // load prim var and slopes
+  if(i > 0 and i < imax-1 and 
+     j > 0 and j < jmax-1 )
+    {
+      int offset = elemOffset;
+
+      qLoc [ID] = d_Q[offset];
+      dq[0][ID] = d_slope_x[offset];
+      dq[1][ID] = d_slope_y[offset]; offset += arraySize;
+
+      qLoc [IP] = d_Q[offset];
+      dq[0][IP] = d_slope_x[offset];
+      dq[1][IP] = d_slope_y[offset]; offset += arraySize;
+
+      qLoc [IU] = d_Q[offset];
+      dq[0][IU] = d_slope_x[offset];
+      dq[1][IU] = d_slope_y[offset]; offset += arraySize;
+
+      qLoc [IV] = d_Q[offset];
+      dq[0][IV] = d_slope_x[offset];
+      dq[1][IV] = d_slope_y[offset]; offset += arraySize;
+
+      //
+      // Compute reconstructed states 
+      //
+      
+      // TAKE CARE here left and right designate the interface location
+      // compare to current cell
+      // !!! THIS is FUNDAMENTALLY different from v0 and v1 !!!
+      
+      // left interface 
+      trace_unsplit_hydro_2d_by_direction(qLoc, 
+					  dq, 
+					  dtdx, dtdy, 
+					  dir_min,
+					  qleft);
+      
+      // right interface
+      trace_unsplit_hydro_2d_by_direction(qLoc,
+					  dq,
+					  dtdx, dtdy,
+					  dir_max, 
+					  qright);
+      
+      if (gravityEnabled) { 
+	
+	// we need to modify input to flux computation with
+	// gravity predictor (half time step)
+	
+	qleft[IU]  += HALF_F * dt * gravin[elemOffset+IX*arraySize];
+	qleft[IV]  += HALF_F * dt * gravin[elemOffset+IY*arraySize];
+	
+	qright[IU] += HALF_F * dt * gravin[elemOffset+IX*arraySize];
+	qright[IV] += HALF_F * dt * gravin[elemOffset+IY*arraySize];
+	
+      } // end gravityEnabled
+
+      // store them
+      offset = elemOffset;
+	
+      d_qm[offset] = qleft [ID];
+      d_qp[offset] = qright[ID]; offset += arraySize;
+	
+      d_qm[offset] = qleft [IP];
+      d_qp[offset] = qright[IP]; offset += arraySize;
+
+      d_qm[offset] = qleft [IU];
+      d_qp[offset] = qright[IU]; offset += arraySize;
+
+      d_qm[offset] = qleft [IV];
+      d_qp[offset] = qright[IV]; offset += arraySize;
+
+    }
+
+} // kernel_godunov_trace_by_dir_2d_v2
+
+/*********************************************************
+ *** UPDATE CONSERVATIVE VAR ARRAY 2D KERNEL version 2 ***
+ *********************************************************/
+#ifdef USE_DOUBLE
+#define UPDATE_BLOCK_DIMX_2D_V2	16
+#define UPDATE_BLOCK_INNER_DIMX_2D_V2	(UPDATE_BLOCK_DIMX_2D_V2-1)
+#define UPDATE_BLOCK_DIMY_2D_V2	16
+#define UPDATE_BLOCK_INNER_DIMY_2D_V2	(UPDATE_BLOCK_DIMY_2D_V2-1)
+#else // simple precision
+#define UPDATE_BLOCK_DIMX_2D_V2	16
+#define UPDATE_BLOCK_INNER_DIMX_2D_V2	(UPDATE_BLOCK_DIMX_2D_V2-1)
+#define UPDATE_BLOCK_DIMY_2D_V2	16
+#define UPDATE_BLOCK_INNER_DIMY_2D_V2	(UPDATE_BLOCK_DIMY_2D_V2-1)
+#endif // USE_DOUBLE
+
+/**
+ * Update hydro conservative variables 2D (implementation version 1).
+ * 
+ * This is the final kernel, that given the qm, qp states compute
+ * fluxes and perform update.
+ *
+ * \see kernel_hydro_compute_trace_unsplit_2d_v1 (computation of qm, qp buffer)
+ *
+ * \param[in,out] Uout ouput conservative variable array
+ * \param[in] d_qm_x qm state along dir
+ * \param[in] d_qp_x qp state along dir
+ * \param[in] direction : IX, IY or IZ
+ *
+ */
+__global__ void kernel_hydro_flux_update_unsplit_2d_v2(real_t       * Uout,
+						       const real_t * __restrict__ d_qm,
+						       const real_t * __restrict__ d_qp,
+						       int pitch, 
+						       int imax, 
+						       int jmax,
+						       real_t dtdx, 
+						       real_t dtdy,
+						       real_t dt,
+						       int direction)
+{
+
+  // Block index
+  const int bx = blockIdx.x;
+  const int by = blockIdx.y;
+  
+  // Thread index
+  const int tx = threadIdx.x;
+  const int ty = threadIdx.y;
+  
+  const int i = __mul24(bx, UPDATE_BLOCK_INNER_DIMX_2D_V2) + tx;
+  const int j = __mul24(by, UPDATE_BLOCK_INNER_DIMY_2D_V2) + ty;
+  
+  const int arraySize    = pitch * jmax;
+
+  // flux computation
+  __shared__ real_t flux[UPDATE_BLOCK_DIMX_2D_V2][UPDATE_BLOCK_DIMY_2D_V2][NVAR_2D];
+
+  // conservative variables
+  real_t uOut[NVAR_2D];
+  real_t qgdnv[NVAR_2D];
+
+  int elemOffset = i + pitch * j;
+
+  int deltaOffset;
+  if (direction == IX)
+    deltaOffset = -1;
+  else if (direction == IY)
+    deltaOffset = -pitch;
+  
+  /*
+   * Compute fluxes 
+   */
+  flux[tx][ty][ID] = ZERO_F;
+  flux[tx][ty][IP] = ZERO_F;
+  flux[tx][ty][IU] = ZERO_F;
+  flux[tx][ty][IV] = ZERO_F;
+  __syncthreads();
+    
+  if(i >= 2 and i < imax-1 and
+     j >= 2 and j < jmax-1)
+    {
+      // Solve Riemann problem at interfaces and compute fluxes
+      real_t   qleft [NVAR_2D];
+      real_t   qright[NVAR_2D];
+      
+      // set qleft by re-reading qp from external memory at location x-1 or y-1
+      int offset = elemOffset + deltaOffset;
+      for (int iVar=0; iVar<NVAR_2D; iVar++) {
+	qleft[iVar] = d_qp[offset];
+	offset += arraySize;
+      }
+      
+      // set qright by re-reading qm from external memory at curent location
+      offset = elemOffset;
+      for (int iVar=0; iVar<NVAR_2D; iVar++) {
+	qright[iVar] = d_qm[offset];
+	offset += arraySize;
+      }
+
+      if (direction == IY) {
+	// watchout swap IU and IV
+	swap_value(qleft[IU],qleft[IV]);
+	swap_value(qright[IU],qright[IV]);
+      }
+      
+      riemann<NVAR_2D>(qleft, qright, qgdnv, flux[tx][ty]);
+    }  
+  __syncthreads();
+    
+  // update uOut with flux
+  if(i >= 2 and i < imax-1 and tx < UPDATE_BLOCK_DIMX_2D_V2-1 and
+     j >= 2 and j < jmax-1 and ty < UPDATE_BLOCK_DIMY_2D_V2-1)
+    {
+      // re-read input state into uOut which will in turn serve to
+      // update Uout !
+      int offset = elemOffset;
+      uOut[ID] = Uout[offset];  offset += arraySize;
+      uOut[IP] = Uout[offset];  offset += arraySize;
+      uOut[IU] = Uout[offset];  offset += arraySize;
+      uOut[IV] = Uout[offset];
+
+      if (direction == IX) {
+	uOut[ID] += flux[tx  ][ty][ID]*dtdx;
+	uOut[ID] -= flux[tx+1][ty][ID]*dtdx;
+	
+	uOut[IP] += flux[tx  ][ty][IP]*dtdx;
+	uOut[IP] -= flux[tx+1][ty][IP]*dtdx;
+	
+	uOut[IU] += flux[tx  ][ty][IU]*dtdx;
+	uOut[IU] -= flux[tx+1][ty][IU]*dtdx;
+	
+	uOut[IV] += flux[tx  ][ty][IV]*dtdx;
+	uOut[IV] -= flux[tx+1][ty][IV]*dtdx;
+      } else if (direction == IY) {
+	// watchout IU and IV are swapped !
+	uOut[ID] += flux[tx][ty  ][ID]*dtdy;
+	uOut[ID] -= flux[tx][ty+1][ID]*dtdy;
+	
+	uOut[IP] += flux[tx][ty  ][IP]*dtdy;
+	uOut[IP] -= flux[tx][ty+1][IP]*dtdy;
+	
+	uOut[IU] += flux[tx][ty  ][IV]*dtdy;
+	uOut[IU] -= flux[tx][ty+1][IV]*dtdy;
+	
+	uOut[IV] += flux[tx][ty  ][IU]*dtdy;
+	uOut[IV] -= flux[tx][ty+1][IU]*dtdy;
+      }
+
+      // actually perform the update on external device memory
+      offset = elemOffset;
+      
+      Uout[offset] = uOut[ID];  offset += arraySize;
+      Uout[offset] = uOut[IP];  offset += arraySize;
+      Uout[offset] = uOut[IU];  offset += arraySize;
+      Uout[offset] = uOut[IV];
+
+    }
+
+} // kernel_hydro_flux_update_unsplit_2d_v2
+
 /*****************************************
  *** COMPUTE TRACE 3D KERNEL version 2 ***
  *****************************************/
 
 // 3D-kernel block dimensions
 #ifdef USE_DOUBLE
-#define TRACE_BLOCK_DIMX_3D_V2	16
-#define TRACE_BLOCK_INNER_DIMX_3D_V2	(TRACE_BLOCK_DIMX_3D_V2-2)
-#define TRACE_BLOCK_DIMY_3D_V2	16
-#define TRACE_BLOCK_INNER_DIMY_3D_V2	(TRACE_BLOCK_DIMY_3D_V2-2)
+# define TRACE_BLOCK_DIMX_3D_V2	16
+# define TRACE_BLOCK_INNER_DIMX_3D_V2	(TRACE_BLOCK_DIMX_3D_V2-2)
+# define TRACE_BLOCK_DIMY_3D_V2	16
+# define TRACE_BLOCK_INNER_DIMY_3D_V2	(TRACE_BLOCK_DIMY_3D_V2-2)
 #else // simple precision
 # define TRACE_BLOCK_DIMX_3D_V2	16
 # define TRACE_BLOCK_INNER_DIMX_3D_V2	(TRACE_BLOCK_DIMX_3D_V2-2)
-# define TRACE_BLOCK_DIMY_3D_V2	8
+# define TRACE_BLOCK_DIMY_3D_V2	16
 # define TRACE_BLOCK_INNER_DIMY_3D_V2	(TRACE_BLOCK_DIMY_3D_V2-2)
 #endif // USE_DOUBLE
 
