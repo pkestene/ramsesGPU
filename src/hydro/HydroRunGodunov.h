@@ -224,7 +224,7 @@ namespace hydroSimu {
 #endif // __CUDACC__
     /*@}*/
 
-    /** \defgroup implementation1 */
+    /** \defgroup implementation2 */
     /*@{*/
 #ifdef __CUDACC__
     DeviceArray<real_t> d_qm;      //!< only for unsplit version 2

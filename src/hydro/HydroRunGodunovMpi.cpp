@@ -75,12 +75,12 @@ namespace hydroSimu {
       if (unsplitVersion !=0 and unsplitVersion !=1 and unsplitVersion !=2)
 	{
 	  if (myRank == 0) {
-	    std::cerr << "##############################################" << std::endl;
-	    std::cerr << "WARNING : you should review your parameter    " << std::endl;
-	    std::cerr << "file and set hydro/unsplitVersion to a valid  " << std::endl;
-	    std::cerr << "number : 0, 1, 2 are currently available      " << std::endl;
-	    std::cerr << "Fall back to the default value : 1            " << std::endl;
-	    std::cerr << "##############################################" << std::endl;
+	    std::cerr << "##################################################" << std::endl;
+	    std::cerr << "WARNING : you should review your parameter file   " << std::endl;
+	    std::cerr << "and set hydro/unsplitVersion to a valid number :  " << std::endl;
+	    std::cerr << " - 0, 1 and 2 are currently available for 2D/3D   " << std::endl;
+	    std::cerr << "Fall back to the default value : 1                " << std::endl;
+	    std::cerr << "##################################################" << std::endl;
 	  }
 	  unsplitVersion = 1;
 	}
@@ -91,7 +91,7 @@ namespace hydroSimu {
        * allways allocate primitive variables array : h_Q / d_Q
        */
 #ifdef __CUDACC__
-      
+
       if (dimType == TWO_D) {
 	d_Q.allocate   (make_uint3(isize, jsize, nbVar), gpuMemAllocType);
       } else { // THREE_D
@@ -99,9 +99,9 @@ namespace hydroSimu {
       }
       // register data pointers
       _gParams.arrayList[A_Q]    = d_Q.data();
-      
+    
 #else
-      
+    
       if (dimType == TWO_D) {
 	h_Q.allocate   (make_uint3(isize, jsize, nbVar));
       } else { // THREE_D
@@ -109,71 +109,70 @@ namespace hydroSimu {
       }
       // register data pointers
       _gParams.arrayList[A_Q]    = h_Q.data();
-      
+
 #endif
-      
+
       /*
        * memory allocation specific to a given implementation version
        */
       if (unsplitVersion == 1) {
-	
+
 	// do memory allocation for extra array
 #ifdef __CUDACC__
 	if (dimType == TWO_D) {
-	  
+
 	  d_qm_x.allocate(make_uint3(isize, jsize, nbVar), gpuMemAllocType);
 	  d_qm_y.allocate(make_uint3(isize, jsize, nbVar), gpuMemAllocType);
 	  d_qp_x.allocate(make_uint3(isize, jsize, nbVar), gpuMemAllocType);
 	  d_qp_y.allocate(make_uint3(isize, jsize, nbVar), gpuMemAllocType);
-	  
+
 	  // register data pointers
 	  _gParams.arrayList[A_QM_X] = d_qm_x.data();
 	  _gParams.arrayList[A_QM_Y] = d_qm_y.data();
 	  _gParams.arrayList[A_QP_X] = d_qp_x.data();
 	  _gParams.arrayList[A_QP_Y] = d_qp_y.data();
-	  
+
 	} else { // THREE_D
-	  
+
 	  d_qm_x.allocate(make_uint4(isize, jsize, ksize, nbVar), gpuMemAllocType);
 	  d_qm_y.allocate(make_uint4(isize, jsize, ksize, nbVar), gpuMemAllocType);
 	  d_qm_z.allocate(make_uint4(isize, jsize, ksize, nbVar), gpuMemAllocType);
 	  d_qp_x.allocate(make_uint4(isize, jsize, ksize, nbVar), gpuMemAllocType);
 	  d_qp_y.allocate(make_uint4(isize, jsize, ksize, nbVar), gpuMemAllocType);
 	  d_qp_z.allocate(make_uint4(isize, jsize, ksize, nbVar), gpuMemAllocType);
-	  
+
 	  // register data pointers
-	  _gParams.arrayList[A_Q]    = d_Q.data();
 	  _gParams.arrayList[A_QM_X] = d_qm_x.data();
 	  _gParams.arrayList[A_QM_Y] = d_qm_y.data();
 	  _gParams.arrayList[A_QM_Z] = d_qm_z.data();
 	  _gParams.arrayList[A_QP_X] = d_qp_x.data();
 	  _gParams.arrayList[A_QP_Y] = d_qp_y.data();
 	  _gParams.arrayList[A_QP_Z] = d_qp_z.data();
-	  
+
 	}
 #else // CPU version
 	if (dimType == TWO_D) {
-	  
+
 	  h_qm_x.allocate(make_uint3(isize, jsize, nbVar));
 	  h_qm_y.allocate(make_uint3(isize, jsize, nbVar));
 	  h_qp_x.allocate(make_uint3(isize, jsize, nbVar));
 	  h_qp_y.allocate(make_uint3(isize, jsize, nbVar));
-	  
+
 	  // register data pointers
 	  _gParams.arrayList[A_QM_X] = h_qm_x.data();
 	  _gParams.arrayList[A_QM_Y] = h_qm_y.data();
 	  _gParams.arrayList[A_QP_X] = h_qp_x.data();
 	  _gParams.arrayList[A_QP_Y] = h_qp_y.data();
-	  
+
 	} else { // THREE_D
-	  
+
 	  h_qm_x.allocate(make_uint4(isize, jsize, ksize, nbVar));
 	  h_qm_y.allocate(make_uint4(isize, jsize, ksize, nbVar));
 	  h_qm_z.allocate(make_uint4(isize, jsize, ksize, nbVar));
 	  h_qp_x.allocate(make_uint4(isize, jsize, ksize, nbVar));
 	  h_qp_y.allocate(make_uint4(isize, jsize, ksize, nbVar));
 	  h_qp_z.allocate(make_uint4(isize, jsize, ksize, nbVar));
-	  
+
 	  // register data pointers
 	  _gParams.arrayList[A_QM_X] = h_qm_x.data();
 	  _gParams.arrayList[A_QM_Y] = h_qm_y.data();
@@ -181,79 +180,79 @@ namespace hydroSimu {
 	  _gParams.arrayList[A_QP_X] = h_qp_x.data();
 	  _gParams.arrayList[A_QP_Y] = h_qp_y.data();
 	  _gParams.arrayList[A_QP_Z] = h_qp_z.data();
-	  
+
 	} // end THREE_D
 #endif // __CUDACC__
-	
+
       } else if (unsplitVersion == 2) {
-	
+
 	// do memory allocation for extra array
 #ifdef __CUDACC__
 	if (dimType == TWO_D) {
-	  
+
 	  d_slope_x.allocate(make_uint3(isize, jsize, nbVar), gpuMemAllocType);
 	  d_slope_y.allocate(make_uint3(isize, jsize, nbVar), gpuMemAllocType);
 	  d_qm.allocate(make_uint3(isize, jsize, nbVar), gpuMemAllocType);
 	  d_qp.allocate(make_uint3(isize, jsize, nbVar), gpuMemAllocType);
-	  
+
 	  // register data pointers
 	  _gParams.arrayList[A_SLOPE_X] = d_slope_x.data();
 	  _gParams.arrayList[A_SLOPE_Y] = d_slope_y.data();
 	  _gParams.arrayList[A_QM]      = d_qm.data();
 	  _gParams.arrayList[A_QP]      = d_qp.data();
-	  
+
 	} else { // THREE_D
-	  
+
 	  d_slope_x.allocate(make_uint4(isize, jsize, ksize, nbVar), gpuMemAllocType);
 	  d_slope_y.allocate(make_uint4(isize, jsize, ksize, nbVar), gpuMemAllocType);
 	  d_slope_z.allocate(make_uint4(isize, jsize, ksize, nbVar), gpuMemAllocType);
 	  d_qm.allocate(make_uint4(isize, jsize, ksize, nbVar), gpuMemAllocType);
 	  d_qp.allocate(make_uint4(isize, jsize, ksize, nbVar), gpuMemAllocType);
-	  
+
 	  // register data pointers
 	  _gParams.arrayList[A_SLOPE_X] = d_slope_x.data();
 	  _gParams.arrayList[A_SLOPE_Y] = d_slope_y.data();
 	  _gParams.arrayList[A_SLOPE_Z] = d_slope_z.data();
 	  _gParams.arrayList[A_QM]      = d_qm.data();
 	  _gParams.arrayList[A_QP]      = d_qp.data();
-	  
+
 	} // end THREE_D
 #else
 	if (dimType == TWO_D) {
-	  
+
 	  h_slope_x.allocate(make_uint3(isize, jsize, nbVar));
 	  h_slope_y.allocate(make_uint3(isize, jsize, nbVar));
-	  
+
 	  h_qm.allocate(make_uint3(isize, jsize, nbVar));
 	  h_qp.allocate(make_uint3(isize, jsize, nbVar));
-	  
+
 	  // register data pointers
 	  _gParams.arrayList[A_SLOPE_X] = h_slope_x.data();
 	  _gParams.arrayList[A_SLOPE_Y] = h_slope_y.data();
 	  _gParams.arrayList[A_QM]      = h_qm.data();
 	  _gParams.arrayList[A_QP]      = h_qp.data();
-	  
+
 	} else { // THREE_D
-	  
+
 	  h_slope_x.allocate(make_uint4(isize, jsize, ksize, nbVar));
 	  h_slope_y.allocate(make_uint4(isize, jsize, ksize, nbVar));
 	  h_slope_z.allocate(make_uint4(isize, jsize, ksize, nbVar));
-	  
+
 	  h_qm.allocate(make_uint4(isize, jsize, ksize, nbVar));
 	  h_qp.allocate(make_uint4(isize, jsize, ksize, nbVar));
-	  
+
 	  // register data pointers
 	  _gParams.arrayList[A_SLOPE_X] = h_slope_x.data();
 	  _gParams.arrayList[A_SLOPE_Y] = h_slope_y.data();
 	  _gParams.arrayList[A_SLOPE_Z] = h_slope_z.data();
 	  _gParams.arrayList[A_QM]      = h_qm.data();
 	  _gParams.arrayList[A_QP]      = h_qp.data();
-	  
+
 	} // end THREE_D
 #endif // __CUDACC__
-	
+
       } // end unsplitVersion == 2
-      
+
     } // end unsplitEnabled
 
     // make sure variable declared as __constant__ are copied to device
@@ -272,14 +271,14 @@ namespace hydroSimu {
      */
     if (myRank==0)
 #ifdef __CUDACC__
-    {
-      size_t freeMemory, totalMemory;
-      cutilSafeCall( cudaMemGetInfo(&freeMemory, &totalMemory) );
-      std::cout << "Total memory available on GPU " << totalMemory/1000000. << " MBytes\n";
-      std::cout << "Currently free  memory on GPU " <<  freeMemory/1000000. << " MBytes\n";
-      std::cout << "Total memory allocated on GPU " << DeviceArray<real_t>::totalAllocMemoryInKB/1000. << " MBytes\n";
-      std::cout << "Total memory allocated on CPU " << HostArray<real_t>::totalAllocMemoryInKB/1000. << " MBytes\n";
-    }
+      {
+	size_t freeMemory, totalMemory;
+	cutilSafeCall( cudaMemGetInfo(&freeMemory, &totalMemory) );
+	std::cout << "Total memory available on GPU " << totalMemory/1000000. << " MBytes\n";
+	std::cout << "Currently free  memory on GPU " <<  freeMemory/1000000. << " MBytes\n";
+	std::cout << "Total memory allocated on GPU " << DeviceArray<real_t>::totalAllocMemoryInKB/1000. << " MBytes\n";
+	std::cout << "Total memory allocated on CPU " << HostArray<real_t>::totalAllocMemoryInKB/1000. << " MBytes\n";
+      }
 #else
     {
       std::cout << "Total memory allocated on CPU " << HostArray<real_t>::totalAllocMemoryInKB/1000. << " MBytes\n";
@@ -302,7 +301,7 @@ namespace hydroSimu {
 #ifdef __CUDACC__
   {
     if (dimType == TWO_D) {
-      
+    
       // one step integration results are always in d_U
       if ((nStep%2)==0) {
 	godunov_split_gpu(d_U , d_U2, XDIR, dt);
@@ -311,11 +310,11 @@ namespace hydroSimu {
 	godunov_split_gpu(d_U , d_U2, YDIR, dt);
 	godunov_split_gpu(d_U2, d_U , XDIR, dt);
       }
-      
+
     } else { // THREE_D
-      
+
       // we check nStep % 6 because, we rotate the 1d operator
-      
+
       if ((nStep%6)==0) {
 	godunov_split_gpu(d_U , d_U2, XDIR, dt);
 	godunov_split_gpu(d_U2, d_U , YDIR, dt);
@@ -341,9 +340,9 @@ namespace hydroSimu {
 	godunov_split_gpu(d_U , d_U2, YDIR,dt);
 	godunov_split_gpu(d_U2, d_U , XDIR,dt);
       }
-      
+
     } // end THREE_D
-    
+
   } // HydroRunGodunovMpi::godunov_split (GPU version)
 #else // CPU version
   {
@@ -667,6 +666,15 @@ namespace hydroSimu {
     // inner domain integration
     TIMER_START(timerGodunov);
     
+    /*
+     * Whatever implementation version, start by computing primitive variables
+     *   
+     * convert conservative to primitive variables (and source term predictor)
+     * put results in h_Q object
+     *
+     */
+    convertToPrimitives( d_UOld.data() );
+  
     if (dimType == TWO_D) {
       
       if (unsplitVersion == 0) {
@@ -2306,11 +2314,11 @@ namespace hydroSimu {
     } else { // not a restart run
 
 #ifdef __CUDACC__
-    make_all_boundaries(d_U);
-    d_U.copyTo(d_U2);
+      make_all_boundaries(d_U);
+      d_U.copyTo(d_U2);
 #else
-    make_all_boundaries(h_U);
-    h_U.copyTo(h_U2);
+      make_all_boundaries(h_U);
+      h_U.copyTo(h_U2);
 #endif // __CUDACC__
 
     } // end if (restartEnabled and allghostIncluded)
@@ -2649,6 +2657,6 @@ namespace hydroSimu {
     
 #endif // __CUDACC__
 
-} // HydroRunGodunovMpi::convertToPrimitives
+  } // HydroRunGodunovMpi::convertToPrimitives
 
 } // namespace hydroSimu

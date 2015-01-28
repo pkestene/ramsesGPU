@@ -53,29 +53,6 @@ namespace hydroSimu {
     //! see godunov_unsplit_gpu or godunov_unsplit_cpu.
     void godunov_unsplit(int nStep, real_t dt);
 
-    //! unplitVersion = 0
-    //! memory footprint is very low
-    //! nothing is stored globally except h_Q
-    //! some redundancy in trace computation
-    void godunov_unsplit_cpu_v0(HostArray<real_t>& h_UOld, 
-				HostArray<real_t>& h_UNew, 
-				real_t dt, int nStep);
-
-    //! unplitVersion = 1
-    //! memory footprint is medium
-    //! reconstructed (trace) states are stored
-    //! then perform Riemann flux computation and update
-    void godunov_unsplit_cpu_v1(HostArray<real_t>& h_UOld, 
-				HostArray<real_t>& h_UNew, 
-				real_t dt, int nStep);
-
-    //! unplitVersion = 2
-    //! memory footprint is larger than unplitVersion 2
-    //! slopes are stored and only 1 pair of reconstructed (trace) states
-    void godunov_unsplit_cpu_v2(HostArray<real_t>& h_UOld, 
-				HostArray<real_t>& h_UNew, 
-				real_t dt, int nStep);
-
   private:
 #ifdef __CUDACC__
     //! Actual computation of the godunov integration on GPU using
@@ -91,6 +68,30 @@ namespace hydroSimu {
     void godunov_unsplit_gpu(DeviceArray<real_t>& d_UOld, 
 			     DeviceArray<real_t>& d_UNew,
 			     real_t dt);
+
+    //! unplitVersion = 0
+    //! memory footprint is very low
+    //! nothing is stored globally except h_Q
+    //! some redundancy in trace computation
+    void godunov_unsplit_gpu_v0(DeviceArray<real_t>& d_UOld, 
+				DeviceArray<real_t>& d_UNew, 
+				real_t dt);
+
+    //! unplitVersion = 1
+    //! memory footprint is medium
+    //! reconstructed (trace) states are stored
+    //! then perform Riemann flux computation and update
+    void godunov_unsplit_gpu_v1(DeviceArray<real_t>& d_UOld, 
+				DeviceArray<real_t>& d_UNew, 
+				real_t dt);
+
+    //! unplitVersion = 2
+    //! memory footprint is larger than unplitVersion 2
+    //! slopes are stored and only 1 pair of reconstructed (trace) states
+    void godunov_unsplit_gpu_v2(DeviceArray<real_t>& d_UOld, 
+				DeviceArray<real_t>& d_UNew, 
+				real_t dt);
+
 #else
     //! Actual computation of the godunov integration on CPU using
     //! directionally split scheme. 
@@ -105,6 +106,30 @@ namespace hydroSimu {
     void godunov_unsplit_cpu(HostArray<real_t>& h_UOld, 
 			     HostArray<real_t>& h_UNew, 
 			     real_t dt);
+
+    //! unplitVersion = 0
+    //! memory footprint is very low
+    //! nothing is stored globally except h_Q
+    //! some redundancy in trace computation
+    void godunov_unsplit_cpu_v0(HostArray<real_t>& h_UOld, 
+				HostArray<real_t>& h_UNew, 
+				real_t dt);
+
+    //! unplitVersion = 1
+    //! memory footprint is medium
+    //! reconstructed (trace) states are stored
+    //! then perform Riemann flux computation and update
+    void godunov_unsplit_cpu_v1(HostArray<real_t>& h_UOld, 
+				HostArray<real_t>& h_UNew, 
+				real_t dt);
+
+    //! unplitVersion = 2
+    //! memory footprint is larger than unplitVersion 2
+    //! slopes are stored and only 1 pair of reconstructed (trace) states
+    void godunov_unsplit_cpu_v2(HostArray<real_t>& h_UOld, 
+				HostArray<real_t>& h_UNew, 
+				real_t dt);
+
 #endif // __CUDAC__
 
   public:
@@ -124,7 +149,7 @@ namespace hydroSimu {
     bool getUnsplitEnabled() {return unsplitEnabled;};
 
   private:
-    
+
     void convertToPrimitives(real_t *U);
 
     /** do trace computations */
@@ -134,13 +159,13 @@ namespace hydroSimu {
     /** use unsplit scheme */
     bool unsplitEnabled;
     int  unsplitVersion;
-    
+
 #ifdef __CUDACC__
     DeviceArray<real_t> d_Q; //!< GPU : primitive data array
 #else
     HostArray<real_t>   h_Q; //!< !!! CPU ONLY !!! Primitive Data array on CPU
 #endif // __CUDACC__
-    
+
     /** \defgroup implementation1 */
     /*@{*/
 #ifdef __CUDACC__
@@ -184,8 +209,11 @@ namespace hydroSimu {
      * in HydroRunBaseMpi.h
      */
 #ifdef DO_TIMING
+    /** \defgroup timing monitoring computation time */
+    /*@{*/
 #ifdef __CUDACC__
     CudaTimer timerGodunov;
+
     // other timers
     CudaTimer timerPrimVar;
     CudaTimer timerSlopeTrace;
@@ -193,12 +221,15 @@ namespace hydroSimu {
     CudaTimer timerDissipative;
 #else
     Timer     timerGodunov;
+
     // other timers
     Timer     timerPrimVar;
     Timer     timerSlopeTrace;
     Timer     timerUpdate;
     Timer     timerDissipative;
+
 #endif // __CUDACC__
+    /*@}*/
 #endif // DO_TIMING
 
   }; // class HydroRunGodunovMpi
