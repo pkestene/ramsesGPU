@@ -346,8 +346,8 @@ namespace hydroSimu {
   } // HydroRunGodunovMpi::godunov_split (GPU version)
 #else // CPU version
   {
-  
-    if (dimType == TWO_D) {
+
+  if (dimType == TWO_D) {
       
       // one step integration results are always in h_U
       if ((nStep%2)==0) {
@@ -392,20 +392,20 @@ namespace hydroSimu {
     
   } // HydroRunGodunovMpi::godunov_split (CPU version)
 #endif // __CUDACC__
-  
+
   // =======================================================
   // =======================================================
   void HydroRunGodunovMpi::godunov_unsplit(int nStep, real_t dt)
 #ifdef __CUDACC__
   {
-    
+
     if ((nStep%2)==0) {
       godunov_unsplit_gpu(d_U , d_U2, dt);
     } else {
       godunov_unsplit_gpu(d_U2, d_U , dt);
     }
-    
-  } // HydroRunGodunovMpi::godunov_unsplit (__CUDACC__)
+
+  } // HydroRunGodunovMpi::godunov_unsplit (GPU version)
 #else // CPU version
  {
    
@@ -415,9 +415,9 @@ namespace hydroSimu {
      godunov_unsplit_cpu(h_U2, h_U , dt);
    }
    
- } // HydroRunGodunovMpi::godunov_unsplit (not __CUDACC__)
-#endif // __CUDACC__ 
-  
+ } // HydroRunGodunovMpi::godunov_unsplit (CPU version)
+#endif // __CUDACC__
+
 #ifdef __CUDACC__ 
   // =======================================================
   // =======================================================
@@ -1225,7 +1225,7 @@ namespace hydroSimu {
 
   } // HydroRunGodunovMpi::godunov_unsplit_gpu_v2
 
-# else // CPU version
+#else // CPU version
 
   // =======================================================
   // =======================================================
@@ -1237,17 +1237,17 @@ namespace hydroSimu {
     
     make_boundaries(h_UOld,idim);
     communicator->synchronize();
-    
+
     real_t dtdx = dt/dx;
-    
+
     TIMER_START(timerGodunov);
     if (dimType == TWO_D) {
-      
+
       if(idim == XDIR) {
-	
+
 	// gather conservative variables and convert to primitives variables
 	for (int j=2; j<jsize-2; j++) {
-	  
+
 	  real_t qxm[NVAR_2D]     = {0.0f, 0.0f, 0.0f, 0.0f};
 	  real_t qxm1[NVAR_2D]    = {0.0f, 0.0f, 0.0f, 0.0f};
 	  real_t qxp[NVAR_2D]     = {0.0f, 0.0f, 0.0f, 0.0f};
@@ -1259,7 +1259,7 @@ namespace hydroSimu {
 	  real_t flux1[NVAR_2D]   = {0.0f, 0.0f, 0.0f, 0.0f};
 	  real_t qPlus[NVAR_2D]   = {0.0f, 0.0f, 0.0f, 0.0f};
 	  real_t qMinus[NVAR_2D]  = {0.0f, 0.0f, 0.0f, 0.0f};
-	  
+
 	  for (int i=0; i<isize; i++) {
 	    int index = i+j*isize;
 	    real_t q[NVAR_2D];
@@ -1270,8 +1270,8 @@ namespace hydroSimu {
 	      computePrimitives_0(h_UOld.data(), h_UOld.section(), index+1, cPlus,  qPlus);
 	    if (i>0)
 	      computePrimitives_0(h_UOld.data(), h_UOld.section(), index-1, cMinus, qMinus);
-	    
-	    // Characteristic tracing : memorize qxm and qxp
+ 
+	    // Characteristic tracing : memorize qxm, qxp
 	    // and then update
 	    for (int ivar=0; ivar<NVAR_2D; ivar++) {
 	      qxm1[ivar] = qxm[ivar];
@@ -1288,7 +1288,7 @@ namespace hydroSimu {
 		}
 	      } // end traceEnabled
 	    }
-	    
+	  
 	    // Solve Riemann problem at interfaces and compute fluxes
 	    for (int ivar=0; ivar<NVAR_2D; ivar++) {
 	      qleft[ivar]   = qxm1[ivar];
@@ -1297,7 +1297,7 @@ namespace hydroSimu {
 	    }
 	    if (i>1)
 	      riemann<NVAR_2D>(qleft,qright,qgdnv,flux);
-	    
+
 	    // update conservative variables
 	    if (i>2 && i<isize-1) {
 	      h_UNew(i-1,j,ID) = h_UOld(i-1,j,ID) + (flux1[ID]-flux[ID])*dtdx;
@@ -1305,16 +1305,16 @@ namespace hydroSimu {
 	      h_UNew(i-1,j,IU) = h_UOld(i-1,j,IU) + (flux1[IU]-flux[IU])*dtdx;
 	      h_UNew(i-1,j,IV) = h_UOld(i-1,j,IV) + (flux1[IV]-flux[IV])*dtdx;
 	    }
-	    
+
 	  } // for (int i...
-	  
+
 	} // for(int j...
-	
+
       } else { // idim == YDIR
-	
+
 	// gather conservative variables and convert to primitives variables
 	for (int i=2; i<isize-2; i++) {
-	  
+
 	  real_t qxm[NVAR_2D]     = {0.0f, 0.0f, 0.0f, 0.0f};
 	  real_t qxm1[NVAR_2D]    = {0.0f, 0.0f, 0.0f, 0.0f};
 	  real_t qxp[NVAR_2D]     = {0.0f, 0.0f, 0.0f, 0.0f};
@@ -1326,7 +1326,7 @@ namespace hydroSimu {
 	  real_t flux1[NVAR_2D]   = {0.0f, 0.0f, 0.0f, 0.0f};
 	  real_t qPlus[NVAR_2D]   = {0.0f, 0.0f, 0.0f, 0.0f};
 	  real_t qMinus[NVAR_2D]  = {0.0f, 0.0f, 0.0f, 0.0f};
-	  
+	
 	  for (int j=0; j<jsize; j++) {
 	    int index = i+j*isize;
 	    real_t q[NVAR_2D];
@@ -1337,7 +1337,7 @@ namespace hydroSimu {
 	      computePrimitives_1(h_UOld.data(), h_UOld.section(), index+isize, cPlus, qPlus);
 	    if (j>0)
 	      computePrimitives_1(h_UOld.data(), h_UOld.section(), index-isize, cMinus, qMinus);
-	    
+ 
 	    // Characteristic tracing : memorize qxm and qxp and then update
 	    for (int ivar=0; ivar<NVAR_2D; ivar++) {
 	      qxm1[ivar] = qxm[ivar];
@@ -1363,7 +1363,7 @@ namespace hydroSimu {
 	    }
 	    if (j>1)
 	      riemann<NVAR_2D>(qleft,qright,qgdnv,flux);
-	    
+
 	    // update conservative variables (care that IV and IV are swapped)
 	    if (j>2 && j<jsize-1) {
 	      h_UNew(i,j-1,ID) = h_UOld(i,j-1,ID) + (flux1[ID]-flux[ID])*dtdx;
@@ -1371,17 +1371,17 @@ namespace hydroSimu {
 	      h_UNew(i,j-1,IU) = h_UOld(i,j-1,IU) + (flux1[IV]-flux[IV])*dtdx;
 	      h_UNew(i,j-1,IV) = h_UOld(i,j-1,IV) + (flux1[IU]-flux[IU])*dtdx;
 	    }
-	    
+
 	  } // for (int j...
-	  
+
 	} // for(int i...
-	
+
       }
-      
+
     } else { // THREE_D
-      
+
       if(idim == XDIR) {
-	
+
 	// gather conservative variables and convert to primitives variables
 	for (int k=2; k<ksize-2; k++) {
 	  
@@ -1398,18 +1398,18 @@ namespace hydroSimu {
 	    real_t flux1[NVAR_3D]   = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 	    real_t qPlus[NVAR_3D]   = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 	    real_t qMinus[NVAR_3D]  = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
-	    
+	  
 	    for (int i=0; i<isize; i++) {
 	      int index = i + j*isize + k*isize*jsize;
 	      real_t q[NVAR_3D];
 	      real_t c, cPlus, cMinus;
-	      
+	    
 	      computePrimitives_3D_0(h_UOld.data(), h_UOld.section(), index, c, q);
 	      if (i<isize-1)
 		computePrimitives_3D_0(h_UOld.data(), h_UOld.section(), index+1, cPlus,  qPlus);
 	      if (i>0)
 		computePrimitives_3D_0(h_UOld.data(), h_UOld.section(), index-1, cMinus, qMinus);
-	      
+
 	      // Characteristic tracing : memorize qxm and qxp and then update
 	      for (int ivar=0; ivar<NVAR_3D; ivar++) {
 		qxm1[ivar] = qxm[ivar];
@@ -1426,7 +1426,7 @@ namespace hydroSimu {
 		  }
 		} // end traceEnabled
 	      }
-	      
+	    
 	      // Solve Riemann problem at interfaces and compute fluxes
 	      for (int ivar=0; ivar<NVAR_3D; ivar++) {
 		qleft[ivar]   = qxm1[ivar];
@@ -1435,7 +1435,7 @@ namespace hydroSimu {
 	      }
 	      if (i>1)
 		riemann<NVAR_3D>(qleft,qright,qgdnv,flux);
-	      
+	    
 	      // update conservative variables
 	      if (i>2 && i<isize-1) {
 		h_UNew(i-1,j,k,ID) = h_UOld(i-1,j,k,ID) + (flux1[ID]-flux[ID])*dtdx;
@@ -1444,15 +1444,15 @@ namespace hydroSimu {
 		h_UNew(i-1,j,k,IV) = h_UOld(i-1,j,k,IV) + (flux1[IV]-flux[IV])*dtdx;
 		h_UNew(i-1,j,k,IW) = h_UOld(i-1,j,k,IW) + (flux1[IW]-flux[IW])*dtdx;
 	      }
-	      
-	    } // for (int i...
 	    
-	  } // for(int j...
+	    } // for (int i...
 	  
+	  } // for(int j...
+  
 	} // for(int k...
 	
       } else if (idim == YDIR) { // swap indexes (i,j,k) into (j,i,k)
-	
+
 	// gather conservative variables and convert to primitives variables
 	for (int k=2; k<ksize-2; k++) {
 	  
@@ -1469,18 +1469,18 @@ namespace hydroSimu {
 	    real_t flux1[NVAR_3D]   = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 	    real_t qPlus[NVAR_3D]   = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 	    real_t qMinus[NVAR_3D]  = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
-	    
+	  
 	    for (int j=0; j<jsize; j++) {
 	      int index = i + j*isize + k*isize*jsize;
 	      real_t q[NVAR_3D];
 	      real_t c, cPlus, cMinus;
-	      
+	    
 	      computePrimitives_3D_1(h_UOld.data(), h_UOld.section(), index, c, q);
 	      if (j<jsize-1)
 		computePrimitives_3D_1(h_UOld.data(), h_UOld.section(), index+isize, cPlus,  qPlus);
 	      if (j>0)
 		computePrimitives_3D_1(h_UOld.data(), h_UOld.section(), index-isize, cMinus, qMinus);
-	      
+	    
 	      // Characteristic tracing : memorize qxm and qxp and then update
 	      for (int ivar=0; ivar<NVAR_3D; ivar++) {
 		qxm1[ivar] = qxm[ivar];
@@ -1497,7 +1497,7 @@ namespace hydroSimu {
 		  }
 		} // end traceEnabled
 	      }
-	      
+	    
 	      // Solve Riemann problem at interfaces and compute fluxes
 	      for (int ivar=0; ivar<NVAR_3D; ivar++) {
 		qleft[ivar]   = qxm1[ivar];
@@ -1506,8 +1506,8 @@ namespace hydroSimu {
 	      }
 	      if (j>1)
 		riemann<NVAR_3D>(qleft,qright,qgdnv,flux);
-	      
-	      // update conservative variables
+	    
+	      // update conservative variables : watchout IU and IV are swapped
 	      if (j>2 && j<jsize-1) {
 		h_UNew(i,j-1,k,ID) = h_UOld(i,j-1,k,ID) + (flux1[ID]-flux[ID])*dtdx;
 		h_UNew(i,j-1,k,IP) = h_UOld(i,j-1,k,IP) + (flux1[IP]-flux[IP])*dtdx;
@@ -1515,15 +1515,15 @@ namespace hydroSimu {
 		h_UNew(i,j-1,k,IV) = h_UOld(i,j-1,k,IV) + (flux1[IU]-flux[IU])*dtdx;
 		h_UNew(i,j-1,k,IW) = h_UOld(i,j-1,k,IW) + (flux1[IW]-flux[IW])*dtdx;
 	      }
-	      
-	    } // for (int i...
 	    
-	  } // for(int j...
+	    } // for (int i...
 	  
+	  } // for(int j...
+  
 	} // for(int k...
 	
       } else { // idim == ZDIR       // swap indexes (i,j,k) into (k,j,i)
-	
+
 	// gather conservative variables and convert to primitives variables
 	for (int j=2; j<jsize-2; j++) {
 	  
@@ -1540,18 +1540,18 @@ namespace hydroSimu {
 	    real_t flux1[NVAR_3D]   = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 	    real_t qPlus[NVAR_3D]   = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 	    real_t qMinus[NVAR_3D]  = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
-	    
+	  
 	    for (int k=0; k<ksize; k++) {
 	      int index = i + j*isize + k*isize*jsize;
 	      real_t q[NVAR_3D];
 	      real_t c, cPlus, cMinus;
-	      
+	    
 	      computePrimitives_3D_2(h_UOld.data(), h_UOld.section(), index, c, q);
 	      if (k<ksize-1)
 		computePrimitives_3D_2(h_UOld.data(), h_UOld.section(), index+isize*jsize, cPlus,  qPlus);
 	      if (k>0)
 		computePrimitives_3D_2(h_UOld.data(), h_UOld.section(), index-isize*jsize, cMinus, qMinus);
-	      
+
 	      // Characteristic tracing : memorize qxm and qxp and then update
 	      for (int ivar=0; ivar<NVAR_3D; ivar++) {
 		qxm1[ivar] = qxm[ivar];
@@ -1568,7 +1568,7 @@ namespace hydroSimu {
 		  }
 		} // end traceEnabled
 	      }
-	      
+	    
 	      // Solve Riemann problem at interfaces and compute fluxes
 	      for (int ivar=0; ivar<NVAR_3D; ivar++) {
 		qleft[ivar]   = qxm1[ivar];
@@ -1577,8 +1577,8 @@ namespace hydroSimu {
 	      }
 	      if (k>1)
 		riemann<NVAR_3D>(qleft,qright,qgdnv,flux);
-	      
-	      // update conservative variables
+	    
+	      // update conservative variables : watchout IU and IW are swapped
 	      if (k>2 && k<ksize-1) {
 		h_UNew(i,j,k-1,ID) = h_UOld(i,j,k-1,ID) + (flux1[ID]-flux[ID])*dtdx;
 		h_UNew(i,j,k-1,IP) = h_UOld(i,j,k-1,IP) + (flux1[IP]-flux[IP])*dtdx;
@@ -1586,25 +1586,20 @@ namespace hydroSimu {
 		h_UNew(i,j,k-1,IV) = h_UOld(i,j,k-1,IV) + (flux1[IV]-flux[IV])*dtdx;
 		h_UNew(i,j,k-1,IW) = h_UOld(i,j,k-1,IW) + (flux1[IU]-flux[IU])*dtdx;
 	      }
-	      
-	    } // for (int i...
 	    
-	  } // for(int j...
+	    } // for (int i...
 	  
+	  } // for(int j...
+  
 	} // for(int k...
-	
+
       } // end if (idim == ZDIR)
-      
+
     } // THREE_D
     TIMER_STOP(timerGodunov);
-    
-  }
-#endif // __CUDACC__
-  
-#ifdef __CUDACC__ 
-  
-#else // CPU version
-  
+
+  } // HydroRunGodunovMpi::godunov_split_cpu
+
   // =======================================================
   // =======================================================
   void HydroRunGodunovMpi::godunov_unsplit_cpu(HostArray<real_t>& h_UOld, 
@@ -1633,7 +1628,7 @@ namespace hydroSimu {
     TIMER_STOP(timerPrimVar);
 
     if (unsplitVersion == 0) {
-    
+
       godunov_unsplit_cpu_v0(h_UOld, h_UNew, dt);
 
     } else if (unsplitVersion == 1) {
@@ -1645,13 +1640,12 @@ namespace hydroSimu {
       godunov_unsplit_cpu_v2(h_UOld, h_UNew, dt);
 
     } // end unsplitVersion == 2
- 
+
     TIMER_STOP(timerGodunov);
 
   } // HydroRunGodunovMpi::godunov_unsplit_cpu
 
 #endif // __CUDACC__
-
 
 #ifndef __CUDACC__
   // =======================================================
@@ -2205,7 +2199,7 @@ namespace hydroSimu {
 
 } // HydroRunGodunovMpi::godunov_unsplit_cpu_v0
 #endif // __CUDACC__
-  
+
 #ifndef __CUDACC__
   // =======================================================
   // =======================================================
@@ -2715,7 +2709,6 @@ namespace hydroSimu {
     } // end THREE_D  unsplit version 1
 
   } // HydroRunGodunovMpi::godunov_unsplit_cpu_v1
-
 #endif // __CUDACC__
 
 #ifndef __CUDACC__
@@ -3505,7 +3498,6 @@ namespace hydroSimu {
     } // end THREE_D  unsplit version 2
 
   } // HydroRunGodunovMpi::godunov_unsplit_cpu_v2
-
 #endif // __CUDACC__
 
   // =======================================================
@@ -3522,7 +3514,9 @@ namespace hydroSimu {
     bool ghostIncluded = configMap.getBool("output","ghostIncluded",false);
     bool allghostIncluded = configMap.getBool("output","allghostIncluded",false);
 
-    // initial condition
+    /*
+     * initial condition.
+     */
     int  nStep = 0;
 
     std::cout << "Initialization on MPI process " << myRank << std::endl;
@@ -3582,11 +3576,11 @@ namespace hydroSimu {
       bool resetTotalTime = configMap.getBool("run","restart_reset_totaltime",false);
       if (resetTotalTime)
 	totalTime=0;
-      
+
       std::cout << "### This is a restarted run ! Current time is " << totalTime << " ###\n";
     }
 
-    real_t dt  = compute_dt(0); 
+    real_t dt = compute_dt(0);
 
     // how often should we print some log
     int nLog = configMap.getInteger("run", "nlog", 0);
@@ -3646,7 +3640,7 @@ namespace hydroSimu {
 	  
 	  // call timing routines for output results
 	  timerWriteOnDisk.start();
-	  
+
 	  // make sure Device data are copied back onto Host memory
 	  // which data to save ?
 	  copyGpuToCpu(nStep);
@@ -3686,7 +3680,7 @@ namespace hydroSimu {
 
 	/* one time step integration (nStep increment) */
 	oneStepIntegration(nStep, totalTime, dt);
-	
+
       } // end while (t < tEnd && nStep < nStepmax)
 
     // output last time step
@@ -3771,7 +3765,7 @@ namespace hydroSimu {
 	}
 
       } else { // THREE_D
-	
+
 	/* compute new time-step */
 	if ((nStep%6)==0) { // current data are in h_U (or d_U)
 	  dt=compute_dt(0);
@@ -3780,9 +3774,9 @@ namespace hydroSimu {
 	} else if ((nStep%6)==3) { // current data are in h_U2 (or d_U2)
 	  dt=compute_dt(1);
 	}
-	
+
       } // end THREE_D
-      
+
       /* Directional splitting computations */
       godunov_split(nStep, dt);
 
@@ -3791,7 +3785,7 @@ namespace hydroSimu {
     // increment time
     nStep++;
     t+=dt;
-    
+  
   } // HydroRunGodunovMpi::oneStepIntegration
 
   // =======================================================
@@ -3801,7 +3795,7 @@ namespace hydroSimu {
    */
   void HydroRunGodunovMpi::convertToPrimitives(real_t *U)
   {
-    
+
 #ifdef __CUDACC__
 
     if (dimType == TWO_D) {
@@ -3848,18 +3842,15 @@ namespace hydroSimu {
     } // end THREE_D
   
 #else // CPU version
- 
+
     if (dimType == TWO_D) {
-      
-      // primitive variable state vector
-      real_t q[NVAR_2D];
-      
+  
       // primitive variable domain array
       real_t *Q = h_Q.data();
-      
+    
       // section / domain size
       int arraySize = h_Q.section();
-      
+    
       // update primitive variables array
 #ifdef _OPENMP
 #pragma omp parallel default(shared) private(arraySize)
@@ -3867,37 +3858,37 @@ namespace hydroSimu {
 #endif // _OPENMP
       for (int j=0; j<jsize; j++) {
 	for (int i=0; i<isize; i++) {
-	  
+	
+	  // primitive variable state vector
+	  real_t q[NVAR_2D];
+
 	  int indexLoc = i+j*isize;
 	  real_t c;
-	  
-	  computePrimitives_0(U, h_Q.section(), indexLoc, c, q);
-	  
+	
+	  computePrimitives_0(U, arraySize, indexLoc, c, q);
+	
 	  // copy q state in h_Q
 	  int offset = indexLoc;
 	  Q[offset] = q[ID]; offset += arraySize;
 	  Q[offset] = q[IP]; offset += arraySize;
 	  Q[offset] = q[IU]; offset += arraySize;
 	  Q[offset] = q[IV];
-	  
+	
 	} // end for i
       } // end for j
-      
+    
     } else { // THREE_D
-      
+    
       /*int physicalDim[3] = {(int) h_Q.pitch(),
 	(int) h_Q.dimy(),
 	(int) h_Q.dimz()};*/
-      
-      // primitive variable state vector
-      real_t q[NVAR_3D];
-      
+        
       // primitive variable domain array
       real_t *Q = h_Q.data();
-      
+    
       // section / domain size
       int arraySize = h_Q.section();
-      
+    
       // update primitive variables array
 #ifdef _OPENMP
 #pragma omp parallel default(shared) private(arraySize)
@@ -3906,12 +3897,15 @@ namespace hydroSimu {
       for (int k=0; k<ksize; k++) {
 	for (int j=0; j<jsize; j++) {
 	  for (int i=0; i<isize; i++) {
-	    
+	  
+	    // primitive variable state vector
+	    real_t q[NVAR_3D];
+
 	    int indexLoc = i+j*isize+k*isize*jsize;
 	    real_t c;
-	    
-	    computePrimitives_3D_0(U, h_Q.section(), indexLoc, c, q);
-	    
+	  
+	    computePrimitives_3D_0(U, arraySize, indexLoc, c, q);
+	  
 	    // copy q state in h_Q
 	    int offset = indexLoc;
 	    Q[offset] = q[ID]; offset += arraySize;
@@ -3919,13 +3913,13 @@ namespace hydroSimu {
 	    Q[offset] = q[IU]; offset += arraySize;
 	    Q[offset] = q[IV]; offset += arraySize;
 	    Q[offset] = q[IW];
-	    
+	  
 	  } // end for i
 	} // end for j
       } // end for k
     
     } // end THREE_D
-    
+  
 #endif // __CUDACC__
 
   } // HydroRunGodunovMpi::convertToPrimitives

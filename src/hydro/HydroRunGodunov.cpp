@@ -366,7 +366,7 @@ namespace hydroSimu {
 
   } // HydroRunGodunov::godunov_split (GPU version)
 #else // CPU version
-{
+  {
 
   if (dimType == TWO_D) {
     
@@ -1270,7 +1270,7 @@ namespace hydroSimu {
 
 	  for (int i=0; i<isize; i++) {
 	    int index = i+j*isize;
-	    real_t q[NVAR_2D]; 
+	    real_t q[NVAR_2D];
 	    real_t c, cPlus, cMinus;
 
 	    real_t rhoOld=ZERO_F;
@@ -1301,7 +1301,7 @@ namespace hydroSimu {
 	      } // end traceEnabled
 	    }
 	  
-	    // Solve Riemann problem at interfaces and compute fluxes 
+	    // Solve Riemann problem at interfaces and compute fluxes
 	    for (int ivar=0; ivar<NVAR_2D; ivar++) {
 	      qleft[ivar]   = qxm1[ivar];
 	      qright[ivar]  = qxp[ivar];
@@ -1324,9 +1324,9 @@ namespace hydroSimu {
 	    }
 
 	  } // for (int i...
-	
+
 	} // for(int j...
-     
+
       } else { // idim == YDIR
 
 	// gather conservative variables and convert to primitives variables
@@ -1399,7 +1399,7 @@ namespace hydroSimu {
 	    }
 
 	  } // for (int j...
-	
+
 	} // for(int i...
 
       }
@@ -1484,7 +1484,7 @@ namespace hydroSimu {
 	    } // for (int i...
 	  
 	  } // for(int j...
-      
+  
 	} // for(int k...
 	
       } else if (idim == YDIR) { // swap indexes (i,j,k) into (j,i,k)
@@ -1542,7 +1542,7 @@ namespace hydroSimu {
 	      for (int ivar=0; ivar<NVAR_3D; ivar++) {
 		qleft[ivar]   = qxm1[ivar];
 		qright[ivar]  = qxp[ivar];
-		flux1[ivar] = flux[ivar];
+		flux1[ivar]   = flux[ivar];
 	      }
 	      if (j>1)
 		riemann<NVAR_3D>(qleft,qright,qgdnv,flux);
@@ -1565,11 +1565,11 @@ namespace hydroSimu {
 	    } // for (int i...
 	  
 	  } // for(int j...
-      
+  
 	} // for(int k...
 	
       } else { // idim == ZDIR       // swap indexes (i,j,k) into (k,j,i)
-      
+
 	// gather conservative variables and convert to primitives variables
 	for (int j=2; j<jsize-2; j++) {
 
@@ -1646,12 +1646,12 @@ namespace hydroSimu {
 	    } // for (int i...
 	  
 	  } // for(int j...
-      
+  
 	} // for(int k...
- 
+
       } // end if (idim == ZDIR)
 
-    }
+    } // THREE_D
     TIMER_STOP(timerGodunov);
 
   } // HydroRunGodunov::godunov_split_cpu
@@ -2788,7 +2788,7 @@ namespace hydroSimu {
       }
     
     } // end THREE_D  unsplit version 1
-  
+
   } // HydroRunGodunov::godunov_unsplit_cpu_v1
 #endif // __CUDACC__
 
@@ -3640,7 +3640,7 @@ namespace hydroSimu {
     if (!restartEnabled) {
 
       totalTime = 0;
-  
+
     } else {
 
       // do we force totalTime to be zero ?
@@ -3706,7 +3706,7 @@ namespace hydroSimu {
 	if ((nStep % nOutput)==0) {
 
 	  timerWriteOnDisk.start();
-	
+
 	  // make sure Device data are copied back onto Host memory
 	  // which data to save ?
 	  copyGpuToCpu(nStep);
@@ -3720,7 +3720,7 @@ namespace hydroSimu {
 		    << " t="      << fmt(totalTime)
 		    << " dt="     << fmt(dt)
 		    << " output " << std::endl;
-	}
+	} // end output results
 
 	/* Do we want to output faces of domain ? */
 	if (outputFacesEnabled and (nStep % nOutputFaces)==0) {
@@ -3747,7 +3747,7 @@ namespace hydroSimu {
 
 	/* one time step integration (nStep increment) */
 	oneStepIntegration(nStep, totalTime, dt);
-      
+
       } // end time loop
 
     // output last time step
@@ -3757,7 +3757,7 @@ namespace hydroSimu {
 
       // make sure Device data are copied back onto Host memory
       copyGpuToCpu(nStep);
-    
+
       output(getDataHost(nStep), nStep, ghostIncluded);
       timerWriteOnDisk.stop();
     }
@@ -3835,7 +3835,7 @@ namespace hydroSimu {
 	}
 
       } else { // THREE_D
-      
+
 	/* compute new time-step */
 	if ((nStep%6)==0) { // current data are in h_U (or d_U)
 	  dt=compute_dt(0);
@@ -3844,7 +3844,7 @@ namespace hydroSimu {
 	} else if ((nStep%6)==3) { // current data are in h_U2 (or d_U2)
 	  dt=compute_dt(1);
 	}
-      
+
       } // end THREE_D
 
       /* Directional splitting computations */
@@ -3914,7 +3914,7 @@ namespace hydroSimu {
 #else // CPU version
 
     if (dimType == TWO_D) {
-        
+  
       // primitive variable domain array
       real_t *Q = h_Q.data();
     
@@ -3949,8 +3949,8 @@ namespace hydroSimu {
     
     } else { // THREE_D
     
-      /*int physicalDim[3] = {(int) h_Q.pitch(), 
-	(int) h_Q.dimy(), 
+      /*int physicalDim[3] = {(int) h_Q.pitch(),
+	(int) h_Q.dimy(),
 	(int) h_Q.dimz()};*/
         
       // primitive variable domain array
