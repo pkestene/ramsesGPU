@@ -1709,6 +1709,7 @@ namespace hydroSimu {
     } // end unsplitVersion == 2
 
     TIMER_STOP(timerGodunov);
+
 #ifdef USE_PAPI
     // PAPI FLOPS counter
     papiFlops_total.stop();
