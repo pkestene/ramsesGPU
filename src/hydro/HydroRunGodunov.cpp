@@ -3861,8 +3861,7 @@ namespace hydroSimu {
   // =======================================================
   // =======================================================
   /*
-   * convert to primitive variables (should only be usefull when using
-   * the unsplit scheme version 1.
+   * convert to primitive variables.
    */
   void HydroRunGodunov::convertToPrimitives(real_t *U)
   {

@@ -663,6 +663,9 @@ namespace hydroSimu {
     // update boundaries
     make_all_boundaries(d_UOld);
     
+    // easier for time integration later
+    d_UOld.copyTo(d_UNew);
+
     // inner domain integration
     TIMER_START(timerGodunov);
     
@@ -675,285 +678,19 @@ namespace hydroSimu {
      */
     convertToPrimitives( d_UOld.data() );
   
-    if (dimType == TWO_D) {
-      
-      if (unsplitVersion == 0) {
-	
-	// 2D Godunov unsplit kernel
-	dim3 dimBlock(UNSPLIT_BLOCK_DIMX_2D,
-		      UNSPLIT_BLOCK_DIMY_2D);
-	dim3 dimGrid(blocksFor(isize, UNSPLIT_BLOCK_INNER_DIMX_2D), 
-		     blocksFor(jsize, UNSPLIT_BLOCK_INNER_DIMY_2D));
-	kernel_godunov_unsplit_2d<<<dimGrid, dimBlock>>>(d_UOld.data(), 
-							 d_UNew.data(), 
-							 d_UOld.pitch(), 
-							 d_UOld.dimx(), 
-							 d_UOld.dimy(), 
-							 dt / dx, dt,
-							 gravityEnabled);
-	checkCudaErrorMpi("HydroRunGodunovMpi :: kernel_godunov_unsplit_2d error", myRank);
+    if (unsplitVersion == 0) {
+  
+      godunov_unsplit_gpu_v0(d_UOld, d_UNew, dt);
+  
+    } else if (unsplitVersion == 1) {
 
-      } else if (unsplitVersion == 1) {
+      godunov_unsplit_gpu_v1(d_UOld, d_UNew, dt);
+    
+    } else if (unsplitVersion == 2) {
+    
+      godunov_unsplit_gpu_v2(d_UOld, d_UNew, dt);
 
-	TIMER_START(timerPrimVar);
-	{
-	  // 2D primitive variables computation kernel    
-	  dim3 dimBlock(PRIM_VAR_BLOCK_DIMX_2D,
-			PRIM_VAR_BLOCK_DIMY_2D);
-	  dim3 dimGrid(blocksFor(isize, PRIM_VAR_BLOCK_DIMX_2D), 
-		       blocksFor(jsize, PRIM_VAR_BLOCK_DIMY_2D));
-	  kernel_hydro_compute_primitive_variables_2D<<<dimGrid, 
-	    dimBlock>>>(d_UOld.data(), 
-			d_Q.data(),
-			d_UOld.pitch(),
-			d_UOld.dimx(),
-			d_UOld.dimy());
-	  checkCudaErrorMpi("HydroRunGodunovMpi :: kernel_hydro_compute_primitive_variables_2D error",myRank);
-	  
-	} // end compute primitive variables 2d kernel
-	TIMER_STOP(timerPrimVar);
-
-	TIMER_START(timerSlopeTrace);
-	{
-	  // 2D slope / trace computation kernel
-	  dim3 dimBlock(TRACE_BLOCK_DIMX_2D_V1,
-			TRACE_BLOCK_DIMY_2D_V1);
-	  dim3 dimGrid(blocksFor(isize, TRACE_BLOCK_INNER_DIMX_2D_V1), 
-		       blocksFor(jsize, TRACE_BLOCK_INNER_DIMY_2D_V1));
-	  kernel_hydro_compute_trace_unsplit_2d_v1<<<dimGrid, 
-	    dimBlock>>>(d_UOld.data(),
-			d_Q.data(),
-			d_qm_x.data(),
-			d_qm_y.data(),
-			d_qp_x.data(),
-			d_qp_y.data(),
-			d_UOld.pitch(), 
-			d_UOld.dimx(), 
-			d_UOld.dimy(), 
-			dt / dx, 
-			dt / dy,
-			dt);
-	  checkCudaErrorMpi("HydroRunGodunovMpi :: kernel_hydro_compute_trace_unsplit_2d_v1 error",myRank);
-
-	  if (gravityEnabled) {
-	    compute_gravity_predictor(d_qm_x, dt);
-	    compute_gravity_predictor(d_qm_y, dt);
-	    compute_gravity_predictor(d_qp_x, dt);
-	    compute_gravity_predictor(d_qp_y, dt);
-	  }
-
-	} // end 2D slope / trace computation kernel
-	TIMER_STOP(timerSlopeTrace);
-
-	TIMER_START(timerUpdate);
-	{
-	  // 2D update hydro kernel
-	  dim3 dimBlock(UPDATE_BLOCK_DIMX_2D_V1,
-			UPDATE_BLOCK_DIMY_2D_V1);
-	  dim3 dimGrid(blocksFor(isize, UPDATE_BLOCK_INNER_DIMX_2D_V1), 
-		       blocksFor(jsize, UPDATE_BLOCK_INNER_DIMY_2D_V1));
-	  kernel_hydro_flux_update_unsplit_2d_v1<<<dimGrid, 
-	    dimBlock>>>(d_UOld.data(),
-			d_UNew.data(),
-			d_qm_x.data(),
-			d_qm_y.data(),
-			d_qp_x.data(),
-			d_qp_y.data(),
-			d_UOld.pitch(), 
-			d_UOld.dimx(), 
-			d_UOld.dimy(), 
-			dt / dx, 
-			dt / dy,
-			dt );
-	  checkCudaErrorMpi("HydroRunGodunovMpi :: kernel_hydro_flux_update_unsplit_2d_v1< error",myRank);
-	} // end 2D update hydro kernel	
-
-	// gravity source term
-	if (gravityEnabled) {
-	  compute_gravity_source_term(d_UNew, d_UOld, dt);
-	}
-	TIMER_STOP(timerUpdate);
-	
-	/*
-	 * DISSIPATIVE TERMS (i.e. viscosity)
-	 */
-	TIMER_START(timerDissipative);
-	real_t &nu = _gParams.nu;
-	if (nu>0) {
-	  // update boundaries before dissipative terms computations
-	  make_all_boundaries(d_UNew);
-	}
-	
-	// compute viscosity
-	if (nu>0) {
-	  DeviceArray<real_t> &d_flux_x = d_qm_x;
-	  DeviceArray<real_t> &d_flux_y = d_qm_y;
-	  
-	  compute_viscosity_flux(d_UNew, d_flux_x, d_flux_y, dt);
-	  compute_hydro_update  (d_UNew, d_flux_x, d_flux_y);
-	} // end compute viscosity force / update  
-	TIMER_STOP(timerDissipative);
-	
-      } // end unsplitVersion switch for 2D domain
-      
-    } else { // THREE_D
-
-      if (unsplitVersion == 0) {
-	
-	// 3D Godunov unsplit kernel    
-	dim3 dimBlock(UNSPLIT_BLOCK_DIMX_3D,
-		      UNSPLIT_BLOCK_DIMY_3D);
-	dim3 dimGrid(blocksFor(isize, UNSPLIT_BLOCK_INNER_DIMX_3D), 
-		     blocksFor(jsize, UNSPLIT_BLOCK_INNER_DIMY_3D));
-	kernel_godunov_unsplit_3d<<<dimGrid, dimBlock>>>(d_UOld.data(), 
-							 d_UNew.data(), 
-							 d_UOld.pitch(), 
-							 d_UOld.dimx(), 
-							 d_UOld.dimy(), 
-							 d_UOld.dimz(),
-							 dt / dx, dt,
-							 gravityEnabled);
-	checkCudaErrorMpi("HydroRunGodunovMpi :: kernel_godunov_unsplit_3d error", myRank);
-
-	// gravity source term computation
-	if (gravityEnabled) {
-	  compute_gravity_source_term(d_UNew, d_UOld, dt);
-	}
-
-      } else if (unsplitVersion == 1 || unsplitVersion == 2) {
-
-	TIMER_START(timerPrimVar);
-	{
-	  // 3D primitive variables computation kernel    
-	  dim3 dimBlock(PRIM_VAR_BLOCK_DIMX_3D,
-			PRIM_VAR_BLOCK_DIMY_3D);
-	  dim3 dimGrid(blocksFor(isize, PRIM_VAR_BLOCK_DIMX_3D), 
-		       blocksFor(jsize, PRIM_VAR_BLOCK_DIMY_3D));
-	  kernel_hydro_compute_primitive_variables_3D<<<dimGrid, 
-	    dimBlock>>>(d_UOld.data(), 
-			d_Q.data(),
-			d_UOld.pitch(),
-			d_UOld.dimx(),
-			d_UOld.dimy(),
-			d_UOld.dimz());
-	  checkCudaErrorMpi("HydroRunGodunovMpi :: kernel_hydro_compute_primitive_variables_3D error",myRank);
-	  
-	} // end compute primitive variables 3d kernel
-	TIMER_STOP(timerPrimVar);
-	
-	TIMER_START(timerSlopeTrace);
-	{
-	  // 3D slope / trace computation kernel
-	  dim3 dimBlock(TRACE_BLOCK_DIMX_3D_V1,
-			TRACE_BLOCK_DIMY_3D_V1);
-	  dim3 dimGrid(blocksFor(isize, TRACE_BLOCK_INNER_DIMX_3D_V1), 
-		       blocksFor(jsize, TRACE_BLOCK_INNER_DIMY_3D_V1));
-	  kernel_hydro_compute_trace_unsplit_3d_v1<<<dimGrid, 
-	    dimBlock>>>(d_UOld.data(),
-			d_Q.data(),
-			d_qm_x.data(),
-			d_qm_y.data(),
-			d_qm_z.data(),
-			d_qp_x.data(),
-			d_qp_y.data(),
-			d_qp_z.data(),
-			d_UOld.pitch(), 
-			d_UOld.dimx(), 
-			d_UOld.dimy(), 
-			d_UOld.dimz(),
-			dt / dx, 
-			dt / dy,
-			dt / dz,
-			dt);
-	  checkCudaErrorMpi("HydroRunGodunovMpi :: kernel_hydro_compute_trace_unsplit_3d_v1 error",myRank);
-
-	  if (gravityEnabled) {
-	    compute_gravity_predictor(d_qm_x, dt);
-	    compute_gravity_predictor(d_qm_y, dt);
-	    compute_gravity_predictor(d_qm_z, dt);
-	    compute_gravity_predictor(d_qp_x, dt);
-	    compute_gravity_predictor(d_qp_y, dt);
-	    compute_gravity_predictor(d_qp_z, dt);
-	  }
-
-	} // end 3D slope / trace computation kernel
-	TIMER_STOP(timerSlopeTrace);
-	
-	TIMER_START(timerUpdate);
-	{
-	  // 3D update hydro kernel
-	  dim3 dimBlock(UPDATE_BLOCK_DIMX_3D_V1,
-			UPDATE_BLOCK_DIMY_3D_V1);
-	  dim3 dimGrid(blocksFor(isize, UPDATE_BLOCK_INNER_DIMX_3D_V1), 
-		       blocksFor(jsize, UPDATE_BLOCK_INNER_DIMY_3D_V1));
-	  kernel_hydro_flux_update_unsplit_3d_v1<<<dimGrid, 
-	    dimBlock>>>(d_UOld.data(),
-			d_UNew.data(),
-			d_qm_x.data(),
-			d_qm_y.data(),
-			d_qm_z.data(),
-			d_qp_x.data(),
-			d_qp_y.data(),
-			d_qp_z.data(),
-			d_UOld.pitch(), 
-			d_UOld.dimx(), 
-			d_UOld.dimy(), 
-			d_UOld.dimz(),
-			dt / dx, 
-			dt / dy,
-			dt / dz,
-			dt );
-	  checkCudaErrorMpi("HydroRunGodunovMpi :: kernel_hydro_flux_update_unsplit_3d_v1 error",myRank);
-	  
-	} // end 3D update hydro kernel
-
-	if (gravityEnabled) {
-	  compute_gravity_source_term(d_UNew, d_UOld, dt);
-	}
-	
-	TIMER_STOP(timerUpdate);
-	
-	/*
-	 * DISSIPATIVE TERMS (i.e. viscosity)
-	 */
-	TIMER_START(timerDissipative);
-	real_t &nu = _gParams.nu;
-	if (nu>0) {
-	  // update boundaries before dissipative terms computations
-	  make_all_boundaries(d_UNew);
-	}
-	
-	// compute viscosity
-	if (nu>0) {
-	  DeviceArray<real_t> &d_flux_x = d_qm_x;
-	  DeviceArray<real_t> &d_flux_y = d_qm_y;
-	  DeviceArray<real_t> &d_flux_z = d_qm_z;
-	  
-	  compute_viscosity_flux(d_UNew, d_flux_x, d_flux_y, d_flux_z, dt);
-	  compute_hydro_update  (d_UNew, d_flux_x, d_flux_y, d_flux_z );
-	} // end compute viscosity force / update  
-	TIMER_STOP(timerDissipative);
-	
-	/*
-	 * random forcing
-	 */
-	if (randomForcingEnabled) {
-	  
-	  real_t norm = compute_random_forcing_normalization(d_UNew, dt);
-	  
-	  add_random_forcing(d_UNew, dt, norm);
-	  
-	}
-	if (randomForcingOrnsteinUhlenbeckEnabled) {
-	  
-	  // add forcing field in real space
-	  pForcingOrnsteinUhlenbeck->add_forcing_field(d_UNew, dt);
-	  
-	}
-
-      } // end unsplitVersion switch for 3D domain
-      
-    } // end THREE_D
+    } // end unsplitVersion == 2
        
     TIMER_STOP(timerGodunov);
 
@@ -968,10 +705,525 @@ namespace hydroSimu {
   {
 
     if (dimType == TWO_D) {
+    
+      // In this version primitive variables are computed as needed inside
+      // kernel
+      //
+      // // 2D Godunov unsplit kernel
+      // dim3 dimBlock(UNSPLIT_BLOCK_DIMX_2D,
+      // 		    UNSPLIT_BLOCK_DIMY_2D);
+      // dim3 dimGrid(blocksFor(isize, UNSPLIT_BLOCK_INNER_DIMX_2D), 
+      // 		   blocksFor(jsize, UNSPLIT_BLOCK_INNER_DIMY_2D));
+      // kernel_godunov_unsplit_2d<<<dimGrid, dimBlock>>>(d_UOld.data(), 
+      // 						       d_UNew.data(),
+      // 						       d_UOld.pitch(), 
+      // 						       d_UOld.dimx(), 
+      // 						       d_UOld.dimy(), 
+      // 						       dt / dx, dt,
+      // 						       gravityEnabled);
+      // checkCudaError("HydroRunGodunov :: kernel_godunov_unsplit_2d error");
+    
+      {
+	dim3 dimBlock(UNSPLIT_BLOCK_DIMX_2D_V0,
+		      UNSPLIT_BLOCK_DIMY_2D_V0);
+	dim3 dimGrid(blocksFor(isize, UNSPLIT_BLOCK_INNER_DIMX_2D_V0), 
+		     blocksFor(jsize, UNSPLIT_BLOCK_INNER_DIMY_2D_V0));
+	kernel_godunov_unsplit_2d_v0<<<dimGrid,
+	  dimBlock>>>(d_UNew.data(),
+		      d_Q.data(),
+		      d_UNew.pitch(),
+		      d_UNew.dimx(),
+		      d_UNew.dimy(),
+		      dt / dx, 
+		      dt / dy,
+		      dt,
+		      gravityEnabled);
+	checkCudaErrorMpi("HydroRunGodunov :: kernel_godunov_unsplit_2d_v0 error",myRank);
+      
+      } // end compute unsplit v0
+    
+    } else if (dimType == THREE_D) {
+    
+      // // 3D Godunov unsplit kernel    
+      // dim3 dimBlock(UNSPLIT_BLOCK_DIMX_3D,
+      // 		  UNSPLIT_BLOCK_DIMY_3D);
+      // dim3 dimGrid(blocksFor(isize, UNSPLIT_BLOCK_INNER_DIMX_3D), 
+      // 		 blocksFor(jsize, UNSPLIT_BLOCK_INNER_DIMY_3D));
+      // kernel_godunov_unsplit_3d<<<dimGrid, dimBlock>>>(d_UOld.data(), 
+      // 						     d_UNew.data(), 
+      // 						     d_UOld.pitch(), 
+      // 						     d_UOld.dimx(), 
+      // 						     d_UOld.dimy(), 
+      // 						     d_UOld.dimz(),
+      // 						     dt / dx, dt,
+      // 						     gravityEnabled);
+      // checkCudaError("HydroRunGodunov :: kernel_godunov_unsplit_3d error");
+
+      // 3D Godunov unsplit kernel    
+      dim3 dimBlock(UNSPLIT_BLOCK_DIMX_3D_V0,
+		    UNSPLIT_BLOCK_DIMY_3D_V0);
+      dim3 dimGrid(blocksFor(isize, UNSPLIT_BLOCK_INNER_DIMX_3D_V0),
+		   blocksFor(jsize, UNSPLIT_BLOCK_INNER_DIMY_3D_V0));
+      kernel_godunov_unsplit_3d_v0<<<dimGrid, dimBlock>>>(d_Q.data(), 
+							  d_UNew.data(), 
+							  d_UOld.pitch(), 
+							  d_UOld.dimx(), 
+							  d_UOld.dimy(), 
+							  d_UOld.dimz(),
+							  dt / dx, 
+							  dt / dy, 
+							  dt / dz, 
+							  dt,
+							  gravityEnabled);
+      checkCudaErrorMpi("HydroRunGodunov :: kernel_godunov_unsplit_3d_v0 error",myRank);
+
+    } // end THREE_D
+
+    // gravity source term computation
+    if (gravityEnabled) {
+      compute_gravity_source_term(d_UNew, d_UOld, dt);
     }
 
   } // HydroRunGodunovMpi::godunov_unsplit_gpu_v0
 
+  // =======================================================
+  // =======================================================
+  void HydroRunGodunovMpi::godunov_unsplit_gpu_v1(DeviceArray<real_t>& d_UOld, 
+						  DeviceArray<real_t>& d_UNew,
+						  real_t dt)
+  {
+
+    if (dimType == TWO_D) {
+
+      TIMER_START(timerSlopeTrace);
+      {
+	// 2D slope / trace computation kernel
+	dim3 dimBlock(TRACE_BLOCK_DIMX_2D_V1,
+		      TRACE_BLOCK_DIMY_2D_V1);
+	dim3 dimGrid(blocksFor(isize, TRACE_BLOCK_INNER_DIMX_2D_V1), 
+		     blocksFor(jsize, TRACE_BLOCK_INNER_DIMY_2D_V1));
+	kernel_hydro_compute_trace_unsplit_2d_v1<<<dimGrid, 
+	  dimBlock>>>(d_UOld.data(),
+		      d_Q.data(),
+		      d_qm_x.data(),
+		      d_qm_y.data(),
+		      d_qp_x.data(),
+		      d_qp_y.data(),
+		      d_UOld.pitch(), 
+		      d_UOld.dimx(), 
+		      d_UOld.dimy(), 
+		      dt / dx, 
+		      dt / dy,
+		      dt);
+	checkCudaErrorMpi("HydroRunGodunov :: kernel_hydro_compute_trace_unsplit_2d_v1 error",myRank);
+      
+	if (gravityEnabled) {
+	  compute_gravity_predictor(d_qm_x, dt);
+	  compute_gravity_predictor(d_qm_y, dt);
+	  compute_gravity_predictor(d_qp_x, dt);
+	  compute_gravity_predictor(d_qp_y, dt);
+	}
+      
+      } // end 2D slope / trace computation kernel
+      TIMER_STOP(timerSlopeTrace);
+    
+      TIMER_START(timerUpdate);
+      {
+	// 2D update hydro kernel
+	dim3 dimBlock(UPDATE_BLOCK_DIMX_2D_V1,
+		      UPDATE_BLOCK_DIMY_2D_V1);
+	dim3 dimGrid(blocksFor(isize, UPDATE_BLOCK_INNER_DIMX_2D_V1), 
+		     blocksFor(jsize, UPDATE_BLOCK_INNER_DIMY_2D_V1));
+	kernel_hydro_flux_update_unsplit_2d_v1<<<dimGrid, 
+	  dimBlock>>>(d_UOld.data(),
+		      d_UNew.data(),
+		      d_qm_x.data(),
+		      d_qm_y.data(),
+		      d_qp_x.data(),
+		      d_qp_y.data(),
+		      d_UOld.pitch(), 
+		      d_UOld.dimx(), 
+		      d_UOld.dimy(), 
+		      dt / dx, 
+		      dt / dy,
+		      dt );
+	checkCudaErrorMpi("HydroRunGodunov :: kernel_hydro_flux_update_unsplit_2d_v1< error",myRank);
+      } // end 2D update hydro kernel
+    
+      // gravity source term
+      if (gravityEnabled) {
+	compute_gravity_source_term(d_UNew, d_UOld, dt);
+      }
+      TIMER_STOP(timerUpdate);
+    
+      /*
+       * DISSIPATIVE TERMS (i.e. viscosity)
+       */
+      TIMER_START(timerDissipative);
+      real_t &nu = _gParams.nu;
+      if (nu>0) {
+	// update boundaries before dissipative terms computations
+	make_all_boundaries(d_UNew);
+      }
+    
+      // compute viscosity
+      if (nu>0) {
+	DeviceArray<real_t> &d_flux_x = d_qm_x;
+	DeviceArray<real_t> &d_flux_y = d_qm_y;
+      
+	compute_viscosity_flux(d_UNew, d_flux_x, d_flux_y, dt);
+	compute_hydro_update  (d_UNew, d_flux_x, d_flux_y);
+      } // end compute viscosity force / update  
+      TIMER_STOP(timerDissipative);
+
+    } else if (dimType == THREE_D) {
+
+      TIMER_START(timerSlopeTrace);
+      {
+	// 3D slope / trace computation kernel
+	dim3 dimBlock(TRACE_BLOCK_DIMX_3D_V1,
+		      TRACE_BLOCK_DIMY_3D_V1);
+	dim3 dimGrid(blocksFor(isize, TRACE_BLOCK_INNER_DIMX_3D_V1), 
+		     blocksFor(jsize, TRACE_BLOCK_INNER_DIMY_3D_V1));
+	kernel_hydro_compute_trace_unsplit_3d_v1<<<dimGrid, 
+	  dimBlock>>>(d_UOld.data(),
+		      d_Q.data(),
+		      d_qm_x.data(),
+		      d_qm_y.data(),
+		      d_qm_z.data(),
+		      d_qp_x.data(),
+		      d_qp_y.data(),
+		      d_qp_z.data(),
+		      d_UOld.pitch(), 
+		      d_UOld.dimx(), 
+		      d_UOld.dimy(), 
+		      d_UOld.dimz(),
+		      dt / dx, 
+		      dt / dy,
+		      dt / dz,
+		      dt);
+	checkCudaErrorMpi("HydroRunGodunov :: kernel_hydro_compute_trace_unsplit_3d_v1 error",myRank);
+      
+	if (gravityEnabled) {
+	  compute_gravity_predictor(d_qm_x, dt);
+	  compute_gravity_predictor(d_qm_y, dt);
+	  compute_gravity_predictor(d_qm_z, dt);
+	  compute_gravity_predictor(d_qp_x, dt);
+	  compute_gravity_predictor(d_qp_y, dt);
+	  compute_gravity_predictor(d_qp_z, dt);
+	}
+      
+      } // end 3D slope / trace computation kernel
+      TIMER_STOP(timerSlopeTrace);
+    
+      TIMER_START(timerUpdate);
+      {
+	// 3D update hydro kernel
+	dim3 dimBlock(UPDATE_BLOCK_DIMX_3D_V1,
+		      UPDATE_BLOCK_DIMY_3D_V1);
+	dim3 dimGrid(blocksFor(isize, UPDATE_BLOCK_INNER_DIMX_3D_V1), 
+		     blocksFor(jsize, UPDATE_BLOCK_INNER_DIMY_3D_V1));
+	kernel_hydro_flux_update_unsplit_3d_v1<<<dimGrid, 
+	  dimBlock>>>(d_UOld.data(),
+		      d_UNew.data(),
+		      d_qm_x.data(),
+		      d_qm_y.data(),
+		      d_qm_z.data(),
+		      d_qp_x.data(),
+		      d_qp_y.data(),
+		      d_qp_z.data(),
+		      d_UOld.pitch(), 
+		      d_UOld.dimx(), 
+		      d_UOld.dimy(), 
+		      d_UOld.dimz(),
+		      dt / dx, 
+		      dt / dy,
+		      dt / dz,
+		      dt );
+	checkCudaErrorMpi("HydroRunGodunov :: kernel_hydro_flux_update_unsplit_3d_v1 error",myRank);
+      
+      } // end 3D update hydro kernel
+    
+      if (gravityEnabled) {
+	compute_gravity_source_term(d_UNew, d_UOld, dt);
+      }
+    
+      TIMER_STOP(timerUpdate);
+    
+      /*
+       * DISSIPATIVE TERMS (i.e. viscosity)
+       */
+      TIMER_START(timerDissipative);
+      real_t &nu = _gParams.nu;
+      if (nu>0) {
+	// update boundaries before dissipative terms computations
+	make_all_boundaries(d_UNew);
+      }
+    
+      // compute viscosity
+      if (nu>0) {
+	DeviceArray<real_t> &d_flux_x = d_qm_x;
+	DeviceArray<real_t> &d_flux_y = d_qm_y;
+	DeviceArray<real_t> &d_flux_z = d_qm_z;
+      
+	compute_viscosity_flux(d_UNew, d_flux_x, d_flux_y, d_flux_z, dt);
+	compute_hydro_update  (d_UNew, d_flux_x, d_flux_y, d_flux_z );
+      } // end compute viscosity force / update  
+      TIMER_STOP(timerDissipative);
+    
+      /*
+       * random forcing
+       */
+      if (randomForcingEnabled) {
+      
+	real_t norm = compute_random_forcing_normalization(d_UNew, dt);
+      
+	add_random_forcing(d_UNew, dt, norm);
+      
+      }
+      if (randomForcingOrnsteinUhlenbeckEnabled) {
+      
+	// add forcing field in real space
+	pForcingOrnsteinUhlenbeck->add_forcing_field(d_UNew, dt);
+      
+      }
+    
+    } // end THREE_D
+
+  } // HydroRunGodunovMpi::godunov_unsplit_gpu_v1
+
+  // =======================================================
+  // =======================================================
+  void HydroRunGodunovMpi::godunov_unsplit_gpu_v2(DeviceArray<real_t>& d_UOld, 
+						  DeviceArray<real_t>& d_UNew,
+						  real_t dt)
+  {
+
+    if (dimType == TWO_D) {
+
+      /*
+       * 1. Compute and store slopes
+       */
+      {
+	// 2D slopes
+	dim3 dimBlock(SLOPES_BLOCK_DIMX_2D_V2,
+		      SLOPES_BLOCK_DIMY_2D_V2);
+	dim3 dimGrid(blocksFor(isize, SLOPES_BLOCK_INNER_DIMX_2D_V2), 
+		     blocksFor(jsize, SLOPES_BLOCK_INNER_DIMY_2D_V2));
+	kernel_godunov_slopes_2d_v2<<<dimGrid,
+	  dimBlock>>>(d_Q.data(),
+		      d_slope_x.data(),
+		      d_slope_y.data(),
+		      d_Q.pitch(), 
+		      d_Q.dimx(), 
+		      d_Q.dimy()		    
+		      );
+      } // end slopes 2D
+
+      /*
+       * 2. compute reconstructed states along X interfaces
+       */
+      {
+	dim3 dimBlock(TRACE_BLOCK_DIMX_2D_V2,
+		      TRACE_BLOCK_DIMY_2D_V2);
+	dim3 dimGrid(blocksFor(isize, TRACE_BLOCK_DIMX_2D_V2), 
+		     blocksFor(jsize, TRACE_BLOCK_DIMY_2D_V2));
+	kernel_godunov_trace_by_dir_2d_v2<<<dimGrid,
+	  dimBlock>>>(d_Q.data(),
+		      d_slope_x.data(),
+		      d_slope_y.data(),
+		      d_qm.data(),
+		      d_qp.data(),
+		      d_Q.pitch(), 
+		      d_Q.dimx(), 
+		      d_Q.dimy(),
+		      dt, dt / dx, dt / dy,
+		      gravityEnabled,
+		      IX
+		      );
+      } // end trace X
+
+      /*
+       * 3. Riemann solver at X interface and update
+       */
+      {
+	dim3 dimBlock(UPDATE_BLOCK_DIMX_2D_V2,
+		      UPDATE_BLOCK_DIMY_2D_V2);
+	dim3 dimGrid(blocksFor(isize, UPDATE_BLOCK_INNER_DIMX_2D_V2), 
+		     blocksFor(jsize, UPDATE_BLOCK_INNER_DIMY_2D_V2));
+	kernel_hydro_flux_update_unsplit_2d_v2<<<dimGrid,
+	  dimBlock>>>(d_UNew.data(),
+		      d_qm.data(),
+		      d_qp.data(),
+		      d_Q.pitch(), 
+		      d_Q.dimx(), 
+		      d_Q.dimy(),
+		      dt / dx, dt / dy, dt,
+		      IX
+		      );
+      
+      } // end update X
+
+      /*
+       * 4. Compute reconstructed states along Y interfaces
+       */
+      {
+	dim3 dimBlock(TRACE_BLOCK_DIMX_2D_V2,
+		      TRACE_BLOCK_DIMY_2D_V2);
+	dim3 dimGrid(blocksFor(isize, TRACE_BLOCK_DIMX_2D_V2), 
+		     blocksFor(jsize, TRACE_BLOCK_DIMY_2D_V2));
+	kernel_godunov_trace_by_dir_2d_v2<<<dimGrid,
+	  dimBlock>>>(d_Q.data(),
+		      d_slope_x.data(),
+		      d_slope_y.data(),
+		      d_qm.data(),
+		      d_qp.data(),
+		      d_Q.pitch(), 
+		      d_Q.dimx(), 
+		      d_Q.dimy(),
+		      dt, dt / dx, dt / dy,
+		      gravityEnabled,
+		      IY
+		      );
+      } // end trace Y
+
+      /*
+       * 5. Riemann solver at Y interface and update
+       */
+      {
+	dim3 dimBlock(UPDATE_BLOCK_DIMX_2D_V2,
+		      UPDATE_BLOCK_DIMY_2D_V2);
+	dim3 dimGrid(blocksFor(isize, UPDATE_BLOCK_INNER_DIMX_2D_V2), 
+		     blocksFor(jsize, UPDATE_BLOCK_INNER_DIMY_2D_V2));
+	kernel_hydro_flux_update_unsplit_2d_v2<<<dimGrid,
+	  dimBlock>>>(d_UNew.data(),
+		      d_qm.data(),
+		      d_qp.data(),
+		      d_Q.pitch(), 
+		      d_Q.dimx(), 
+		      d_Q.dimy(),
+		      dt / dx, dt / dy, dt,
+		      IY
+		      );
+      } // end update Y
+
+      if (gravityEnabled) {
+	compute_gravity_source_term(d_UNew, d_UOld, dt);
+      }
+
+    } else if (dimType == THREE_D) {
+    
+      TIMER_START(timerSlopeTrace);
+      {
+	// 3D slope / trace computation kernel
+	dim3 dimBlock(TRACE_BLOCK_DIMX_3D_V2,
+		      TRACE_BLOCK_DIMY_3D_V2);
+	dim3 dimGrid(blocksFor(isize, TRACE_BLOCK_INNER_DIMX_3D_V2), 
+		     blocksFor(jsize, TRACE_BLOCK_INNER_DIMY_3D_V2));
+	kernel_hydro_compute_trace_unsplit_3d_v2<<<dimGrid, 
+	  dimBlock>>>(d_UOld.data(),
+		      d_Q.data(),
+		      d_qm_x.data(),
+		      d_qm_y.data(),
+		      d_qm_z.data(),
+		      d_qp_x.data(),
+		      d_qp_y.data(),
+		      d_qp_z.data(),
+		      d_UOld.pitch(), 
+		      d_UOld.dimx(), 
+		      d_UOld.dimy(), 
+		      d_UOld.dimz(),
+		      dt / dx, 
+		      dt / dy,
+		      dt / dz,
+		      dt);
+	checkCudaError("HydroRunGodunov :: kernel_hydro_compute_trace_unsplit_3d_v2 error");
+      } // end 3D slope / trace computation kernel
+    
+      if (gravityEnabled) {
+	compute_gravity_predictor(d_qm_x, dt);
+	compute_gravity_predictor(d_qm_y, dt);
+	compute_gravity_predictor(d_qm_z, dt);
+	compute_gravity_predictor(d_qp_x, dt);
+	compute_gravity_predictor(d_qp_y, dt);
+	compute_gravity_predictor(d_qp_z, dt);
+      }
+      TIMER_STOP(timerSlopeTrace);
+    
+      TIMER_START(timerUpdate);
+      {
+	// 3D update hydro kernel
+	dim3 dimBlock(UPDATE_BLOCK_DIMX_3D_V1,
+		      UPDATE_BLOCK_DIMY_3D_V1);
+	dim3 dimGrid(blocksFor(isize, UPDATE_BLOCK_INNER_DIMX_3D_V1), 
+		     blocksFor(jsize, UPDATE_BLOCK_INNER_DIMY_3D_V1));
+	kernel_hydro_flux_update_unsplit_3d_v1<<<dimGrid, 
+	  dimBlock>>>(d_UOld.data(),
+		      d_UNew.data(),
+		      d_qm_x.data(),
+		      d_qm_y.data(),
+		      d_qm_z.data(),
+		      d_qp_x.data(),
+		      d_qp_y.data(),
+		      d_qp_z.data(),
+		      d_UOld.pitch(), 
+		      d_UOld.dimx(), 
+		      d_UOld.dimy(), 
+		      d_UOld.dimz(),
+		      dt / dx, 
+		      dt / dy,
+		      dt / dz,
+		      dt );
+	checkCudaError("HydroRunGodunov :: kernel_hydro_flux_update_unsplit_3d_v1 error");
+      
+      } // end 3D update hydro kernel
+    
+      if (gravityEnabled) {
+	compute_gravity_source_term(d_UNew, d_UOld, dt);
+      }
+      TIMER_STOP(timerUpdate);
+    
+      /*
+       * DISSIPATIVE TERMS (i.e. viscosity)
+       */
+      TIMER_START(timerDissipative);
+      real_t &nu = _gParams.nu;
+      if (nu>0) {
+	// update boundaries before dissipative terms computations
+	make_all_boundaries(d_UNew);
+      }
+    
+      // compute viscosity
+      if (nu>0) {
+	DeviceArray<real_t> &d_flux_x = d_qm_x;
+	DeviceArray<real_t> &d_flux_y = d_qm_y;
+	DeviceArray<real_t> &d_flux_z = d_qm_z;
+      
+	compute_viscosity_flux(d_UNew, d_flux_x, d_flux_y, d_flux_z, dt);
+	compute_hydro_update  (d_UNew, d_flux_x, d_flux_y, d_flux_z );
+      } // end compute viscosity force / update  
+      TIMER_STOP(timerDissipative);
+    
+      /*
+       * random forcing
+       */
+      if (randomForcingEnabled) {
+      
+	real_t norm = compute_random_forcing_normalization(d_UNew, dt);
+      
+	add_random_forcing(d_UNew, dt, norm);
+      
+      }
+      if (randomForcingOrnsteinUhlenbeckEnabled) {
+      
+	// add forcing field in real space
+	pForcingOrnsteinUhlenbeck->add_forcing_field(d_UNew, dt);
+      
+      }
+
+    } // end THREE_D
+
+  } // HydroRunGodunovMpi::godunov_unsplit_gpu_v2
 
 # else // CPU version
 
@@ -3545,15 +3797,58 @@ namespace hydroSimu {
   // =======================================================
   // =======================================================
   /*
-   * convert to primitive variables (should only be usefull when using
-   * the unsplit scheme version 1.
+   * convert to primitive variables.
    */
   void HydroRunGodunovMpi::convertToPrimitives(real_t *U)
   {
     
-    // this is a CPU-only routine    
-#ifndef __CUDACC__
-    
+#ifdef __CUDACC__
+
+    if (dimType == TWO_D) {
+
+      TIMER_START(timerPrimVar);
+      {
+	// 2D primitive variables computation kernel    
+	dim3 dimBlock(PRIM_VAR_BLOCK_DIMX_2D,
+		      PRIM_VAR_BLOCK_DIMY_2D);
+	dim3 dimGrid(blocksFor(isize, PRIM_VAR_BLOCK_DIMX_2D), 
+		     blocksFor(jsize, PRIM_VAR_BLOCK_DIMY_2D));
+	kernel_hydro_compute_primitive_variables_2D<<<dimGrid, 
+	  dimBlock>>>(U, 
+		      d_Q.data(),
+		      d_Q.pitch(),
+		      d_Q.dimx(),
+		      d_Q.dimy());
+	checkCudaErrorMpi("HydroRunGodunov :: kernel_hydro_compute_primitive_variables_2D error",myRank);
+      
+      } // end compute primitive variables 2d kernel
+      TIMER_STOP(timerPrimVar);
+
+    } else { // THREE_D
+
+      TIMER_START(timerPrimVar);
+      {
+	// 3D primitive variables computation kernel    
+	dim3 dimBlock(PRIM_VAR_BLOCK_DIMX_3D,
+		      PRIM_VAR_BLOCK_DIMY_3D);
+	dim3 dimGrid(blocksFor(isize, PRIM_VAR_BLOCK_DIMX_3D), 
+		     blocksFor(jsize, PRIM_VAR_BLOCK_DIMY_3D));
+	kernel_hydro_compute_primitive_variables_3D<<<dimGrid, 
+	  dimBlock>>>(U, 
+		      d_Q.data(),
+		      d_Q.pitch(),
+		      d_Q.dimx(),
+		      d_Q.dimy(),
+		      d_Q.dimz());
+	checkCudaErrorMpi("HydroRunGodunov :: kernel_hydro_compute_primitive_variables_3D error",myRank);
+      
+      } // end compute primitive variables 3d kernel
+      TIMER_STOP(timerPrimVar);
+
+    } // end THREE_D
+  
+#else // CPU version
+ 
     if (dimType == TWO_D) {
       
       // primitive variable state vector
