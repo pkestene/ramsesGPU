@@ -1,7 +1,7 @@
 # ------------------------------------------------------------------------------
 # Package setup
 # ------------------------------------------------------------------------------
-AC_INIT([RAMSES-GPU], [1.2.0], [pierre.kestener@cea.fr])
+AC_INIT([RAMSES-GPU], [1.3.0], [pierre.kestener@cea.fr])
 
 AM_INIT_AUTOMAKE([-Wall -Werror foreign -Wno-portability])
 

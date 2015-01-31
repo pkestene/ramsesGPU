@@ -1,3 +1,9 @@
+2015-1-31 Pierre Kestener
+	* Version 1.3 : some refactoring in hydrodynamics schemes
+
+	* both CPU and GPU implementation are slightly improved: each of
+	them have now 3 versions which varies by the amount of memory required.
+
 2014-11-3 Pierre Kestener
 	* Version 1.2 : bug fixes and minor improvements
 
@@ -13,7 +19,7 @@
 	* add new initial condition for stratified shearing box problems
 
 	* minor improvements in example parameter files
-	
+
 2013-8-27 Pierre Kestener
 	* Version 1.1 : bug fixes and features implementation
 
