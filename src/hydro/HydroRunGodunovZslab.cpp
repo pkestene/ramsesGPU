@@ -215,10 +215,118 @@ namespace hydroSimu {
     make_all_boundaries(d_UOld);
     TIMER_STOP(timerBoundaries);
 
+    // copy d_UOld into d_UNew
+    d_UOld.copyTo(d_UNew);
+
     // inner domain integration
     TIMER_START(timerGodunov);
-    {
+
+    if (unsplitVersion == 0) {
+
+      godunov_unsplit_gpu_v0(d_UOld, d_UNew, dt, nStep);
+
+    } else if (unsplitVersion == 1) {
+
+      godunov_unsplit_gpu_v1(d_UOld, d_UNew, dt, nStep);
     
+    } // end unsplitVersion == 1
+    
+    TIMER_STOP(timerGodunov);
+
+  } // HydroRunGodunovZslab::godunov_unsplit_gpu
+
+  // =======================================================
+  // =======================================================
+  void HydroRunGodunovZslab::godunov_unsplit_gpu_v0(DeviceArray<real_t>& d_UOld, 
+						    DeviceArray<real_t>& d_UNew,
+						    real_t dt, int nStep)
+  {
+
+    // loop over z-slab index
+    for (int zSlabId=0; zSlabId < zSlabNb; ++zSlabId) {
+      
+      ZslabInfo zSlabInfo;
+      zSlabInfo.zSlabId     = zSlabId;
+      zSlabInfo.zSlabNb     = zSlabNb;
+      zSlabInfo.zSlabWidthG = zSlabWidthG;
+      zSlabInfo.kStart      = zSlabWidth * zSlabId;
+      zSlabInfo.kStop       = zSlabWidth * zSlabId + zSlabWidthG;
+      zSlabInfo.ksizeSlab   = zSlabWidthG;
+      
+      // take care that the last slab might be truncated
+      if (zSlabId == zSlabNb-1) {
+	zSlabInfo.ksizeSlab = ksize - zSlabInfo.kStart;
+      }
+      
+      TIMER_START(timerPrimVar);
+      {
+	// 3D primitive variables computation kernel    
+	dim3 dimBlock(PRIM_VAR_BLOCK_DIMX_3D_Z,
+		      PRIM_VAR_BLOCK_DIMY_3D_Z);
+	dim3 dimGrid(blocksFor(isize, PRIM_VAR_BLOCK_DIMX_3D_Z), 
+		     blocksFor(jsize, PRIM_VAR_BLOCK_DIMY_3D_Z));
+	kernel_hydro_compute_primitive_variables_3D_zslab<<<dimGrid, 
+	  dimBlock>>>(d_UOld.data(), 
+		      d_Q.data(),
+		      d_UOld.pitch(),
+		      d_UOld.dimx(),
+		      d_UOld.dimy(),
+		      d_UOld.dimz(),
+		      zSlabInfo);
+	checkCudaError("HydroRunGodunovZslab :: kernel_hydro_compute_primitive_variables_3D_zslab error");
+	
+      } // end compute primitive variables 3d kernel
+      TIMER_STOP(timerPrimVar);
+
+      {
+	// 3D Godunov unsplit kernel    
+	dim3 dimBlock(UNSPLIT_BLOCK_DIMX_3D_V0_Z,
+		      UNSPLIT_BLOCK_DIMY_3D_V0_Z);
+	dim3 dimGrid(blocksFor(isize, UNSPLIT_BLOCK_INNER_DIMX_3D_V0_Z),
+		     blocksFor(jsize, UNSPLIT_BLOCK_INNER_DIMY_3D_V0_Z));
+	kernel_godunov_unsplit_3d_v0_zslab<<<dimGrid, 
+	  dimBlock>>>(d_Q.data(), 
+		      d_UNew.data(), 
+		      d_UOld.pitch(), 
+		      d_UOld.dimx(), 
+		      d_UOld.dimy(), 
+		      d_UOld.dimz(),
+		      dt / dx, 
+		      dt / dy, 
+		      dt / dz, 
+		      dt,
+		      gravityEnabled,
+		      zSlabInfo);
+	checkCudaError("HydroRunGodunovZslab :: kernel_godunov_unsplit_3d_v0_zslab error");
+
+      }
+      
+      if (gravityEnabled) {
+	compute_gravity_source_term(d_UNew, d_UOld, dt, zSlabInfo);
+      }
+      
+    } // end for k inside z-slab
+    
+    /*************************************
+     * DISSIPATIVE TERMS (i.e. viscosity)
+     *************************************/
+    TIMER_START(timerDissipative);
+    real_t &nu = _gParams.nu;
+    if (nu>0) {
+      std::cerr << "Dissipative terms not implemented (TODO)..." << std::endl;
+    } // end compute viscosity force / update
+    TIMER_STOP(timerDissipative);
+    
+  } // HydroRunGodunovZslab::godunov_unsplit_gpu_v0
+
+  // =======================================================
+  // =======================================================
+  void HydroRunGodunovZslab::godunov_unsplit_gpu_v1(DeviceArray<real_t>& d_UOld, 
+						    DeviceArray<real_t>& d_UNew,
+						    real_t dt, int nStep)
+  {
+
+    {
       // loop over z-slab index
       for (int zSlabId=0; zSlabId < zSlabNb; ++zSlabId) {
 
@@ -238,11 +346,11 @@ namespace hydroSimu {
 	TIMER_START(timerPrimVar);
 	{
 	  // 3D primitive variables computation kernel    
-	  dim3 dimBlock(PRIM_VAR_BLOCK_DIMX_3D_V1Z,
-			PRIM_VAR_BLOCK_DIMY_3D_V1Z);
-	  dim3 dimGrid(blocksFor(isize, PRIM_VAR_BLOCK_DIMX_3D_V1Z), 
-		       blocksFor(jsize, PRIM_VAR_BLOCK_DIMY_3D_V1Z));
-	  kernel_hydro_compute_primitive_variables_3D_v1_zslab<<<dimGrid, 
+	  dim3 dimBlock(PRIM_VAR_BLOCK_DIMX_3D_Z,
+			PRIM_VAR_BLOCK_DIMY_3D_Z);
+	  dim3 dimGrid(blocksFor(isize, PRIM_VAR_BLOCK_DIMX_3D_Z), 
+		       blocksFor(jsize, PRIM_VAR_BLOCK_DIMY_3D_Z));
+	  kernel_hydro_compute_primitive_variables_3D_zslab<<<dimGrid, 
 	    dimBlock>>>(d_UOld.data(), 
 			d_Q.data(),
 			d_UOld.pitch(),
@@ -250,7 +358,7 @@ namespace hydroSimu {
 			d_UOld.dimy(),
 			d_UOld.dimz(),
 			zSlabInfo);
-	  checkCudaError("HydroRunGodunovZslab :: kernel_hydro_compute_primitive_variables_3D_v1_zslab error");
+	  checkCudaError("HydroRunGodunovZslab :: kernel_hydro_compute_primitive_variables_3D_zslab error");
 	
 	} // end compute primitive variables 3d kernel
 	TIMER_STOP(timerPrimVar);
@@ -398,11 +506,10 @@ namespace hydroSimu {
 	
       }
 
-
     } // end godunov
-    TIMER_STOP(timerGodunov);
 
-  } // HydroRunGodunovZslab::godunov_unsplit_gpu
+  } // HydroRunGodunovZslab::godunov_unsplit_gpu_v1
+
 
 #else // CPU version
 
