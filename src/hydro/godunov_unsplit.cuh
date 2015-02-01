@@ -1143,7 +1143,7 @@ __global__ void kernel_godunov_unsplit_3d(const real_t * __restrict__ Uin,
 #else // simple precision
 #define UNSPLIT_BLOCK_DIMX_3D_V0	16
 #define UNSPLIT_BLOCK_INNER_DIMX_3D_V0	(UNSPLIT_BLOCK_DIMX_3D_V0-4)
-#define UNSPLIT_BLOCK_DIMY_3D_V0	12
+#define UNSPLIT_BLOCK_DIMY_3D_V0	24
 #define UNSPLIT_BLOCK_INNER_DIMY_3D_V0	(UNSPLIT_BLOCK_DIMY_3D_V0-4)
 #endif // USE_DOUBLE
 

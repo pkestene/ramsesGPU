@@ -51,7 +51,7 @@ namespace hydroSimu {
   public:
     HydroRunGodunovZslab(ConfigMap &_configMap);
     ~HydroRunGodunovZslab();
-       
+    
     //! Godunov integration using unsplit scheme (brut force, compute
     //! everything that is needed to have the flux update for each
     //! cell without taking care of the fact that some computations

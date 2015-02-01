@@ -144,7 +144,7 @@ kernel_hydro_compute_primitive_variables_3D_zslab(const real_t * __restrict__ Ui
 #else // simple precision
 #define UNSPLIT_BLOCK_DIMX_3D_V0_Z	16
 #define UNSPLIT_BLOCK_INNER_DIMX_3D_V0_Z	(UNSPLIT_BLOCK_DIMX_3D_V0_Z-4)
-#define UNSPLIT_BLOCK_DIMY_3D_V0_Z	12
+#define UNSPLIT_BLOCK_DIMY_3D_V0_Z	24
 #define UNSPLIT_BLOCK_INNER_DIMY_3D_V0_Z	(UNSPLIT_BLOCK_DIMY_3D_V0_Z-4)
 #endif // USE_DOUBLE
 

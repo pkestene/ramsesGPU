@@ -10074,7 +10074,8 @@ namespace hydroSimu {
     // initialize gravity field
     if (gravityEnabled) {
 
-      double phi[2][THREE_D] = {0.0};
+      double phi[2][THREE_D] = { {0.0, 0.0, 0.0},
+				 {0.0, 0.0, 0.0} };
       h_gravity.reset();
       
       bool smoothGravity = configMap.getBool ("MRI", "smoothGravity", false);

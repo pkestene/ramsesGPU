@@ -37,9 +37,6 @@ namespace hydroSimu {
     HydroRunGodunovZslabMpi(ConfigMap &_configMap);
     ~HydroRunGodunovZslabMpi();
     
-    //! Godunov integration with directionnal spliting
-    void godunov_split(int idim, real_t dt);
-
     //! Godunov integration using unsplit scheme (brut force, compute
     //! everything that is needed to have the flux update for each
     //! cell without taking care of the fact that some computations
@@ -56,6 +53,22 @@ namespace hydroSimu {
     void godunov_unsplit_gpu(DeviceArray<real_t>& d_UOld, 
 			     DeviceArray<real_t>& d_UNew,
 			     real_t dt);
+    //! unplitVersion = 0
+    //! memory footprint is very low
+    //! nothing is stored globally except h_Q
+    //! some redundancy in trace computation
+    void godunov_unsplit_gpu_v0(DeviceArray<real_t>& d_UOld, 
+				DeviceArray<real_t>& d_UNew, 
+				real_t dt);
+
+    //! unplitVersion = 1
+    //! memory footprint is medium
+    //! reconstructed (trace) states are stored
+    //! then perform Riemann flux computation and update
+    void godunov_unsplit_gpu_v1(DeviceArray<real_t>& d_UOld, 
+				DeviceArray<real_t>& d_UNew, 
+				real_t dt);
+
 #else
     //! Actual computation of the godunov integration using unsplit 
     //! scheme on CPU, two array are necessary to make ping-pong (h_UOld and
@@ -63,6 +76,21 @@ namespace hydroSimu {
     void godunov_unsplit_cpu(HostArray<real_t>& h_UOld, 
 			     HostArray<real_t>& h_UNew, 
 			     real_t dt);
+    //! unplitVersion = 0
+    //! memory footprint is very low
+    //! nothing is stored globally except h_Q
+    //! some redundancy in trace computation
+    void godunov_unsplit_cpu_v0(HostArray<real_t>& h_UOld, 
+				HostArray<real_t>& h_UNew, 
+				real_t dt);
+
+    //! unplitVersion = 1
+    //! memory footprint is medium
+    //! reconstructed (trace) states are stored
+    //! then perform Riemann flux computation and update
+    void godunov_unsplit_cpu_v1(HostArray<real_t>& h_UOld, 
+				HostArray<real_t>& h_UNew, 
+				real_t dt);
 #endif // __CUDAC__
 
   public:
@@ -84,13 +112,16 @@ namespace hydroSimu {
     int zSlabWidthG;
 
     void convertToPrimitives(real_t *U, int zSlabId);
-    
+
+    /** use unsplit scheme */
+    int  unsplitVersion;
+       
 #ifdef __CUDACC__
     DeviceArray<real_t> d_Q; //!< GPU : primitive data array
 #else
     HostArray<real_t>   h_Q; //!< !!! CPU ONLY !!! Primitive Data array on CPU
 #endif // __CUDACC__
-    
+
     /** \defgroup implementation1 */
     /*@{*/
 #ifdef __CUDACC__
