@@ -214,10 +214,10 @@ namespace hydroSimu {
 	TIMER_START(timerPrimVar);
 	{
 	  // 3D primitive variables computation kernel    
-	  dim3 dimBlock(PRIM_VAR_BLOCK_DIMX_3D_V1Z,
-			PRIM_VAR_BLOCK_DIMY_3D_V1Z);
-	  dim3 dimGrid(blocksFor(isize, PRIM_VAR_BLOCK_DIMX_3D_V1Z), 
-		       blocksFor(jsize, PRIM_VAR_BLOCK_DIMY_3D_V1Z));
+	  dim3 dimBlock(PRIM_VAR_BLOCK_DIMX_3D_Z,
+			PRIM_VAR_BLOCK_DIMY_3D_Z);
+	  dim3 dimGrid(blocksFor(isize, PRIM_VAR_BLOCK_DIMX_3D_Z), 
+		       blocksFor(jsize, PRIM_VAR_BLOCK_DIMY_3D_Z));
 	  kernel_hydro_compute_primitive_variables_3D_v1_zslab<<<dimGrid, 
 	    dimBlock>>>(d_UOld.data(), 
 			d_Q.data(),
