@@ -218,7 +218,7 @@ namespace hydroSimu {
 			PRIM_VAR_BLOCK_DIMY_3D_Z);
 	  dim3 dimGrid(blocksFor(isize, PRIM_VAR_BLOCK_DIMX_3D_Z), 
 		       blocksFor(jsize, PRIM_VAR_BLOCK_DIMY_3D_Z));
-	  kernel_hydro_compute_primitive_variables_3D_v1_zslab<<<dimGrid, 
+	  kernel_hydro_compute_primitive_variables_3D_zslab<<<dimGrid, 
 	    dimBlock>>>(d_UOld.data(), 
 			d_Q.data(),
 			d_UOld.pitch(),
@@ -226,7 +226,7 @@ namespace hydroSimu {
 			d_UOld.dimy(),
 			d_UOld.dimz(),
 			zSlabInfo);
-	  checkCudaErrorMpi("HydroRunGodunovZslabMpi :: kernel_hydro_compute_primitive_variables_3D_v1_zslab error",myRank);
+	  checkCudaErrorMpi("HydroRunGodunovZslabMpi :: kernel_hydro_compute_primitive_variables_3D_zslab error",myRank);
 	
 	} // end compute primitive variables 3d kernel
 	TIMER_STOP(timerPrimVar);
