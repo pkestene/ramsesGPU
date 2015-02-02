@@ -1113,71 +1113,11 @@ namespace hydroSimu {
 
     } else if (dimType == THREE_D) {
     
-      TIMER_START(timerSlopeTrace);
-      {
-	// 3D slope / trace computation kernel
-	dim3 dimBlock(TRACE_BLOCK_DIMX_3D_V2,
-		      TRACE_BLOCK_DIMY_3D_V2);
-	dim3 dimGrid(blocksFor(isize, TRACE_BLOCK_INNER_DIMX_3D_V2), 
-		     blocksFor(jsize, TRACE_BLOCK_INNER_DIMY_3D_V2));
-	kernel_hydro_compute_trace_unsplit_3d_v2<<<dimGrid, 
-	  dimBlock>>>(d_UOld.data(),
-		      d_Q.data(),
-		      d_qm_x.data(),
-		      d_qm_y.data(),
-		      d_qm_z.data(),
-		      d_qp_x.data(),
-		      d_qp_y.data(),
-		      d_qp_z.data(),
-		      d_UOld.pitch(), 
-		      d_UOld.dimx(), 
-		      d_UOld.dimy(), 
-		      d_UOld.dimz(),
-		      dt / dx, 
-		      dt / dy,
-		      dt / dz,
-		      dt);
-	checkCudaError("HydroRunGodunov :: kernel_hydro_compute_trace_unsplit_3d_v2 error");
-      } // end 3D slope / trace computation kernel
-    
-      if (gravityEnabled) {
-	compute_gravity_predictor(d_qm_x, dt);
-	compute_gravity_predictor(d_qm_y, dt);
-	compute_gravity_predictor(d_qm_z, dt);
-	compute_gravity_predictor(d_qp_x, dt);
-	compute_gravity_predictor(d_qp_y, dt);
-	compute_gravity_predictor(d_qp_z, dt);
-      }
-      TIMER_STOP(timerSlopeTrace);
-    
-      TIMER_START(timerUpdate);
-      {
-	// 3D update hydro kernel
-	dim3 dimBlock(UPDATE_BLOCK_DIMX_3D_V1,
-		      UPDATE_BLOCK_DIMY_3D_V1);
-	dim3 dimGrid(blocksFor(isize, UPDATE_BLOCK_INNER_DIMX_3D_V1), 
-		     blocksFor(jsize, UPDATE_BLOCK_INNER_DIMY_3D_V1));
-	kernel_hydro_flux_update_unsplit_3d_v1<<<dimGrid, 
-	  dimBlock>>>(d_UOld.data(),
-		      d_UNew.data(),
-		      d_qm_x.data(),
-		      d_qm_y.data(),
-		      d_qm_z.data(),
-		      d_qp_x.data(),
-		      d_qp_y.data(),
-		      d_qp_z.data(),
-		      d_UOld.pitch(), 
-		      d_UOld.dimx(), 
-		      d_UOld.dimy(), 
-		      d_UOld.dimz(),
-		      dt / dx, 
-		      dt / dy,
-		      dt / dz,
-		      dt );
-	checkCudaError("HydroRunGodunov :: kernel_hydro_flux_update_unsplit_3d_v1 error");
-      
-      } // end 3D update hydro kernel
-    
+      /* TODO */
+      /* TODO */
+      /* TODO */
+      /* TODO */
+          
       if (gravityEnabled) {
 	compute_gravity_source_term(d_UNew, d_UOld, dt);
       }
