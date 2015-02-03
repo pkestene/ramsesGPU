@@ -1148,6 +1148,15 @@ namespace hydroSimu {
 		      );
       } // end slopes 3D
       
+      if (dumpDataForDebugEnabled) {
+	d_slope_x.copyToHost(h_debug);
+	outputVtkDebug(h_debug, "slope_x_", nStep, true);
+      	d_slope_y.copyToHost(h_debug);
+	outputVtkDebug(h_debug, "slope_y_", nStep, true);
+      	d_slope_z.copyToHost(h_debug);
+	outputVtkDebug(h_debug, "slope_z_", nStep, true);
+      }
+
       /*
        * 2. compute reconstructed states along X interfaces
        */
@@ -1173,6 +1182,13 @@ namespace hydroSimu {
 		      );
       } // end trace X
 
+      if (dumpDataForDebugEnabled) {
+	d_qm.copyToHost(h_debug);
+	outputVtkDebug(h_debug, "qm_x_", nStep, true);
+      	d_qp.copyToHost(h_debug);
+	outputVtkDebug(h_debug, "qp_x_", nStep, true);
+      }
+
       /*
        * 3. Riemann solver at X interface and update
        */
@@ -1194,6 +1210,11 @@ namespace hydroSimu {
 		      );
       
       } // end update X
+
+      if (dumpDataForDebugEnabled) {
+	d_UNew.copyToHost(h_debug);
+	outputVtkDebug(h_debug, "update_x_", nStep, true);
+      }
 
       /*
        * 4. compute reconstructed states along Y interfaces
@@ -1220,6 +1241,13 @@ namespace hydroSimu {
 		      );
       } // end trace Y
 
+      if (dumpDataForDebugEnabled) {
+	d_qm.copyToHost(h_debug);
+	outputVtkDebug(h_debug, "qm_y_", nStep, true);
+      	d_qp.copyToHost(h_debug);
+	outputVtkDebug(h_debug, "qp_y_", nStep, true);
+      }
+
       /*
        * 5. Riemann solver at Y interface and update
        */
@@ -1241,6 +1269,11 @@ namespace hydroSimu {
 		      );
       
       } // end update Y
+
+      if (dumpDataForDebugEnabled) {
+	d_UNew.copyToHost(h_debug);
+	outputVtkDebug(h_debug, "update_y_", nStep, true);
+      }
 
       /*
        * 6. compute reconstructed states along Z interfaces
@@ -1267,6 +1300,13 @@ namespace hydroSimu {
 		      );
       } // end trace Z
 
+      if (dumpDataForDebugEnabled) {
+	d_qm.copyToHost(h_debug);
+	outputVtkDebug(h_debug, "qm_z_", nStep, true);
+      	d_qp.copyToHost(h_debug);
+	outputVtkDebug(h_debug, "qp_z_", nStep, true);
+      }
+
       /*
        * 7. Riemann solver at Z interface and update
        */
@@ -1289,6 +1329,11 @@ namespace hydroSimu {
       
       } // end update Z
     
+      if (dumpDataForDebugEnabled) {
+	d_UNew.copyToHost(h_debug);
+	outputVtkDebug(h_debug, "update_z_", nStep, true);
+      }
+
       if (gravityEnabled) {
 	compute_gravity_source_term(d_UNew, d_UOld, dt);
       }
