@@ -2519,8 +2519,8 @@ __global__ void kernel_hydro_flux_update_unsplit_2d_v2(real_t       * Uout,
   __syncthreads();
     
   // update uOut with flux
-  if(i >= 2 and i < imax-1 and tx < UPDATE_BLOCK_DIMX_2D_V2-1 and
-     j >= 2 and j < jmax-1 and ty < UPDATE_BLOCK_DIMY_2D_V2-1)
+  if(i >= 2 and i < imax-2 and tx < UPDATE_BLOCK_DIMX_2D_V2-1 and
+     j >= 2 and j < jmax-2 and ty < UPDATE_BLOCK_DIMY_2D_V2-1)
     {
       // re-read input state into uOut which will in turn serve to
       // update Uout !
@@ -2630,6 +2630,7 @@ void kernel_hydro_flux_update_unsplit_3d_v2(real_t       * Uout,
   // conservative variables
   real_t uOut[NVAR_3D];
   real_t qgdnv[NVAR_3D];
+  real_t flux_zm1[NVAR_3D];
 
   int deltaOffset;
   if (direction == IX)
@@ -2701,47 +2702,48 @@ void kernel_hydro_flux_update_unsplit_3d_v2(real_t       * Uout,
       {
 	// re-read input state into uOut which will in turn serve to
 	// update Uout !
-	int offset = elemOffset;
-	uOut[ID] = Uout[offset];  offset += arraySize;
-	uOut[IP] = Uout[offset];  offset += arraySize;
-	uOut[IU] = Uout[offset];  offset += arraySize;
-	uOut[IV] = Uout[offset];  offset += arraySize;
-	uOut[IW] = Uout[offset];
-
-	if (direction == IX) {
-	  uOut[ID] += flux[tx  ][ty][ID]*dtdx;
-	  uOut[ID] -= flux[tx+1][ty][ID]*dtdx;
-	  
-	  uOut[IP] += flux[tx  ][ty][IP]*dtdx;
-	  uOut[IP] -= flux[tx+1][ty][IP]*dtdx;
-	  
-	  uOut[IU] += flux[tx  ][ty][IU]*dtdx;
-	  uOut[IU] -= flux[tx+1][ty][IU]*dtdx;
-	  
-	  uOut[IV] += flux[tx  ][ty][IV]*dtdx;
-	  uOut[IV] -= flux[tx+1][ty][IV]*dtdx;
-	  
-	  uOut[IW] += flux[tx  ][ty][IW]*dtdx;
-	  uOut[IW] -= flux[tx+1][ty][IW]*dtdx;
-	} else if (direction == IY) {
-	  // watchout IU and IV are swapped !
-	  uOut[ID] += flux[tx][ty  ][ID]*dtdy;
-	  uOut[ID] -= flux[tx][ty+1][ID]*dtdy;
-	  
-	  uOut[IP] += flux[tx][ty  ][IP]*dtdy;
-	  uOut[IP] -= flux[tx][ty+1][IP]*dtdy;
-	  
-	  uOut[IU] += flux[tx][ty  ][IV]*dtdy;
-	  uOut[IU] -= flux[tx][ty+1][IV]*dtdy;
-	  
-	  uOut[IV] += flux[tx][ty  ][IU]*dtdy;
-	  uOut[IV] -= flux[tx][ty+1][IU]*dtdy;
-	  
-	  uOut[IW] += flux[tx][ty  ][IW]*dtdy;
-	  uOut[IW] -= flux[tx][ty+1][IW]*dtdy;
-	}
 
 	if (direction == IX or direction == IY) {
+	  int offset = elemOffset;
+	  uOut[ID] = Uout[offset];  offset += arraySize;
+	  uOut[IP] = Uout[offset];  offset += arraySize;
+	  uOut[IU] = Uout[offset];  offset += arraySize;
+	  uOut[IV] = Uout[offset];  offset += arraySize;
+	  uOut[IW] = Uout[offset];
+	  
+	  if (direction == IX) {
+	    uOut[ID] += flux[tx  ][ty][ID]*dtdx;
+	    uOut[ID] -= flux[tx+1][ty][ID]*dtdx;
+	    
+	    uOut[IP] += flux[tx  ][ty][IP]*dtdx;
+	    uOut[IP] -= flux[tx+1][ty][IP]*dtdx;
+	    
+	    uOut[IU] += flux[tx  ][ty][IU]*dtdx;
+	    uOut[IU] -= flux[tx+1][ty][IU]*dtdx;
+	    
+	    uOut[IV] += flux[tx  ][ty][IV]*dtdx;
+	    uOut[IV] -= flux[tx+1][ty][IV]*dtdx;
+	    
+	    uOut[IW] += flux[tx  ][ty][IW]*dtdx;
+	    uOut[IW] -= flux[tx+1][ty][IW]*dtdx;
+	  } else if (direction == IY) {
+	    // watchout IU and IV are swapped !
+	    uOut[ID] += flux[tx][ty  ][ID]*dtdy;
+	    uOut[ID] -= flux[tx][ty+1][ID]*dtdy;
+	    
+	    uOut[IP] += flux[tx][ty  ][IP]*dtdy;
+	    uOut[IP] -= flux[tx][ty+1][IP]*dtdy;
+	    
+	    uOut[IU] += flux[tx][ty  ][IV]*dtdy;
+	    uOut[IU] -= flux[tx][ty+1][IV]*dtdy;
+	    
+	    uOut[IV] += flux[tx][ty  ][IU]*dtdy;
+	    uOut[IV] -= flux[tx][ty+1][IU]*dtdy;
+	    
+	    uOut[IW] += flux[tx][ty  ][IW]*dtdy;
+	    uOut[IW] -= flux[tx][ty+1][IW]*dtdy;
+	  }
+
 	  if (k < kmax-2) {
 	    offset = elemOffset;
 	    
@@ -2752,39 +2754,30 @@ void kernel_hydro_flux_update_unsplit_3d_v2(real_t       * Uout,
 	    Uout[offset] = uOut[IW];
 
 	  }
+
 	} else if (direction == IZ) {
 	  
-	  if (k < kmax-2) {
-	    // watchout IU and IW are swapped !
-	    uOut[ID] += flux[tx][ty][ID]*dtdz;
-	    uOut[IP] += flux[tx][ty][IP]*dtdz;
-	    uOut[IU] += flux[tx][ty][IW]*dtdz;
-	    uOut[IV] += flux[tx][ty][IV]*dtdz;
-	    uOut[IW] += flux[tx][ty][IU]*dtdz;
-	    
-	    // actually perform the update on external device memory
-	    offset = elemOffset;
-	    Uout[offset] = uOut[ID];  offset += arraySize;
-	    Uout[offset] = uOut[IP];  offset += arraySize;
-	    Uout[offset] = uOut[IU];  offset += arraySize;
-	    Uout[offset] = uOut[IV];  offset += arraySize;
-	    Uout[offset] = uOut[IW];
-	  }
+	  // at k=2 we do nothing but store flux_zm1 which will be used at k=3
 	  
-	  if (k > 2) { 
+	  if (k > 2 and k < kmax-1) { 
 	    /*
 	     * update at position z-1.
-	     * Note that position z-1 has already been partialy updated in
-	     * the previous iteration (for loop over k).
 	     */
 	    // watchout! IU and IW are swapped !
-	    offset = elemOffset - pitch*jmax;
-	    Uout[offset] -= flux[tx][ty][ID]*dtdz; offset += arraySize;
-	    Uout[offset] -= flux[tx][ty][IP]*dtdz; offset += arraySize;
-	    Uout[offset] -= flux[tx][ty][IW]*dtdz; offset += arraySize;
-	    Uout[offset] -= flux[tx][ty][IV]*dtdz; offset += arraySize;
-	    Uout[offset] -= flux[tx][ty][IU]*dtdz;
+	    int offset = elemOffset - pitch*jmax;
+	    Uout[offset] += (flux_zm1[ID]-flux[tx][ty][ID])*dtdz; offset += arraySize;
+	    Uout[offset] += (flux_zm1[IP]-flux[tx][ty][IP])*dtdz; offset += arraySize;
+	    Uout[offset] += (flux_zm1[IW]-flux[tx][ty][IW])*dtdz; offset += arraySize;
+	    Uout[offset] += (flux_zm1[IV]-flux[tx][ty][IV])*dtdz; offset += arraySize;
+	    Uout[offset] += (flux_zm1[IU]-flux[tx][ty][IU])*dtdz;
 	  }
+
+	  // store flux for next z value
+	  flux_zm1[ID] = flux[tx][ty][ID];
+	  flux_zm1[IP] = flux[tx][ty][IP];
+	  flux_zm1[IU] = flux[tx][ty][IU];
+	  flux_zm1[IV] = flux[tx][ty][IV];
+	  flux_zm1[IW] = flux[tx][ty][IW];
 
 	} // end direction IZ
       }
