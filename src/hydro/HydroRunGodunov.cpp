@@ -3214,7 +3214,6 @@ namespace hydroSimu {
 
     } else if (dimType == THREE_D) { // THREE_D - unsplit version 2
 
-      TIMER_START(timerSlopeTrace);
       /*
        * 1. Compute and store slopes
        */
@@ -3266,6 +3265,12 @@ namespace hydroSimu {
 	  } // end for i
 	} // end for j
       } // end for k
+
+      if (dumpDataForDebugEnabled) {
+	  outputVtkDebug(h_slope_x, "slope_x_", nStep, true);
+	  outputVtkDebug(h_slope_y, "slope_y_", nStep, true);
+	  outputVtkDebug(h_slope_z, "slope_z_", nStep, true);
+      }
 
       /*
        * 2. Compute reconstructed states along X interfaces
@@ -3347,7 +3352,11 @@ namespace hydroSimu {
 	  } // end for i
 	} // end for j
       } // end for k
-      TIMER_STOP(timerSlopeTrace);
+
+      if (dumpDataForDebugEnabled) {
+	  outputVtkDebug(h_qm, "qm_x_", nStep, true);
+	  outputVtkDebug(h_qp, "qp_x_", nStep, true);
+      }
 
       /*
        * 3. Riemann solver at X interface and update
@@ -3402,6 +3411,10 @@ namespace hydroSimu {
 	  } // end for i
 	} // end for j
       } // end for k
+
+      if (dumpDataForDebugEnabled) {
+	  outputVtkDebug(h_UNew, "update_x_", nStep, true);
+      }
 
       /*
        * 4. Compute reconstructed states along Y interfaces
@@ -3483,6 +3496,11 @@ namespace hydroSimu {
 	} // end for j
       } // end for k
     
+      if (dumpDataForDebugEnabled) {
+	  outputVtkDebug(h_qm, "qm_y_", nStep, true);
+	  outputVtkDebug(h_qp, "qp_y_", nStep, true);
+      }
+
       /*
        * 5. Riemann solver at Y interface and update
        */
@@ -3539,6 +3557,10 @@ namespace hydroSimu {
 	} // end for i
       } // end for k
     
+      if (dumpDataForDebugEnabled) {
+	  outputVtkDebug(h_UNew, "update_y_", nStep, true);
+      }
+
       /*
        * 6. Compute reconstructed states along Z interfaces
        */
@@ -3619,6 +3641,11 @@ namespace hydroSimu {
 	} // end for j
       } // end for k
     
+      if (dumpDataForDebugEnabled) {
+	  outputVtkDebug(h_qm, "qm_z_", nStep, true);
+	  outputVtkDebug(h_qp, "qp_z_", nStep, true);
+      }
+
       /*
        * 7. Riemann solver at Z interface and update
        */
@@ -3674,6 +3701,10 @@ namespace hydroSimu {
 	  } // end for j
 	} // end for i
       } // end for k
+
+      if (dumpDataForDebugEnabled) {
+	  outputVtkDebug(h_UNew, "update_z_", nStep, true);
+      }
 
       // gravity source term
       if (gravityEnabled) {
