@@ -2233,7 +2233,8 @@ __global__ void kernel_godunov_slopes_3d_v2(const real_t * __restrict__ qData,
 	d_slope_z[offset] = dq[IZ][IW];  offset += arraySize;     
       
       } // end store slopes
-  
+    __syncthreads();
+
     // load next z-plane primitive variables
     tmp = low;
     low = current;
