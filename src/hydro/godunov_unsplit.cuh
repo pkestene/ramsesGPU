@@ -2240,13 +2240,14 @@ __global__ void kernel_godunov_slopes_3d_v2(const real_t * __restrict__ qData,
     low = current;
     current = top;
     top = tmp;
+    //__syncthreads();
 
     if(i >= 0 and i < imax and 
        j >= 0 and j < jmax)
       {
       
-	// read conservative variables at z+1
-	int offset = elemOffset + pitch*jmax;
+	// read conservative variables at z+2
+	int offset = elemOffset + pitch*jmax*2;
 	q[top][tx][ty][ID] = qData[offset];  offset += arraySize;
 	q[top][tx][ty][IP] = qData[offset];  offset += arraySize;
 	q[top][tx][ty][IU] = qData[offset];  offset += arraySize;
@@ -2254,6 +2255,7 @@ __global__ void kernel_godunov_slopes_3d_v2(const real_t * __restrict__ qData,
 	q[top][tx][ty][IW] = qData[offset];
 	
       }
+    //__syncthreads();
 
   } // end for
 
