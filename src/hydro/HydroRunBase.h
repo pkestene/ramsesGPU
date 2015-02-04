@@ -462,6 +462,10 @@ namespace hydroSimu {
     void outputPng(HostArray<real_t> &U, int nStep, ComponentIndex iVar=ID);
     virtual void outputVtk(HostArray<real_t> &U, int nStep);
     virtual void outputVtkDebug(HostArray<real_t> &data, const std::string suffix, int nStep, bool ghostIncluded=false);
+    virtual void outputDebug(HostArray<real_t> &data, const std::string suffix, int nStep);
+#ifdef __CUDACC__
+    virtual void outputDebug(DeviceArray<real_t> &data, const std::string suffix, int nStep);
+#endif // __CUDACC__
     virtual void outputHdf5(HostArray<real_t> &U, int nStep, bool ghostIncluded=false);
     virtual void outputHdf5Debug(HostArray<real_t> &data, const std::string suffix, int nStep);
     virtual void writeXdmfForHdf5Wrapper(int totalNumberOfSteps, bool singleStep = false, bool ghostIncluded=false);

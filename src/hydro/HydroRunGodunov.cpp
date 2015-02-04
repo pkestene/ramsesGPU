@@ -663,6 +663,9 @@ namespace hydroSimu {
      *
      */
     convertToPrimitives( d_UOld.data() );
+    if (dumpDataForDebugEnabled) {
+      outputDebug(d_Q, "prim_", nStep);
+    }
 
     if (unsplitVersion == 0) {
   
@@ -1149,12 +1152,9 @@ namespace hydroSimu {
       } // end slopes 3D
       
       if (dumpDataForDebugEnabled) {
-	d_slope_x.copyToHost(h_debug);
-	outputVtkDebug(h_debug, "slope_x_", nStep, true);
-      	d_slope_y.copyToHost(h_debug);
-	outputVtkDebug(h_debug, "slope_y_", nStep, true);
-      	d_slope_z.copyToHost(h_debug);
-	outputVtkDebug(h_debug, "slope_z_", nStep, true);
+	outputDebug(d_slope_x, "slope_x_", nStep);
+	outputDebug(d_slope_y, "slope_y_", nStep);
+	outputDebug(d_slope_z, "slope_z_", nStep);
       }
 
       /*
@@ -1183,10 +1183,8 @@ namespace hydroSimu {
       } // end trace X
 
       if (dumpDataForDebugEnabled) {
-	d_qm.copyToHost(h_debug);
-	outputVtkDebug(h_debug, "qm_x_", nStep, true);
-      	d_qp.copyToHost(h_debug);
-	outputVtkDebug(h_debug, "qp_x_", nStep, true);
+	outputDebug(d_qm, "qm_x_", nStep);
+	outputDebug(d_qp, "qp_x_", nStep);
       }
 
       /*
@@ -1212,8 +1210,7 @@ namespace hydroSimu {
       } // end update X
 
       if (dumpDataForDebugEnabled) {
-	d_UNew.copyToHost(h_debug);
-	outputVtkDebug(h_debug, "update_x_", nStep, true);
+	outputDebug(d_UNew, "update_x_", nStep);
       }
 
       /*
@@ -1242,10 +1239,8 @@ namespace hydroSimu {
       } // end trace Y
 
       if (dumpDataForDebugEnabled) {
-	d_qm.copyToHost(h_debug);
-	outputVtkDebug(h_debug, "qm_y_", nStep, true);
-      	d_qp.copyToHost(h_debug);
-	outputVtkDebug(h_debug, "qp_y_", nStep, true);
+	outputDebug(d_qm, "qm_y_", nStep);
+	outputDebug(d_qp, "qp_y_", nStep);
       }
 
       /*
@@ -1271,8 +1266,7 @@ namespace hydroSimu {
       } // end update Y
 
       if (dumpDataForDebugEnabled) {
-	d_UNew.copyToHost(h_debug);
-	outputVtkDebug(h_debug, "update_y_", nStep, true);
+	outputDebug(d_UNew, "update_y_", nStep);
       }
 
       /*
@@ -1301,10 +1295,8 @@ namespace hydroSimu {
       } // end trace Z
 
       if (dumpDataForDebugEnabled) {
-	d_qm.copyToHost(h_debug);
-	outputVtkDebug(h_debug, "qm_z_", nStep, true);
-      	d_qp.copyToHost(h_debug);
-	outputVtkDebug(h_debug, "qp_z_", nStep, true);
+	outputDebug(d_qm, "qm_z_", nStep);
+	outputDebug(d_qp, "qp_z_", nStep);
       }
 
       /*
@@ -1330,8 +1322,7 @@ namespace hydroSimu {
       } // end update Z
     
       if (dumpDataForDebugEnabled) {
-	d_UNew.copyToHost(h_debug);
-	outputVtkDebug(h_debug, "update_z_", nStep, true);
+	outputDebug(d_UNew, "update_z_", nStep);
       }
 
       if (gravityEnabled) {
@@ -1839,7 +1830,7 @@ namespace hydroSimu {
     convertToPrimitives( h_UOld.data() );
     TIMER_STOP(timerPrimVar);
     if (dumpDataForDebugEnabled) {
-      outputVtkDebug(h_Q, "prim_", nStep, true);
+      outputDebug(h_Q, "prim_", nStep);
     }
 
     if (unsplitVersion == 0) {
@@ -3312,9 +3303,9 @@ namespace hydroSimu {
       } // end for k
 
       if (dumpDataForDebugEnabled) {
-	  outputVtkDebug(h_slope_x, "slope_x_", nStep, true);
-	  outputVtkDebug(h_slope_y, "slope_y_", nStep, true);
-	  outputVtkDebug(h_slope_z, "slope_z_", nStep, true);
+	  outputDebug(h_slope_x, "slope_x_", nStep);
+	  outputDebug(h_slope_y, "slope_y_", nStep);
+	  outputDebug(h_slope_z, "slope_z_", nStep);
       }
 
       /*
@@ -3399,8 +3390,8 @@ namespace hydroSimu {
       } // end for k
 
       if (dumpDataForDebugEnabled) {
-	  outputVtkDebug(h_qm, "qm_x_", nStep, true);
-	  outputVtkDebug(h_qp, "qp_x_", nStep, true);
+	  outputDebug(h_qm, "qm_x_", nStep);
+	  outputDebug(h_qp, "qp_x_", nStep);
       }
 
       /*
@@ -3458,7 +3449,7 @@ namespace hydroSimu {
       } // end for k
 
       if (dumpDataForDebugEnabled) {
-	  outputVtkDebug(h_UNew, "update_x_", nStep, true);
+	  outputDebug(h_UNew, "update_x_", nStep);
       }
 
       /*
@@ -3542,8 +3533,8 @@ namespace hydroSimu {
       } // end for k
     
       if (dumpDataForDebugEnabled) {
-	  outputVtkDebug(h_qm, "qm_y_", nStep, true);
-	  outputVtkDebug(h_qp, "qp_y_", nStep, true);
+	  outputDebug(h_qm, "qm_y_", nStep);
+	  outputDebug(h_qp, "qp_y_", nStep);
       }
 
       /*
@@ -3603,7 +3594,7 @@ namespace hydroSimu {
       } // end for k
     
       if (dumpDataForDebugEnabled) {
-	  outputVtkDebug(h_UNew, "update_y_", nStep, true);
+	  outputDebug(h_UNew, "update_y_", nStep);
       }
 
       /*
@@ -3687,8 +3678,8 @@ namespace hydroSimu {
       } // end for k
     
       if (dumpDataForDebugEnabled) {
-	  outputVtkDebug(h_qm, "qm_z_", nStep, true);
-	  outputVtkDebug(h_qp, "qp_z_", nStep, true);
+	  outputDebug(h_qm, "qm_z_", nStep);
+	  outputDebug(h_qp, "qp_z_", nStep);
       }
 
       /*
@@ -3748,7 +3739,7 @@ namespace hydroSimu {
       } // end for k
 
       if (dumpDataForDebugEnabled) {
-	  outputVtkDebug(h_UNew, "update_z_", nStep, true);
+	  outputDebug(h_UNew, "update_z_", nStep);
       }
 
       // gravity source term

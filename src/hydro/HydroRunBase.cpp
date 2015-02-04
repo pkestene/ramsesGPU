@@ -3223,6 +3223,70 @@ namespace hydroSimu {
   // =======================================================
   // =======================================================
   /**
+   * dump debug array into a file (wrapper to methods 
+   * HydroRunBase::outputVtkDebug and outputHdf5Debug).
+   *
+   * \param[in] data A reference to a HostArray for debug.
+   * \param[in] suffix a string appended to filename.
+   * \param[in] nStep The current time step, used to label results filename. 
+   * \param[in] ghostIncluded Do we want ghost cell to be saved as well.
+   *
+   */
+  void HydroRunBase::outputDebug(HostArray<real_t> &data, 
+				 const std::string suffix, 
+				 int nStep)
+  {
+
+    bool vtk  = configMap.getBool("debug","vtk",false);
+    bool hdf5 = configMap.getBool("debug","hdf5",false);
+    bool ghostIncluded = configMap.getBool("debug","ghostIncluded",false);
+
+    if (vtk)
+      outputVtkDebug(data, suffix, nStep, ghostIncluded);
+
+    if (hdf5)
+      outputHdf5Debug(data, suffix, nStep);
+
+  } // HydroRunBase::outputDebug
+
+#ifdef __CUDACC__
+  // =======================================================
+  // =======================================================
+  /**
+   * dump debug array into a file (wrapper to methods 
+   * HydroRunBase::outputVtkDebug and outputHdf5Debug).
+   *
+   * \param[in] data A reference to a HostArray for debug.
+   * \param[in] suffix a string appended to filename.
+   * \param[in] nStep The current time step, used to label results filename. 
+   * \param[in] ghostIncluded Do we want ghost cell to be saved as well.
+   *
+   */
+  void HydroRunBase::outputDebug(DeviceArray<real_t> &data, 
+				 const std::string suffix, 
+				 int nStep)
+  {
+
+    bool vtk  = configMap.getBool("debug","vtk",false);
+    bool hdf5 = configMap.getBool("debug","hdf5",false);
+    bool ghostIncluded = configMap.getBool("debug","ghostIncluded",false);
+
+
+    if (vtk || hdf5)
+      data.copyToHost(h_debug);
+    
+    if (vtk)
+      outputVtkDebug(h_debug, suffix, nStep, ghostIncluded);
+    
+    if (hdf5)
+      outputHdf5Debug(h_debug, suffix, nStep);
+    
+  } // HydroRunBase::outputDebug
+#endif // __CUDACC__
+
+  // =======================================================
+  // =======================================================
+  /**
    * dump computation results (conservative variables) into a file
    * (HDF5 file format) file extension is h5. File can be viewed by
    * hdfview; see also h5dump.
