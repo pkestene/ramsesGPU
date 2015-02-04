@@ -1632,7 +1632,7 @@ __global__ void kernel_hydro_compute_primitive_variables_3D(const real_t * __res
    * in external memory buffer Q.
    */
   for (int k=0, elemOffset = i + pitch * j;
-       k < kmax-1; 
+       k < kmax; 
        ++k, elemOffset += (pitch*jmax)) {
 
     if (i < imax and j < jmax) {
