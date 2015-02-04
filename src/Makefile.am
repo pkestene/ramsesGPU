@@ -197,7 +197,8 @@ endif
 if USE_MPI
 euler_cpu_mpi_SOURCES = euler_mpi_main.cpp
 euler_cpu_mpi_CXXFLAGS = $(MPI_CXXFLAGS) $(GM_CFLAGS) $(GM_FLAGS_SUPP) -I$(srcdir)/utils/mpiUtils  $(EXTRA_FLAGS)
-euler_cpu_mpi_LDADD = $(MPI_LDFLAGS) $(GM_LIBS) hydro/libhydroCpu.la utils/config/libIniConfig.la utils/monitoring/libMonitoring.la utils/cnpy/libCNpy.la utils/mpiUtils/libMpiUtils.la
+euler_cpu_mpi_LDFLAGS = $(MPI_LDFLAGS) $(GM_LIBS)
+euler_cpu_mpi_LDADD = hydro/libhydroCpu.la utils/config/libIniConfig.la utils/monitoring/libMonitoring.la utils/cnpy/libCNpy.la utils/mpiUtils/libMpiUtils.la
 endif
 
 ### Double Precision - MPI ###
@@ -205,7 +206,8 @@ if USE_MPI_AND_DOUBLE_PRECISION
 euler_cpu_mpi_double_SOURCES = euler_mpi_main.cpp
 euler_cpu_mpi_double_CXXFLAGS = -DUSE_DOUBLE $(MPI_CXXFLAGS) $(GM_CFLAGS) $(GM_FLAGS_SUPP) -I$(srcdir)/utils/mpiUtils  $(EXTRA_FLAGS)
 euler_cpu_mpi_double_CPPFLAGS = -DUSE_DOUBLE $(AM_CPPFLAGS)
-euler_cpu_mpi_double_LDADD = $(MPI_LDFLAGS) $(GM_LIBS) hydro/libhydroCpu_double.la utils/config/libIniConfig.la utils/monitoring/libMonitoring.la utils/cnpy/libCNpy.la utils/mpiUtils/libMpiUtils.la
+euler_cpu_mpi_double_LDFLAGS = $(MPI_LDFLAGS) $(GM_LIBS)
+euler_cpu_mpi_double_LDADD = hydro/libhydroCpu_double.la utils/config/libIniConfig.la utils/monitoring/libMonitoring.la utils/cnpy/libCNpy.la utils/mpiUtils/libMpiUtils.la
 endif
 
 # =======================================================
@@ -362,7 +364,8 @@ endif
 if USE_MPI
 euler_zslab_cpu_mpi_SOURCES = euler_zslab_mpi_main.cpp 
 euler_zslab_cpu_mpi_CXXFLAGS = $(MPI_CXXFLAGS) $(GM_CFLAGS) $(GM_FLAGS_SUPP) -I$(srcdir)/utils/mpiUtils  $(EXTRA_FLAGS)
-euler_zslab_cpu_mpi_LDADD = $(MPI_LDFLAGS) $(GM_LIBS) hydro/libhydroCpu.la utils/config/libIniConfig.la utils/monitoring/libMonitoring.la utils/cnpy/libCNpy.la utils/mpiUtils/libMpiUtils.la
+euler_zslab_cpu_mpi_LDFLAGS = $(MPI_LDFLAGS) $(GM_LIBS)
+euler_zslab_cpu_mpi_LDADD = hydro/libhydroCpu.la utils/config/libIniConfig.la utils/monitoring/libMonitoring.la utils/cnpy/libCNpy.la utils/mpiUtils/libMpiUtils.la
 endif
 
 ### Double Precision - MPI ###
@@ -370,7 +373,8 @@ if USE_MPI_AND_DOUBLE_PRECISION
 euler_zslab_cpu_mpi_double_SOURCES = euler_zslab_mpi_main.cpp 
 euler_zslab_cpu_mpi_double_CXXFLAGS = -DUSE_DOUBLE $(MPI_CXXFLAGS) $(GM_CFLAGS) $(GM_FLAGS_SUPP) -I$(srcdir)/utils/mpiUtils  $(EXTRA_FLAGS)
 euler_zslab_cpu_mpi_double_CPPFLAGS = -DUSE_DOUBLE $(AM_CPPFLAGS)
-euler_zslab_cpu_mpi_double_LDADD = $(MPI_LDFLAGS) $(GM_LIBS) hydro/libhydroCpu_double.la utils/config/libIniConfig.la utils/monitoring/libMonitoring.la utils/cnpy/libCNpy.la utils/mpiUtils/libMpiUtils.la
+euler_zslab_cpu_mpi_double_LDFLAGS = $(MPI_LDFLAGS) $(GM_LIBS)
+euler_zslab_cpu_mpi_double_LDADD = hydro/libhydroCpu_double.la utils/config/libIniConfig.la utils/monitoring/libMonitoring.la utils/cnpy/libCNpy.la utils/mpiUtils/libMpiUtils.la
 endif
 
 # =======================================
