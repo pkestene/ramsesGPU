@@ -68,6 +68,7 @@ namespace hydroSimu {
     void godunov_unsplit_gpu(DeviceArray<real_t>& d_UOld, 
 			     DeviceArray<real_t>& d_UNew,
 			     real_t dt, int nStep);
+
     //! unplitVersion = 0
     //! memory footprint is very low
     //! nothing is stored globally except h_Q
@@ -91,6 +92,7 @@ namespace hydroSimu {
     void godunov_unsplit_cpu(HostArray<real_t>& h_UOld, 
 			     HostArray<real_t>& h_UNew, 
 			     real_t dt, int nStep);
+
     //! unplitVersion = 0
     //! memory footprint is very low
     //! nothing is stored globally except h_Q
@@ -104,6 +106,13 @@ namespace hydroSimu {
     //! reconstructed (trace) states are stored
     //! then perform Riemann flux computation and update
     void godunov_unsplit_cpu_v1(HostArray<real_t>& h_UOld, 
+				HostArray<real_t>& h_UNew, 
+				real_t dt, int nStep);
+
+    //! unplitVersion = 2
+    //! memory footprint is larger than unplitVersion 2
+    //! slopes are stored and only 1 pair of reconstructed (trace) states
+    void godunov_unsplit_cpu_v2(HostArray<real_t>& h_UOld, 
 				HostArray<real_t>& h_UNew, 
 				real_t dt, int nStep);
 
@@ -131,7 +140,7 @@ namespace hydroSimu {
 
     /** use unsplit scheme */
     int  unsplitVersion;
-       
+
 #ifdef __CUDACC__
     DeviceArray<real_t> d_Q; //!< GPU : primitive data array
 #else
@@ -156,6 +165,23 @@ namespace hydroSimu {
     HostArray<real_t> h_qp_x;
     HostArray<real_t> h_qp_y;
     HostArray<real_t> h_qp_z;
+#endif // __CUDACC__
+    /*@}*/
+
+    /** \defgroup implementation2 */
+    /*@{*/
+#ifdef __CUDACC__
+    DeviceArray<real_t> d_qm;      //!< only for unsplit version 2
+    DeviceArray<real_t> d_qp;      //!< only for unsplit version 2
+    DeviceArray<real_t> d_slope_x; //!< only for unsplit version 2
+    DeviceArray<real_t> d_slope_y; //!< only for unsplit version 2
+    DeviceArray<real_t> d_slope_z; //!< only for unsplit version 2
+#else
+    HostArray<real_t> h_qm;      //!< only for unsplit version 2
+    HostArray<real_t> h_qp;      //!< only for unsplit version 2
+    HostArray<real_t> h_slope_x; //!< only for unsplit version 2
+    HostArray<real_t> h_slope_y; //!< only for unsplit version 2
+    HostArray<real_t> h_slope_z; //!< only for unsplit version 2
 #endif // __CUDACC__
     /*@}*/
 
