@@ -1113,15 +1113,176 @@ namespace hydroSimu {
 
     } else if (dimType == THREE_D) {
     
-      /* TODO */
-      /* TODO */
-      /* TODO */
-      /* TODO */
           
+      /*
+       * THREE_D
+       */
+      
+      /*
+       * 1. Compute and store slopes
+       */
+      // 3D slopes
+      {
+	dim3 dimBlock(SLOPES_BLOCK_DIMX_3D_V2,
+		      SLOPES_BLOCK_DIMY_3D_V2);
+	dim3 dimGrid(blocksFor(isize, SLOPES_BLOCK_INNER_DIMX_3D_V2), 
+		     blocksFor(jsize, SLOPES_BLOCK_INNER_DIMY_3D_V2));
+	kernel_godunov_slopes_3d_v2<<<dimGrid,
+	  dimBlock>>>(d_Q.data(),
+		      d_slope_x.data(),
+		      d_slope_y.data(),
+		      d_slope_z.data(),
+		      d_Q.pitch(), 
+		      d_Q.dimx(), 
+		      d_Q.dimy(), 
+		      d_Q.dimz()		    
+		      );
+      } // end slopes 3D
+      
+      /*
+       * 2. compute reconstructed states along X interfaces
+       */
+      {
+	dim3 dimBlock(TRACE_BLOCK_DIMX_3D_V2,
+		      TRACE_BLOCK_DIMY_3D_V2);
+	dim3 dimGrid(blocksFor(isize, TRACE_BLOCK_DIMX_3D_V2), 
+		     blocksFor(jsize, TRACE_BLOCK_DIMY_3D_V2));
+	kernel_godunov_trace_by_dir_3d_v2<<<dimGrid,
+	  dimBlock>>>(d_Q.data(),
+		      d_slope_x.data(),
+		      d_slope_y.data(),
+		      d_slope_z.data(),
+		      d_qm.data(),
+		      d_qp.data(),
+		      d_Q.pitch(), 
+		      d_Q.dimx(), 
+		      d_Q.dimy(),
+		      d_Q.dimz(),
+		      dt, dt / dx, dt / dy, dt / dz,
+		      gravityEnabled,
+		      IX
+		      );
+      } // end trace X
+
+      /*
+       * 3. Riemann solver at X interface and update
+       */
+      {
+	dim3 dimBlock(UPDATE_BLOCK_DIMX_3D_V2,
+		      UPDATE_BLOCK_DIMY_3D_V2);
+	dim3 dimGrid(blocksFor(isize, UPDATE_BLOCK_INNER_DIMX_3D_V2), 
+		     blocksFor(jsize, UPDATE_BLOCK_INNER_DIMY_3D_V2));
+	kernel_hydro_flux_update_unsplit_3d_v2<<<dimGrid,
+	  dimBlock>>>(d_UNew.data(),
+		      d_qm.data(),
+		      d_qp.data(),
+		      d_Q.pitch(), 
+		      d_Q.dimx(), 
+		      d_Q.dimy(),
+		      d_Q.dimz(),
+		      dt / dx, dt / dy, dt / dz, dt,
+		      IX
+		      );
+      
+      } // end update X
+
+      /*
+       * 4. compute reconstructed states along Y interfaces
+       */
+      {
+	dim3 dimBlock(TRACE_BLOCK_DIMX_3D_V2,
+		      TRACE_BLOCK_DIMY_3D_V2);
+	dim3 dimGrid(blocksFor(isize, TRACE_BLOCK_DIMX_3D_V2), 
+		     blocksFor(jsize, TRACE_BLOCK_DIMY_3D_V2));
+	kernel_godunov_trace_by_dir_3d_v2<<<dimGrid,
+	  dimBlock>>>(d_Q.data(),
+		      d_slope_x.data(),
+		      d_slope_y.data(),
+		      d_slope_z.data(),
+		      d_qm.data(),
+		      d_qp.data(),
+		      d_Q.pitch(), 
+		      d_Q.dimx(), 
+		      d_Q.dimy(),
+		      d_Q.dimz(),
+		      dt, dt / dx, dt / dy, dt / dz,
+		      gravityEnabled,
+		      IY
+		      );
+      } // end trace Y
+
+      /*
+       * 5. Riemann solver at Y interface and update
+       */
+      {
+	dim3 dimBlock(UPDATE_BLOCK_DIMX_3D_V2,
+		      UPDATE_BLOCK_DIMY_3D_V2);
+	dim3 dimGrid(blocksFor(isize, UPDATE_BLOCK_INNER_DIMX_3D_V2), 
+		     blocksFor(jsize, UPDATE_BLOCK_INNER_DIMY_3D_V2));
+	kernel_hydro_flux_update_unsplit_3d_v2<<<dimGrid,
+	  dimBlock>>>(d_UNew.data(),
+		      d_qm.data(),
+		      d_qp.data(),
+		      d_Q.pitch(), 
+		      d_Q.dimx(), 
+		      d_Q.dimy(),
+		      d_Q.dimz(),
+		      dt / dx, dt / dy, dt / dz, dt,
+		      IY
+		      );
+      
+      } // end update Y
+
+      /*
+       * 6. compute reconstructed states along Z interfaces
+       */
+      {
+	dim3 dimBlock(TRACE_BLOCK_DIMX_3D_V2,
+		      TRACE_BLOCK_DIMY_3D_V2);
+	dim3 dimGrid(blocksFor(isize, TRACE_BLOCK_DIMX_3D_V2), 
+		     blocksFor(jsize, TRACE_BLOCK_DIMY_3D_V2));
+	kernel_godunov_trace_by_dir_3d_v2<<<dimGrid,
+	  dimBlock>>>(d_Q.data(),
+		      d_slope_x.data(),
+		      d_slope_y.data(),
+		      d_slope_z.data(),
+		      d_qm.data(),
+		      d_qp.data(),
+		      d_Q.pitch(), 
+		      d_Q.dimx(), 
+		      d_Q.dimy(),
+		      d_Q.dimz(),
+		      dt, dt / dx, dt / dy, dt / dz,
+		      gravityEnabled,
+		      IZ
+		      );
+      } // end trace Z
+
+      /*
+       * 7. Riemann solver at Z interface and update
+       */
+      {
+	dim3 dimBlock(UPDATE_BLOCK_DIMX_3D_V2,
+		      UPDATE_BLOCK_DIMY_3D_V2);
+	dim3 dimGrid(blocksFor(isize, UPDATE_BLOCK_INNER_DIMX_3D_V2), 
+		     blocksFor(jsize, UPDATE_BLOCK_INNER_DIMY_3D_V2));
+	kernel_hydro_flux_update_unsplit_3d_v2<<<dimGrid,
+	  dimBlock>>>(d_UNew.data(),
+		      d_qm.data(),
+		      d_qp.data(),
+		      d_Q.pitch(), 
+		      d_Q.dimx(), 
+		      d_Q.dimy(),
+		      d_Q.dimz(),
+		      dt / dx, dt / dy, dt / dz, dt,
+		      IZ
+		      );
+      
+      } // end update Z
+    
       if (gravityEnabled) {
 	compute_gravity_source_term(d_UNew, d_UOld, dt);
       }
-      TIMER_STOP(timerUpdate);
     
       /*
        * DISSIPATIVE TERMS (i.e. viscosity)
