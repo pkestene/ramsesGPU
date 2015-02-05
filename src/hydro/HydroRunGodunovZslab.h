@@ -85,6 +85,13 @@ namespace hydroSimu {
 				DeviceArray<real_t>& d_UNew, 
 				real_t dt, int nStep);
 
+    //! unplitVersion = 2
+    //! memory footprint is larger than unplitVersion 2
+    //! slopes are stored and only 1 pair of reconstructed (trace) states
+    void godunov_unsplit_gpu_v2(DeviceArray<real_t>& d_UOld, 
+				DeviceArray<real_t>& d_UNew, 
+				real_t dt, int nStep);
+
 #else
     //! Actual computation of the godunov integration using unsplit 
     //! scheme on CPU, two array are necessary to make ping-pong (h_UOld and

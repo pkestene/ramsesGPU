@@ -263,7 +263,11 @@ namespace hydroSimu {
 
       godunov_unsplit_gpu_v1(d_UOld, d_UNew, dt, nStep);
     
-    } // end unsplitVersion == 1
+    } else if (unsplitVersion == 2) {
+
+      godunov_unsplit_gpu_v2(d_UOld, d_UNew, dt, nStep);
+    
+    } // end unsplitVersion == 2
     
     TIMER_STOP(timerGodunov);
 
@@ -360,190 +364,459 @@ namespace hydroSimu {
 						    real_t dt, int nStep)
   {
 
-    {
+    // loop over z-slab index
+    for (int zSlabId=0; zSlabId < zSlabNb; ++zSlabId) {
+
+      ZslabInfo zSlabInfo;
+      zSlabInfo.zSlabId     = zSlabId;
+      zSlabInfo.zSlabNb     = zSlabNb;
+      zSlabInfo.zSlabWidthG = zSlabWidthG;
+      zSlabInfo.kStart      = zSlabWidth * zSlabId;
+      zSlabInfo.kStop       = zSlabWidth * zSlabId + zSlabWidthG;
+      zSlabInfo.ksizeSlab   = zSlabWidthG;
+
+      // take care that the last slab might be truncated
+      if (zSlabId == zSlabNb-1) {
+	zSlabInfo.ksizeSlab = ksize - zSlabInfo.kStart;
+      }
+      
+      TIMER_START(timerPrimVar);
+      {
+	// 3D primitive variables computation kernel    
+	dim3 dimBlock(PRIM_VAR_BLOCK_DIMX_3D_Z,
+		      PRIM_VAR_BLOCK_DIMY_3D_Z);
+	dim3 dimGrid(blocksFor(isize, PRIM_VAR_BLOCK_DIMX_3D_Z), 
+		     blocksFor(jsize, PRIM_VAR_BLOCK_DIMY_3D_Z));
+	kernel_hydro_compute_primitive_variables_3D_zslab<<<dimGrid, 
+	  dimBlock>>>(d_UOld.data(), 
+		      d_Q.data(),
+		      d_UOld.pitch(),
+		      d_UOld.dimx(),
+		      d_UOld.dimy(),
+		      d_UOld.dimz(),
+		      zSlabInfo);
+	checkCudaError("HydroRunGodunovZslab :: kernel_hydro_compute_primitive_variables_3D_zslab error");
+	
+      } // end compute primitive variables 3d kernel
+      TIMER_STOP(timerPrimVar);
+      
+      TIMER_START(timerSlopeTrace);
+      {
+	// 3D slope / trace computation kernel
+	dim3 dimBlock(TRACE_BLOCK_DIMX_3D_V1Z,
+		      TRACE_BLOCK_DIMY_3D_V1Z);
+	dim3 dimGrid(blocksFor(isize, TRACE_BLOCK_INNER_DIMX_3D_V1Z), 
+		     blocksFor(jsize, TRACE_BLOCK_INNER_DIMY_3D_V1Z));
+	kernel_hydro_compute_trace_unsplit_3d_v1_zslab<<<dimGrid, 
+	  dimBlock>>>(d_UOld.data(),
+		      d_Q.data(),
+		      d_qm_x.data(),
+		      d_qm_y.data(),
+		      d_qm_z.data(),
+		      d_qp_x.data(),
+		      d_qp_y.data(),
+		      d_qp_z.data(),
+		      d_UOld.pitch(), 
+		      d_UOld.dimx(), 
+		      d_UOld.dimy(), 
+		      d_UOld.dimz(),
+		      dt / dx, 
+		      dt / dy,
+		      dt / dz,
+		      dt,
+		      zSlabInfo);
+	checkCudaError("HydroRunGodunovZslab :: kernel_hydro_compute_trace_unsplit_3d_v1_zslab error");
+
+	if (gravityEnabled) {
+	  compute_gravity_predictor(d_qm_x, dt, zSlabInfo);
+	  compute_gravity_predictor(d_qm_y, dt, zSlabInfo);
+	  compute_gravity_predictor(d_qm_z, dt, zSlabInfo);
+	  compute_gravity_predictor(d_qp_x, dt, zSlabInfo);
+	  compute_gravity_predictor(d_qp_y, dt, zSlabInfo);
+	  compute_gravity_predictor(d_qp_z, dt, zSlabInfo);
+	}
+	  
+      } // end 3D slope / trace computation kernel
+      TIMER_STOP(timerSlopeTrace);
+      
+      TIMER_START(timerUpdate);
+      {
+	// 3D update hydro kernel
+	dim3 dimBlock(UPDATE_BLOCK_DIMX_3D_V1Z,
+		      UPDATE_BLOCK_DIMY_3D_V1Z);
+	dim3 dimGrid(blocksFor(isize, UPDATE_BLOCK_INNER_DIMX_3D_V1Z), 
+		     blocksFor(jsize, UPDATE_BLOCK_INNER_DIMY_3D_V1Z));
+	kernel_hydro_flux_update_unsplit_3d_v1_zslab<<<dimGrid, 
+	  dimBlock>>>(d_UOld.data(),
+		      d_UNew.data(),
+		      d_qm_x.data(),
+		      d_qm_y.data(),
+		      d_qm_z.data(),
+		      d_qp_x.data(),
+		      d_qp_y.data(),
+		      d_qp_z.data(),
+		      d_UOld.pitch(), 
+		      d_UOld.dimx(), 
+		      d_UOld.dimy(), 
+		      d_UOld.dimz(),
+		      dt / dx, 
+		      dt / dy,
+		      dt / dz,
+		      dt,
+		      zSlabInfo);
+	checkCudaError("HydroRunGodunovZslab :: kernel_hydro_flux_update_unsplit_3d_v1_zslab error");
+	
+      } // end 3D update hydro kernel
+
+      if (gravityEnabled) {
+	compute_gravity_source_term(d_UNew, d_UOld, dt, zSlabInfo);
+      }
+
+      TIMER_STOP(timerUpdate);
+      
+    } // end for zSlabId
+    
+    // debug
+    // {
+    // 	HostArray<real_t> h_debug; 
+    // 	h_debug.allocate(make_uint4(isize,jsize,ksize,nbVar));
+    // 	d_UNew.copyToHost(h_debug);
+    // 	outputHdf5Debug(h_debug, "UNew_before_dissip_", nStep);
+    // }
+
+    /*************************************
+     * DISSIPATIVE TERMS (i.e. viscosity)
+     *************************************/
+    TIMER_START(timerDissipative);
+    real_t &nu = _gParams.nu;
+    if (nu>0) {
+      // update boundaries before dissipative terms computations
+      make_all_boundaries(d_UNew);
+    }
+    
+    // compute viscosity
+    if (nu>0) {
+      DeviceArray<real_t> &d_flux_x = d_qm_x;
+      DeviceArray<real_t> &d_flux_y = d_qm_y;
+      DeviceArray<real_t> &d_flux_z = d_qm_z;
+      
+      // copy d_UNew into d_UOld
+      d_UNew.copyTo(d_UOld);
+
+      ZslabInfo zSlabInfo;
+      zSlabInfo.zSlabId     = -1;
+      zSlabInfo.zSlabNb     = zSlabNb;
+      zSlabInfo.zSlabWidthG = zSlabWidthG;
+      zSlabInfo.kStart      = -1;
+      zSlabInfo.kStop       = -1;
+      zSlabInfo.ksizeSlab   = zSlabWidthG;
+
       // loop over z-slab index
       for (int zSlabId=0; zSlabId < zSlabNb; ++zSlabId) {
 
-	ZslabInfo zSlabInfo;
 	zSlabInfo.zSlabId     = zSlabId;
-	zSlabInfo.zSlabNb     = zSlabNb;
-	zSlabInfo.zSlabWidthG = zSlabWidthG;
 	zSlabInfo.kStart      = zSlabWidth * zSlabId;
 	zSlabInfo.kStop       = zSlabWidth * zSlabId + zSlabWidthG;
-	zSlabInfo.ksizeSlab   = zSlabWidthG;
-
-	// take care that the last slab might be truncated
-	if (zSlabId == zSlabNb-1) {
-	  zSlabInfo.ksizeSlab = ksize - zSlabInfo.kStart;
-	}
-      
-	TIMER_START(timerPrimVar);
-	{
-	  // 3D primitive variables computation kernel    
-	  dim3 dimBlock(PRIM_VAR_BLOCK_DIMX_3D_Z,
-			PRIM_VAR_BLOCK_DIMY_3D_Z);
-	  dim3 dimGrid(blocksFor(isize, PRIM_VAR_BLOCK_DIMX_3D_Z), 
-		       blocksFor(jsize, PRIM_VAR_BLOCK_DIMY_3D_Z));
-	  kernel_hydro_compute_primitive_variables_3D_zslab<<<dimGrid, 
-	    dimBlock>>>(d_UOld.data(), 
-			d_Q.data(),
-			d_UOld.pitch(),
-			d_UOld.dimx(),
-			d_UOld.dimy(),
-			d_UOld.dimz(),
-			zSlabInfo);
-	  checkCudaError("HydroRunGodunovZslab :: kernel_hydro_compute_primitive_variables_3D_zslab error");
-	
-	} // end compute primitive variables 3d kernel
-	TIMER_STOP(timerPrimVar);
-      
-	TIMER_START(timerSlopeTrace);
-	{
-	  // 3D slope / trace computation kernel
-	  dim3 dimBlock(TRACE_BLOCK_DIMX_3D_V1Z,
-			TRACE_BLOCK_DIMY_3D_V1Z);
-	  dim3 dimGrid(blocksFor(isize, TRACE_BLOCK_INNER_DIMX_3D_V1Z), 
-		       blocksFor(jsize, TRACE_BLOCK_INNER_DIMY_3D_V1Z));
-	  kernel_hydro_compute_trace_unsplit_3d_v1_zslab<<<dimGrid, 
-	    dimBlock>>>(d_UOld.data(),
-			d_Q.data(),
-			d_qm_x.data(),
-			d_qm_y.data(),
-			d_qm_z.data(),
-			d_qp_x.data(),
-			d_qp_y.data(),
-			d_qp_z.data(),
-			d_UOld.pitch(), 
-			d_UOld.dimx(), 
-			d_UOld.dimy(), 
-			d_UOld.dimz(),
-			dt / dx, 
-			dt / dy,
-			dt / dz,
-			dt,
-			zSlabInfo);
-	  checkCudaError("HydroRunGodunovZslab :: kernel_hydro_compute_trace_unsplit_3d_v1_zslab error");
-
-	  if (gravityEnabled) {
-	    compute_gravity_predictor(d_qm_x, dt, zSlabInfo);
-	    compute_gravity_predictor(d_qm_y, dt, zSlabInfo);
-	    compute_gravity_predictor(d_qm_z, dt, zSlabInfo);
-	    compute_gravity_predictor(d_qp_x, dt, zSlabInfo);
-	    compute_gravity_predictor(d_qp_y, dt, zSlabInfo);
-	    compute_gravity_predictor(d_qp_z, dt, zSlabInfo);
-	  }
 	  
-	} // end 3D slope / trace computation kernel
-	TIMER_STOP(timerSlopeTrace);
+	compute_viscosity_flux(d_UOld, d_flux_x, d_flux_y, d_flux_z, dt, zSlabInfo);
+	compute_hydro_update  (d_UNew, d_flux_x, d_flux_y, d_flux_z,     zSlabInfo);
+
+      } // end for zSlabId
+
+    } // end compute viscosity force / update  
+    TIMER_STOP(timerDissipative);
       
-	TIMER_START(timerUpdate);
-	{
-	  // 3D update hydro kernel
-	  dim3 dimBlock(UPDATE_BLOCK_DIMX_3D_V1Z,
-			UPDATE_BLOCK_DIMY_3D_V1Z);
-	  dim3 dimGrid(blocksFor(isize, UPDATE_BLOCK_INNER_DIMX_3D_V1Z), 
-		       blocksFor(jsize, UPDATE_BLOCK_INNER_DIMY_3D_V1Z));
-	  kernel_hydro_flux_update_unsplit_3d_v1_zslab<<<dimGrid, 
-	    dimBlock>>>(d_UOld.data(),
-			d_UNew.data(),
-			d_qm_x.data(),
-			d_qm_y.data(),
-			d_qm_z.data(),
-			d_qp_x.data(),
-			d_qp_y.data(),
-			d_qp_z.data(),
-			d_UOld.pitch(), 
-			d_UOld.dimx(), 
-			d_UOld.dimy(), 
-			d_UOld.dimz(),
-			dt / dx, 
-			dt / dy,
-			dt / dz,
-			dt,
-			zSlabInfo);
-	  checkCudaError("HydroRunGodunovZslab :: kernel_hydro_flux_update_unsplit_3d_v1_zslab error");
+    /*
+     * random forcing
+     */
+    if (randomForcingEnabled) {
+      
+      real_t norm = compute_random_forcing_normalization(d_UNew, dt);
+      
+      add_random_forcing(d_UNew, dt, norm);
+      
+    } // end random forcing
+    if (randomForcingOrnsteinUhlenbeckEnabled) {
 	
-	} // end 3D update hydro kernel
-
-	if (gravityEnabled) {
-	  compute_gravity_source_term(d_UNew, d_UOld, dt, zSlabInfo);
-	}
-
-	TIMER_STOP(timerUpdate);
-      
-      } // end for k inside z-slab
-    
-      // debug
-      // {
-      // 	HostArray<real_t> h_debug; 
-      // 	h_debug.allocate(make_uint4(isize,jsize,ksize,nbVar));
-      // 	d_UNew.copyToHost(h_debug);
-      // 	outputHdf5Debug(h_debug, "UNew_before_dissip_", nStep);
-      // }
-
-      /*************************************
-       * DISSIPATIVE TERMS (i.e. viscosity)
-       *************************************/
-      TIMER_START(timerDissipative);
-      real_t &nu = _gParams.nu;
-      if (nu>0) {
-        // update boundaries before dissipative terms computations
-        make_all_boundaries(d_UNew);
-      }
-    
-      // compute viscosity
-      if (nu>0) {
-        DeviceArray<real_t> &d_flux_x = d_qm_x;
-        DeviceArray<real_t> &d_flux_y = d_qm_y;
-        DeviceArray<real_t> &d_flux_z = d_qm_z;
-      
-	// copy d_UNew into d_UOld
-	d_UNew.copyTo(d_UOld);
-
-	ZslabInfo zSlabInfo;
-	zSlabInfo.zSlabId     = -1;
-	zSlabInfo.zSlabNb     = zSlabNb;
-	zSlabInfo.zSlabWidthG = zSlabWidthG;
-	zSlabInfo.kStart      = -1;
-	zSlabInfo.kStop       = -1;
-	zSlabInfo.ksizeSlab   = zSlabWidthG;
-
-	// loop over z-slab index
-	for (int zSlabId=0; zSlabId < zSlabNb; ++zSlabId) {
-
-	  zSlabInfo.zSlabId     = zSlabId;
-	  zSlabInfo.kStart      = zSlabWidth * zSlabId;
-	  zSlabInfo.kStop       = zSlabWidth * zSlabId + zSlabWidthG;
-	  
-	  compute_viscosity_flux(d_UOld, d_flux_x, d_flux_y, d_flux_z, dt, zSlabInfo);
-	  compute_hydro_update  (d_UNew, d_flux_x, d_flux_y, d_flux_z,     zSlabInfo);
-
-	} // end for zSlabId
-
-      } // end compute viscosity force / update  
-      TIMER_STOP(timerDissipative);
-      
-      /*
-       * random forcing
-       */
-      if (randomForcingEnabled) {
-      
-      	real_t norm = compute_random_forcing_normalization(d_UNew, dt);
-      
-      	add_random_forcing(d_UNew, dt, norm);
-      
-      } // end random forcing
-      if (randomForcingOrnsteinUhlenbeckEnabled) {
+      // add forcing field in real space
+      pForcingOrnsteinUhlenbeck->add_forcing_field(d_UNew, dt);
 	
-	// add forcing field in real space
-	pForcingOrnsteinUhlenbeck->add_forcing_field(d_UNew, dt);
-	
-      }
-
-    } // end godunov
+    }
 
   } // HydroRunGodunovZslab::godunov_unsplit_gpu_v1
 
+  // =======================================================
+  // =======================================================
+  void HydroRunGodunovZslab::godunov_unsplit_gpu_v2(DeviceArray<real_t>& d_UOld, 
+						    DeviceArray<real_t>& d_UNew,
+						    real_t dt, int nStep)
+  {
+
+    // loop over z-slab index
+    for (int zSlabId=0; zSlabId < zSlabNb; ++zSlabId) {
+      
+      ZslabInfo zSlabInfo;
+      zSlabInfo.zSlabId     = zSlabId;
+      zSlabInfo.zSlabNb     = zSlabNb;
+      zSlabInfo.zSlabWidthG = zSlabWidthG;
+      zSlabInfo.kStart      = zSlabWidth * zSlabId;
+      zSlabInfo.kStop       = zSlabWidth * zSlabId + zSlabWidthG;
+      zSlabInfo.ksizeSlab   = zSlabWidthG;
+      
+      // take care that the last slab might be truncated
+      if (zSlabId == zSlabNb-1) {
+	zSlabInfo.ksizeSlab = ksize - zSlabInfo.kStart;
+      }
+      
+      TIMER_START(timerPrimVar);
+      {
+	// 3D primitive variables computation kernel    
+	dim3 dimBlock(PRIM_VAR_BLOCK_DIMX_3D_Z,
+		      PRIM_VAR_BLOCK_DIMY_3D_Z);
+	dim3 dimGrid(blocksFor(isize, PRIM_VAR_BLOCK_DIMX_3D_Z), 
+		     blocksFor(jsize, PRIM_VAR_BLOCK_DIMY_3D_Z));
+	kernel_hydro_compute_primitive_variables_3D_zslab<<<dimGrid, 
+	  dimBlock>>>(d_UOld.data(), 
+		      d_Q.data(),
+		      d_UOld.pitch(),
+		      d_UOld.dimx(),
+		      d_UOld.dimy(),
+		      d_UOld.dimz(),
+		      zSlabInfo);
+	checkCudaError("HydroRunGodunovZslab :: kernel_hydro_compute_primitive_variables_3D_zslab error");
+	
+      } // end compute primitive variables 3d kernel
+      TIMER_STOP(timerPrimVar);
+
+      /*
+       * 1. Compute and store slopes
+       */
+      // 3D slopes
+      {
+	dim3 dimBlock(SLOPES_BLOCK_DIMX_3D_V2_Z,
+		      SLOPES_BLOCK_DIMY_3D_V2_Z);
+	dim3 dimGrid(blocksFor(isize, SLOPES_BLOCK_INNER_DIMX_3D_V2_Z), 
+		     blocksFor(jsize, SLOPES_BLOCK_INNER_DIMY_3D_V2_Z));
+	kernel_godunov_slopes_3d_v2_zslab<<<dimGrid,
+	  dimBlock>>>(d_Q.data(),
+		      d_slope_x.data(),
+		      d_slope_y.data(),
+		      d_slope_z.data(),
+		      d_Q.pitch(), 
+		      d_Q.dimx(), 
+		      d_Q.dimy(), 
+		      d_Q.dimz(),
+		      zSlabInfo);
+      } // end slopes 3D
+
+      /*
+       * 2. compute reconstructed states along X interfaces
+       */
+      {
+	dim3 dimBlock(TRACE_BLOCK_DIMX_3D_V2_Z,
+		      TRACE_BLOCK_DIMY_3D_V2_Z);
+	dim3 dimGrid(blocksFor(isize, TRACE_BLOCK_DIMX_3D_V2_Z), 
+		     blocksFor(jsize, TRACE_BLOCK_DIMY_3D_V2_Z));
+	kernel_godunov_trace_by_dir_3d_v2_zslab<<<dimGrid,
+	  dimBlock>>>(d_Q.data(),
+		      d_slope_x.data(),
+		      d_slope_y.data(),
+		      d_slope_z.data(),
+		      d_qm.data(),
+		      d_qp.data(),
+		      d_Q.pitch(), 
+		      d_Q.dimx(), 
+		      d_Q.dimy(),
+		      d_Q.dimz(),
+		      dt, dt / dx, dt / dy, dt / dz,
+		      gravityEnabled,
+		      IX,
+		      zSlabInfo);
+      } // end trace X
+
+      /*
+       * 3. Riemann solver at X interface and update
+       */
+      if (0) {
+	dim3 dimBlock(UPDATE_BLOCK_DIMX_3D_V2_Z,
+		      UPDATE_BLOCK_DIMY_3D_V2_Z);
+	dim3 dimGrid(blocksFor(isize, UPDATE_BLOCK_INNER_DIMX_3D_V2_Z), 
+		     blocksFor(jsize, UPDATE_BLOCK_INNER_DIMY_3D_V2_Z));
+	kernel_hydro_flux_update_unsplit_3d_v2_zslab<<<dimGrid,
+	  dimBlock>>>(d_UNew.data(),
+		      d_qm.data(),
+		      d_qp.data(),
+		      d_Q.pitch(), 
+		      d_Q.dimx(), 
+		      d_Q.dimy(),
+		      d_Q.dimz(),
+		      dt / dx, dt / dy, dt / dz, dt,
+		      IX,
+		      zSlabInfo);
+      
+      } // end update X
+
+      /*
+       * 4. compute reconstructed states along Y interfaces
+       */
+      {
+	dim3 dimBlock(TRACE_BLOCK_DIMX_3D_V2_Z,
+		      TRACE_BLOCK_DIMY_3D_V2_Z);
+	dim3 dimGrid(blocksFor(isize, TRACE_BLOCK_DIMX_3D_V2_Z), 
+		     blocksFor(jsize, TRACE_BLOCK_DIMY_3D_V2_Z));
+	kernel_godunov_trace_by_dir_3d_v2_zslab<<<dimGrid,
+	  dimBlock>>>(d_Q.data(),
+		      d_slope_x.data(),
+		      d_slope_y.data(),
+		      d_slope_z.data(),
+		      d_qm.data(),
+		      d_qp.data(),
+		      d_Q.pitch(), 
+		      d_Q.dimx(), 
+		      d_Q.dimy(),
+		      d_Q.dimz(),
+		      dt, dt / dx, dt / dy, dt / dz,
+		      gravityEnabled,
+		      IY,
+		      zSlabInfo);
+      } // end trace Y
+
+      /*
+       * 5. Riemann solver at Y interface and update
+       */
+      if (0) {
+	dim3 dimBlock(UPDATE_BLOCK_DIMX_3D_V2_Z,
+		      UPDATE_BLOCK_DIMY_3D_V2_Z);
+	dim3 dimGrid(blocksFor(isize, UPDATE_BLOCK_INNER_DIMX_3D_V2_Z), 
+		     blocksFor(jsize, UPDATE_BLOCK_INNER_DIMY_3D_V2_Z));
+	kernel_hydro_flux_update_unsplit_3d_v2_zslab<<<dimGrid,
+	  dimBlock>>>(d_UNew.data(),
+		      d_qm.data(),
+		      d_qp.data(),
+		      d_Q.pitch(), 
+		      d_Q.dimx(), 
+		      d_Q.dimy(),
+		      d_Q.dimz(),
+		      dt / dx, dt / dy, dt / dz, dt,
+		      IY,
+		      zSlabInfo);
+      
+      } // end update Y
+
+      /*
+       * 6. compute reconstructed states along Z interfaces
+       */
+      {
+	dim3 dimBlock(TRACE_BLOCK_DIMX_3D_V2_Z,
+		      TRACE_BLOCK_DIMY_3D_V2_Z);
+	dim3 dimGrid(blocksFor(isize, TRACE_BLOCK_DIMX_3D_V2_Z), 
+		     blocksFor(jsize, TRACE_BLOCK_DIMY_3D_V2_Z));
+	kernel_godunov_trace_by_dir_3d_v2_zslab<<<dimGrid,
+	  dimBlock>>>(d_Q.data(),
+		      d_slope_x.data(),
+		      d_slope_y.data(),
+		      d_slope_z.data(),
+		      d_qm.data(),
+		      d_qp.data(),
+		      d_Q.pitch(), 
+		      d_Q.dimx(), 
+		      d_Q.dimy(),
+		      d_Q.dimz(),
+		      dt, dt / dx, dt / dy, dt / dz,
+		      gravityEnabled,
+		      IZ,
+		      zSlabInfo);
+      } // end trace Z
+
+      /*
+       * 7. Riemann solver at Z interface and update
+       */
+      if (0) {
+	dim3 dimBlock(UPDATE_BLOCK_DIMX_3D_V2_Z,
+		      UPDATE_BLOCK_DIMY_3D_V2_Z);
+	dim3 dimGrid(blocksFor(isize, UPDATE_BLOCK_INNER_DIMX_3D_V2_Z), 
+		     blocksFor(jsize, UPDATE_BLOCK_INNER_DIMY_3D_V2_Z));
+	kernel_hydro_flux_update_unsplit_3d_v2_zslab<<<dimGrid,
+	  dimBlock>>>(d_UNew.data(),
+		      d_qm.data(),
+		      d_qp.data(),
+		      d_Q.pitch(), 
+		      d_Q.dimx(), 
+		      d_Q.dimy(),
+		      d_Q.dimz(),
+		      dt / dx, dt / dy, dt / dz, dt,
+		      IZ,
+		      zSlabInfo);
+      
+      } // end update Z
+
+      if (gravityEnabled) {
+	compute_gravity_source_term(d_UNew, d_UOld, dt, zSlabInfo);
+      }
+
+    } // end for loop zSlabId
+
+    /*************************************
+     * DISSIPATIVE TERMS (i.e. viscosity)
+     *************************************/
+    TIMER_START(timerDissipative);
+    real_t &nu = _gParams.nu;
+    if (nu>0) {
+      // update boundaries before dissipative terms computations
+      make_all_boundaries(d_UNew);
+    }
+    
+    // compute viscosity
+    if (nu>0) {
+      // re-use slopes arrays
+      DeviceArray<real_t> &d_flux_x = d_slope_x;
+      DeviceArray<real_t> &d_flux_y = d_slope_y;
+      DeviceArray<real_t> &d_flux_z = d_slope_z;
+      
+      // copy d_UNew into d_UOld
+      d_UNew.copyTo(d_UOld);
+
+      ZslabInfo zSlabInfo;
+      zSlabInfo.zSlabId     = -1;
+      zSlabInfo.zSlabNb     = zSlabNb;
+      zSlabInfo.zSlabWidthG = zSlabWidthG;
+      zSlabInfo.kStart      = -1;
+      zSlabInfo.kStop       = -1;
+      zSlabInfo.ksizeSlab   = zSlabWidthG;
+
+      // loop over z-slab index
+      for (int zSlabId=0; zSlabId < zSlabNb; ++zSlabId) {
+
+	zSlabInfo.zSlabId     = zSlabId;
+	zSlabInfo.kStart      = zSlabWidth * zSlabId;
+	zSlabInfo.kStop       = zSlabWidth * zSlabId + zSlabWidthG;
+	  
+	compute_viscosity_flux(d_UOld, d_flux_x, d_flux_y, d_flux_z, dt, zSlabInfo);
+	compute_hydro_update  (d_UNew, d_flux_x, d_flux_y, d_flux_z,     zSlabInfo);
+
+      } // end for zSlabId
+
+    } // end compute viscosity force / update  
+    TIMER_STOP(timerDissipative);
+      
+    /*
+     * random forcing
+     */
+    if (randomForcingEnabled) {
+      
+      real_t norm = compute_random_forcing_normalization(d_UNew, dt);
+      
+      add_random_forcing(d_UNew, dt, norm);
+      
+    } // end random forcing
+    if (randomForcingOrnsteinUhlenbeckEnabled) {
+	
+      // add forcing field in real space
+      pForcingOrnsteinUhlenbeck->add_forcing_field(d_UNew, dt);
+	
+    }
+
+  } // HydroRunGodunovZslab::godunov_unsplit_gpu_v2
 
 #else // CPU version
 
@@ -1338,8 +1611,6 @@ namespace hydroSimu {
 
   } // HydroRunGodunovZslab::godunov_unsplit_cpu_v1
 
-#endif // __CUDACC__
-  
   // =======================================================
   // =======================================================
   void HydroRunGodunovZslab::godunov_unsplit_cpu_v2(HostArray<real_t>& h_UOld, 
@@ -1938,6 +2209,8 @@ namespace hydroSimu {
 
   } // HydroRunGodunovZslab::godunov_unsplit_cpu_v2
 
+#endif // __CUDACC__
+  
   // =======================================================
   // =======================================================
   /*

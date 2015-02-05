@@ -527,9 +527,9 @@ __global__ void kernel_godunov_unsplit_3d_v0_zslab(const real_t * __restrict__ q
 } //  kernel_godunov_unsplit_3d_v0_zslab
 
 
-/***********************************************
- *** COMPUTE TRACE 3D KERNEL - zslab version ***
- ***********************************************/
+/*************************************************
+ *** COMPUTE TRACE 3D KERNEL - zslab version 1 ***
+ *************************************************/
 
 // 3D-kernel block dimensions
 #ifdef USE_DOUBLE
@@ -730,9 +730,9 @@ kernel_hydro_compute_trace_unsplit_3d_v1_zslab(const real_t * __restrict__ Uin,
 
 } // kernel_hydro_compute_trace_unsplit_3d_v1_zslab
 
-/***************************************************************
- *** UPDATE CONSERVATIVE VAR ARRAY 3D KERNEL - zslab version ***
- ***************************************************************/
+/*****************************************************************
+ *** UPDATE CONSERVATIVE VAR ARRAY 3D KERNEL - zslab version 1 ***
+ *****************************************************************/
 #ifdef USE_DOUBLE
 #define UPDATE_BLOCK_DIMX_3D_V1Z	16
 #define UPDATE_BLOCK_INNER_DIMX_3D_V1Z	(UPDATE_BLOCK_DIMX_3D_V1Z-1)
@@ -1052,5 +1052,586 @@ kernel_hydro_flux_update_unsplit_3d_v1_zslab(const real_t * __restrict__ Uin,
   } // end for k
 
 } // kernel_hydro_flux_update_unsplit_3d_v1_zslab
+
+/***********************************
+ *** KERNELS for zslab version 2 ***
+ ***********************************/
+
+/******************************************
+ *** COMPUTE SLOPES 3D KERNEL version 2 ***
+ ******************************************/
+
+// 3D-kernel block dimensions
+#ifdef USE_DOUBLE
+#define SLOPES_BLOCK_DIMX_3D_V2_Z	16
+#define SLOPES_BLOCK_INNER_DIMX_3D_V2_Z	(SLOPES_BLOCK_DIMX_3D_V2_Z-2)
+#define SLOPES_BLOCK_DIMY_3D_V2_Z	16
+#define SLOPES_BLOCK_INNER_DIMY_3D_V2_Z	(SLOPES_BLOCK_DIMY_3D_V2_Z-2)
+#else // simple precision
+#define SLOPES_BLOCK_DIMX_3D_V2_Z	16
+#define SLOPES_BLOCK_INNER_DIMX_3D_V2_Z (SLOPES_BLOCK_DIMX_3D_V2_Z-2)
+#define SLOPES_BLOCK_DIMY_3D_V2_Z	24
+#define SLOPES_BLOCK_INNER_DIMY_3D_V2_Z (SLOPES_BLOCK_DIMY_3D_V2_Z-2)
+#endif // USE_DOUBLE
+
+/**
+ * Unsplit Godunov kernel : computes slopes for 3D data (version 2).
+ * 
+ * Primitive variables are assumed to have been already computed. 
+ *
+ */
+__global__ 
+void kernel_godunov_slopes_3d_v2_zslab(const real_t * __restrict__ qData,
+				       real_t * d_slope_x,
+				       real_t * d_slope_y,
+				       real_t * d_slope_z,
+				       int pitch, 
+				       int imax, 
+				       int jmax,
+				       int kmax,
+				       ZslabInfo zSlabInfo)
+{
+  // Block index
+  const int bx = blockIdx.x;
+  const int by = blockIdx.y;
+  
+  // Thread index
+  const int tx = threadIdx.x;
+  const int ty = threadIdx.y;
+  
+  const int i = __mul24(bx, SLOPES_BLOCK_INNER_DIMX_3D_V2_Z) + tx;
+  const int j = __mul24(by, SLOPES_BLOCK_INNER_DIMY_3D_V2_Z) + ty;
+
+  // 3D array size
+  const int arraySizeQ  = pitch * jmax * zSlabInfo.zSlabWidthG;
+  const int &ksizeSlab = zSlabInfo.ksizeSlab;
+
+  __shared__ real_t q[3][SLOPES_BLOCK_DIMX_3D_V2_Z][SLOPES_BLOCK_DIMY_3D_V2_Z][NVAR_3D];
+
+  // slopes
+  real_t dq[THREE_D][NVAR_3D];
+
+  // index to address the 3 plans of data
+  int low, current, top, tmp;
+  low=0;
+  current=1;
+  top=2;
+
+  /*
+   * initialize q with the first 3 plans
+   */
+  for (int k=0, elemOffset = i + pitch * j; 
+       k < 3;
+       ++k, elemOffset += (pitch*jmax) ) {
+
+    // load primitive variables
+    if(i >= 0 and i < imax and 
+       j >= 0 and j < jmax)
+      {
+      
+	// read conservative variables
+	int offset = elemOffset;
+	q[k][tx][ty][ID] = qData[offset];  offset += arraySizeQ;
+	q[k][tx][ty][IP] = qData[offset];  offset += arraySizeQ;
+	q[k][tx][ty][IU] = qData[offset];  offset += arraySizeQ;
+	q[k][tx][ty][IV] = qData[offset];  offset += arraySizeQ;
+	q[k][tx][ty][IW] = qData[offset];
+	
+      }
+  } // end  loading the first 3 plans
+  __syncthreads();
+
+  /*
+   * loop over all X-Y-planes starting at z=1 as the current plane.
+   * Note that elemOffset is used in the update stage
+   */
+  for (int k=1, elemOffset = i + pitch * (j + jmax * 1);
+       k < ksizeSlab-1; 
+       ++k, elemOffset += (pitch*jmax)) {
+
+    // compute slopes along X, Y and Z at plane z
+    if(i > 0 and i < imax-1 and tx > 0 and tx < SLOPES_BLOCK_DIMX_3D_V2_Z-1 and
+       j > 0 and j < jmax-1 and ty > 0 and ty < SLOPES_BLOCK_DIMY_3D_V2_Z-1)
+      {
+ 
+	// compute slopes in current cell
+	slope_unsplit_3d(q[current][tx  ][ty  ],
+			 q[current][tx+1][ty  ],
+			 q[current][tx-1][ty  ],
+			 q[current][tx  ][ty+1],
+			 q[current][tx  ][ty-1],
+			 q[top    ][tx  ][ty  ],
+			 q[low    ][tx  ][ty  ],
+			 dq);
+      }
+    __syncthreads();
+
+    // store slopes in external memory buffer
+    if(i > 0 and i < imax-1 and tx > 0 and tx < SLOPES_BLOCK_DIMX_3D_V2_Z-1 and
+       j > 0 and j < jmax-1 and ty > 0 and ty < SLOPES_BLOCK_DIMY_3D_V2_Z-1)
+      {
+	// write slopes on global memory
+	int offset = elemOffset;
+	d_slope_x[offset] = dq[IX][ID];
+	d_slope_y[offset] = dq[IY][ID];
+	d_slope_z[offset] = dq[IZ][ID];  offset += arraySizeQ;
+	
+	d_slope_x[offset] = dq[IX][IP];
+	d_slope_y[offset] = dq[IY][IP];
+	d_slope_z[offset] = dq[IZ][IP];  offset += arraySizeQ;
+	
+	d_slope_x[offset] = dq[IX][IU];
+	d_slope_y[offset] = dq[IY][IU];
+	d_slope_z[offset] = dq[IZ][IU];  offset += arraySizeQ;
+	
+	d_slope_x[offset] = dq[IX][IV];
+	d_slope_y[offset] = dq[IY][IV];
+	d_slope_z[offset] = dq[IZ][IV];  offset += arraySizeQ;     
+	
+	d_slope_x[offset] = dq[IX][IW];
+	d_slope_y[offset] = dq[IY][IW];
+	d_slope_z[offset] = dq[IZ][IW];  offset += arraySizeQ;     
+      
+      } // end store slopes
+    __syncthreads();
+
+    // load next z-plane primitive variables
+    tmp = low;
+    low = current;
+    current = top;
+    top = tmp;
+    //__syncthreads();
+
+    if(i >= 0 and i < imax and 
+       j >= 0 and j < jmax)
+      {
+      
+	// read conservative variables at z+2
+	int offset = elemOffset + pitch*jmax*2;
+	q[top][tx][ty][ID] = qData[offset];  offset += arraySizeQ;
+	q[top][tx][ty][IP] = qData[offset];  offset += arraySizeQ;
+	q[top][tx][ty][IU] = qData[offset];  offset += arraySizeQ;
+	q[top][tx][ty][IV] = qData[offset];  offset += arraySizeQ;
+	q[top][tx][ty][IW] = qData[offset];
+	
+      }
+    //__syncthreads();
+
+  } // end for
+
+} // kernel_godunov_slopes_3d_v2_zslab
+
+/*****************************************
+ *** COMPUTE TRACE 3D KERNEL version 2 ***
+ *****************************************/
+
+// 3D-kernel block dimensions
+#ifdef USE_DOUBLE
+# define TRACE_BLOCK_DIMX_3D_V2_Z	16
+# define TRACE_BLOCK_DIMY_3D_V2_Z	16
+#else // simple precision
+# define TRACE_BLOCK_DIMX_3D_V2_Z	16
+# define TRACE_BLOCK_DIMY_3D_V2_Z	16
+#endif // USE_DOUBLE
+
+/**
+ * Compute trace for hydro 3D by direction (implementation version 2).
+ *
+ * Output are all that is needed to compute fluxes.
+ *
+ * All we do here is call :
+ * - trace_unsplit_hydro_3d_by_direction to get output : qleft, right.
+ *
+ * \param[in] d_Q input primitive    variable array
+ * \param[in] d_slope_x input slopes array
+ * \param[in] d_slope_y input slopes array
+ * \param[in] d_slope_z input slopes array
+ * \param[out] d_qm qm state along dir
+ * \param[out] d_qp qp state along dir
+ *
+ */
+__global__ 
+void kernel_godunov_trace_by_dir_3d_v2_zslab(const real_t * __restrict__ d_Q,
+					     const real_t * __restrict__ d_slope_x,
+					     const real_t * __restrict__ d_slope_y,
+					     const real_t * __restrict__ d_slope_z,
+					     real_t *d_qm,
+					     real_t *d_qp,
+					     int pitch, 
+					     int imax, 
+					     int jmax, 
+					     int kmax,
+					     real_t dt,
+					     real_t dtdx,
+					     real_t dtdy,
+					     real_t dtdz,
+					     bool gravityEnabled,
+					     int direction,
+					     ZslabInfo zSlabInfo)
+{
+  // Block index
+  const int bx = blockIdx.x;
+  const int by = blockIdx.y;
+  
+  // Thread index
+  const int tx = threadIdx.x;
+  const int ty = threadIdx.y;
+  
+  const int i = __mul24(bx, TRACE_BLOCK_DIMX_3D_V2_Z) + tx;
+  const int j = __mul24(by, TRACE_BLOCK_DIMY_3D_V2_Z) + ty;
+  
+  const int arraySizeU = pitch * jmax * kmax;
+  const int arraySizeQ = pitch * jmax * zSlabInfo.zSlabWidthG;
+
+  const int &ksizeSlab = zSlabInfo.ksizeSlab;
+  const int &kStart    = zSlabInfo.kStart; 
+
+  real_t qLoc[NVAR_3D];
+  real_t dq[THREE_D][NVAR_3D];
+
+  // reconstructed state on cell faces
+  // aka riemann solver input
+  real_t qleft[NVAR_3D];
+  real_t qright[NVAR_3D];
+
+  real_t *gravin = gParams.arrayList[A_GRAV];
+
+  int dir_min, dir_max;
+  
+  if (direction == IX) {
+    dir_min = FACE_XMIN;
+    dir_max = FACE_XMAX;
+  } else if (direction == IY) {
+    dir_min = FACE_YMIN;
+    dir_max = FACE_YMAX;
+  } else if (direction == IZ) {
+    dir_min = FACE_ZMIN;
+    dir_max = FACE_ZMAX;
+  }
+
+  /*
+   * loop over all X-Y-planes starting at z=1 as the current plane.
+   */
+  for (int k=1, elemOffset = i + pitch * (j + jmax * 1);
+       k < ksizeSlab-1; 
+       ++k, elemOffset += (pitch*jmax)) {
+    
+    if(i > 0 and i < imax-1 and 
+       j > 0 and j < jmax-1)
+      {
+	// load primitive variables as well as slopes
+	int offset = elemOffset;
+
+	qLoc  [ID] = d_Q[offset];
+	dq[IX][ID] = d_slope_x[offset];
+	dq[IY][ID] = d_slope_y[offset];
+	dq[IZ][ID] = d_slope_z[offset]; offset += arraySizeQ;
+
+	qLoc  [IP] = d_Q[offset];
+	dq[IX][IP] = d_slope_x[offset];
+	dq[IY][IP] = d_slope_y[offset];
+	dq[IZ][IP] = d_slope_z[offset]; offset += arraySizeQ;
+	
+	qLoc  [IU] = d_Q[offset];
+	dq[IX][IU] = d_slope_x[offset];
+	dq[IY][IU] = d_slope_y[offset];
+	dq[IZ][IU] = d_slope_z[offset]; offset += arraySizeQ;
+	
+	qLoc  [IV] = d_Q[offset];
+	dq[IX][IV] = d_slope_x[offset];
+	dq[IY][IV] = d_slope_y[offset];
+	dq[IZ][IV] = d_slope_z[offset]; offset += arraySizeQ;
+	
+	qLoc  [IW] = d_Q[offset];
+	dq[IX][IW] = d_slope_x[offset];
+	dq[IY][IW] = d_slope_y[offset];
+	dq[IZ][IW] = d_slope_z[offset]; offset += arraySizeQ;
+
+	//
+	// Compute reconstructed states 
+	//
+	
+	// TAKE CARE here left and right designate the interface location
+	// compare to current cell
+	// !!! THIS is FUNDAMENTALLY different from v0 and v1 !!!
+	
+	// left interface 
+	trace_unsplit_hydro_3d_by_direction(qLoc, 
+					    dq, 
+					    dtdx, dtdy, dtdz,
+					    dir_min,
+					    qleft);
+	
+	// right interface
+	trace_unsplit_hydro_3d_by_direction(qLoc,
+					    dq,
+					    dtdx, dtdy, dtdz,
+					    dir_max, 
+					    qright);
+	
+	if (gravityEnabled) { 
+	  int elemOffsetG = elemOffset + pitch*jmax*kStart;
+	  
+	  // we need to modify input to flux computation with
+	  // gravity predictor (half time step)
+	  
+	  qleft[IU]  += HALF_F * dt * gravin[elemOffsetG+IX*arraySizeU];
+	  qleft[IV]  += HALF_F * dt * gravin[elemOffsetG+IY*arraySizeU];
+	  qleft[IW]  += HALF_F * dt * gravin[elemOffsetG+IZ*arraySizeU];
+	  
+	  qright[IU] += HALF_F * dt * gravin[elemOffsetG+IX*arraySizeU];
+	  qright[IV] += HALF_F * dt * gravin[elemOffsetG+IY*arraySizeU];
+	  qright[IW] += HALF_F * dt * gravin[elemOffsetG+IZ*arraySizeU];
+	  
+	} // end gravityEnabled
+
+	// store them in global memory
+	offset = elemOffset;
+	
+	d_qm[offset] = qleft [ID];
+	d_qp[offset] = qright[ID]; offset += arraySizeQ;
+	
+	d_qm[offset] = qleft [IP];
+	d_qp[offset] = qright[IP]; offset += arraySizeQ;
+	
+	d_qm[offset] = qleft [IU];
+	d_qp[offset] = qright[IU]; offset += arraySizeQ;
+	
+	d_qm[offset] = qleft [IV];
+	d_qp[offset] = qright[IV]; offset += arraySizeQ;
+
+	d_qm[offset] = qleft [IW];
+	d_qp[offset] = qright[IW]; offset += arraySizeQ;
+      		
+      } // end if (i,j)
+
+  } // end for k
+
+} // kernel_godunov_trace_by_dir_3d_v2_zslab
+
+/*********************************************************
+ *** UPDATE CONSERVATIVE VAR ARRAY 3D KERNEL version 2 ***
+ *********************************************************/
+#ifdef USE_DOUBLE
+#define UPDATE_BLOCK_DIMX_3D_V2_Z	16
+#define UPDATE_BLOCK_INNER_DIMX_3D_V2_Z	(UPDATE_BLOCK_DIMX_3D_V2_Z-1)
+#define UPDATE_BLOCK_DIMY_3D_V2_Z	16
+#define UPDATE_BLOCK_INNER_DIMY_3D_V2_Z	(UPDATE_BLOCK_DIMY_3D_V2_Z-1)
+#else // simple precision
+#define UPDATE_BLOCK_DIMX_3D_V2_Z	16
+#define UPDATE_BLOCK_INNER_DIMX_3D_V2_Z	(UPDATE_BLOCK_DIMX_3D_V2_Z-1)
+#define UPDATE_BLOCK_DIMY_3D_V2_Z	16
+#define UPDATE_BLOCK_INNER_DIMY_3D_V2_Z	(UPDATE_BLOCK_DIMY_3D_V2_Z-1)
+#endif // USE_DOUBLE
+
+/**
+ * Update hydro conservative variables 3D (implementation version 2).
+ * 
+ * This is the final kernel, that given the qm, qp states compute
+ * fluxes and perform update.
+ *
+ * \param[in,out] Uout ouput conservative variable array
+ * \param[in] d_qm qm state along dir
+ * \param[in] d_qp qp state along dir
+ * \param[in] direction : IX, IY or IZ
+ *
+ */
+__global__ 
+void kernel_hydro_flux_update_unsplit_3d_v2_zslab(real_t       * Uout,
+						  const real_t * __restrict__ d_qm,
+						  const real_t * __restrict__ d_qp,
+						  int pitch, 
+						  int imax, 
+						  int jmax,
+						  int kmax,
+						  real_t dtdx, 
+						  real_t dtdy,
+						  real_t dtdz,
+						  real_t dt,
+						  int direction,
+						  ZslabInfo zSlabInfo)
+{
+
+  // Block index
+  const int bx = blockIdx.x;
+  const int by = blockIdx.y;
+  
+  // Thread index
+  const int tx = threadIdx.x;
+  const int ty = threadIdx.y;
+  
+  const int i = __mul24(bx, UPDATE_BLOCK_INNER_DIMX_3D_V2_Z) + tx;
+  const int j = __mul24(by, UPDATE_BLOCK_INNER_DIMY_3D_V2_Z) + ty;
+  
+  // 3D array size
+  const int arraySizeU = pitch * jmax * kmax;
+  const int arraySizeQ = pitch * jmax * zSlabInfo.zSlabWidthG;
+
+  const int &ksizeSlab = zSlabInfo.ksizeSlab;
+  const int &kStart    = zSlabInfo.kStart; 
+
+  // flux computation
+  __shared__ real_t flux[UPDATE_BLOCK_DIMX_3D_V2_Z][UPDATE_BLOCK_DIMY_3D_V2_Z][NVAR_3D];
+
+  // conservative variables
+  real_t uOut[NVAR_3D];
+  real_t qgdnv[NVAR_3D];
+  real_t flux_zm1[NVAR_3D];
+
+  int deltaOffset;
+  if (direction == IX)
+    deltaOffset = -1;
+  else if (direction == IY)
+    deltaOffset = -pitch;
+  else if (direction == IZ)
+    deltaOffset = -pitch*jmax;
+  
+  /*
+   * loop over k (i.e. z) to compute trace
+   */
+  for (int k=2, elemOffset = i + pitch * (j + jmax * 2);
+       k < ksizeSlab-1; 
+       ++k, elemOffset += (pitch*jmax)) {
+    
+    /*
+     * Compute fluxes at X-interfaces.
+     */
+    flux[tx][ty][ID] = ZERO_F;
+    flux[tx][ty][IP] = ZERO_F;
+    flux[tx][ty][IU] = ZERO_F;
+    flux[tx][ty][IV] = ZERO_F;
+    flux[tx][ty][IW] = ZERO_F;
+    __syncthreads();
+    
+    // Solve Riemann problem at interfaces and compute fluxes
+    real_t   qleft [NVAR_3D];
+    real_t   qright[NVAR_3D];
+    
+    if(i >= 2 and i < imax-1 and
+       j >= 2 and j < jmax-1 and
+       k >= 2 and k < ksizeSlab-1)
+      {
+	
+	// set qleft by re-reading qp from external memory at location
+	// x-1 or y-1 or z-1
+	int offset = elemOffset + deltaOffset;
+	for (int iVar=0; iVar<NVAR_3D; iVar++) {
+	  qleft[iVar] = d_qp[offset];
+	  offset += arraySizeQ;
+	}
+
+	// set qright by re-reading qm from external memory at current location
+	offset = elemOffset;
+	for (int iVar=0; iVar<NVAR_3D; iVar++) {
+	  qright[iVar] = d_qm[offset];
+	  offset += arraySizeQ;
+	}
+
+	if (direction == IY) {
+	  // watchout swap IU and IV
+	  swap_val(qleft[IU],qleft[IV]);
+	  swap_val(qright[IU],qright[IV]);
+	} else if (direction == IZ) {
+	  // watchout swap IU and IW
+	  swap_val(qleft[IU],qleft[IW]);
+	  swap_val(qright[IU],qright[IW]);
+	}
+
+	riemann<NVAR_3D>(qleft, qright, qgdnv, flux[tx][ty]);
+      }  
+    __syncthreads();
+    
+    // update uOut with flux IX or IY or IZ
+    if(i >= 2 and i < imax-2 and tx < UPDATE_BLOCK_DIMX_3D_V2_Z-1 and
+       j >= 2 and j < jmax-2 and ty < UPDATE_BLOCK_DIMY_3D_V2_Z-1 and
+       k >= 2 and k < ksizeSlab-1)
+      {
+	// re-read input state into uOut which will in turn serve to
+	// update Uout !
+
+	if (direction == IX or direction == IY) {
+	  int offsetU = elemOffset  + pitch*jmax*kStart;
+	  uOut[ID] = Uout[offsetU];  offsetU += arraySizeU;
+	  uOut[IP] = Uout[offsetU];  offsetU += arraySizeU;
+	  uOut[IU] = Uout[offsetU];  offsetU += arraySizeU;
+	  uOut[IV] = Uout[offsetU];  offsetU += arraySizeU;
+	  uOut[IW] = Uout[offsetU];
+	  
+	  if (direction == IX) {
+	    uOut[ID] += flux[tx  ][ty][ID]*dtdx;
+	    uOut[ID] -= flux[tx+1][ty][ID]*dtdx;
+	    
+	    uOut[IP] += flux[tx  ][ty][IP]*dtdx;
+	    uOut[IP] -= flux[tx+1][ty][IP]*dtdx;
+	    
+	    uOut[IU] += flux[tx  ][ty][IU]*dtdx;
+	    uOut[IU] -= flux[tx+1][ty][IU]*dtdx;
+	    
+	    uOut[IV] += flux[tx  ][ty][IV]*dtdx;
+	    uOut[IV] -= flux[tx+1][ty][IV]*dtdx;
+	    
+	    uOut[IW] += flux[tx  ][ty][IW]*dtdx;
+	    uOut[IW] -= flux[tx+1][ty][IW]*dtdx;
+	  } else if (direction == IY) {
+	    // watchout IU and IV are swapped !
+	    uOut[ID] += flux[tx][ty  ][ID]*dtdy;
+	    uOut[ID] -= flux[tx][ty+1][ID]*dtdy;
+	    
+	    uOut[IP] += flux[tx][ty  ][IP]*dtdy;
+	    uOut[IP] -= flux[tx][ty+1][IP]*dtdy;
+	    
+	    uOut[IU] += flux[tx][ty  ][IV]*dtdy;
+	    uOut[IU] -= flux[tx][ty+1][IV]*dtdy;
+	    
+	    uOut[IV] += flux[tx][ty  ][IU]*dtdy;
+	    uOut[IV] -= flux[tx][ty+1][IU]*dtdy;
+	    
+	    uOut[IW] += flux[tx][ty  ][IW]*dtdy;
+	    uOut[IW] -= flux[tx][ty+1][IW]*dtdy;
+	  }
+
+	  if (k < ksizeSlab-2) {
+	    offsetU = elemOffset  + pitch*jmax*kStart;
+
+	    Uout[offsetU] = uOut[ID];  offsetU += arraySizeU;
+	    Uout[offsetU] = uOut[IP];  offsetU += arraySizeU;
+	    Uout[offsetU] = uOut[IU];  offsetU += arraySizeU;
+	    Uout[offsetU] = uOut[IV];  offsetU += arraySizeU;
+	    Uout[offsetU] = uOut[IW];
+
+	  }
+
+	} else if (direction == IZ) {
+	  
+	  // at k=2 we do nothing but store flux_zm1 which will be used at k=3
+	  
+	  if (k > 2 and k < ksizeSlab-1) { 
+	    /*
+	     * update at position z-1.
+	     */
+	    // watchout! IU and IW are swapped !
+	    int offsetU = elemOffset  + pitch*jmax*(kStart - 1);
+
+	    Uout[offsetU] += (flux_zm1[ID]-flux[tx][ty][ID])*dtdz; offsetU += arraySizeU;
+	    Uout[offsetU] += (flux_zm1[IP]-flux[tx][ty][IP])*dtdz; offsetU += arraySizeU;
+	    Uout[offsetU] += (flux_zm1[IW]-flux[tx][ty][IW])*dtdz; offsetU += arraySizeU;
+	    Uout[offsetU] += (flux_zm1[IV]-flux[tx][ty][IV])*dtdz; offsetU += arraySizeU;
+	    Uout[offsetU] += (flux_zm1[IU]-flux[tx][ty][IU])*dtdz;
+	  }
+
+	  // store flux for next z value
+	  flux_zm1[ID] = flux[tx][ty][ID];
+	  flux_zm1[IP] = flux[tx][ty][IP];
+	  flux_zm1[IU] = flux[tx][ty][IU];
+	  flux_zm1[IV] = flux[tx][ty][IV];
+	  flux_zm1[IW] = flux[tx][ty][IW];
+
+	} // end direction IZ
+      }
+    __syncthreads();
+
+  } // end for k
+ 
+} // kernel_hydro_flux_update_unsplit_3d_v2_zslab
 
 #endif // GODUNOV_UNSPLIT_ZSLAB_CUH_
