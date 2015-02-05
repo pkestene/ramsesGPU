@@ -1296,9 +1296,10 @@ namespace hydroSimu {
     
       // compute viscosity
       if (nu>0) {
-	DeviceArray<real_t> &d_flux_x = d_qm_x;
-	DeviceArray<real_t> &d_flux_y = d_qm_y;
-	DeviceArray<real_t> &d_flux_z = d_qm_z;
+	// re-use slope array
+	DeviceArray<real_t> &d_flux_x = d_slope_x;
+	DeviceArray<real_t> &d_flux_y = d_slope_y;
+	DeviceArray<real_t> &d_flux_z = d_slope_z;
       
 	compute_viscosity_flux(d_UNew, d_flux_x, d_flux_y, d_flux_z, dt);
 	compute_hydro_update  (d_UNew, d_flux_x, d_flux_y, d_flux_z );

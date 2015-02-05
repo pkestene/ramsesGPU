@@ -1124,6 +1124,26 @@ namespace hydroSimu {
 	compute_gravity_source_term(d_UNew, d_UOld, dt);
       }
 
+      /*
+       * DISSIPATIVE TERMS (i.e. viscosity)
+       */
+      TIMER_START(timerDissipative);
+      real_t &nu = _gParams.nu;
+      if (nu>0) {
+	// update boundaries before dissipative terms computations
+	make_all_boundaries(d_UNew);
+      }
+    
+      // compute viscosity
+      if (nu>0) {
+	DeviceArray<real_t> &d_flux_x = d_slope_x;
+	DeviceArray<real_t> &d_flux_y = d_slope_y;
+      
+	compute_viscosity_flux(d_UNew, d_flux_x, d_flux_y, dt);
+	compute_hydro_update  (d_UNew, d_flux_x, d_flux_y);
+      } // end compute viscosity force / update  
+      TIMER_STOP(timerDissipative);
+
     } else if (dimType == THREE_D) {
 
       /*
@@ -1341,9 +1361,9 @@ namespace hydroSimu {
     
       // compute viscosity
       if (nu>0) {
-	DeviceArray<real_t> &d_flux_x = d_qm_x;
-	DeviceArray<real_t> &d_flux_y = d_qm_y;
-	DeviceArray<real_t> &d_flux_z = d_qm_z;
+	DeviceArray<real_t> &d_flux_x = d_slope_x;
+	DeviceArray<real_t> &d_flux_y = d_slope_y;
+	DeviceArray<real_t> &d_flux_z = d_slope_z;
       
 	compute_viscosity_flux(d_UNew, d_flux_x, d_flux_y, d_flux_z, dt);
 	compute_hydro_update  (d_UNew, d_flux_x, d_flux_y, d_flux_z );
@@ -3248,6 +3268,45 @@ namespace hydroSimu {
 	compute_gravity_source_term(h_UNew, h_UOld, dt);
       }
 
+      /*
+       * DISSIPATIVE TERMS (i.e. viscosity)
+       */
+      TIMER_START(timerDissipative);
+      real_t &nu = _gParams.nu;
+      if (nu>0) {
+	// update boundaries before dissipative terms computations
+	make_all_boundaries(h_UNew);
+      }
+    
+      // compute viscosity forces
+      if (nu>0) {
+	// re-use h_qm_x and h_qm_y
+	HostArray<real_t> &flux_x = h_slope_x;
+	HostArray<real_t> &flux_y = h_slope_y;
+      
+	compute_viscosity_flux(h_UNew, flux_x, flux_y, dt);
+	compute_hydro_update  (h_UNew, flux_x, flux_y);
+      
+      } // end compute viscosity force / update
+      TIMER_STOP(timerDissipative);
+    
+      /*
+       * random forcing
+       */
+      if (randomForcingEnabled) {
+      
+	real_t norm = compute_random_forcing_normalization(h_UNew, dt);
+      
+	add_random_forcing(h_UNew, dt, norm);
+      
+      }
+      if (randomForcingOrnsteinUhlenbeckEnabled) {
+      
+	// add forcing field in real space
+	pForcingOrnsteinUhlenbeck->add_forcing_field(h_UNew, dt);
+      
+      }
+
     } else if (dimType == THREE_D) { // THREE_D - unsplit version 2
 
       /*
@@ -3745,6 +3804,46 @@ namespace hydroSimu {
       // gravity source term
       if (gravityEnabled) {
 	compute_gravity_source_term(h_UNew, h_UOld, dt);
+      }
+
+      /*
+       * DISSIPATIVE TERMS (i.e. viscosity)
+       */
+      TIMER_START(timerDissipative);
+      real_t &nu = _gParams.nu;
+      if (nu>0) {
+	// update boundaries before dissipative terms computations
+	make_all_boundaries(h_UNew);
+      }
+    
+      // compute viscosity forces
+      if (nu>0) {
+	// re-use slopes array
+	HostArray<real_t> &flux_x = h_slope_x;
+	HostArray<real_t> &flux_y = h_slope_y;
+	HostArray<real_t> &flux_z = h_slope_z;
+      
+	compute_viscosity_flux(h_UNew, flux_x, flux_y, flux_z, dt);
+	compute_hydro_update  (h_UNew, flux_x, flux_y, flux_z);
+      
+      } // end compute viscosity force / update
+      TIMER_STOP(timerDissipative);
+    
+      /*
+       * random forcing
+       */
+      if (randomForcingEnabled) {
+      
+	real_t norm = compute_random_forcing_normalization(h_UNew, dt);
+      
+	add_random_forcing(h_UNew, dt, norm);
+      
+      }
+      if (randomForcingOrnsteinUhlenbeckEnabled) {
+      
+	// add forcing field in real space
+	pForcingOrnsteinUhlenbeck->add_forcing_field(h_UNew, dt);
+      
       }
 
     } // end THREE_D  unsplit version 2
