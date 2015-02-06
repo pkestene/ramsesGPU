@@ -3112,11 +3112,13 @@ namespace hydroSimu {
     outFile.open(filenameFull.c_str(), std::ios_base::out);
     
     // domain extent
-    int xmin=0, xmax=nx-1, ymin=0, ymax=ny-1, zmin=0, zmax=nz-1;
-    if (ghostIncluded) {
-      xmax += 2*ghostWidth;
-      ymax += 2*ghostWidth;
-      zmax += 2*ghostWidth;
+    int xmin=0, xmax=data.dimx()-1;
+    int ymin=0, ymax=data.dimy()-1;
+    int zmin=0, zmax=data.dimz()-1;
+    if (!ghostIncluded) {
+      xmax -= 2*ghostWidth;
+      ymax -= 2*ghostWidth;
+      zmax -= 2*ghostWidth;
     }
     
     // if writing raw binary data (file does not respect XML standard)
@@ -3147,8 +3149,8 @@ namespace hydroSimu {
       if (dimType == TWO_D) {
 	int imin = ghostWidth;
 	int jmin = ghostWidth;
-	int imax = isize-ghostWidth;
-	int jmax = jsize-ghostWidth;
+	int imax = data.dimx()-ghostWidth;
+	int jmax = data.dimy()-ghostWidth;
 	if (ghostIncluded) {
 	  imin = 0;
 	  jmin = 0;
@@ -3176,9 +3178,9 @@ namespace hydroSimu {
 	int imin = ghostWidth;
 	int jmin = ghostWidth;
 	int kmin = ghostWidth;
-	int imax = isize-ghostWidth;
-	int jmax = jsize-ghostWidth;
-	int kmax = ksize-ghostWidth;
+	int imax = data.dimx()-ghostWidth;
+	int jmax = data.dimy()-ghostWidth;
+	int kmax = data.dimz()-ghostWidth;
 	if (ghostIncluded) {
 	  imin = 0;
 	  jmin = 0;
