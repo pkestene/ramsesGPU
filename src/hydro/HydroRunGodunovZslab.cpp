@@ -584,6 +584,15 @@ namespace hydroSimu {
 		      d_UOld.dimz(),
 		      zSlabInfo);
 	checkCudaError("HydroRunGodunovZslab :: kernel_hydro_compute_primitive_variables_3D_zslab error");
+
+	if (dumpDataForDebugEnabled) {
+	  HostArray<real_t> h_debug; 
+	  h_debug.allocate(make_uint4(isize,jsize,zSlabWidthG,nbVar));
+	  d_Q.copyToHost(h_debug);
+	  std::stringstream ss;
+	  ss << "qprim_slab_" << zSlabId << "_";
+	  outputDebug(h_debug, ss.str(), nStep);
+	}
 	
       } // end compute primitive variables 3d kernel
       TIMER_STOP(timerPrimVar);
@@ -602,11 +611,24 @@ namespace hydroSimu {
 		      d_slope_x.data(),
 		      d_slope_y.data(),
 		      d_slope_z.data(),
-		      d_Q.pitch(), 
-		      d_Q.dimx(), 
-		      d_Q.dimy(), 
-		      d_Q.dimz(),
+		      d_UNew.pitch(), 
+		      d_UNew.dimx(), 
+		      d_UNew.dimy(), 
+		      d_UNew.dimz(),
 		      zSlabInfo);
+	if (dumpDataForDebugEnabled) {
+	  HostArray<real_t> h_debug; 
+	  h_debug.allocate(make_uint4(isize,jsize,zSlabWidthG,nbVar));
+	  d_slope_x.copyToHost(h_debug);
+	  std::stringstream ss;
+	  ss << "slope_x_slab_" << zSlabId << "_";
+	  outputDebug(h_debug, ss.str(), nStep);
+	  d_slope_z.copyToHost(h_debug);
+	  ss.str("");
+	  ss << "slope_z_slab_" << zSlabId << "_";
+	  outputDebug(h_debug, ss.str(), nStep);
+	}
+
       } // end slopes 3D
 
       /*
@@ -624,20 +646,35 @@ namespace hydroSimu {
 		      d_slope_z.data(),
 		      d_qm.data(),
 		      d_qp.data(),
-		      d_Q.pitch(), 
-		      d_Q.dimx(), 
-		      d_Q.dimy(),
-		      d_Q.dimz(),
+		      d_UNew.pitch(), 
+		      d_UNew.dimx(), 
+		      d_UNew.dimy(),
+		      d_UNew.dimz(),
 		      dt, dt / dx, dt / dy, dt / dz,
 		      gravityEnabled,
 		      IX,
 		      zSlabInfo);
+
+	if (dumpDataForDebugEnabled) {
+	  HostArray<real_t> h_debug; 
+	  h_debug.allocate(make_uint4(isize,jsize,zSlabWidthG,nbVar));
+	  d_qm.copyToHost(h_debug);
+	  std::stringstream ss;
+	  ss << "qm_x_slab_" << zSlabId << "_";
+	  outputDebug(h_debug, ss.str(), nStep);
+
+	  d_qp.copyToHost(h_debug);
+	  ss.str("");
+	  ss << "qp_x_slab_" << zSlabId << "_";
+	  outputDebug(h_debug, ss.str(), nStep);
+	}
+
       } // end trace X
 
       /*
        * 3. Riemann solver at X interface and update
        */
-      if (0) {
+      {
 	dim3 dimBlock(UPDATE_BLOCK_DIMX_3D_V2_Z,
 		      UPDATE_BLOCK_DIMY_3D_V2_Z);
 	dim3 dimGrid(blocksFor(isize, UPDATE_BLOCK_INNER_DIMX_3D_V2_Z), 
@@ -646,14 +683,26 @@ namespace hydroSimu {
 	  dimBlock>>>(d_UNew.data(),
 		      d_qm.data(),
 		      d_qp.data(),
-		      d_Q.pitch(), 
-		      d_Q.dimx(), 
-		      d_Q.dimy(),
-		      d_Q.dimz(),
+		      d_UNew.pitch(), 
+		      d_UNew.dimx(), 
+		      d_UNew.dimy(),
+		      d_UNew.dimz(),
 		      dt / dx, dt / dy, dt / dz, dt,
 		      IX,
 		      zSlabInfo);
       
+	// debug
+	if (dumpDataForDebugEnabled) {
+	  std::cout << " ################ " << zSlabInfo.kStart << "\n";
+	  HostArray<real_t> h_debug; 
+	  h_debug.allocate(make_uint4(isize,jsize,ksize,nbVar));
+	  d_UNew.copyToHost(h_debug);
+	  std::stringstream ss;
+	  ss << "UNew_update_x_slab_" << zSlabId << "_";
+	  outputDebug(h_debug, ss.str(), nStep);
+	}
+
+
       } // end update X
 
       /*
@@ -671,10 +720,10 @@ namespace hydroSimu {
 		      d_slope_z.data(),
 		      d_qm.data(),
 		      d_qp.data(),
-		      d_Q.pitch(), 
-		      d_Q.dimx(), 
-		      d_Q.dimy(),
-		      d_Q.dimz(),
+		      d_UNew.pitch(), 
+		      d_UNew.dimx(), 
+		      d_UNew.dimy(),
+		      d_UNew.dimz(),
 		      dt, dt / dx, dt / dy, dt / dz,
 		      gravityEnabled,
 		      IY,
@@ -684,7 +733,7 @@ namespace hydroSimu {
       /*
        * 5. Riemann solver at Y interface and update
        */
-      if (0) {
+      {
 	dim3 dimBlock(UPDATE_BLOCK_DIMX_3D_V2_Z,
 		      UPDATE_BLOCK_DIMY_3D_V2_Z);
 	dim3 dimGrid(blocksFor(isize, UPDATE_BLOCK_INNER_DIMX_3D_V2_Z), 
@@ -693,13 +742,22 @@ namespace hydroSimu {
 	  dimBlock>>>(d_UNew.data(),
 		      d_qm.data(),
 		      d_qp.data(),
-		      d_Q.pitch(), 
-		      d_Q.dimx(), 
-		      d_Q.dimy(),
-		      d_Q.dimz(),
+		      d_UNew.pitch(), 
+		      d_UNew.dimx(), 
+		      d_UNew.dimy(),
+		      d_UNew.dimz(),
 		      dt / dx, dt / dy, dt / dz, dt,
 		      IY,
 		      zSlabInfo);
+
+	if (dumpDataForDebugEnabled) {
+	  HostArray<real_t> h_debug; 
+	  h_debug.allocate(make_uint4(isize,jsize,ksize,nbVar));
+	  d_UNew.copyToHost(h_debug);
+	  std::stringstream ss;
+	  ss << "UNew_update_y_slab_" << zSlabId << "_";
+	  outputDebug(h_debug, ss.str(), nStep);
+	}
       
       } // end update Y
 
@@ -718,10 +776,10 @@ namespace hydroSimu {
 		      d_slope_z.data(),
 		      d_qm.data(),
 		      d_qp.data(),
-		      d_Q.pitch(), 
-		      d_Q.dimx(), 
-		      d_Q.dimy(),
-		      d_Q.dimz(),
+		      d_UNew.pitch(), 
+		      d_UNew.dimx(), 
+		      d_UNew.dimy(),
+		      d_UNew.dimz(),
 		      dt, dt / dx, dt / dy, dt / dz,
 		      gravityEnabled,
 		      IZ,
@@ -731,7 +789,7 @@ namespace hydroSimu {
       /*
        * 7. Riemann solver at Z interface and update
        */
-      if (0) {
+      {
 	dim3 dimBlock(UPDATE_BLOCK_DIMX_3D_V2_Z,
 		      UPDATE_BLOCK_DIMY_3D_V2_Z);
 	dim3 dimGrid(blocksFor(isize, UPDATE_BLOCK_INNER_DIMX_3D_V2_Z), 
@@ -740,10 +798,10 @@ namespace hydroSimu {
 	  dimBlock>>>(d_UNew.data(),
 		      d_qm.data(),
 		      d_qp.data(),
-		      d_Q.pitch(), 
-		      d_Q.dimx(), 
-		      d_Q.dimy(),
-		      d_Q.dimz(),
+		      d_UNew.pitch(), 
+		      d_UNew.dimx(), 
+		      d_UNew.dimy(),
+		      d_UNew.dimz(),
 		      dt / dx, dt / dy, dt / dz, dt,
 		      IZ,
 		      zSlabInfo);

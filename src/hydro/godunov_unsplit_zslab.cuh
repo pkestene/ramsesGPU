@@ -1494,7 +1494,7 @@ void kernel_hydro_flux_update_unsplit_3d_v2_zslab(real_t       * Uout,
        ++k, elemOffset += (pitch*jmax)) {
     
     /*
-     * Compute fluxes at X-interfaces.
+     * Compute fluxes at interfaces.
      */
     flux[tx][ty][ID] = ZERO_F;
     flux[tx][ty][IP] = ZERO_F;
@@ -1551,6 +1551,7 @@ void kernel_hydro_flux_update_unsplit_3d_v2_zslab(real_t       * Uout,
 
 	if (direction == IX or direction == IY) {
 	  int offsetU = elemOffset  + pitch*jmax*kStart;
+
 	  uOut[ID] = Uout[offsetU];  offsetU += arraySizeU;
 	  uOut[IP] = Uout[offsetU];  offsetU += arraySizeU;
 	  uOut[IU] = Uout[offsetU];  offsetU += arraySizeU;
