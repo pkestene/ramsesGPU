@@ -35,7 +35,7 @@
 #include <cstdlib>
 
 /** a dummy device-only swap function */
-__device__ inline void swap_value(real_t& a, real_t& b) {
+__inline__ __device__ void swap_value(real_t& a, real_t& b) {
   
   real_t tmp = a;
   a = b;
