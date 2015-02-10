@@ -56,6 +56,102 @@ __device__ inline void swap_value_(real_riemann_t& a, real_riemann_t& b) {
 } // swap_value
 #endif // USE_MIXED_PRECISION
 
+/******************************************************************
+ * Define some CUDA kernel common to all MHD implementation on GPU
+ ******************************************************************/
+
+
+#ifdef USE_DOUBLE
+#define PRIM_VAR_MHD_BLOCK_DIMX_3D	16
+#define PRIM_VAR_MHD_BLOCK_DIMY_3D	16
+#else // simple precision
+#define PRIM_VAR_MHD_BLOCK_DIMX_3D	16
+#define PRIM_VAR_MHD_BLOCK_DIMY_3D	16
+#endif // USE_DOUBLE
+
+/**
+ * Compute primitive variables 
+ *
+ * \param[in]  Uin  input  convervative variable array 
+ * \param[out] Qout output primitive variable array
+ */
+__global__ void kernel_mhd_compute_primitive_variables(const real_t * __restrict__ Uin,
+						       real_t       *Qout,
+						       int pitch, 
+						       int imax, 
+						       int jmax,
+						       int kmax,
+						       real_t dt)
+{
+
+  // Block index
+  const int bx = blockIdx.x;
+  const int by = blockIdx.y;
+  
+  // Thread index
+  const int tx = threadIdx.x;
+  const int ty = threadIdx.y;
+  
+  const int i = __mul24(bx, PRIM_VAR_MHD_BLOCK_DIMX_3D) + tx;
+  const int j = __mul24(by, PRIM_VAR_MHD_BLOCK_DIMY_3D) + ty;
+  
+  const int arraySize    = pitch * jmax * kmax;
+
+  // conservative variables
+  real_riemann_t uIn [NVAR_MHD];
+  real_t c;
+
+  /*
+   * loop over k (i.e. z) to compute primitive variables, and store results
+   * in external memory buffer Q.
+   */
+  for (int k=0, elemOffset = i + pitch * j;
+       k < kmax-1; 
+       ++k, elemOffset += (pitch*jmax)) {
+    
+    if( i < imax-1 and j < jmax-1 ) {
+
+      	// Gather conservative variables (at z=k)
+	int offset = elemOffset;
+
+	uIn[ID] = static_cast<real_riemann_t>(Uin[offset]);  offset += arraySize;
+	uIn[IP] = static_cast<real_riemann_t>(Uin[offset]);  offset += arraySize;
+	uIn[IU] = static_cast<real_riemann_t>(Uin[offset]);  offset += arraySize;
+	uIn[IV] = static_cast<real_riemann_t>(Uin[offset]);  offset += arraySize;
+	uIn[IW] = static_cast<real_riemann_t>(Uin[offset]);  offset += arraySize;
+	uIn[IA] = static_cast<real_riemann_t>(Uin[offset]);  offset += arraySize;
+	uIn[IB] = static_cast<real_riemann_t>(Uin[offset]);  offset += arraySize;
+	uIn[IC] = static_cast<real_riemann_t>(Uin[offset]);
+	
+	// go to magnetic field components and get values from 
+	// neighbors on the right
+	real_riemann_t magFieldNeighbors[3];
+	offset = elemOffset + 5 * arraySize;
+	magFieldNeighbors[IX] = static_cast<real_riemann_t>(Uin[offset+1         ]);  offset += arraySize;
+	magFieldNeighbors[IY] = static_cast<real_riemann_t>(Uin[offset+pitch     ]);  offset += arraySize;
+	magFieldNeighbors[IZ] = static_cast<real_riemann_t>(Uin[offset+pitch*jmax]);
+	
+	//Convert to primitive variables
+	real_riemann_t qTmp[NVAR_MHD];
+	constoprim_mhd(uIn, magFieldNeighbors, qTmp, c, dt);
+
+	// copy results into output d_Q at z=k
+	offset = elemOffset;
+	Qout[offset] = static_cast<real_t>(qTmp[ID]); offset += arraySize;
+	Qout[offset] = static_cast<real_t>(qTmp[IP]); offset += arraySize;
+	Qout[offset] = static_cast<real_t>(qTmp[IU]); offset += arraySize;
+	Qout[offset] = static_cast<real_t>(qTmp[IV]); offset += arraySize;
+	Qout[offset] = static_cast<real_t>(qTmp[IW]); offset += arraySize;
+	Qout[offset] = static_cast<real_t>(qTmp[IA]); offset += arraySize;
+	Qout[offset] = static_cast<real_t>(qTmp[IB]); offset += arraySize;
+	Qout[offset] = static_cast<real_t>(qTmp[IC]);
+
+    } // end if
+
+  } // enf for k
+
+} // kernel_mhd_compute_primitive_variables
+
 /*****************************************
  *** *** GODUNOV UNSPLIT 2D KERNEL *** ***
  *****************************************/
@@ -1897,98 +1993,6 @@ __global__ void kernel_godunov_unsplit_mhd_3d_v1(const real_t * __restrict__ Uin
 /************************************************************
  * Define some CUDA kernel to implement MHD version 3 on GPU
  ************************************************************/
-
-#ifdef USE_DOUBLE
-#define PRIM_VAR_BLOCK_DIMX_3D_V3	16
-#define PRIM_VAR_BLOCK_DIMY_3D_V3	16
-#else // simple precision
-#define PRIM_VAR_BLOCK_DIMX_3D_V3	16
-#define PRIM_VAR_BLOCK_DIMY_3D_V3	16
-#endif // USE_DOUBLE
-
-/**
- * Compute primitive variables 
- *
- * \param[in]  Uin  input  convervative variable array 
- * \param[out] Qout output primitive variable array
- */
-__global__ void kernel_mhd_compute_primitive_variables(const real_t * __restrict__ Uin,
-						       real_t       *Qout,
-						       int pitch, 
-						       int imax, 
-						       int jmax,
-						       int kmax,
-						       real_t dt)
-{
-
-  // Block index
-  const int bx = blockIdx.x;
-  const int by = blockIdx.y;
-  
-  // Thread index
-  const int tx = threadIdx.x;
-  const int ty = threadIdx.y;
-  
-  const int i = __mul24(bx, PRIM_VAR_BLOCK_DIMX_3D_V3) + tx;
-  const int j = __mul24(by, PRIM_VAR_BLOCK_DIMY_3D_V3) + ty;
-  
-  const int arraySize    = pitch * jmax * kmax;
-
-  // conservative variables
-  real_riemann_t uIn [NVAR_MHD];
-  real_t c;
-
-  /*
-   * loop over k (i.e. z) to compute primitive variables, and store results
-   * in external memory buffer Q.
-   */
-  for (int k=0, elemOffset = i + pitch * j;
-       k < kmax-1; 
-       ++k, elemOffset += (pitch*jmax)) {
-    
-    if( i < imax-1 and j < jmax-1 ) {
-
-      	// Gather conservative variables (at z=k)
-	int offset = elemOffset;
-
-	uIn[ID] = static_cast<real_riemann_t>(Uin[offset]);  offset += arraySize;
-	uIn[IP] = static_cast<real_riemann_t>(Uin[offset]);  offset += arraySize;
-	uIn[IU] = static_cast<real_riemann_t>(Uin[offset]);  offset += arraySize;
-	uIn[IV] = static_cast<real_riemann_t>(Uin[offset]);  offset += arraySize;
-	uIn[IW] = static_cast<real_riemann_t>(Uin[offset]);  offset += arraySize;
-	uIn[IA] = static_cast<real_riemann_t>(Uin[offset]);  offset += arraySize;
-	uIn[IB] = static_cast<real_riemann_t>(Uin[offset]);  offset += arraySize;
-	uIn[IC] = static_cast<real_riemann_t>(Uin[offset]);
-	
-	// go to magnetic field components and get values from 
-	// neighbors on the right
-	real_riemann_t magFieldNeighbors[3];
-	offset = elemOffset + 5 * arraySize;
-	magFieldNeighbors[IX] = static_cast<real_riemann_t>(Uin[offset+1         ]);  offset += arraySize;
-	magFieldNeighbors[IY] = static_cast<real_riemann_t>(Uin[offset+pitch     ]);  offset += arraySize;
-	magFieldNeighbors[IZ] = static_cast<real_riemann_t>(Uin[offset+pitch*jmax]);
-	
-	//Convert to primitive variables
-	real_riemann_t qTmp[NVAR_MHD];
-	constoprim_mhd(uIn, magFieldNeighbors, qTmp, c, dt);
-
-	// copy results into output d_Q at z=k
-	offset = elemOffset;
-	Qout[offset] = static_cast<real_t>(qTmp[ID]); offset += arraySize;
-	Qout[offset] = static_cast<real_t>(qTmp[IP]); offset += arraySize;
-	Qout[offset] = static_cast<real_t>(qTmp[IU]); offset += arraySize;
-	Qout[offset] = static_cast<real_t>(qTmp[IV]); offset += arraySize;
-	Qout[offset] = static_cast<real_t>(qTmp[IW]); offset += arraySize;
-	Qout[offset] = static_cast<real_t>(qTmp[IA]); offset += arraySize;
-	Qout[offset] = static_cast<real_t>(qTmp[IB]); offset += arraySize;
-	Qout[offset] = static_cast<real_t>(qTmp[IC]);
-
-    } // end if
-
-  } // enf for k
-
-} // kernel_mhd_compute_primitive_variables
-
 
 #ifdef USE_DOUBLE
 #define ELEC_FIELD_BLOCK_DIMX_3D_V3	16

@@ -452,11 +452,38 @@ namespace hydroSimu {
   
   // =======================================================
   // =======================================================
-  void MHDRunGodunovMpi::convertToPrimitives(real_t *U, real_t timeStep)
+  void MHDRunGodunovMpi::convertToPrimitives(real_t *U, real_t deltaT)
   {
 
     // this is a CPU-only routine    
-#ifndef __CUDACC__
+#ifdef __CUDACC__
+
+    if (dimType == TWO_D) {
+
+    } else { // THREE_D
+
+      TIMER_START(timerPrimVar);
+      {
+	// 3D primitive variables computation kernel    
+	dim3 dimBlock(PRIM_VAR_MHD_BLOCK_DIMX_3D,
+		      PRIM_VAR_MHD_BLOCK_DIMY_3D);
+	dim3 dimGrid(blocksFor(isize, PRIM_VAR_MHD_BLOCK_DIMX_3D), 
+		     blocksFor(jsize, PRIM_VAR_MHD_BLOCK_DIMY_3D));
+	kernel_mhd_compute_primitive_variables<<<dimGrid, dimBlock>>>(U, 
+								      d_Q.data(),
+								      d_Q.pitch(),
+								      d_Q.dimx(),
+								      d_Q.dimy(), 
+								      d_Q.dimz(),
+								      deltaT);
+	checkCudaError("MHDRunGodunov :: kernel_mhd_compute_primitive_variables error");
+	
+      }
+      TIMER_STOP(timerPrimVar);
+
+    } // end THREE_D
+
+#else // CPU version
 
     if (dimType == TWO_D) {
       
@@ -482,7 +509,7 @@ namespace hydroSimu {
 	  int indexLoc = i+j*isize;
 	  real_t c=0;
 	  
-	  computePrimitives_MHD_2D(U, physicalDim, indexLoc, c, q, timeStep);
+	  computePrimitives_MHD_2D(U, physicalDim, indexLoc, c, q, deltaT);
 	  
 	  // copy q state in h_Q
 	  int offset = indexLoc;
@@ -524,7 +551,7 @@ namespace hydroSimu {
 	    int indexLoc = i+j*isize+k*isize*jsize;
 	    real_t c=0;
 	    
-	    computePrimitives_MHD_3D(U, physicalDim, indexLoc, c, q, timeStep);
+	    computePrimitives_MHD_3D(U, physicalDim, indexLoc, c, q, deltaT);
 	    
 	    // copy q state in h_Q
 	    int offset = indexLoc;
@@ -781,10 +808,10 @@ namespace hydroSimu {
 	TIMER_START(timerPrimVar);
 	{
 	  // 3D primitive variables computation kernel    
-	  dim3 dimBlock(PRIM_VAR_BLOCK_DIMX_3D_V3,
-			PRIM_VAR_BLOCK_DIMY_3D_V3);
-	  dim3 dimGrid(blocksFor(isize, PRIM_VAR_BLOCK_DIMX_3D_V3), 
-		       blocksFor(jsize, PRIM_VAR_BLOCK_DIMY_3D_V3));
+	  dim3 dimBlock(PRIM_VAR_MHD_BLOCK_DIMX_3D,
+			PRIM_VAR_MHD_BLOCK_DIMY_3D);
+	  dim3 dimGrid(blocksFor(isize, PRIM_VAR_MHD_BLOCK_DIMX_3D), 
+		       blocksFor(jsize, PRIM_VAR_MHD_BLOCK_DIMY_3D));
 	  kernel_mhd_compute_primitive_variables<<<dimGrid, dimBlock>>>(d_UOld.data(), 
 									d_Q.data(),
 									d_UOld.pitch(),
@@ -3407,10 +3434,10 @@ namespace hydroSimu {
       TIMER_START(timerPrimVar);
       {
 	// 3D primitive variables computation kernel    
-	dim3 dimBlock(PRIM_VAR_BLOCK_DIMX_3D_V3,
-		      PRIM_VAR_BLOCK_DIMY_3D_V3);
-	dim3 dimGrid(blocksFor(isize, PRIM_VAR_BLOCK_DIMX_3D_V3), 
-		     blocksFor(jsize, PRIM_VAR_BLOCK_DIMY_3D_V3));
+	dim3 dimBlock(PRIM_VAR_MHD_BLOCK_DIMX_3D,
+		      PRIM_VAR_MHD_BLOCK_DIMY_3D);
+	dim3 dimGrid(blocksFor(isize, PRIM_VAR_MHD_BLOCK_DIMX_3D), 
+		     blocksFor(jsize, PRIM_VAR_MHD_BLOCK_DIMY_3D));
 	kernel_mhd_compute_primitive_variables<<<dimGrid, dimBlock>>>(d_UOld.data(), 
 								      d_Q.data(),
 								      d_UOld.pitch(),

@@ -90,8 +90,8 @@ namespace hydroSimu {
     //! In the GPU version, the conversion is done on line, inside
     //! kernel as needed.
     //! \param[in] U conservative variable domain array
-    //! \param[in] timeStep time step is needed for predictor computations
-    void convertToPrimitives(real_t *U, real_t timeStep);
+    //! \param[in] deltaT time step is needed for predictor computations
+    void convertToPrimitives(real_t *U, real_t deltaT);
 
     //! Godunov integration using unsplit scheme (brut force, compute
     //! everything that is needed to have the flux update for each
