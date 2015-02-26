@@ -4175,6 +4175,10 @@ namespace hydroSimu {
       useDouble = true;
       dataType = VTK_DOUBLE;
     }
+#else
+    if (sizeof(real_t) == sizeof(double)) {
+      useDouble = true;
+    }
 #endif // USE_VTK
 
     // which method will we use to dump data (standard VTK API or hand
@@ -4773,7 +4777,7 @@ namespace hydroSimu {
 	    outFile.write((char *)&nbOfWords,sizeof(unsigned int));
 	    for (int j=ymin; j<ymax; j++)
 	      for (int i=xmin; i<xmax; i++) {
-		float tmp = U(i,j,iVar);
+		real_t tmp = U(i,j,iVar);
 		outFile.write((char *)&tmp,sizeof(real_t));
 	      }
 	  }
@@ -4784,7 +4788,7 @@ namespace hydroSimu {
 	    for (int k=zmin; k<zmax; k++) 
 	      for (int j=ymin; j<ymax; j++) 
 		for (int i=xmin; i<xmax; i++) {
-		  float tmp = U(i,j,k,iVar);
+		  real_t tmp = U(i,j,k,iVar);
 		  outFile.write((char *)&tmp,sizeof(real_t));
 		}
 	  }

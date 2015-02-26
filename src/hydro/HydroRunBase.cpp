@@ -2684,6 +2684,10 @@ namespace hydroSimu {
       useDouble = true;
       dataType = VTK_DOUBLE;
     }
+#else
+    if (sizeof(real_t) == sizeof(double)) {
+      useDouble = true;
+    }
 #endif // USE_VTK
 
     // which method will we use to dump data (standard VTK API or hand
@@ -2738,9 +2742,9 @@ namespace hydroSimu {
 #else
     imageData->SetNumberOfScalarComponents(nbVar);
     if (useDouble)
-      imageData->SetScalarTypeToFloat();
-    else
       imageData->SetScalarTypeToDouble();
+    else
+      imageData->SetScalarTypeToFloat();
     //imageData->AllocateScalars();
  #endif
 
