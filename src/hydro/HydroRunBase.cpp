@@ -5443,7 +5443,7 @@ namespace hydroSimu {
   /**
    * The Hydrodynamical Implosion Test.
    * see
-   * http://www.astro.princeton.edu/~jstone/tests/implode/Implode.html
+   * http://www.astro.princeton.edu/~jstone/Athena/tests/implode/Implode.html
    * for a description of such initial conditions.
    * see also article : Liska, R., & Wendroff, B., "Comparison of Several difference schemes on 1D and 2D Test problems for the Euler equations", http://www-troja.fjfi.cvut.cz/~liska/CompareEuler/compare8/
    */
@@ -5541,8 +5541,13 @@ namespace hydroSimu {
   /**
    * Sperical blast wave test.
    * see
-   * http://www.astro.princeton.edu/~jstone/tests/blast/blast.html
+   * http://www.astro.princeton.edu/~jstone/Athena/tests/blast/blast.html
    * for a description of such initial conditions.
+   *
+   * parameters:
+   * - radius: radius of the initial spherical domain, in real units
+   * - center_x, center_y, center_z : cartesian coordinate of the center of the domain. 
+   *
    */
   void HydroRunBase::init_hydro_blast()
   {
@@ -5550,15 +5555,27 @@ namespace hydroSimu {
     /* initial condition in grid interior */
     memset(h_U.data(),0,h_U.sizeBytes());
 
-    /* get radius */
-    int radius          = configMap.getInteger("blast", "radius"      , 1);
-    int center_x        = configMap.getInteger("blast", "center_x"    , nx/2);
-    int center_y        = configMap.getInteger("blast", "center_y"    , ny/2);
-    int center_z        = configMap.getInteger("blast", "center_z"    , nz/2);
-    real_t density_in   = configMap.getFloat  ("blast", "density_in"  , 1.0);
-    real_t density_out  = configMap.getFloat  ("blast", "density_out" , 1.0);
-    real_t pressure_in  = configMap.getFloat  ("blast", "pressure_in" , 10.0);
-    real_t pressure_out = configMap.getFloat  ("blast", "pressure_out", 0.1);
+    real_t &xMin = _gParams.xMin;
+    real_t &yMin = _gParams.yMin;
+    real_t &zMin = _gParams.zMin;
+
+    real_t &xMax = _gParams.xMax;
+    real_t &yMax = _gParams.yMax;
+    real_t &zMax = _gParams.zMax;
+
+    real_t &dx   = _gParams.dx;
+    real_t &dy   = _gParams.dy;
+    real_t &dz   = _gParams.dz;
+
+    /* get spherical domain parameters */
+    real_t radius       = configMap.getFloat("blast","radius",0.25*(xMax-xMin));
+    real_t center_x     = configMap.getFloat("blast","center_x",(xMax+xMin)/2);
+    real_t center_y     = configMap.getFloat("blast","center_y",(yMax+yMin)/2);
+    real_t center_z     = configMap.getFloat("blast","center_z",(zMax+zMin)/2);
+    real_t density_in   = configMap.getFloat("blast","density_in"  ,1.0);
+    real_t density_out  = configMap.getFloat("blast","density_out" ,1.0);
+    real_t pressure_in  = configMap.getFloat("blast","pressure_in" ,10.0);
+    real_t pressure_out = configMap.getFloat("blast","pressure_out",0.1);
 
     // compute square radius
     radius *= radius;
@@ -5566,10 +5583,16 @@ namespace hydroSimu {
     /* spherical blast wave test */
     if (dimType == TWO_D) {
     
-      for (int j=ghostWidth; j<jsize-ghostWidth; j++)
+      for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
+	real_t yPos = yMin + dy/2 + (j-ghostWidth)*dy;
+
 	for (int i=ghostWidth; i<isize-ghostWidth; i++) {
+	  real_t xPos = xMin + dx/2 + (i-ghostWidth)*dx;
 	
-	  real_t d2 = (i-center_x)*(i-center_x)+(j-center_y)*(j-center_y);
+	  // distance to center
+	  real_t d2 = 
+	    (xPos-center_x)*(xPos-center_x) +
+	    (yPos-center_y)*(yPos-center_y);
 	
 	  if ( d2 < radius) {
 	    h_U(i,j,ID)=density_in;
@@ -5582,7 +5605,8 @@ namespace hydroSimu {
 	    h_U(i,j,IU)=0.0f;
 	    h_U(i,j,IV)=0.0f;
 	  }
-	}
+	} // end for i
+      } // end for j
     
       if (ghostWidth == 2) {
 	/* corner grid (not really needed (except for Kurganov-Tadmor) */
@@ -5599,13 +5623,19 @@ namespace hydroSimu {
 
     } else { // THREE_D
 	
-      for (int k=ghostWidth; k<ksize-ghostWidth; k++)
-	for (int j=ghostWidth; j<jsize-ghostWidth; j++)
+      for (int k=ghostWidth; k<ksize-ghostWidth; k++) {
+	real_t zPos = zMin + dz/2 + (k-ghostWidth)*dz;
+
+	for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
+	real_t yPos = yMin + dy/2 + (j-ghostWidth)*dy;
+
 	  for (int i=ghostWidth; i<isize-ghostWidth; i++) {
-	  
-	    real_t d2 = (i-center_x)*(i-center_x) +
-	      (j-center_y)*(j-center_y) +
-	      (k-center_z)*(k-center_z);
+	    real_t xPos = xMin + dx/2 + (i-ghostWidth)*dx;
+	
+	    real_t d2 = 
+	      (xPos-center_x)*(xPos-center_x) +
+	      (yPos-center_y)*(yPos-center_y) +
+	      (zPos-center_z)*(zPos-center_z);
 	  
 	    if ( d2 < radius ) {
 	      h_U(i,j,k,ID)=density_in;
@@ -5620,7 +5650,9 @@ namespace hydroSimu {
 	      h_U(i,j,k,IV)=0.0f;
 	      h_U(i,j,k,IW)=0.0f;
 	    }
-	  }
+	  } // end for i
+	} // end for j
+      } // end for k
 
       if (ghostWidth == 2) {
 	/* fill the 8 grid corner (not really needed except for Kurganov-Tadmor) */
@@ -5683,13 +5715,17 @@ namespace hydroSimu {
     real_t &yMax = _gParams.yMax;
     real_t &zMax = _gParams.zMax;
 
+    real_t &dx   = _gParams.dx;
+    real_t &dy   = _gParams.dy;
+    real_t &dz   = _gParams.dz;
+
     if (dimType == TWO_D) {
   
       for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
-	real_t yPos = yMin + (yMax-yMin)*j/jsize;
+	real_t yPos = yMin + dy/2 + (j-ghostWidth)*dy;
 
 	for (int i=ghostWidth; i<isize-ghostWidth; i++) {
-	  real_t xPos = xMin + (xMax-xMin)*j/jsize;
+	  real_t xPos = xMin + dx/2 + (i-ghostWidth)*dx;
 	  
 	  if ( yPos < yMin+0.25*(yMax-yMin) or
 	       yPos > yMin+0.75*(yMax-yMin) ) {
@@ -5740,13 +5776,13 @@ namespace hydroSimu {
     } else { // THREE_D
 
       for (int k=ghostWidth; k<ksize-ghostWidth; k++) {
-	real_t zPos = zMin + (zMax-zMin)*k/ksize;
+	real_t zPos = zMin + dz/2 + (k-ghostWidth)*dz;
 
 	for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
-	  //real_t yPos = yMin + (yMax-yMin)*j/jsize;
+	  //real_t yPos = yMin + dy/2 + (j-ghostWidth)*dy;
 
 	  for (int i=ghostWidth; i<isize-ghostWidth; i++) {
-	    real_t xPos = xMin + (xMax-xMin)*j/jsize;
+	    real_t xPos = xMin + dx/2 + (i-ghostWidth)*dx;
 
 	    if ( zPos > zMin+0.25*(zMax-zMin) or
 		 zPos < zMin+0.75*(zMax-zMin) ) {
