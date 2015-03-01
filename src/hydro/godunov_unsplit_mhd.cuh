@@ -62,6 +62,88 @@ __device__ inline void swap_value_(real_riemann_t& a, real_riemann_t& b) {
 
 
 #ifdef USE_DOUBLE
+#define PRIM_VAR_MHD_BLOCK_DIMX_2D	16
+#define PRIM_VAR_MHD_BLOCK_DIMY_2D	16
+#else // simple precision
+#define PRIM_VAR_MHD_BLOCK_DIMX_2D	16
+#define PRIM_VAR_MHD_BLOCK_DIMY_2D	16
+#endif // USE_DOUBLE
+
+/**
+ * Compute MHD primitive variables in 2D.
+ *
+ * \param[in]  Uin  input  convervative variable array 
+ * \param[out] Qout output primitive variable array
+ */
+__global__ void kernel_mhd_compute_primitive_variables_2D(const real_t * __restrict__ Uin,
+							  real_t       *Qout,
+							  int pitch, 
+							  int imax, 
+							  int jmax,
+							  real_t dt)
+{
+
+  // Block index
+  const int bx = blockIdx.x;
+  const int by = blockIdx.y;
+  
+  // Thread index
+  const int tx = threadIdx.x;
+  const int ty = threadIdx.y;
+  
+  const int i = __mul24(bx, PRIM_VAR_MHD_BLOCK_DIMX_2D) + tx;
+  const int j = __mul24(by, PRIM_VAR_MHD_BLOCK_DIMY_2D) + ty;
+  
+  const int arraySize  = pitch * jmax;
+  const int elemOffset = pitch * j + i;
+
+  // conservative variables
+  real_t uIn [NVAR_MHD];
+  real_t c;
+
+  if( i < imax-1 and j < jmax-1 ) {
+    
+    // Gather conservative variables
+    int offset = elemOffset;
+    
+    uIn[ID] = Uin[offset];  offset += arraySize;
+    uIn[IP] = Uin[offset];  offset += arraySize;
+    uIn[IU] = Uin[offset];  offset += arraySize;
+    uIn[IV] = Uin[offset];  offset += arraySize;
+    uIn[IW] = Uin[offset];  offset += arraySize;
+    uIn[IA] = Uin[offset];  offset += arraySize;
+    uIn[IB] = Uin[offset];  offset += arraySize;
+    uIn[IC] = Uin[offset];
+    
+    // go to magnetic field components and get values from 
+    // neighbors on the right
+    real_t magFieldNeighbors[3];
+    offset = elemOffset + 5 * arraySize;
+    magFieldNeighbors[IX] = Uin[offset+1    ];  offset += arraySize;
+    magFieldNeighbors[IY] = Uin[offset+pitch];
+    magFieldNeighbors[IZ] = ZERO_F;
+    
+    //Convert to primitive variables
+    real_t qTmp[NVAR_MHD];
+    constoprim_mhd(uIn, magFieldNeighbors, qTmp, c, dt);
+    
+    // copy results into output d_Q
+    offset = elemOffset;
+    Qout[offset] = qTmp[ID]; offset += arraySize;
+    Qout[offset] = qTmp[IP]; offset += arraySize;
+    Qout[offset] = qTmp[IU]; offset += arraySize;
+    Qout[offset] = qTmp[IV]; offset += arraySize;
+    Qout[offset] = qTmp[IW]; offset += arraySize;
+    Qout[offset] = qTmp[IA]; offset += arraySize;
+    Qout[offset] = qTmp[IB]; offset += arraySize;
+    Qout[offset] = qTmp[IC];
+    
+  } // end if
+
+} // kernel_mhd_compute_primitive_variables_2D
+
+
+#ifdef USE_DOUBLE
 #define PRIM_VAR_MHD_BLOCK_DIMX_3D	16
 #define PRIM_VAR_MHD_BLOCK_DIMY_3D	16
 #else // simple precision
@@ -69,19 +151,20 @@ __device__ inline void swap_value_(real_riemann_t& a, real_riemann_t& b) {
 #define PRIM_VAR_MHD_BLOCK_DIMY_3D	16
 #endif // USE_DOUBLE
 
+
 /**
- * Compute primitive variables 
+ * Compute MHD primitive variables in 3D.
  *
  * \param[in]  Uin  input  convervative variable array 
  * \param[out] Qout output primitive variable array
  */
-__global__ void kernel_mhd_compute_primitive_variables(const real_t * __restrict__ Uin,
-						       real_t       *Qout,
-						       int pitch, 
-						       int imax, 
-						       int jmax,
-						       int kmax,
-						       real_t dt)
+__global__ void kernel_mhd_compute_primitive_variables_3D(const real_t * __restrict__ Uin,
+							  real_t       *Qout,
+							  int pitch, 
+							  int imax, 
+							  int jmax,
+							  int kmax,
+							  real_t dt)
 {
 
   // Block index
@@ -150,7 +233,7 @@ __global__ void kernel_mhd_compute_primitive_variables(const real_t * __restrict
 
   } // enf for k
 
-} // kernel_mhd_compute_primitive_variables
+} // kernel_mhd_compute_primitive_variables_3D
 
 /*****************************************
  *** *** GODUNOV UNSPLIT 2D KERNEL *** ***

@@ -101,8 +101,8 @@ void slope_unsplit_hydro_2d(real_t q[NVAR_2D],
 			    real_t qMinusY[NVAR_2D],
 			    real_t (&dq)[2][NVAR_2D])
 {			
-  real_t (&dqX)[NVAR_2D] = dq[0];
-  real_t (&dqY)[NVAR_2D] = dq[1];
+  real_t (&dqX)[NVAR_2D] = dq[IX];
+  real_t (&dqY)[NVAR_2D] = dq[IY];
   
   if (::gParams.slope_type==0) {
     for (int nVar=0; nVar<NVAR_2D; ++nVar) {

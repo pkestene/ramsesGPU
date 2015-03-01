@@ -469,14 +469,15 @@ namespace hydroSimu {
 		      PRIM_VAR_MHD_BLOCK_DIMY_3D);
 	dim3 dimGrid(blocksFor(isize, PRIM_VAR_MHD_BLOCK_DIMX_3D), 
 		     blocksFor(jsize, PRIM_VAR_MHD_BLOCK_DIMY_3D));
-	kernel_mhd_compute_primitive_variables<<<dimGrid, dimBlock>>>(U, 
-								      d_Q.data(),
-								      d_Q.pitch(),
-								      d_Q.dimx(),
-								      d_Q.dimy(), 
-								      d_Q.dimz(),
-								      deltaT);
-	checkCudaError("MHDRunGodunov :: kernel_mhd_compute_primitive_variables error");
+	kernel_mhd_compute_primitive_variables_3D<<<dimGrid, 
+	  dimBlock>>>(U, 
+		      d_Q.data(),
+		      d_Q.pitch(),
+		      d_Q.dimx(),
+		      d_Q.dimy(), 
+		      d_Q.dimz(),
+		      deltaT);
+	checkCudaError("MHDRunGodunov :: kernel_mhd_compute_primitive_variables_3D error");
 	
       }
       TIMER_STOP(timerPrimVar);
@@ -812,14 +813,15 @@ namespace hydroSimu {
 			PRIM_VAR_MHD_BLOCK_DIMY_3D);
 	  dim3 dimGrid(blocksFor(isize, PRIM_VAR_MHD_BLOCK_DIMX_3D), 
 		       blocksFor(jsize, PRIM_VAR_MHD_BLOCK_DIMY_3D));
-	  kernel_mhd_compute_primitive_variables<<<dimGrid, dimBlock>>>(d_UOld.data(), 
-									d_Q.data(),
-									d_UOld.pitch(),
-									d_UOld.dimx(),
-									d_UOld.dimy(), 
-									d_UOld.dimz(),
-									dt);
-	
+	  kernel_mhd_compute_primitive_variables_3D<<<dimGrid, 
+	    dimBlock>>>(d_UOld.data(), 
+			d_Q.data(),
+			d_UOld.pitch(),
+			d_UOld.dimx(),
+			d_UOld.dimy(), 
+			d_UOld.dimz(),
+			dt);
+	  
 	}
 	TIMER_STOP(timerPrimVar);
 
@@ -3438,14 +3440,15 @@ namespace hydroSimu {
 		      PRIM_VAR_MHD_BLOCK_DIMY_3D);
 	dim3 dimGrid(blocksFor(isize, PRIM_VAR_MHD_BLOCK_DIMX_3D), 
 		     blocksFor(jsize, PRIM_VAR_MHD_BLOCK_DIMY_3D));
-	kernel_mhd_compute_primitive_variables<<<dimGrid, dimBlock>>>(d_UOld.data(), 
-								      d_Q.data(),
-								      d_UOld.pitch(),
-								      d_UOld.dimx(),
-								      d_UOld.dimy(), 
-								      d_UOld.dimz(),
-								      dt);
-	checkCudaErrorMpi("MHDRunGodunovMpi :: kernel_mhd_compute_primitive_variables error", myRank);
+	kernel_mhd_compute_primitive_variables_3D<<<dimGrid, 
+	  dimBlock>>>(d_UOld.data(), 
+		      d_Q.data(),
+		      d_UOld.pitch(),
+		      d_UOld.dimx(),
+		      d_UOld.dimy(), 
+		      d_UOld.dimz(),
+		      dt);
+	checkCudaErrorMpi("MHDRunGodunovMpi :: kernel_mhd_compute_primitive_variables_3D error", myRank);
 	
       }
       TIMER_STOP(timerPrimVar);

@@ -1846,9 +1846,7 @@ namespace hydroSimu {
      * put results in h_Q object
      *
      */
-    TIMER_START(timerPrimVar);
     convertToPrimitives( h_UOld.data() );
-    TIMER_STOP(timerPrimVar);
     if (dumpDataForDebugEnabled) {
       outputDebug(h_Q, "prim_", nStep);
     }
@@ -4135,11 +4133,12 @@ namespace hydroSimu {
   void HydroRunGodunov::convertToPrimitives(real_t *U)
   {
 
+    TIMER_START(timerPrimVar);
+
 #ifdef __CUDACC__
 
     if (dimType == TWO_D) {
 
-      TIMER_START(timerPrimVar);
       {
 	// 2D primitive variables computation kernel    
 	dim3 dimBlock(PRIM_VAR_BLOCK_DIMX_2D,
@@ -4155,11 +4154,9 @@ namespace hydroSimu {
 	checkCudaError("HydroRunGodunov :: kernel_hydro_compute_primitive_variables_2D error");
       
       } // end compute primitive variables 2d kernel
-      TIMER_STOP(timerPrimVar);
-
+    
     } else { // THREE_D
 
-      TIMER_START(timerPrimVar);
       {
 	// 3D primitive variables computation kernel    
 	dim3 dimBlock(PRIM_VAR_BLOCK_DIMX_3D,
@@ -4176,7 +4173,6 @@ namespace hydroSimu {
 	checkCudaError("HydroRunGodunov :: kernel_hydro_compute_primitive_variables_3D error");
       
       } // end compute primitive variables 3d kernel
-      TIMER_STOP(timerPrimVar);
 
     } // end THREE_D
   
@@ -4260,6 +4256,8 @@ namespace hydroSimu {
     } // end THREE_D
   
 #endif // __CUDACC__
+
+    TIMER_STOP(timerPrimVar);
 
   } // HydroRunGodunov::convertToPrimitives
 

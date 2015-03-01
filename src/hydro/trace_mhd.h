@@ -339,6 +339,254 @@ void trace_unsplit_mhd_2d(real_t qNb[3][3][NVAR_MHD],
 } // trace_unsplit_mhd_2d
 
 /**
+ * 2D Trace computations for unsplit Godunov scheme.
+ *
+ * \note Note that this routine uses global variables iorder, scheme and
+ * slope_type.
+ *
+ * \note Note that is routine is loosely adapted from trace2d found in 
+ * Dumses and in Ramses sources (sub-dir mhd, file umuscl.f90) to be now a one cell 
+ * computation. 
+ *
+ * \param[in]  q          primitive variables state in current cell
+ * \param[in]  dq         primitive variable slopes
+ * \param[in]  bfNb       face centered magnetic field
+ * \param[in]  dbf        face-centered magnetic slopes in transverse direction dBx/dy and dBy/dx
+ * \param[in]  dtdx       dt over dx
+ * \param[in]  dtdy       dt over dy
+ * \param[in]  xPos       x location of current cell (needed for shear computation)
+ * \param[in]  locationId identify which cell face or edge is to be reconstructed
+ * \param[out] qRecons    the reconstructed state
+ */
+__DEVICE__
+void trace_unsplit_mhd_2d_face(real_t q[NVAR_MHD],
+			       real_t dq[2][NVAR_MHD],
+			       real_t bfNb[TWO_D*2],
+			       real_t dbf[4],
+			       real_t Ez[2][2],
+			       real_t dtdx,
+			       real_t dtdy,
+			       real_t xPos,
+			       int    locationId,
+			       real_t (&qRecons)[NVAR_MHD]) 
+{
+
+  real_t &smallR = ::gParams.smallr;
+  real_t &smallp = ::gParams.smallp;
+  real_t &gamma  = ::gParams.gamma0;
+  real_t &Omega0 = ::gParams.Omega0;
+
+  // Electric field
+  real_t &ELL = Ez[0][0];
+  real_t &ELR = Ez[0][1];
+  real_t &ERL = Ez[1][0];
+  real_t &ERR = Ez[1][1];
+
+  // Cell centered values
+  real_t r = q[ID];
+  real_t p = q[IP];
+  real_t u = q[IU];
+  real_t v = q[IV];
+  real_t w = q[IW];            
+  real_t A = q[IA];
+  real_t B = q[IB];
+  real_t C = q[IC];            
+    
+  // Face centered variables
+  real_t AL =  bfNb[0];
+  real_t AR =  bfNb[1];
+  real_t BL =  bfNb[2];
+  real_t BR =  bfNb[3];
+
+  // TODO LATER : compute xL, xR and xC using ::gParam
+  // this is only needed when doing cylindrical or spherical coordinates
+
+  // Cell centered TVD slopes in X direction
+  real_t drx = dq[IX][ID] * HALF_F;
+  real_t dpx = dq[IX][IP] * HALF_F;
+  real_t dux = dq[IX][IU] * HALF_F;
+  real_t dvx = dq[IX][IV] * HALF_F;
+  real_t dwx = dq[IX][IW] * HALF_F;
+  real_t dCx = dq[IX][IC] * HALF_F;
+  real_t dBx = dq[IX][IB] * HALF_F;
+  
+  // Cell centered TVD slopes in Y direction
+  real_t dry = dq[IY][ID] * HALF_F;
+  real_t dpy = dq[IY][IP] * HALF_F;
+  real_t duy = dq[IY][IU] * HALF_F;
+  real_t dvy = dq[IY][IV] * HALF_F;
+  real_t dwy = dq[IY][IW] * HALF_F;
+  real_t dCy = dq[IY][IC] * HALF_F;
+  real_t dAy = dq[IY][IA] * HALF_F;
+ 
+  // Face centered TVD slopes in transverse direction
+  real_t dALy = HALF_F * dbf[0];
+  real_t dBLx = HALF_F * dbf[1];
+  real_t dARy = HALF_F * dbf[2];
+  real_t dBRx = HALF_F * dbf[3];
+  
+  // Cell centered slopes in normal direction
+  real_t dAx = HALF_F * (AR - AL);
+  real_t dBy = HALF_F * (BR - BL);
+  
+  // Source terms (including transverse derivatives)
+  real_t sr0, su0, sv0, sw0, sp0, sA0, sB0, sC0;
+  real_t sAL0, sAR0, sBL0, sBR0;
+
+  if (true /*cartesian*/) {
+
+    sr0 = (-u*drx-dux*r)                *dtdx + (-v*dry-dvy*r)                *dtdy;
+    su0 = (-u*dux-dpx/r-B*dBx/r-C*dCx/r)*dtdx + (-v*duy+B*dAy/r)              *dtdy;
+    sv0 = (-u*dvx+A*dBx/r)              *dtdx + (-v*dvy-dpy/r-A*dAy/r-C*dCy/r)*dtdy;
+    sw0 = (-u*dwx+A*dCx/r)              *dtdx + (-v*dwy+B*dCy/r)              *dtdy;
+    sp0 = (-u*dpx-dux*gamma*p)          *dtdx + (-v*dpy-dvy*gamma*p)          *dtdy;
+    sA0 =                                       ( u*dBy+B*duy-v*dAy-A*dvy)    *dtdy;
+    sB0 = (-u*dBx-B*dux+v*dAx+A*dvx)    *dtdx ;
+    sC0 = ( w*dAx+A*dwx-u*dCx-C*dux)    *dtdx + (-v*dCy-C*dvy+w*dBy+B*dwy)    *dtdy;
+    if (Omega0 > ZERO_F) {
+      real_t shear = -1.5 * Omega0 * xPos;
+      sC0 += (shear * dAx - 1.5 * Omega0 * A) * dtdx;
+      sC0 +=  shear * dBy                     * dtdy;
+    }
+
+    // Face centered B-field
+    sAL0 = +(ELR-ELL)*HALF_F*dtdy;
+    sAR0 = +(ERR-ERL)*HALF_F*dtdy;
+    sBL0 = -(ERL-ELL)*HALF_F*dtdx;
+    sBR0 = -(ERR-ELR)*HALF_F*dtdx;
+
+  } // end cartesian
+  
+  // Update in time the  primitive variables
+  r = r + sr0;
+  u = u + su0;
+  v = v + sv0;
+  w = w + sw0;
+  p = p + sp0;
+  A = A + sA0;
+  B = B + sB0;
+  C = C + sC0;
+  
+  AL = AL + sAL0;
+  AR = AR + sAR0;
+  BL = BL + sBL0;
+  BR = BR + sBR0;
+  
+  if (locationId == FACE_XMIN) {
+    // Right state at left interface
+    qRecons[ID] = r - drx;
+    qRecons[IU] = u - dux;
+    qRecons[IV] = v - dvx;
+    qRecons[IW] = w - dwx;
+    qRecons[IP] = p - dpx;
+    qRecons[IA] = AL;
+    qRecons[IB] = B - dBx;
+    qRecons[IC] = C - dCx;
+    qRecons[ID] = FMAX(smallR, qRecons[ID]);
+    qRecons[IP] = FMAX(smallp *qRecons[ID], qRecons[IP]);
+  }
+
+  if (locationId == FACE_XMAX) {
+    // Left state at right interface
+    qRecons[ID] = r + drx;
+    qRecons[IU] = u + dux;
+    qRecons[IV] = v + dvx;
+    qRecons[IW] = w + dwx;
+    qRecons[IP] = p + dpx;
+    qRecons[IA] = AR;
+    qRecons[IB] = B + dBx;
+    qRecons[IC] = C + dCx;
+    qRecons[ID] = FMAX(smallR, qRecons[ID]);
+    qRecons[IP] = FMAX(smallp *qRecons[ID], qRecons[IP]);
+  }
+
+  if (locationId == FACE_YMIN) {
+    // Top state at bottom interface
+    qRecons[ID] = r - dry;
+    qRecons[IU] = u - duy;
+    qRecons[IV] = v - dvy;
+    qRecons[IW] = w - dwy;
+    qRecons[IP] = p - dpy;
+    qRecons[IA] = A - dAy;
+    qRecons[IB] = BL;
+    qRecons[IC] = C - dCy;
+    qRecons[ID] = FMAX(smallR, qRecons[ID]);
+    qRecons[IP] = FMAX(smallp *qRecons[ID], qRecons[IP]);
+  }
+
+  if (locationId == FACE_YMAX) {
+    // Bottom state at top interface
+    qRecons[ID] = r + dry;
+    qRecons[IU] = u + duy;
+    qRecons[IV] = v + dvy;
+    qRecons[IW] = w + dwy;
+    qRecons[IP] = p + dpy;
+    qRecons[IA] = A + dAy;
+    qRecons[IB] = BR;
+    qRecons[IC] = C + dCy;
+    qRecons[ID] = FMAX(smallR, qRecons[ID]);
+    qRecons[IP] = FMAX(smallp *qRecons[ID], qRecons[IP]);
+  }
+
+  if (locationId == EDGE_RT) {
+    // Right-top state (RT->LL)
+    qRecons[ID] = r + (+drx+dry);
+    qRecons[IU] = u + (+dux+duy);
+    qRecons[IV] = v + (+dvx+dvy);
+    qRecons[IW] = w + (+dwx+dwy);
+    qRecons[IP] = p + (+dpx+dpy);
+    qRecons[IA] = AR+ (   +dARy);
+    qRecons[IB] = BR+ (+dBRx   );
+    qRecons[IC] = C + (+dCx+dCy);
+    qRecons[ID] = FMAX(smallR, qRecons[ID]);
+    qRecons[IP] = FMAX(smallp *qRecons[ID], qRecons[IP]);
+  }
+
+  if (locationId == EDGE_RB) {
+    // Right-Bottom state (RB->LR)
+    qRecons[ID] = r + (+drx-dry);
+    qRecons[IU] = u + (+dux-duy);
+    qRecons[IV] = v + (+dvx-dvy);
+    qRecons[IW] = w + (+dwx-dwy);
+    qRecons[IP] = p + (+dpx-dpy);
+    qRecons[IA] = AR+ (   -dARy);
+    qRecons[IB] = BL+ (+dBLx   );
+    qRecons[IC] = C + (+dCx-dCy);
+    qRecons[ID] = FMAX(smallR, qRecons[ID]);
+    qRecons[IP] = FMAX(smallp *qRecons[ID], qRecons[IP]);
+  }
+
+  if (locationId == EDGE_LB) {
+    // Left-Bottom state (LB->RR)
+    qRecons[ID] = r + (-drx-dry);
+    qRecons[IU] = u + (-dux-duy);
+    qRecons[IV] = v + (-dvx-dvy);
+    qRecons[IW] = w + (-dwx-dwy);
+    qRecons[IP] = p + (-dpx-dpy);
+    qRecons[IA] = AL+ (   -dALy);
+    qRecons[IB] = BL+ (-dBLx   );
+    qRecons[IC] = C + (-dCx-dCy);
+    qRecons[ID] = FMAX(smallR, qRecons[ID]);
+    qRecons[IP] = FMAX(smallp *qRecons[ID], qRecons[IP]);
+  }
+
+  if (locationId == EDGE_LT) {
+    // Left-Top state (LT->RL)
+    qRecons[ID] = r + (-drx+dry);
+    qRecons[IU] = u + (-dux+duy);
+    qRecons[IV] = v + (-dvx+dvy);
+    qRecons[IW] = w + (-dwx+dwy);
+    qRecons[IP] = p + (-dpx+dpy);
+    qRecons[IA] = AL+ (   +dALy);
+    qRecons[IB] = BR+ (-dBRx   );
+    qRecons[IC] = C + (-dCx+dCy);
+    qRecons[ID] = FMAX(smallR, qRecons[ID]);
+    qRecons[IP] = FMAX(smallp *qRecons[ID], qRecons[IP]);
+  }
+
+} // trace_unsplit_mhd_2d_by_direction
+
+/**
  * 3D Trace computations for unsplit Godunov scheme.
  *
  * \note Note that this routine uses global variables iorder, scheme and
@@ -976,16 +1224,16 @@ void trace_unsplit_mhd_3d(real_t qNb[3][3][3][NVAR_MHD],
  */
 __DEVICE__
 void trace_unsplit_mhd_3d_simpler(real_t q[NVAR_MHD],
-				  real_t dq[3][NVAR_MHD],
-				  real_t bfNb[6],
+				  real_t dq[THREE_D][NVAR_MHD],
+				  real_t bfNb[THREE_D*2], /* 2 faces per direction*/
 				  real_t dbf[12],
-				  real_t elecFields[3][2][2],
+				  real_t elecFields[THREE_D][2][2],
 				  real_t dtdx,
 				  real_t dtdy,
 				  real_t dtdz,
 				  real_t xPos,
-				  real_t (&qm)[3][NVAR_MHD], 
-				  real_t (&qp)[3][NVAR_MHD],
+				  real_t (&qm)[THREE_D][NVAR_MHD], 
+				  real_t (&qp)[THREE_D][NVAR_MHD],
 				  real_t (&qEdge)[4][3][NVAR_MHD])
 {
   

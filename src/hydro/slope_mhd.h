@@ -173,6 +173,81 @@ void slope_unsplit_hydro_2d(real_t qNb[3][3][NVAR_MHD],
 
 /**
  * Compute primitive variables slope (vector dq) from q and its neighbors.
+ * This routine is only used in the 2D UNSPLIT integration and slope_type = 0,1,2 and 3.
+ * 
+ * Note that slope_type is a global variable, located in symbol memory when 
+ * using the GPU version.
+ *
+ * Loosely adapted from RAMSES/hydro/umuscl.f90: subroutine uslope
+ * Interface is changed to become cellwise.
+ * Only slope_type 1 and 2 are supported.
+ *
+ * \param[in]  q       : current primitive variable state
+ * \param[in]  qPlusX  : state in the next neighbor cell along XDIR
+ * \param[in]  qMinusX : state in the previous neighbor cell along XDIR
+ * \param[in]  qPlusY  : state in the next neighbor cell along YDIR
+ * \param[in]  qMinusY : state in the previous neighbor cell along YDIR
+ *
+ * \param[out] dq      : reference to an array returning the X and Y slopes
+ *
+ * 
+ */
+__DEVICE__ 
+void slope_unsplit_hydro_2d_simple(real_t q[NVAR_MHD],
+				   real_t qPlusX[NVAR_MHD], 
+				   real_t qMinusX[NVAR_MHD],
+				   real_t qPlusY[NVAR_MHD], 
+				   real_t qMinusY[NVAR_MHD],
+				   real_t (&dq)[2][NVAR_MHD])
+{
+
+  real_t (&dqX)[NVAR_MHD] = dq[IX];
+  real_t (&dqY)[NVAR_MHD] = dq[IY];
+  
+  if (::gParams.slope_type==0) {
+    for (int nVar=0; nVar<NVAR_MHD; ++nVar) {
+      dqX[nVar] = ZERO_F;
+      dqY[nVar] = ZERO_F;
+    }
+    return;
+  }
+
+  if (::gParams.slope_type==1 or ::gParams.slope_type==2) {  // minmod or average
+
+    real_t dlft, drgt, dcen, dsgn, slop, dlim;
+    
+    for (int nVar=0; nVar<NVAR_MHD; ++nVar) {
+
+      // slopes in first coordinate direction
+      dlft = ::gParams.slope_type*(q     [nVar] - qMinusX[nVar]);
+      drgt = ::gParams.slope_type*(qPlusX[nVar] - q      [nVar]);
+      dcen = HALF_F * (qPlusX[nVar] - qMinusX[nVar]);
+      dsgn = (dcen >= ZERO_F) ? ONE_F : -ONE_F;
+      slop = FMIN( FABS(dlft), FABS(drgt) );
+      dlim = slop;
+      if ( (dlft*drgt) <= ZERO_F )
+	dlim = ZERO_F;
+      dqX[nVar] = dsgn * FMIN( dlim, FABS(dcen) );
+      
+      // slopes in second coordinate direction
+      dlft = ::gParams.slope_type*(q     [nVar] - qMinusY[nVar]);
+      drgt = ::gParams.slope_type*(qPlusY[nVar] - q      [nVar]);
+      dcen = HALF_F * (qPlusY[nVar] - qMinusY[nVar]);
+      dsgn = (dcen >= ZERO_F) ? ONE_F : -ONE_F;
+      slop = FMIN( FABS(dlft), FABS(drgt) );
+      dlim = slop;
+      if ( (dlft*drgt) <= ZERO_F )
+	dlim = ZERO_F;
+      dqY[nVar] = dsgn * FMIN( dlim, FABS(dcen) );
+
+    } // end for nVar
+
+  } // end slope_type
+  
+} // slope_unsplit_hydro_2d_simple
+
+/**
+ * Compute primitive variables slope (vector dq) from q and its neighbors.
  * This routine is only used in the 3D UNSPLIT integration and slope_type = 0,1,2 and 3.
  * 
  * Note that slope_type is a global variable, located in symbol memory when 
