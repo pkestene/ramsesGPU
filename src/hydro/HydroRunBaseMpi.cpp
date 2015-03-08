@@ -8310,6 +8310,10 @@ namespace hydroSimu {
    * http://www.astro.princeton.edu/~jstone/Athena/tests/kh/kh.html
    * for a description of such initial conditions
    *
+   * 3 types of perturbations:
+   * - rand : multi-mode
+   * - sine : single-mode (simple)
+   * - sine_athena : single mode with init condition from Athena
    */
   void HydroRunBaseMpi::init_hydro_Kelvin_Helmholtz()
   {
@@ -8321,8 +8325,13 @@ namespace hydroSimu {
     real_t amplitude = configMap.getFloat("kelvin-helmholtz", "amplitude", 0.01);
     
     /* type of perturbation sine or random */
-    bool p_sine = configMap.getFloat("kelvin-helmholtz", "perturbation_sine", false);
-    bool p_rand = configMap.getFloat("kelvin-helmholtz", "perturbation_rand", true);
+    bool p_rand_bool  = configMap.getBool("kelvin-helmholtz", "perturbation_rand", true);
+    bool p_sine_bool  = configMap.getBool("kelvin-helmholtz", "perturbation_sine", false);
+    bool p_sine_athena_bool = configMap.getBool("kelvin-helmholtz", "perturbation_sine_athena", false);
+
+    real_t p_rand  = p_rand_bool  ? 1.0 : 0.0;
+    real_t p_sine  = p_sine_bool  ? 1.0 : 0.0;
+    real_t p_sine_athena = p_sine_athena_bool ? 1.0 : 0.0;
 
     /* initialize random generator (if needed) */
     int seed = configMap.getInteger("kelvin-helmholtz", "seed", 1);
@@ -8334,57 +8343,143 @@ namespace hydroSimu {
     /* inner and outer fluid density */
     real_t rho_inner = configMap.getFloat("kelvin-helmholtz", "rho_inner", 2.0);
     real_t rho_outer = configMap.getFloat("kelvin-helmholtz", "rho_outer", 1.0);
-    real_t pressure  = configMap.getFloat("kelvin_helmholtz", "pressure", 2.5);
+    real_t pressure  = configMap.getFloat("kelvin-helmholtz", "pressure", 2.5);
+
+    // please note that inner_size+outer_size must be smaller than 0.5
+    // unit is a fraction of 0.5*ySize
+    real_t inner_size = configMap.getFloat("kelvin-helmholtz", "inner_size", 0.2);
+    real_t outer_size = configMap.getFloat("kelvin-helmholtz", "outer_size", 0.2);
+
+    real_t vflow_in  = configMap.getFloat("kelvin-helmholtz", "vflow_in", -0.5);
+    real_t vflow_out = configMap.getFloat("kelvin-helmholtz", "vflow_out", 0.5);
 
     real_t &xMin = _gParams.xMin;
     real_t &yMin = _gParams.yMin;
     real_t &zMin = _gParams.zMin;
 
-    //real_t &xMax = _gParams.xMax;
+    real_t &xMax = _gParams.xMax;
     real_t &yMax = _gParams.yMax;
     real_t &zMax = _gParams.zMax;
 
+    real_t xSize = xMax-xMin;
+    real_t ySize = yMax-yMin;
+    real_t zSize = zMax-zMin;
+
+    real_t xCenter = (xMin+xMax)*0.5;
+    real_t yCenter = (yMin+yMax)*0.5;
+    real_t zCenter = (zMin+zMax)*0.5;
+
+    real_t &dx   = _gParams.dx;
+    real_t &dy   = _gParams.dy;
+    real_t &dz   = _gParams.dz;
+
     if (dimType == TWO_D) {
   
-      for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
-	int      jj = j + ny*myMpiPos[1];
-	real_t yPos = yMin + dy/2 + (jj-ghostWidth)*dy;
+      if (p_rand_bool) {
 	
-	for (int i=ghostWidth; i<isize-ghostWidth; i++) {
-	  int      ii = i + nx*myMpiPos[0];
-	  real_t xPos = xMin + dx/2 + (ii-ghostWidth)*dx;
+	for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
+	  int      jj = j + ny*myMpiPos[1];
+	  real_t yPos = yMin + dy/2 + (jj-ghostWidth)*dy;
 	  
-	  if ( yPos < yMin+0.25*(yMax-yMin) or
-	       yPos > yMin+0.75*(yMax-yMin) ) {
+	  for (int i=ghostWidth; i<isize-ghostWidth; i++) {
+	    int      ii = i + nx*myMpiPos[0];
+	    real_t xPos = xMin + dx/2 + (ii-ghostWidth)*dx;
+	    
+	    if ( fabs(yPos-yCenter) > outer_size*ySize ) {
+	      
+	      h_U(i,j,ID) = rho_outer;
 
-	    h_U(i,j,ID) = rho_outer;
-	    h_U(i,j,IP) = pressure/(_gParams.gamma0-1.0f);
-	    h_U(i,j,IU) = rho_outer *
-	      (0.5f + 
-	       p_rand*amplitude  * rand()/RAND_MAX +
-	       p_sine*amplitude  * sin(2*M_PI*xPos) );
-	    h_U(i,j,IV) = rho_outer *
-	      (0.0f + 
-	       p_rand*amplitude * rand()/RAND_MAX +
-	       p_sine*amplitude * sin(2*M_PI*xPos) );
+	      h_U(i,j,IU) = rho_outer *
+		(vflow_out + amplitude * (1.0*rand()/RAND_MAX - 0.5) );
+		
+	      h_U(i,j,IV) = rho_outer *
+		(0.0f      +  amplitude * (1.0*rand()/RAND_MAX - 0.5) );
 
-	  } else {
+	      h_U(i,j,IP) = pressure/(_gParams.gamma0-1.0f) +
+		0.5 * ( SQR(h_U(i,j,IU)) + 
+			SQR(h_U(i,j,IV)) ) / h_U(i,j,ID);
+	      
+	    } else {
 
-	    h_U(i,j,ID) = rho_inner;
-	    h_U(i,j,IP) = pressure/(_gParams.gamma0-1.0f);
-	    h_U(i,j,IU) = rho_inner *
-	      (-0.5f + 
-	       p_rand*amplitude * rand()/RAND_MAX +
-	       p_sine*amplitude * sin(2*M_PI*xPos) );
-	    h_U(i,j,IV) = rho_inner *
-	      (0.0f + 
-	       p_rand*amplitude * rand()/RAND_MAX +
-	       p_sine*amplitude * sin(2*M_PI*xPos) );
+	      h_U(i,j,ID) = rho_inner;
 
-	  }
-	} // end for i
-      } // end for j
-    
+	      h_U(i,j,IU) = rho_inner *
+		(vflow_in + amplitude * (1.0*rand()/RAND_MAX - 0.5) );
+
+	      h_U(i,j,IV) = rho_inner *
+		(0.0      + amplitude * (1.0*rand()/RAND_MAX - 0.5) );
+		
+	      h_U(i,j,IP) = pressure/(_gParams.gamma0-1.0f) +
+		0.5 * ( SQR(h_U(i,j,IU)) + 
+			SQR(h_U(i,j,IV)) ) / h_U(i,j,ID);
+
+	    }
+	  } // end for i
+	} // end for j
+      }
+
+      if (p_sine_bool) {
+	
+	for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
+	  int      jj = j + ny*myMpiPos[1];
+	  real_t yPos = yMin + dy/2 + (jj-ghostWidth)*dy;
+	  
+	  for (int i=ghostWidth; i<isize-ghostWidth; i++) {
+	    int      ii = i + nx*myMpiPos[0];
+	    real_t xPos = xMin + dx/2 + (ii-ghostWidth)*dx;
+	    
+	    real_t perturb_vx = 0;
+	    real_t perturb_vy = amplitude * sin(2.0*M_PI*xPos/xSize);
+
+	    if ( fabs(yPos-yCenter) > outer_size*ySize ) {
+	      
+	      h_U(i,j,ID) = rho_outer;
+	      h_U(i,j,IU) = rho_outer * vflow_out * (1.0+perturb_vx);
+	      h_U(i,j,IV) = rho_outer * perturb_vy;
+	      h_U(i,j,IP) = pressure/(_gParams.gamma0-1.0f) +
+	      0.5 * ( SQR(h_U(i,j,IU)) + 
+		      SQR(h_U(i,j,IV)) ) / h_U(i,j,ID);
+	      
+	    } else if ( fabs(yPos-yCenter) <= inner_size*ySize ) {
+
+	      h_U(i,j,ID) = rho_inner;
+	      h_U(i,j,IU) = rho_inner * vflow_in * (1.0+perturb_vx);
+	      h_U(i,j,IV) = rho_inner * perturb_vy;
+	      h_U(i,j,IP) = pressure/(_gParams.gamma0-1.0f) +
+	      0.5 * ( SQR(h_U(i,j,IU)) + 
+		      SQR(h_U(i,j,IV)) ) / h_U(i,j,ID);
+	      
+	    } else {
+	      
+	      real_t rho_slope = (rho_outer-rho_inner)/(0.1*ySize);
+	      real_t u_slope   = (vflow_out-vflow_in)/(0.1*ySize);
+	      
+	      real_t deltaY;
+	      real_t deltaRho;
+	      real_t deltaU;
+	      if (yPos > yCenter) {
+		deltaY   = yPos-(yCenter+0.2*ySize);
+		deltaRho = rho_slope*deltaY;
+		deltaU   = u_slope*deltaY;
+	      } else {
+		deltaY = yPos-(yCenter-0.2*ySize);
+		deltaRho = -rho_slope*deltaY;
+		deltaU   = -u_slope*deltaY;
+	      }
+	      
+	      h_U(i,j,ID) = rho_inner + deltaRho;
+	      h_U(i,j,IU) = h_U(i,j,ID) * (vflow_in + deltaU)*(1.0+perturb_vx);
+	      h_U(i,j,IV) = h_U(i,j,ID) * perturb_vy;
+	      h_U(i,j,IP) = pressure/(_gParams.gamma0-1.0f) +
+		0.5 * ( SQR(h_U(i,j,IU)) + 
+			SQR(h_U(i,j,IV)) ) / h_U(i,j,ID);
+	      
+	    }
+	    
+	  } // end for i
+	} // end for j
+      }
+
       if (ghostWidth == 2) {
 	/* corner grid (not really needed (except for Kurganov-Tadmor) */
 	for (int nVar=0; nVar<nbVar; ++nVar) {
@@ -8402,56 +8497,110 @@ namespace hydroSimu {
 
     } else { // THREE_D
 
-      for (int k=ghostWidth; k<ksize-ghostWidth; k++) {
-	int      kk = k + nz*myMpiPos[2];
-	real_t zPos = zMin + dz/2 + (kk-ghostWidth)*dz;
+      if (p_rand_bool) {
+	
+	for (int k=ghostWidth; k<ksize-ghostWidth; k++) {
+	  int      kk = k + nz*myMpiPos[2];
+	  real_t zPos = zMin + dz/2 + (kk-ghostWidth)*dz;
+	  
+	  for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
+	    //int      jj = j + ny*myMpiPos[1];
+	    //real_t yPos = yMin + dy/2 + (jj-ghostWidth)*dy;
+	    
+	    for (int i=ghostWidth; i<isize-ghostWidth; i++) {
+	      int      ii = i + nx*myMpiPos[0];
+	      real_t xPos = xMin + dx/2 + (ii-ghostWidth)*dx;
+	      
+	      if ( fabs(zPos-zCenter) > outer_size*zSize ) {
+		
+		h_U(i,j,k,ID) = rho_outer;
 
-	for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
-	  //int      jj = j + ny*myMpiPos[1];
-	  //real_t yPos = yMin + dy/2 + (jj-ghostWidth)*dy;
+		h_U(i,j,k,IU) = rho_outer *
+		  (vflow_out + amplitude  * (1.0*rand()/RAND_MAX-0.5) );
 
-	  for (int i=ghostWidth; i<isize-ghostWidth; i++) {
-	    int      ii = i + nx*myMpiPos[0];
-	    real_t xPos = xMin + dx/2 + (ii-ghostWidth)*dx;
+		h_U(i,j,k,IV) = rho_outer *
+		  (0.0       + amplitude  * (1.0*rand()/RAND_MAX-0.5) );
 
-	    if ( zPos < zMin+0.25*(zMax-zMin) or
-		 zPos > zMin+0.75*(zMax-zMin) ) {
+		h_U(i,j,k,IW) = rho_outer *
+		  (0.0       + amplitude  * (1.0*rand()/RAND_MAX-0.5) );
 
-	      h_U(i,j,k,ID) = rho_outer;
-	      h_U(i,j,k,IP) = pressure/(_gParams.gamma0-1.0f);
-	      h_U(i,j,k,IU) = rho_outer *
-		(0.5f + 
-		 p_rand*amplitude * rand()/RAND_MAX +
-		 p_sine*amplitude * sin(2*M_PI*xPos) );
-	      h_U(i,j,k,IV) = rho_outer *
-		(0.0f + 
-		 p_rand*amplitude * rand()/RAND_MAX +
-		 p_sine*amplitude * sin(2*M_PI*xPos) );
-	      h_U(i,j,k,IW) = rho_outer *
-		(0.0f + 
-		 p_rand * amplitude*rand()/RAND_MAX +
-		 p_sine*amplitude * sin(2*M_PI*xPos) );
+		h_U(i,j,k,IP) = pressure/(_gParams.gamma0-1.0f) +
+		  0.5 * ( SQR(h_U(i,j,k,IU)) + 
+			  SQR(h_U(i,j,k,IV)) + 
+			  SQR(h_U(i,j,k,IW)) ) / h_U(i,j,k,ID);
+		
+	      } else {
+		
+		h_U(i,j,k,ID) = rho_inner;
 
-	    } else {
+		h_U(i,j,k,IU) = rho_inner *
+		  (vflow_in + amplitude   * (1.0*rand()/RAND_MAX-0.5) );
 
-	      h_U(i,j,k,ID) = rho_inner;
-	      h_U(i,j,k,IP) = pressure/(_gParams.gamma0-1.0f);
-	      h_U(i,j,k,IU) = rho_inner *
-		(-0.5f + 
-		 p_rand*amplitude * rand()/RAND_MAX +
-		 p_sine*amplitude * sin(2*M_PI*xPos) );
-	      h_U(i,j,k,IV) = rho_inner *
-		(0.0f + 
-		 p_rand*amplitude * rand()/RAND_MAX +
-		 p_sine*amplitude * sin(2*M_PI*xPos) );
-	      h_U(i,j,k,IW) = rho_inner *
-		(0.0f + 
-		 p_rand*amplitude * rand()/RAND_MAX +
-		 p_sine*amplitude * sin(2*M_PI*xPos) );
-	    }
-	  } // end for i
-	} // end for j
-      } // end for k
+		h_U(i,j,k,IV) = rho_inner *
+		  (0.0      + amplitude   * (1.0*rand()/RAND_MAX-0.5) );
+
+		h_U(i,j,k,IW) = rho_inner *
+		  (0.0      + amplitude   * (1.0*rand()/RAND_MAX-0.5) );
+
+		h_U(i,j,k,IP) = pressure/(_gParams.gamma0-1.0f) +
+		  0.5 * ( SQR(h_U(i,j,k,IU)) + 
+			  SQR(h_U(i,j,k,IV)) + 
+			  SQR(h_U(i,j,k,IW)) ) / h_U(i,j,k,ID);
+
+	      }
+
+	    } // end for i
+	  } // end for j
+	} // end for k
+
+      }
+
+      if (p_sine_bool) {
+	
+	for (int k=ghostWidth; k<ksize-ghostWidth; k++) {
+	  int      kk = k + nz*myMpiPos[2];
+	  real_t zPos = zMin + dz/2 + (kk-ghostWidth)*dz;
+	  
+	  for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
+	    //int      jj = j + ny*myMpiPos[1];
+	    //real_t yPos = yMin + dy/2 + (jj-ghostWidth)*dy;
+	    
+	    for (int i=ghostWidth; i<isize-ghostWidth; i++) {
+	      int      ii = i + nx*myMpiPos[0];
+	      real_t xPos = xMin + dx/2 + (ii-ghostWidth)*dx;
+	      
+	      real_t perturb_vx = 0;
+	      real_t perturb_vy = 0;
+	      real_t perturb_vz = amplitude * sin(2.0*M_PI*xPos/xSize);
+
+	      if ( fabs(zPos-zCenter) > outer_size*zSize ) {
+		
+		h_U(i,j,k,ID) = rho_outer;
+		h_U(i,j,k,IU) = rho_outer * vflow_out; 
+		h_U(i,j,k,IV) = rho_outer * perturb_vy;
+		h_U(i,j,k,IW) = rho_outer * perturb_vz;
+		h_U(i,j,k,IP) = pressure/(_gParams.gamma0-1.0f) +
+		  0.5 * ( SQR(h_U(i,j,k,IU)) + 
+			  SQR(h_U(i,j,k,IV)) + 
+			  SQR(h_U(i,j,k,IW)) ) / h_U(i,j,k,ID);
+
+	      } else {
+		
+		h_U(i,j,k,ID) = rho_inner;
+		h_U(i,j,k,IU) = rho_inner * vflow_in;
+		h_U(i,j,k,IV) = rho_inner * perturb_vy;
+		h_U(i,j,k,IW) = rho_inner * perturb_vz;
+		h_U(i,j,k,IP) = pressure/(_gParams.gamma0-1.0f) +
+		  0.5 * ( SQR(h_U(i,j,k,IU)) + 
+			  SQR(h_U(i,j,k,IV)) + 
+			  SQR(h_U(i,j,k,IW)) ) / h_U(i,j,k,ID);
+
+	      }
+	    } // end for i
+	  } // end for j
+	} // end for k
+
+      }
 
       if (ghostWidth == 2) {
 	/* fill the 8 grid corner (not really needed except for Kurganov-Tadmor) */
