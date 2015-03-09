@@ -2723,110 +2723,110 @@ namespace hydroSimu {
 
  #ifdef USE_VTK
 
-    /*
-     * write data with XML binary image data using VTK API.
-     */
-
-    // create a vtkImageData object
-    vtkSmartPointer<vtkImageData> imageData = 
-      vtkSmartPointer<vtkImageData>::New();
+      /*
+       * write data with XML binary image data using VTK API.
+       */
+      
+      // create a vtkImageData object
+      vtkSmartPointer<vtkImageData> imageData = 
+	vtkSmartPointer<vtkImageData>::New();
 #if HAVE_VTK6
-    imageData->SetExtent(0,nx-1,0,ny-1,0,nz-1);
+      imageData->SetExtent(0,nx-1,0,ny-1,0,nz-1);
 #else
-    imageData->SetDimensions(nx, ny, nz);
+      imageData->SetDimensions(nx, ny, nz);
 #endif
-    imageData->SetOrigin(0.0, 0.0, 0.0);
-    imageData->SetSpacing(1.0,1.0,1.0);
-
+      imageData->SetOrigin(0.0, 0.0, 0.0);
+      imageData->SetSpacing(1.0,1.0,1.0);
+      
 #if HAVE_VTK6
 #else
-    imageData->SetNumberOfScalarComponents(nbVar);
-    if (useDouble)
-      imageData->SetScalarTypeToDouble();
-    else
-      imageData->SetScalarTypeToFloat();
-    //imageData->AllocateScalars();
- #endif
-
-    vtkPointData *pointData = imageData->GetPointData();
-
-    /*
-     * NOTICE :
-     * we add array to the pointData object so that we can have named
-     * components, which appears to be not possible (when doing a
-     * simple imageData->AllocateScalars() and fill data with
-     * SetScalarComponentFromFloat or GetScalarPointer for example.
-     *
-     */
- 
-    // add density array
-    vtkSmartPointer<vtkDataArray> densityArray = 
-      vtkDataArray::CreateDataArray(dataType);
-    densityArray->SetNumberOfComponents( 1 );
-    densityArray->SetNumberOfTuples( nx*ny*nz );
-    densityArray->SetName( "density" );
-
-    // add energy array
-    vtkSmartPointer<vtkDataArray> energyArray = 
-      vtkDataArray::CreateDataArray(dataType);
-    energyArray->SetNumberOfComponents( 1 );
-    energyArray->SetNumberOfTuples( nx*ny*nz );
-    energyArray->SetName( "energy" );
-
-    // add momentum arrays
-    vtkSmartPointer<vtkDataArray> mxArray = 
-      vtkDataArray::CreateDataArray(dataType);
-    mxArray->SetNumberOfComponents( 1 );
-    mxArray->SetNumberOfTuples( nx*ny*nz );
-    mxArray->SetName( "mx" );
-    vtkSmartPointer<vtkDataArray> myArray = 
-      vtkDataArray::CreateDataArray(dataType);
-    myArray->SetNumberOfComponents( 1 );
-    myArray->SetNumberOfTuples( nx*ny*nz );
-    myArray->SetName( "my" );
-    vtkSmartPointer<vtkDataArray> mzArray = 
-      vtkDataArray::CreateDataArray(dataType);
-    mzArray->SetNumberOfComponents( 1 );
-    mzArray->SetNumberOfTuples( nx*ny*nz );
-    mzArray->SetName( "mz" );
-
-    // magnetic component (MHD only)
-    vtkSmartPointer<vtkDataArray> bxArray = 
-      vtkDataArray::CreateDataArray(dataType);
-    bxArray->SetNumberOfComponents( 1 );
-    bxArray->SetName( "bx" );
-    vtkSmartPointer<vtkDataArray> byArray = 
-      vtkDataArray::CreateDataArray(dataType);
-    byArray->SetNumberOfComponents( 1 );
-    byArray->SetName( "by" );
-    vtkSmartPointer<vtkDataArray> bzArray = 
-      vtkDataArray::CreateDataArray(dataType);
-    bzArray->SetNumberOfComponents( 1 );
-    bzArray->SetName( "bz" );
-    if (mhdEnabled) {
-      // do memory allocation
-      bxArray->SetNumberOfTuples( nx*ny*nz );
-      byArray->SetNumberOfTuples( nx*ny*nz );
-      bzArray->SetNumberOfTuples( nx*ny*nz );
-    }
-
-    // fill the vtkImageData with scalars from U
-    if (dimType == TWO_D) {
-      for(int j= ghostWidth; j < jsize-ghostWidth; j++)
-	for(int i = ghostWidth; i < isize-ghostWidth; i++) {
-	  int index = i-ghostWidth + nx*(j-ghostWidth);
-	  densityArray->SetTuple1(index, U(i,j,ID)); 
-	  energyArray->SetTuple1(index, U(i,j,IP));
-	  mxArray->SetTuple1(index, U(i,j,IU));
-	  myArray->SetTuple1(index, U(i,j,IV));
-	  if (mhdEnabled) {
-	    mzArray->SetTuple1(index, U(i,j,IW));
-	    bxArray->SetTuple1(index, U(i,j,IA));
-	    byArray->SetTuple1(index, U(i,j,IB));
-	    bzArray->SetTuple1(index, U(i,j,IC));
+      imageData->SetNumberOfScalarComponents(nbVar);
+      if (useDouble)
+	imageData->SetScalarTypeToDouble();
+      else
+	imageData->SetScalarTypeToFloat();
+      //imageData->AllocateScalars();
+#endif
+      
+      vtkPointData *pointData = imageData->GetPointData();
+      
+      /*
+       * NOTICE :
+       * we add array to the pointData object so that we can have named
+       * components, which appears to be not possible (when doing a
+       * simple imageData->AllocateScalars() and fill data with
+       * SetScalarComponentFromFloat or GetScalarPointer for example.
+       *
+       */
+      
+      // add density array
+      vtkSmartPointer<vtkDataArray> densityArray = 
+	vtkDataArray::CreateDataArray(dataType);
+      densityArray->SetNumberOfComponents( 1 );
+      densityArray->SetNumberOfTuples( nx*ny*nz );
+      densityArray->SetName( "density" );
+      
+      // add energy array
+      vtkSmartPointer<vtkDataArray> energyArray = 
+	vtkDataArray::CreateDataArray(dataType);
+      energyArray->SetNumberOfComponents( 1 );
+      energyArray->SetNumberOfTuples( nx*ny*nz );
+      energyArray->SetName( "energy" );
+      
+      // add momentum arrays
+      vtkSmartPointer<vtkDataArray> mxArray = 
+	vtkDataArray::CreateDataArray(dataType);
+      mxArray->SetNumberOfComponents( 1 );
+      mxArray->SetNumberOfTuples( nx*ny*nz );
+      mxArray->SetName( "mx" );
+      vtkSmartPointer<vtkDataArray> myArray = 
+	vtkDataArray::CreateDataArray(dataType);
+      myArray->SetNumberOfComponents( 1 );
+      myArray->SetNumberOfTuples( nx*ny*nz );
+      myArray->SetName( "my" );
+      vtkSmartPointer<vtkDataArray> mzArray = 
+	vtkDataArray::CreateDataArray(dataType);
+      mzArray->SetNumberOfComponents( 1 );
+      mzArray->SetNumberOfTuples( nx*ny*nz );
+      mzArray->SetName( "mz" );
+      
+      // magnetic component (MHD only)
+      vtkSmartPointer<vtkDataArray> bxArray = 
+	vtkDataArray::CreateDataArray(dataType);
+      bxArray->SetNumberOfComponents( 1 );
+      bxArray->SetName( "bx" );
+      vtkSmartPointer<vtkDataArray> byArray = 
+	vtkDataArray::CreateDataArray(dataType);
+      byArray->SetNumberOfComponents( 1 );
+      byArray->SetName( "by" );
+      vtkSmartPointer<vtkDataArray> bzArray = 
+	vtkDataArray::CreateDataArray(dataType);
+      bzArray->SetNumberOfComponents( 1 );
+      bzArray->SetName( "bz" );
+      if (mhdEnabled) {
+	// do memory allocation
+	bxArray->SetNumberOfTuples( nx*ny*nz );
+	byArray->SetNumberOfTuples( nx*ny*nz );
+	bzArray->SetNumberOfTuples( nx*ny*nz );
+      }
+      
+      // fill the vtkImageData with scalars from U
+      if (dimType == TWO_D) {
+	for(int j= ghostWidth; j < jsize-ghostWidth; j++)
+	  for(int i = ghostWidth; i < isize-ghostWidth; i++) {
+	    int index = i-ghostWidth + nx*(j-ghostWidth);
+	    densityArray->SetTuple1(index, U(i,j,ID)); 
+	    energyArray->SetTuple1(index, U(i,j,IP));
+	    mxArray->SetTuple1(index, U(i,j,IU));
+	    myArray->SetTuple1(index, U(i,j,IV));
+	    if (mhdEnabled) {
+	      mzArray->SetTuple1(index, U(i,j,IW));
+	      bxArray->SetTuple1(index, U(i,j,IA));
+	      byArray->SetTuple1(index, U(i,j,IB));
+	      bzArray->SetTuple1(index, U(i,j,IC));
+	    }
 	  }
-	}
-    } else { // THREE_D
+      } else { // THREE_D
 	for(int k= ghostWidth; k < ksize-ghostWidth; k++)
 	  for(int j= ghostWidth; j < jsize-ghostWidth; j++)
 	    for(int i = ghostWidth; i < isize-ghostWidth; i++) {
@@ -2842,51 +2842,51 @@ namespace hydroSimu {
 		bzArray->SetTuple1(index, U(i,j,k,IC));
 	      }
 	    }
-    }
-
-    // add filled data arrays to point data object
-    pointData->AddArray( densityArray );
-    pointData->AddArray( energyArray );
-    pointData->AddArray( mxArray );
-    pointData->AddArray( myArray );
-    if (dimType == THREE_D and !mhdEnabled)
-      pointData->AddArray( mzArray );
-    if (mhdEnabled) {
-      pointData->AddArray( mzArray );
-      pointData->AddArray( bxArray );
-      pointData->AddArray( byArray );
-      pointData->AddArray( bzArray );
-    }
-
-    // create image writer
-    vtkSmartPointer<vtkXMLImageDataWriter> writer = 
-      vtkSmartPointer<vtkXMLImageDataWriter>::New();
+      }
+      
+      // add filled data arrays to point data object
+      pointData->AddArray( densityArray );
+      pointData->AddArray( energyArray );
+      pointData->AddArray( mxArray );
+      pointData->AddArray( myArray );
+      if (dimType == THREE_D and !mhdEnabled)
+	pointData->AddArray( mzArray );
+      if (mhdEnabled) {
+	pointData->AddArray( mzArray );
+	pointData->AddArray( bxArray );
+	pointData->AddArray( byArray );
+	pointData->AddArray( bzArray );
+      }
+      
+      // create image writer
+      vtkSmartPointer<vtkXMLImageDataWriter> writer = 
+	vtkSmartPointer<vtkXMLImageDataWriter>::New();
 #if HAVE_VTK6
-    writer->SetInputData(imageData);
+      writer->SetInputData(imageData);
 #else
-    writer->SetInput(imageData);
+      writer->SetInput(imageData);
 #endif
-    writer->SetFileName(filenameFull.c_str());
-    if (outputVtkAscii)
-      writer->SetDataModeToAscii();
-
-    // do we want base 64 encoding ?? probably not
-    // since is it better for data reload (simulation restart). By the
-    // way reading/writing raw binary is faster since we don't need to
-    // encode !
-    bool outputVtkBase64Encoding = configMap.getBool("output", "outputVtkBase64", false);
-    if (!outputVtkBase64Encoding)
-      writer->EncodeAppendedDataOff();
-    
-    // if using raw binary or base64, data can be zlib-compressed
-    bool outputVtkCompression = configMap.getBool("output", "outputVtkCompression", true);
-    if (!outputVtkCompression) {
-      writer->SetCompressor(NULL);
-    }
-    writer->Write();
-
+      writer->SetFileName(filenameFull.c_str());
+      if (outputVtkAscii)
+	writer->SetDataModeToAscii();
+      
+      // do we want base 64 encoding ?? probably not
+      // since is it better for data reload (simulation restart). By the
+      // way reading/writing raw binary is faster since we don't need to
+      // encode !
+      bool outputVtkBase64Encoding = configMap.getBool("output", "outputVtkBase64", false);
+      if (!outputVtkBase64Encoding)
+	writer->EncodeAppendedDataOff();
+      
+      // if using raw binary or base64, data can be zlib-compressed
+      bool outputVtkCompression = configMap.getBool("output", "outputVtkCompression", true);
+      if (!outputVtkCompression) {
+	writer->SetCompressor(NULL);
+      }
+      writer->Write();
+      
 #endif // USE_VTK
-
+      
     } else { // use the hand written routine (no need to have VTK
 	     // installed)
       
@@ -2904,7 +2904,11 @@ namespace hydroSimu {
       
       // domain extent
       int xmin=0, xmax=nx-1, ymin=0, ymax=ny-1, zmin=0, zmax=nz-1;
-      
+     
+      if (dimType == TWO_D) {
+	zmax = 0;
+      }
+
       // if writing raw binary data (file does not respect XML standard)
       if (outputVtkAscii)
 	outFile << "<?xml version=\"1.0\"?>" << std::endl;
@@ -3125,6 +3129,10 @@ namespace hydroSimu {
       zmax -= 2*ghostWidth;
     }
     
+    if (dimType == TWO_D) {
+      zmax = 0;
+    }
+
     // if writing raw binary data (file does not respect XML standard)
     if (outputVtkAscii)
       outFile << "<?xml version=\"1.0\"?>" << std::endl;
