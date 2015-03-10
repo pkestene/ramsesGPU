@@ -8451,18 +8451,19 @@ namespace hydroSimu {
 	      
 	    } else {
 	      
-	      real_t rho_slope = (rho_outer-rho_inner)/(0.1*ySize);
-	      real_t u_slope   = (vflow_out-vflow_in)/(0.1*ySize);
+	      real_t interpSize = outer_size-inner_size;
+	      real_t rho_slope = (rho_outer - rho_inner) / (interpSize * ySize);
+	      real_t u_slope   = (vflow_out - vflow_in)  / (interpSize * ySize);
 	      
 	      real_t deltaY;
 	      real_t deltaRho;
 	      real_t deltaU;
 	      if (yPos > yCenter) {
-		deltaY   = yPos-(yCenter+0.2*ySize);
+		deltaY   = yPos-(yCenter+inner_size*ySize);
 		deltaRho = rho_slope*deltaY;
 		deltaU   = u_slope*deltaY;
 	      } else {
-		deltaY = yPos-(yCenter-0.2*ySize);
+		deltaY = yPos-(yCenter-inner_size*ySize);
 		deltaRho = -rho_slope*deltaY;
 		deltaU   = -u_slope*deltaY;
 	      }
