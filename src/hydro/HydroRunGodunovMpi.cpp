@@ -3833,7 +3833,7 @@ namespace hydroSimu {
 
     if (myRank==0)
       std::cout  << "####################################\n"
-		 << "Global perfomance over all MPI proc \n" 
+		 << "Global performance over all MPI proc\n" 
 		 << 1.0*nStep*(nx*mx)*(ny*my)*(nz*mz)/(timerTotal.elapsed()-timerWriteOnDisk.elapsed())
 		 << " cell updates per seconds (based on wall time)\n"
 		 << "####################################\n";

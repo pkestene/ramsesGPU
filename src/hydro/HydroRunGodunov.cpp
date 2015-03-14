@@ -4067,7 +4067,7 @@ namespace hydroSimu {
 #endif // DO_TIMING
 
     std::cout  << "####################################\n"
-	       << "Global perfomance                   \n" 
+	       << "Global performance                  \n" 
 	       << 1.0*nStep*(nx)*(ny)*(nz)/(timerTotal.elapsed()-timerWriteOnDisk.elapsed())
 	       << " cell updates per seconds (based on wall time)\n"
 	       << "####################################\n";
