@@ -5696,10 +5696,14 @@ namespace hydroSimu {
    * http://www.astro.princeton.edu/~jstone/Athena/tests/kh/kh.html
    * for a description of such initial conditions
    *
-   * 3 types of perturbations:
+   * 4 types of perturbations:
    * - rand : multi-mode
    * - sine : single-mode (simple)
    * - sine_athena : single mode with init condition from Athena
+   * - sine_robertson : single mode with init condition from article by Robertson et al.
+   *
+   * "Computational Eulerian hydrodynamics and Galilean invariance", 
+   * B.E. Robertson et al, Mon. Not. R. Astron. Soc., 401, 2463-2476, (2010).
    */
   void HydroRunBase::init_hydro_Kelvin_Helmholtz()
   {
@@ -5717,11 +5721,13 @@ namespace hydroSimu {
     /* perturbation type random / sine / sine_athena */
     bool p_rand_bool  = configMap.getBool("kelvin-helmholtz", "perturbation_rand", true);
     bool p_sine_bool  = configMap.getBool("kelvin-helmholtz", "perturbation_sine", false);
-    bool p_sine_athena_bool = configMap.getBool("kelvin-helmholtz", "perturbation_sine_athena", false);
+    bool p_sine_athena_bool    = configMap.getBool("kelvin-helmholtz", "perturbation_sine_athena", false);
+    bool p_sine_robertson_bool = configMap.getBool("kelvin-helmholtz", "perturbation_sine_robertson", false);
 
     real_t p_rand  = p_rand_bool  ? 1.0 : 0.0;
     real_t p_sine  = p_sine_bool  ? 1.0 : 0.0;
-    real_t p_sine_athena = p_sine_athena_bool ? 1.0 : 0.0;
+    real_t p_sine_athena    = p_sine_athena_bool    ? 1.0 : 0.0;
+    real_t p_sine_robertson = p_sine_robertson_bool ? 1.0 : 0.0;
 
     /* inner and outer fluid density */
     real_t rho_inner = configMap.getFloat("kelvin-helmholtz", "rho_inner", 2.0);
@@ -5813,6 +5819,42 @@ namespace hydroSimu {
 	    h_U(i,j,ID) = rho_inner;
 	    h_U(i,j,IU) = rho_inner * vflow * tanh(yPos/a);
 	    h_U(i,j,IV) = rho_inner * amplitude * sin(2.0*M_PI*xPos) * exp(-(yPos*yPos)/(sigma*sigma));
+	    h_U(i,j,IP) = pressure/(_gParams.gamma0-1.0f) +
+	      0.5 * ( SQR(h_U(i,j,IU)) + 
+		      SQR(h_U(i,j,IV)) ) / h_U(i,j,ID);
+
+	  } // end for i
+	} // end for j
+
+      } else if (p_sine_robertson_bool) {
+
+	// perturbation mode number
+	int    n      = configMap.getInteger("kelvin-helmholtz", "mode", 4);
+	real_t w0     = configMap.getFloat("kelvin-helmholtz", "w0", 0.1);
+	real_t deltaY = configMap.getFloat("kelvin-helmholtz", "deltaY", 0.03);
+
+	real_t rho1 = rho_inner;
+	real_t rho2 = rho_outer;
+
+	real_t v1 = vflow_in;
+	real_t v2 = vflow_out;
+
+	real_t y1 = yMin + 0.25*ySize;
+	real_t y2 = yMin + 0.75*ySize;
+
+	for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
+	  real_t yPos = yMin + dy/2 + (j-ghostWidth)*dy;
+
+	  real_t ramp = 
+	    1.0 / ( 1.0 + exp( 2*(yPos-y1)/deltaY ) ) +
+	    1.0 / ( 1.0 + exp( 2*(y2-yPos)/deltaY ) );
+	  
+	  for (int i=ghostWidth; i<isize-ghostWidth; i++) {
+	    real_t xPos = xMin + dx/2 + (i-ghostWidth)*dx;	    
+	    
+	    h_U(i,j,ID) = rho1 + ramp*(rho2-rho1);
+	    h_U(i,j,IU) = h_U(i,j,ID) * (v1 + ramp*(v2-v1)) ;
+	    h_U(i,j,IV) = h_U(i,j,ID) * w0 * sin(n*M_PI*xPos);
 	    h_U(i,j,IP) = pressure/(_gParams.gamma0-1.0f) +
 	      0.5 * ( SQR(h_U(i,j,IU)) + 
 		      SQR(h_U(i,j,IV)) ) / h_U(i,j,ID);
@@ -5994,7 +6036,49 @@ namespace hydroSimu {
 	  } // end for j
 	} // end for k
 
-      }
+      } else if (p_sine_robertson_bool) {
+
+	// perturbation mode number
+	int    n      = configMap.getInteger("kelvin-helmholtz", "mode", 4);
+	real_t w0     = configMap.getFloat("kelvin-helmholtz", "w0", 0.1);
+	real_t deltaZ = configMap.getFloat("kelvin-helmholtz", "deltaZ", 0.03);
+
+	real_t rho1 = rho_inner;
+	real_t rho2 = rho_outer;
+
+	real_t v1 = vflow_in;
+	real_t v2 = vflow_out;
+
+	real_t z1 = zMin + 0.25*zSize;
+	real_t z2 = zMin + 0.75*zSize;
+
+	for (int k=ghostWidth; k<ksize-ghostWidth; k++) {
+	  real_t zPos = zMin + dz/2 + (k-ghostWidth)*dz;
+
+	  real_t ramp = 
+	    1.0 / ( 1.0 + exp( 2*(zPos-z1)/deltaZ ) ) +
+	    1.0 / ( 1.0 + exp( 2*(z2-zPos)/deltaZ ) );
+	  
+	  for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
+	    real_t yPos = yMin + dy/2 + (j-ghostWidth)*dy;
+	    	    
+	    for (int i=ghostWidth; i<isize-ghostWidth; i++) {
+	      real_t xPos = xMin + dx/2 + (i-ghostWidth)*dx;	    
+	      
+	      h_U(i,j,k,ID) = rho1 + ramp*(rho2-rho1);
+	      h_U(i,j,k,IU) = h_U(i,j,k,ID) * (v1 + ramp*(v2-v1)) ;
+	      h_U(i,j,k,IV) = h_U(i,j,k,ID) * w0 * cos(n*M_PI*xPos);
+	      h_U(i,j,k,IW) = h_U(i,j,k,ID) * w0 * sin(n*M_PI*xPos);
+	      h_U(i,j,k,IP) = pressure/(_gParams.gamma0-1.0f) +
+		0.5 * ( SQR(h_U(i,j,k,IU)) + 
+			SQR(h_U(i,j,k,IV)) + 
+			SQR(h_U(i,j,k,IW)) ) / h_U(i,j,k,ID);
+	      
+	    } // end for i
+	  } // end for j
+	} // end for k
+
+      } 
 
       if (ghostWidth == 2) {
 	/* fill the 8 grid corner (not really needed except for Kurganov-Tadmor) */
