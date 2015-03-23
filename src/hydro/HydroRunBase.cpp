@@ -5853,7 +5853,7 @@ namespace hydroSimu {
 	    real_t xPos = xMin + dx/2 + (i-ghostWidth)*dx;	    
 	    
 	    h_U(i,j,ID) = rho1 + ramp*(rho2-rho1);
-	    h_U(i,j,IU) = h_U(i,j,ID) * (v1 + ramp*(v2-v1)) ;
+	    h_U(i,j,IU) = h_U(i,j,ID) * (v1 + ramp*(v2-v1));
 	    h_U(i,j,IV) = h_U(i,j,ID) * w0 * sin(n*M_PI*xPos);
 	    h_U(i,j,IP) = pressure/(_gParams.gamma0-1.0f) +
 	      0.5 * ( SQR(h_U(i,j,IU)) + 
