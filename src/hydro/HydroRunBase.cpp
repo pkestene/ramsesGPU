@@ -5888,8 +5888,8 @@ namespace hydroSimu {
 	      h_U(i,j,IU) = rho_inner * vflow_in * (1.0+perturb_vx);
 	      h_U(i,j,IV) = rho_inner * perturb_vy;
 	      h_U(i,j,IP) = pressure/(_gParams.gamma0-1.0f) +
-	      0.5 * ( SQR(h_U(i,j,IU)) + 
-		      SQR(h_U(i,j,IV)) ) / h_U(i,j,ID);
+		0.5 * ( SQR(h_U(i,j,IU)) + 
+			SQR(h_U(i,j,IV)) ) / h_U(i,j,ID);
 
 	    } else { // interpolate
 	      
