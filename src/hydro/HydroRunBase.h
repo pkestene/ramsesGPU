@@ -395,6 +395,7 @@ namespace hydroSimu {
     virtual void init_hydro_Gresho_vortex();
     virtual void init_hydro_Kelvin_Helmholtz();
     virtual void init_hydro_Rayleigh_Taylor();
+    virtual void init_hydro_Keplerian_disk();
     virtual void init_hydro_falling_bubble();
     virtual void init_hydro_Riemann();
     virtual void init_hydro_turbulence();

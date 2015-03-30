@@ -61,7 +61,7 @@ void constoprim_2D(real_t u[NVAR_2D], real_t (&q)[NVAR_2D], real_t& c)
     // internal energy = total energy - kinetic energy (per mass unit)
     real_t eint = u[IP] / q[ID] - eken;
     if (eint < 0) {
-      PRINTF("hydro eint < 0  : e %f eken %f d %f u %f v %f\n",u[IP],eken,u[ID],u[IU],u[IV]);
+      PRINTF("hydro eint < 0  : e %f eken %f diff %f d %f u %f v %f\n",u[IP]/q[ID],eken,u[IP]/q[ID]-eken,u[ID],u[IU],u[IV]);
     }
     // use perfect gas equation of state to compute P
     eos(q[ID], eint, q[IP], c);

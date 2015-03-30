@@ -251,7 +251,7 @@ namespace hydroSimu {
     gravityEnabled = configMap.getBool("gravity", "enabled", false);
 
     // enforce gravityEnabled for some problems
-    if ( !problem.compare("Rayleigh-Taylor") )
+    if ( !problem.compare("Rayleigh-Taylor") or !problem.compare("Keplerian-disk"))
       gravityEnabled = true;
     
     if ( gravityEnabled ) {
@@ -5733,9 +5733,9 @@ namespace hydroSimu {
 	
 	  // distance to center
 	  real_t r = sqrt(
-	    (xPos-center_x)*(xPos-center_x) +
-	    (yPos-center_y)*(yPos-center_y) );
-	
+			  (xPos-center_x)*(xPos-center_x) +
+			  (yPos-center_y)*(yPos-center_y) );
+	  
 	  real_t phi = atan2(yPos-center_y,xPos-center_x);
 	  real_t P, v_phi;
 
@@ -6449,6 +6449,228 @@ namespace hydroSimu {
   // =======================================================
   // =======================================================
   /**
+   * Keplerian disk test.
+   * See
+   * http://arxiv.org/pdf/1409.7395v1.pdf - section 4.2.4
+   * for a description of such initial conditions.
+   *
+   */
+  void HydroRunBase::init_hydro_Keplerian_disk()
+  {
+
+    /* initial condition in grid interior */
+    memset(h_U.data(),0,h_U.sizeBytes());
+
+
+    real_t &xMin = _gParams.xMin;
+    real_t &yMin = _gParams.yMin;
+    real_t &zMin = _gParams.zMin;
+
+    real_t &xMax = _gParams.xMax;
+    real_t &yMax = _gParams.yMax;
+    real_t &zMax = _gParams.zMax;
+
+    real_t Lx = xMax-xMin;
+    real_t Ly = yMax-yMin;
+    real_t Lz = zMax-zMin;
+
+    /* initialize parameters */
+    real_t epsilon = configMap.getFloat("Keplerian-disk", "epsilon" , 0.01);
+    real_t P0      = configMap.getFloat("Keplerian-disk", "pressure", 1e-6);
+    real_t xCenter = configMap.getFloat("Keplerian-disk", "xCenter", (xMax+xMin)/2.0);
+    real_t yCenter = configMap.getFloat("Keplerian-disk", "yCenter", (yMax+yMin)/2.0);
+    real_t grav    = configMap.getFloat("gravity"       , "g"       ,1.0);
+
+    if (dimType == TWO_D) {
+  
+      for (int j=0; j<jsize; j++) {
+	real_t yPos = yMin + dy/2 + (j-ghostWidth)*dy;
+	
+	for (int i=0; i<isize; i++) {
+	  real_t xPos = xMin + dx/2 + (i-ghostWidth)*dx;
+	  
+	  real_t theta = atan2(yPos-yCenter, xPos-xCenter);
+	  
+	  // distance to center
+	  real_t r = sqrt(
+			  (xPos-xCenter)*(xPos-xCenter) +
+			  (yPos-yCenter)*(yPos-yCenter) );
+
+	  // orbital velocity
+	  real_t velocity = r * pow(r*r+epsilon*epsilon, -3.0/4.0);
+	  
+	  // static Keplerian potential (g = -grad ( Phi ))
+	  // Phi = - (r^2+epsilon^2)^(-1/2)
+	  {
+
+	    real_t r_x, r_y;
+
+	    // x -> x+dx
+	    r_x = sqrt(
+		       (xPos+dx-xCenter)*(xPos+dx-xCenter) +
+		       (yPos   -yCenter)*(yPos   -yCenter) );
+	    real_t phi_px = -1.0/sqrt(r_x*r_x+epsilon*epsilon);
+
+	    // x -> x-dx
+	    r_x = sqrt(
+		       (xPos-dx-xCenter)*(xPos-dx-xCenter) +
+		       (yPos   -yCenter)*(yPos   -yCenter) );
+	    real_t phi_mx = -1.0/sqrt(r_x*r_x+epsilon*epsilon);
+	    
+	    // y -> y+dy
+	    r_y = sqrt(
+		       (xPos   -xCenter)*(xPos   -xCenter) +
+		       (yPos+dy-yCenter)*(yPos+dy-yCenter) );
+	    real_t phi_py = -1.0/sqrt(r_y*r_y+epsilon*epsilon);
+
+	    // y -> y-dy
+	    r_y = sqrt(
+		       (xPos   -xCenter)*(xPos   -xCenter) +
+		       (yPos-dy-yCenter)*(yPos-dy-yCenter) );
+	    real_t phi_my = -1.0/sqrt(r_y*r_y+epsilon*epsilon);
+	    
+	    h_gravity(i,j,IX) = - grav * HALF_F * (phi_px - phi_mx)/dx;
+	    h_gravity(i,j,IY) = - grav * HALF_F * (phi_py - phi_my)/dy;
+
+	  }
+
+	  // other variables
+	  if ( r < 0.5 ) {
+	    h_U(i,j,ID) = 0.01 + pow( r/0.5, 3.0);
+	  } else if ( r <= 2 ) {
+	    h_U(i,j,ID) = 0.01 + 1;
+	  } else if ( r >  2 ) {
+	    h_U(i,j,ID) = 0.01 + pow(1 + (r-2)/0.1, -3.0);
+	  }
+
+	  h_U(i,j,IU) = -sin(theta) * velocity * h_U(i,j,ID);
+	  h_U(i,j,IV) =  cos(theta) * velocity * h_U(i,j,ID);
+
+	  h_U(i,j,IP) = P0 / (_gParams.gamma0 - ONE_F) +
+	    0.5 * ( h_U(i,j,IU) * h_U(i,j,IU) +
+		    h_U(i,j,IV) * h_U(i,j,IV) ) / h_U(i,j,ID);
+
+	  // real_t eken = 0.5f * (h_U(i,j,IU) * h_U(i,j,IU) + h_U(i,j,IV) * h_U(i,j,IV)) / (h_U(i,j,ID) * h_U(i,j,ID));
+	  // real_t eint = h_U(i,j,IP) / h_U(i,j,ID) - eken;
+
+	  // if (eint < 0) {
+	  //   printf("KKKK hydro eint < 0  : e %f eken %f diff %f d %f u %f v %f\n",h_U(i,j,IP)/h_U(i,j,ID),eken,h_U(i,j,IP)/h_U(i,j,ID)-eken,h_U(i,j,ID),h_U(i,j,IU),h_U(i,j,IV));
+	  // }
+
+  
+	} // end for i
+      } // end for j
+    
+
+      if (ghostWidth == 2) {
+	/* corner grid (not really needed (except for Kurganov-Tadmor) */
+	for (int nVar=0; nVar<nbVar; ++nVar) {
+	  
+	  for (int i=0; i<2; ++i)
+	    for (int j=0; j<2; ++j) {
+	      h_U(     i,     j,nVar) = h_U(   2,   2,nVar);
+	      h_U(nx+2+i,     j,nVar) = h_U(nx+1,   2,nVar);
+	      h_U(     i,ny+2+j,nVar) = h_U(   2,ny+1,nVar);
+	      h_U(nx+2+i,ny+2+j,nVar) = h_U(nx+1,ny+1,nVar);
+	    } // end for loop over i,j
+	  
+	} // end loop over nVar
+      }
+
+    } else { // THREE_D
+
+      // cylindrical symetry
+      for (int k=0; k<ksize; k++) {
+	real_t zPos = zMin + dz/2 + (k-ghostWidth)*dz;
+	
+	for (int j=0; j<jsize; j++) {
+	  real_t yPos = yMin + dy/2 + (j-ghostWidth)*dy;
+	  
+	  for (int i=0; i<isize; i++) {
+	    real_t xPos = xMin + dx/2 + (i-ghostWidth)*dx;
+	    
+	    real_t theta = atan2(yPos-yCenter, xPos-xCenter);
+	    
+	    // distance to center
+	    real_t r = sqrt(
+			    (xPos-xCenter)*(xPos-xCenter) +
+			    (yPos-yCenter)*(yPos-yCenter) );
+	    
+	    // orbital velocity
+	    real_t velocity = r * pow(r*r+epsilon*epsilon, -3.0/4.0);
+	    
+	    if ( r < 0.5 ) {
+	      h_U(i,j,k,ID) = 0.01 + pow( r/0.5, 3.0);
+	    } else if ( r <= 2 ) {
+	      h_U(i,j,k,ID) = 0.01 + 1;
+	    } else {
+	      h_U(i,j,k,ID) = 0.01 + pow(1 + (r-2)/0.1, -3.0);
+	    }
+	    	    
+	    h_U(i,j,k,IU) = -sin(theta) * velocity * h_U(i,j,ID);
+	    h_U(i,j,k,IV) =  cos(theta) * velocity * h_U(i,j,ID);
+	    h_U(i,j,k,IW) =  ZERO_F;
+
+	    h_U(i,j,k,IP) = P0 / (_gParams.gamma0 - ONE_F) +
+	      0.5 * ( h_U(i,j,k,IU) * h_U(i,j,k,IU) +
+		      h_U(i,j,k,IV) * h_U(i,j,k,IV) +
+		      h_U(i,j,k,IW) * h_U(i,j,k,IW) ) / h_U(i,j,k,ID);
+	    
+	    // static Keplerian potential (g = -grad ( Phi ))
+	    // Phi = - (r^2+epsilon^2)^(-1/2)
+	    {
+	      real_t phi = -1.0/sqrt(r*r+epsilon*epsilon);
+	      
+	      // x -> x+dx
+	      real_t r_x = sqrt(
+				(xPos+dx-xCenter)*(xPos+dx-xCenter) +
+				(yPos-yCenter)*(yPos-yCenter) );
+	      real_t phi_x = -1.0/sqrt(r_x*r_x+epsilon*epsilon);
+	      
+	      // y -> y+dy
+	      real_t r_y = sqrt(
+				(xPos-xCenter)*(xPos-xCenter) +
+				(yPos+dy-yCenter)*(yPos+dy-yCenter) );
+	      real_t phi_y = -1.0/sqrt(r_y*r_y+epsilon*epsilon);
+	      
+	      h_gravity(i,j,k,IX) = - (phi - phi_x)/dx;
+	      h_gravity(i,j,k,IY) = - (phi - phi_y)/dy;
+	      h_gravity(i,j,k,IZ) = ZERO_F;
+	    }
+	    
+	  } // end for i
+	} // end for j
+      } // end for k
+
+      if (ghostWidth == 2) {
+	/* fill the 8 grid corner (not really needed except for Kurganov-Tadmor) */
+	for (int nVar=0; nVar<nbVar; ++nVar) {
+	  for (int i=0; i<2; ++i)
+	    for (int j=0; j<2; ++j)
+	      for (int k=0; k<2; ++k) {
+		h_U(     i,     j,     k,nVar) = h_U(   2,   2,   2,nVar);
+		h_U(nx+2+i,     j,     k,nVar) = h_U(nx+1,   2,   2,nVar);
+		h_U(     i,ny+2+j,     k,nVar) = h_U(   2,ny+1,   2,nVar);
+		h_U(nx+2+i,ny+2+j,     k,nVar) = h_U(nx+1,ny+1,   2,nVar);
+		
+		h_U(     i,     j,nz+2+k,nVar) = h_U(   2,   2,nz+1,nVar);
+		h_U(nx+2+i,     j,nz+2+k,nVar) = h_U(nx+1,   2,nz+1,nVar);
+		h_U(     i,ny+2+j,nz+2+k,nVar) = h_U(   2,ny+1,nz+1,nVar);
+		h_U(nx+2+i,ny+2+j,nz+2+k,nVar) = h_U(nx+1,ny+1,nz+1,nVar);
+	      } // end for loop over i,j,k
+	} // end for loop over nVar
+      }	
+    }
+
+#ifdef __CUDACC__
+    d_gravity.copyFromHost(h_gravity);
+#endif
+
+  } // HydroRunBase::init_hydro_Keplerian_disk
+
+  // =======================================================
+  // =======================================================
+  /**
    * Falling bubble test.
    *
    */
@@ -6920,6 +7142,8 @@ namespace hydroSimu {
 	this->init_hydro_Kelvin_Helmholtz();
       } else if (!problemName.compare("Rayleigh-Taylor")) {
 	this->init_hydro_Rayleigh_Taylor();
+      } else if (!problemName.compare("Keplerian-disk")) {
+	this->init_hydro_Keplerian_disk();
       } else if (!problemName.compare("falling-bubble")) {
 	this->init_hydro_falling_bubble();
       } else if (!problemName.compare("riemann2d")) {
