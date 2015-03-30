@@ -5691,6 +5691,165 @@ namespace hydroSimu {
   // =======================================================
   // =======================================================
   /**
+   * Gresho vortex test.
+   * see
+   * http://arxiv.org/pdf/1409.7395v1.pdf - section 4.2.3
+   * http://www.cfd-online.com/Wiki/Gresho_vortex
+   *
+   *
+   */
+  void HydroRunBase::init_hydro_Gresho_vortex()
+  {
+
+    /* initial condition in grid interior */
+    memset(h_U.data(),0,h_U.sizeBytes());
+
+    real_t &xMin = _gParams.xMin;
+    real_t &yMin = _gParams.yMin;
+    real_t &zMin = _gParams.zMin;
+
+    real_t &xMax = _gParams.xMax;
+    real_t &yMax = _gParams.yMax;
+    real_t &zMax = _gParams.zMax;
+
+    real_t &dx   = _gParams.dx;
+    real_t &dy   = _gParams.dy;
+    real_t &dz   = _gParams.dz;
+
+    real_t center_x     = configMap.getFloat("Gresho_vortex","center_x",(xMax+xMin)/2);
+    real_t center_y     = configMap.getFloat("Gresho_vortex","center_y",(yMax+yMin)/2);
+
+    /* 2d Gresho vortex test */
+    if (dimType == TWO_D) {
+    
+      for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
+	real_t yPos = yMin + dy/2 + (j-ghostWidth)*dy;
+
+	for (int i=ghostWidth; i<isize-ghostWidth; i++) {
+	  real_t xPos = xMin + dx/2 + (i-ghostWidth)*dx;
+	
+	  // distance to center
+	  real_t r = sqrt(
+	    (xPos-center_x)*(xPos-center_x) +
+	    (yPos-center_y)*(yPos-center_y) );
+	
+	  real_t phi = atan2(yPos-center_y,xPos-center_x);
+	  real_t P, v_phi;
+
+	  if ( r < 0.2 ) {
+
+	    P     = 5 + 12.5*r*r;
+	    v_phi = 5*r;
+
+	  } else if ( r < 0.4 ) {
+	  
+	    P     = 9 + 12.5*r*r - 20*r + 4*log(5*r);
+	    v_phi = 2-5*r;
+
+	  } else {
+
+	    P     = 3 + 4*log(2);
+	    v_phi = ZERO_F;
+
+	  }
+	   
+	  h_U(i,j,ID) = ONE_F;
+	  h_U(i,j,IU) = -sin(phi) * v_phi;
+	  h_U(i,j,IV) =  cos(phi) * v_phi;
+	  h_U(i,j,IP) = P/(_gParams.gamma0-1.0f) +
+	    0.5 * ( SQR(h_U(i,j,IU)) + 
+		    SQR(h_U(i,j,IV)) ) / h_U(i,j,ID);
+	  
+	} // end for i
+      } // end for j
+    
+      if (ghostWidth == 2) {
+	/* corner grid (not really needed (except for Kurganov-Tadmor) */
+	for (int nVar=0; nVar<nbVar; ++nVar) {    
+	  for (int i=0; i<2; ++i)
+	    for (int j=0; j<2; ++j) {
+	      h_U(     i,     j,nVar) = h_U(   2,   2,nVar);
+	      h_U(nx+2+i,     j,nVar) = h_U(nx+1,   2,nVar);
+	      h_U(     i,ny+2+j,nVar) = h_U(   2,ny+1,nVar);
+	      h_U(nx+2+i,ny+2+j,nVar) = h_U(nx+1,ny+1,nVar);
+	    } // end for loop over i,j
+	} // end loop over nVar
+      }
+
+    } else { // THREE_D
+	
+      for (int k=ghostWidth; k<ksize-ghostWidth; k++) {
+	real_t zPos = zMin + dz/2 + (k-ghostWidth)*dz;
+
+	for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
+	real_t yPos = yMin + dy/2 + (j-ghostWidth)*dy;
+
+	  for (int i=ghostWidth; i<isize-ghostWidth; i++) {
+	    real_t xPos = xMin + dx/2 + (i-ghostWidth)*dx;
+	
+	    // distance to center (vortex tube)
+	    real_t r = sqrt(
+	      (xPos-center_x)*(xPos-center_x) +
+	      (yPos-center_y)*(yPos-center_y) );
+	  
+	    real_t phi = atan2(yPos-center_y,xPos-center_x);
+	    real_t P, v_phi;
+	    
+	    if ( r < 0.2 ) {
+	      
+	      P     = 5 + 12.5*r*r;
+	      v_phi = 5*r;
+	      
+	    } else if ( r < 0.4 ) {
+	      
+	      P     = 9 + 12.5*r*r - 20*r + 4*log(5*r);
+	      v_phi = 2-5*r;
+	      
+	    } else {
+	      
+	      P     = 3 + 4*log(2);
+	      v_phi = ZERO_F;
+	      
+	    }
+
+	    h_U(i,j,k,ID) = ONE_F;
+	    h_U(i,j,k,IU) = -sin(phi)*v_phi;
+	    h_U(i,j,k,IV) =  cos(phi)*v_phi;
+	    h_U(i,j,k,IW) = ZERO_F;
+	    h_U(i,j,k,IP) = P/(_gParams.gamma0-1.0f) +
+	      0.5 * ( SQR(h_U(i,j,k,IU)) + 
+		      SQR(h_U(i,j,k,IV)) + 
+		      SQR(h_U(i,j,k,IW)) ) / h_U(i,j,k,ID);
+	    
+	  } // end for i
+	} // end for j
+      } // end for k
+      
+      if (ghostWidth == 2) {
+	/* fill the 8 grid corner (not really needed except for Kurganov-Tadmor) */
+	for (int nVar=0; nVar<nbVar; ++nVar) {
+	  for (int i=0; i<2; ++i)
+	    for (int j=0; j<2; ++j)
+	      for (int k=0; k<2; ++k) {
+		h_U(     i,     j,     k,nVar) = h_U(   2,   2,   2,nVar);
+		h_U(nx+2+i,     j,     k,nVar) = h_U(nx+1,   2,   2,nVar);
+		h_U(     i,ny+2+j,     k,nVar) = h_U(   2,ny+1,   2,nVar);
+		h_U(nx+2+i,ny+2+j,     k,nVar) = h_U(nx+1,ny+1,   2,nVar);
+		
+		h_U(     i,     j,nz+2+k,nVar) = h_U(   2,   2,nz+1,nVar);
+		h_U(nx+2+i,     j,nz+2+k,nVar) = h_U(nx+1,   2,nz+1,nVar);
+		h_U(     i,ny+2+j,nz+2+k,nVar) = h_U(   2,ny+1,nz+1,nVar);
+		h_U(nx+2+i,ny+2+j,nz+2+k,nVar) = h_U(nx+1,ny+1,nz+1,nVar);
+	      } // end for loop over i,j,k
+	} // end for loop over nVar
+      }
+    }
+
+  } // HydroRunBase::init_hydro_Gresho_vortex
+
+  // =======================================================
+  // =======================================================
+  /**
    * Test of the Kelvin-Helmholtz instability.
    * See
    * http://www.astro.princeton.edu/~jstone/Athena/tests/kh/kh.html
@@ -6752,6 +6911,8 @@ namespace hydroSimu {
 	this->init_hydro_implode();
       } else if (!problemName.compare("blast")) {
 	this->init_hydro_blast();
+      } else if (!problemName.compare("Gresho-vortex")) {
+	this->init_hydro_Gresho_vortex();
       } else if (!problemName.compare("Kelvin-Helmholtz")) {
 	this->init_hydro_Kelvin_Helmholtz();
       } else if (!problemName.compare("Rayleigh-Taylor")) {

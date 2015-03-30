@@ -392,6 +392,7 @@ namespace hydroSimu {
     virtual void init_hydro_sod();
     virtual void init_hydro_implode();
     virtual void init_hydro_blast();
+    virtual void init_hydro_Gresho_vortex();
     virtual void init_hydro_Kelvin_Helmholtz();
     virtual void init_hydro_Rayleigh_Taylor();
     virtual void init_hydro_falling_bubble();
