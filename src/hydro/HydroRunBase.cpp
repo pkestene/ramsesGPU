@@ -251,7 +251,8 @@ namespace hydroSimu {
     gravityEnabled = configMap.getBool("gravity", "enabled", false);
 
     // enforce gravityEnabled for some problems
-    if ( !problem.compare("Rayleigh-Taylor") or !problem.compare("Keplerian-disk"))
+    if ( !problem.compare("Rayleigh-Taylor") or 
+	 !problem.compare("Keplerian-disk") )
       gravityEnabled = true;
     
     if ( gravityEnabled ) {
@@ -6503,34 +6504,11 @@ namespace hydroSimu {
 	  // Phi = - (r^2+epsilon^2)^(-1/2)
 	  {
 
-	    real_t r_x, r_y;
-
-	    // x -> x+dx
-	    r_x = sqrt(
-		       (xPos+dx-xCenter)*(xPos+dx-xCenter) +
-		       (yPos   -yCenter)*(yPos   -yCenter) );
-	    real_t phi_px = -1.0/sqrt(r_x*r_x+epsilon*epsilon);
-
-	    // x -> x-dx
-	    r_x = sqrt(
-		       (xPos-dx-xCenter)*(xPos-dx-xCenter) +
-		       (yPos   -yCenter)*(yPos   -yCenter) );
-	    real_t phi_mx = -1.0/sqrt(r_x*r_x+epsilon*epsilon);
+	    real_t dphi_dx = xPos * pow(r*r+epsilon*epsilon, -3.0/2);
+	    real_t dphi_dy = yPos * pow(r*r+epsilon*epsilon, -3.0/2);
 	    
-	    // y -> y+dy
-	    r_y = sqrt(
-		       (xPos   -xCenter)*(xPos   -xCenter) +
-		       (yPos+dy-yCenter)*(yPos+dy-yCenter) );
-	    real_t phi_py = -1.0/sqrt(r_y*r_y+epsilon*epsilon);
-
-	    // y -> y-dy
-	    r_y = sqrt(
-		       (xPos   -xCenter)*(xPos   -xCenter) +
-		       (yPos-dy-yCenter)*(yPos-dy-yCenter) );
-	    real_t phi_my = -1.0/sqrt(r_y*r_y+epsilon*epsilon);
-	    
-	    h_gravity(i,j,IX) = - grav * HALF_F * (phi_px - phi_mx)/dx;
-	    h_gravity(i,j,IY) = - grav * HALF_F * (phi_py - phi_my)/dy;
+	    h_gravity(i,j,IX) = - grav * dphi_dx;
+	    h_gravity(i,j,IY) = - grav * dphi_dy;
 
 	  }
 
@@ -6549,14 +6527,6 @@ namespace hydroSimu {
 	  h_U(i,j,IP) = P0 / (_gParams.gamma0 - ONE_F) +
 	    0.5 * ( h_U(i,j,IU) * h_U(i,j,IU) +
 		    h_U(i,j,IV) * h_U(i,j,IV) ) / h_U(i,j,ID);
-
-	  // real_t eken = 0.5f * (h_U(i,j,IU) * h_U(i,j,IU) + h_U(i,j,IV) * h_U(i,j,IV)) / (h_U(i,j,ID) * h_U(i,j,ID));
-	  // real_t eint = h_U(i,j,IP) / h_U(i,j,ID) - eken;
-
-	  // if (eint < 0) {
-	  //   printf("KKKK hydro eint < 0  : e %f eken %f diff %f d %f u %f v %f\n",h_U(i,j,IP)/h_U(i,j,ID),eken,h_U(i,j,IP)/h_U(i,j,ID)-eken,h_U(i,j,ID),h_U(i,j,IU),h_U(i,j,IV));
-	  // }
-
   
 	} // end for i
       } // end for j
