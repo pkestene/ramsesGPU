@@ -80,7 +80,7 @@
 	* improvement: much better restart procedure; now one can read an HDF5 file at a twice smaller resolution and perform an upscale. This is usefull for MRI problem to restart a job by increasing resolution with a factor of 2.
 
 2012-5-23 Pierre Kestener
-	* Version 1.0; package name is not RAMSES-GPU with a dedicated website :
+	* Version 1.0; package name is now RAMSES-GPU with a dedicated website :
 	http://www.maisondelasimulation.fr/projects/RAMSES-GPU/html/
 
 	* MRI with both viscous/resistive terms working
