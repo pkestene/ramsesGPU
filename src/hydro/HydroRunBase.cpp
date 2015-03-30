@@ -5718,6 +5718,9 @@ namespace hydroSimu {
 
     real_t center_x     = configMap.getFloat("Gresho_vortex","center_x",(xMax+xMin)/2);
     real_t center_y     = configMap.getFloat("Gresho_vortex","center_y",(yMax+yMin)/2);
+    real_t v_bulk_x     = configMap.getFloat("Gresho_vortex","v_bulk_x"  ,0.0);
+    real_t v_bulk_y     = configMap.getFloat("Gresho_vortex","v_bulk_y"  ,0.0);
+    real_t v_bulk_z     = configMap.getFloat("Gresho_vortex","v_bulk_z"  ,0.0);
 
     /* 2d Gresho vortex test */
     if (dimType == TWO_D) {
@@ -5754,8 +5757,8 @@ namespace hydroSimu {
 	  }
 	   
 	  h_U(i,j,ID) = ONE_F;
-	  h_U(i,j,IU) = -sin(phi) * v_phi;
-	  h_U(i,j,IV) =  cos(phi) * v_phi;
+	  h_U(i,j,IU) = -sin(phi) * v_phi + v_bulk_x;
+	  h_U(i,j,IV) =  cos(phi) * v_phi + v_bulk_y;
 	  h_U(i,j,IP) = P/(_gParams.gamma0-1.0f) +
 	    0.5 * ( SQR(h_U(i,j,IU)) + 
 		    SQR(h_U(i,j,IV)) ) / h_U(i,j,ID);
@@ -5813,9 +5816,9 @@ namespace hydroSimu {
 	    }
 
 	    h_U(i,j,k,ID) = ONE_F;
-	    h_U(i,j,k,IU) = -sin(phi)*v_phi;
-	    h_U(i,j,k,IV) =  cos(phi)*v_phi;
-	    h_U(i,j,k,IW) = ZERO_F;
+	    h_U(i,j,k,IU) = -sin(phi)*v_phi + v_bulk_x;
+	    h_U(i,j,k,IV) =  cos(phi)*v_phi + v_bulk_y;
+	    h_U(i,j,k,IW) = v_bulk_z;
 	    h_U(i,j,k,IP) = P/(_gParams.gamma0-1.0f) +
 	      0.5 * ( SQR(h_U(i,j,k,IU)) + 
 		      SQR(h_U(i,j,k,IV)) + 
