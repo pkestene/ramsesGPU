@@ -80,7 +80,7 @@ def initData(data,testCase):
                         data[i,j,k] = 1.0
                         exactSolution[i,j,k] = r**2/6.0
                     else:
-                        exactSolution[i,j,k] = -R**3/(3*r)+R**2/3+R**2/6.0
+                        exactSolution[i,j,k] = -R**3/(3*r)+R**2/2
 
         # see http://arxiv.org/pdf/1106.0557.pdf
         #exactSolution = -1.0 / (4*np.pi) / np.sqrt( x**2 + y**2 )
