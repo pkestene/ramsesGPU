@@ -11,11 +11,8 @@
  * Test case 1:  rho(x,y) = 4*alpha*(alpha*(x^2+y^2)-1)*exp(-alpha*(x^2+y^2))
  * Test case 2:  rho(x,y) = ( r=sqrt(x^2+y^2) < R ) ? 1 : 0 
  *
- * Example of use:
- * ./testPoissonCpuFFTW2d --nx 64 --ny 64 --method 1 --test 2
- *
  * \author Pierre Kestener
- * \date July 3, 2014
+ * \date April 8, 2015
  */
 
 #include <math.h>
@@ -28,13 +25,14 @@
 
 #define SQR(x) ((x)*(x))
 
-#include <fftw3.h>
-// fftw wrapper for single / double precision
+#include <cuda_runtime.h>
+#include <cufftw.h>
+
+// cufft wrapper for single / double precision
 #if defined(USE_FLOAT)
 typedef float FFTW_REAL;
 typedef fftwf_complex FFTW_COMPLEX;
 typedef fftwf_plan    FFTW_PLAN;
-#define FFTW_WISDOM_FILENAME         ("fftwf_wisdom.txt")
 #define FFTW_PLAN_DFT_R2C_2D         fftwf_plan_dft_r2c_2d
 #define FFTW_PLAN_DFT_C2R_2D         fftwf_plan_dft_c2r_2d
 #define FFTW_PLAN_DFT_R2C_3D         fftwf_plan_dft_r2c_3d
@@ -42,21 +40,14 @@ typedef fftwf_plan    FFTW_PLAN;
 #define FFTW_PLAN_DFT_3D             fftwf_plan_dft_3d
 #define FFTW_DESTROY_PLAN            fftwf_destroy_plan
 #define FFTW_EXECUTE                 fftwf_execute
-#define FFTW_EXPORT_WISDOM_TO_FILE   fftwf_export_wisdom_to_file
-#define FFTW_IMPORT_WISDOM_FROM_FILE fftwf_import_wisdom_from_file
-#define FFTW_PLAN_WITH_NTHREADS      fftwf_plan_with_nthreads
-#define FFTW_INIT_THREADS            fftwf_init_threads
 #define FFTW_CLEANUP                 fftwf_cleanup
-#define FFTW_CLEANUP_THREADS         fftwf_cleanup_threads
 #define FFTW_PRINT_PLAN              fftwf_print_plan
 #define FFTW_FLOPS                   fftwf_flops
-#define FFTW_MALLOC                  fftwf_malloc
 #define FFTW_FREE                    fftwf_free
 #else
 typedef double FFTW_REAL;
 typedef fftw_complex FFTW_COMPLEX;
 typedef fftw_plan    FFTW_PLAN;
-#define FFTW_WISDOM_FILENAME         ("fftw_wisdom.txt")
 #define FFTW_PLAN_DFT_R2C_2D         fftw_plan_dft_r2c_2d
 #define FFTW_PLAN_DFT_C2R_2D         fftw_plan_dft_c2r_2d
 #define FFTW_PLAN_DFT_R2C_3D         fftw_plan_dft_r2c_3d
@@ -64,28 +55,12 @@ typedef fftw_plan    FFTW_PLAN;
 #define FFTW_PLAN_DFT_3D             fftw_plan_dft_3d
 #define FFTW_DESTROY_PLAN            fftw_destroy_plan
 #define FFTW_EXECUTE                 fftw_execute
-#define FFTW_EXPORT_WISDOM_TO_FILE   fftw_export_wisdom_to_file
-#define FFTW_IMPORT_WISDOM_FROM_FILE fftw_import_wisdom_from_file
-#define FFTW_PLAN_WITH_NTHREADS      fftw_plan_with_nthreads
-#define FFTW_INIT_THREADS            fftw_init_threads
 #define FFTW_CLEANUP                 fftw_cleanup
-#define FFTW_CLEANUP_THREADS         fftw_cleanup_threads
 #define FFTW_PRINT_PLAN              fftw_print_plan
 #define FFTW_FLOPS                   fftw_flops
-#define FFTW_MALLOC                  fftw_malloc
 #define FFTW_FREE                    fftw_free
-#endif
+#endif /* USE_FLOAT */
 
-
-#ifdef NO_FFTW_EXHAUSTIVE
-#define MY_FFTW_FLAGS (FFTW_ESTIMATE)
-#else
-#define MY_FFTW_FLAGS (FFTW_EXHAUSTIVE)
-#endif // NO_FFTW_EXHAUSTIVE
-
-// FFTW_PATIENT, FFTW_MEASURE, FFTW_ESTIMATE
-#define O_METHOD  FFTW_ESTIMATE
-#define O_METHOD_STR "FFTW_ESTIMATE"
 
 enum {
   TEST_CASE_SIN=0,
@@ -93,7 +68,94 @@ enum {
   TEST_CASE_UNIFORM_DISK=2
 };
 
+/////////////////////////////////////////////////
+uint blocksFor(uint elementCount, uint threadCount)
+{
+  return (elementCount + threadCount - 1) / threadCount;
+}
 
+
+/**
+ * apply Poisson kernel to complex Fourier coefficient in input.
+ *
+ * The results represent the Fourier coefficients of the gravitational potential.
+ */
+#define POISSON_2D_DIMX 32
+#define POISSON_2D_DIMY 16
+
+__global__ 
+void kernel_poisson_2d(FFTW_COMPLEX *phi_fft, int NX, int NY, 
+		       double dx, double dy,
+		       int methodNb)
+{
+
+  // Block index
+  const int bx = blockIdx.x;
+  const int by = blockIdx.y;
+
+  // Thread index
+  const int tx = threadIdx.x;
+  const int ty = threadIdx.y;
+
+  const int kx = __mul24(bx, POISSON_2D_DIMX) + tx;
+  const int ky = __mul24(by, POISSON_2D_DIMY) + ty;
+
+  // centered frequency
+  int kx_c, ky_c;
+
+  int NYo2p1 = NY/2+1;
+
+  if (kx>NX/2)
+    kx_c = kx - NX;
+  if (ky>NY/2)
+    ky_c = ky - NY;
+
+  // note that factor NX*NY is used here because FFTW fourier coefficients
+  // are not scaled
+  //FFTW_REAL scaleFactor=2*( cos(2*M_PI*kx/NX) + cos(2*M_PI*ky/NY) - 2)*(NX*NY);
+  
+  FFTW_REAL scaleFactor=0.0;
+  
+  if (methodNb == 0) {
+    /*
+     * method 0 (from Numerical recipes)
+     */
+    
+    scaleFactor=2*( 
+		   (cos(1.0*2*M_PI*kx/NX) - 1)/(dx*dx) + 
+		   (cos(1.0*2*M_PI*ky/NY) - 1)/(dy*dy) )*(NX*NY); 
+    
+  } else if (methodNb==1) {
+    /*
+     * method 1 (just from Continuous Fourier transform of Poisson equation)
+     */
+    scaleFactor=-4*M_PI*M_PI*(kx_c*kx_c + ky_c*ky_c)*NX*NY;
+  }
+
+
+  // write result
+  if (kx < NX and ky < NYo2p1) {
+
+    if (kx!=0 or ky!=0) {
+
+      phi_fft[kx*NYo2p1+ky][0] /= scaleFactor;
+      phi_fft[kx*NYo2p1+ky][1] /= scaleFactor;
+
+    } else { // enforce mean value is zero
+
+      phi_fft[kx*NYo2p1+ky][0] = 0.0;
+      phi_fft[kx*NYo2p1+ky][1] = 0.0;
+
+    }
+  
+  }
+  
+} // kernel_poisson_2D
+
+
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
 int main(int argc, char **argv)
 {
   
@@ -121,16 +183,35 @@ int main(int argc, char **argv)
   //double deltaT;
   //int N_ITER;
 
-  // test in 2D using in-place transform
+  /*
+   * test 2D FFT using in-place transform
+   */
+  // cpu variables
   FFTW_REAL  *rho      = (FFTW_REAL *) malloc(NX*NY2*sizeof(FFTW_REAL));
   FFTW_REAL  *solution = (FFTW_REAL *) malloc(NX*NY2*sizeof(FFTW_REAL));
 
-  FFTW_COMPLEX *rhoComplex = (FFTW_COMPLEX *) rho;
+  // gpu variables
+  FFTW_REAL *d_rho;
+  cudaMalloc((void**) &d_rho, NX*NY2*sizeof(FFTW_REAL));
+  if (cudaGetLastError() != cudaSuccess){
+    fprintf(stderr, "Cuda error: Failed to allocate \"rho\"\n");
+    return 0;
+  }
+  FFTW_COMPLEX *d_rhoComplex = (FFTW_COMPLEX *) d_rho;
+  
+  // CUFFT plan
+  // FFTW_PLAN plan_rho_forward;
+  // cufftPlan2d(&plan_rho_forward, NX, NY, CUFFT_R2C);
 
-  FFTW_PLAN plan_rho_forward  = FFTW_PLAN_DFT_R2C_2D(NX, NY, rho, rhoComplex,
-						     FFTW_ESTIMATE);
-  FFTW_PLAN plan_rho_backward = FFTW_PLAN_DFT_C2R_2D(NX, NY, rhoComplex, rho,
-						     FFTW_ESTIMATE);
+  // FFTW_PLAN plan_rho_backward;
+  // cufftPlan2d(&plan_rho_backward, NX, NY, CUFFT_C2R);
+  
+  FFTW_PLAN plan_rho_forward  = FFTW_PLAN_DFT_R2C_2D(NX, NY, 
+						     d_rho, d_rhoComplex,
+                                                     FFTW_ESTIMATE);
+  FFTW_PLAN plan_rho_backward = FFTW_PLAN_DFT_C2R_2D(NX, NY, 
+						     d_rhoComplex, d_rho,
+                                                     FFTW_ESTIMATE);
 
   double Lx=1.0;
   double Ly=1.0;
@@ -143,9 +224,8 @@ int main(int argc, char **argv)
   double y0    = 0.5;
 
   /*
-   * initialize rho to some function my_function(x,y)
+   * (CPU) initialize rho to some function my_function(x,y)
    */
-  //FFTW_REAL scale = - ( SQR(M_PI/NX) + SQR(M_PI/NY) ); 
   for (int i = 0; i < NX; ++i) {
     for (int j = 0; j < NY; ++j) {
       double x = 1.0*i/NX - x0;
@@ -185,57 +265,34 @@ int main(int argc, char **argv)
     cnpy::npy_save("rho.npy",rho,shape,2,"w");
   }
 
+  // copy rho onto gpu
+  cudaMemcpy(d_rho, rho, sizeof(FFTW_REAL)*NX*NY2, cudaMemcpyHostToDevice);
+
   // compute FFT(rho)
   FFTW_EXECUTE(plan_rho_forward);
   
   // compute Fourier coefficient of phi
-  FFTW_COMPLEX *phiComplex = rhoComplex;
-  
-  for (int kx=0; kx < NX; kx++)
-    for (int ky=0; ky < NYo2p1; ky++) {
-      
-      double kkx = (double) kx;
-      double kky = (double) ky;
+  FFTW_COMPLEX *d_phiComplex = d_rhoComplex;
 
-      if (kx>NX/2)
-	kkx -= NX;
-      if (ky>NY/2)
-	kky -= NY;
-      
-      // note that factor NX*NY is used here because FFTW fourier coefficients
-      // are not scaled
-      //FFTW_REAL scaleFactor=2*( cos(2*M_PI*kx/NX) + cos(2*M_PI*ky/NY) - 2)*(NX*NY);
+  // (GPU) apply poisson kernel 
+  {
+    
+    dim3 dimBlock(POISSON_2D_DIMX,
+		  POISSON_2D_DIMY);
+    dim3 dimGrid(blocksFor(NX, POISSON_2D_DIMX),
+		 blocksFor(NY, POISSON_2D_DIMY));
+    kernel_poisson_2d<<<dimGrid, dimBlock>>>(d_phiComplex, 
+					     NX, NY, dx, dy, 
+					     methodNb);
 
-      FFTW_REAL scaleFactor=0.0;
- 
-      if (methodNb == 0) {
-	/*
-	 * method 0 (from Numerical recipes)
-	 */
-	
-	scaleFactor=2*( 
-		 (cos(1.0*2*M_PI*kx/NX) - 1)/(dx*dx) + 
-		 (cos(1.0*2*M_PI*ky/NY) - 1)/(dy*dy) )*(NX*NY); 
-	
-      } else if (methodNb==1) {
-	/*
-	 * method 1 (just from Continuous Fourier transform of Poisson equation)
-	 */
-	scaleFactor=-4*M_PI*M_PI*(kkx*kkx + kky*kky)*NX*NY;
-      }
-
-
-      if (kx!=0 or ky!=0) {
-	phiComplex[kx*NYo2p1+ky][0] /= scaleFactor;
-	phiComplex[kx*NYo2p1+ky][1] /= scaleFactor;
-      } else { // enforce mean value is zero
-	phiComplex[kx*NYo2p1+ky][0] = 0.0;
-	phiComplex[kx*NYo2p1+ky][1] = 0.0;
-      }
-    }
+  }
   
   // compute FFT^{-1} (phiComplex) to retrieve solution
   FFTW_EXECUTE(plan_rho_backward);
+
+  // retrieve gpu computation
+  cudaMemcpy(rho, d_rho, sizeof(FFTW_REAL)*NX*NY2, cudaMemcpyDeviceToHost);
+
   
   if (testCaseNb==TEST_CASE_GAUSSIAN) {
     // compute max value, add offset to match analytical solution at the
@@ -334,7 +391,11 @@ int main(int argc, char **argv)
 
   }
 
+  cudaFree(d_rho);
+
   free(rho);
   free(solution);
+
+  return 0;
   
  } // end main
