@@ -81,13 +81,17 @@ uint blocksFor(uint elementCount, uint threadCount)
 /**
  * apply Poisson kernel to complex Fourier coefficient in input.
  *
- * The results represent the Fourier coefficients of the gravitational potential.
+ * The results represent the Fourier coefficients of the 
+ * gravitational potential.
+ *
+ * Take care that dimensions are swapped, so that we have column-major order
+ * inside kernel.
  */
 #define POISSON_2D_DIMX 32
 #define POISSON_2D_DIMY 16
 
 __global__ 
-void kernel_poisson_2d(FFTW_COMPLEX *phi_fft, int NX, int NY, 
+void kernel_poisson_2d(FFTW_COMPLEX *phi_fft, int nx, int ny, 
 		       double dx, double dy,
 		       int methodNb)
 {
@@ -107,16 +111,16 @@ void kernel_poisson_2d(FFTW_COMPLEX *phi_fft, int NX, int NY,
   int kx_c = kx;
   int ky_c = ky;
 
-  int NYo2p1 = NY/2+1;
+  int nxo2p1 = nx/2+1;
 
-  if (kx>NX/2)
-    kx_c = kx - NX;
-  if (ky>NY/2)
-    ky_c = ky - NY;
+  if (kx>nx/2)
+    kx_c = kx - nx;
+  if (ky>ny/2)
+    ky_c = ky - ny;
 
-  // note that factor NX*NY is used here because FFTW fourier coefficients
+  // note that factor nx*ny is used here because FFTW fourier coefficients
   // are not scaled
-  //FFTW_REAL scaleFactor=2*( cos(2*M_PI*kx/NX) + cos(2*M_PI*ky/NY) - 2)*(NX*NY);
+  //FFTW_REAL scaleFactor=2*( cos(2*M_PI*kx/nx) + cos(2*M_PI*ky/ny) - 2)*(nx*ny);
   
   FFTW_REAL scaleFactor=0.0;
   
@@ -126,29 +130,29 @@ void kernel_poisson_2d(FFTW_COMPLEX *phi_fft, int NX, int NY,
      */
     
     scaleFactor=2*( 
-		   (cos(1.0*2*M_PI*kx/NX) - 1)/(dx*dx) + 
-		   (cos(1.0*2*M_PI*ky/NY) - 1)/(dy*dy) )*(NX*NY); 
+		   (cos(1.0*2*M_PI*kx/nx) - 1)/(dx*dx) + 
+		   (cos(1.0*2*M_PI*ky/ny) - 1)/(dy*dy) )*(nx*ny); 
     
   } else if (methodNb==1) {
     /*
      * method 1 (just from Continuous Fourier transform of Poisson equation)
      */
-    scaleFactor=-4*M_PI*M_PI*(kx_c*kx_c + ky_c*ky_c)*NX*NY;
+    scaleFactor=-4*M_PI*M_PI*(kx_c*kx_c + ky_c*ky_c)*nx*ny;
   }
 
 
   // write result
-  if (kx < NX and ky < NYo2p1) {
+  if (kx < nxo2p1 and ky < ny) {
 
     if (kx!=0 or ky!=0) {
 
-      phi_fft[kx*NYo2p1+ky][0] /= scaleFactor;
-      phi_fft[kx*NYo2p1+ky][1] /= scaleFactor;
+      phi_fft[kx+nxo2p1*ky][0] /= scaleFactor;
+      phi_fft[kx+nxo2p1*ky][1] /= scaleFactor;
 
     } else { // enforce mean value is zero
 
-      phi_fft[kx*NYo2p1+ky][0] = 0.0;
-      phi_fft[kx*NYo2p1+ky][1] = 0.0;
+      phi_fft[kx+nxo2p1*ky][0] = 0.0;
+      phi_fft[kx+nxo2p1*ky][1] = 0.0;
 
     }
   
@@ -173,7 +177,7 @@ int main(int argc, char **argv)
   int NY2 = 2*(NY/2+1);
   //int NZ2 = 2*(NZ/2+1);
   
-  int NYo2p1 = NY/2+1;
+  //int NYo2p1 = NY/2+1;
 
   // method (variant of FFT-based Poisson solver) : 0 or 1
   const int methodNb   = cl.follow(0, "--method");
@@ -198,7 +202,7 @@ int main(int argc, char **argv)
   FFTW_REAL *d_rho;
   cudaMalloc((void**) &d_rho, NX*NY2*sizeof(FFTW_REAL));
   if (cudaGetLastError() != cudaSuccess){
-    fprintf(stderr, "Cuda error: Failed to allocate \"rho\"\n");
+    fprintf(stderr, "Cuda error: Failed to allocate \"d_rho\"\n");
     return 0;
   }
   FFTW_COMPLEX *d_rhoComplex = (FFTW_COMPLEX *) d_rho;
@@ -280,13 +284,21 @@ int main(int argc, char **argv)
 
   // (GPU) apply poisson kernel 
   {
+
+    // swap dimension (row-major to column-major order)
+    int nx = NY;
+    int ny = NX;
     
+    double dx_c = dy;
+    double dy_c = dx;
+
     dim3 dimBlock(POISSON_2D_DIMX,
 		  POISSON_2D_DIMY);
-    dim3 dimGrid(blocksFor(NX    , POISSON_2D_DIMX),
-		 blocksFor(NYo2p1, POISSON_2D_DIMY));
+    dim3 dimGrid(blocksFor(nx/2+1, POISSON_2D_DIMX),
+		 blocksFor(ny    , POISSON_2D_DIMY));
     kernel_poisson_2d<<<dimGrid, dimBlock>>>(d_phiComplex, 
-					     NX, NY, dx, dy, 
+					     nx  , ny  , 
+					     dx_c, dy_c,
 					     methodNb);
 
   }

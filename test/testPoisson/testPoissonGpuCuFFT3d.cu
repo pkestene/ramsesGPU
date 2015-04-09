@@ -90,7 +90,7 @@ uint blocksFor(uint elementCount, uint threadCount)
 
 __global__ 
 void kernel_poisson_3d(FFTW_COMPLEX *phi_fft, 
-		       int nx, int ny, int nz,
+		       int nx   , int ny   , int nz,
 		       double dx, double dy, double dz, 
 		       int methodNb)
 {
@@ -106,56 +106,60 @@ void kernel_poisson_3d(FFTW_COMPLEX *phi_fft,
   const int kx = __mul24(bx, POISSON_3D_DIMX) + tx;
   const int ky = __mul24(by, POISSON_3D_DIMY) + ty;
 
-  // centered frequency
-  int kx_c = kx;
-  int ky_c = ky;
-  int kz_c = kz;
 
-  int nxo2p1 = nx/2+1;
-
-  if (kx>nx/2)
-    kx_c = kx - nx;
-  if (ky>ny/2)
-    ky_c = ky - ny;
-  if (kz>nz/2)
-    kz_c = kz - nz;
-
-  FFTW_REAL scaleFactor=0.0;
-  
-  if (methodNb == 0) {
-    /*
-     * method 0 (from Numerical recipes)
-     */
+  for (int kz=0; kz<nz; kz++) {
     
-    scaleFactor=2*( 
-		   (cos(1.0*2*M_PI*kx/nx) - 1)/(dx*dx) + 
-		   (cos(1.0*2*M_PI*ky/ny) - 1)/(dy*dy) + 
-		   (cos(1.0*2*M_PI*kz/nz) - 1)/(dz*dz) )*(nx*ny*nz); 
+    // centered frequency
+    int kx_c = kx;
+    int ky_c = ky;
+    int kz_c = kz;
     
-  } else if (methodNb==1) {
-    /*
-     * method 1 (just from Continuous Fourier transform of Poisson equation)
-     */
-    scaleFactor=-4*M_PI*M_PI*(kx_c*kx_c + ky_c*ky_c + kz_c*kz_c)*nx*ny*nz;
-  }
+    int nxo2p1 = nx/2+1;
+    
+    if (kx>nx/2)
+      kx_c = kx - nx;
+    if (ky>ny/2)
+      ky_c = ky - ny;
+    if (kz>nz/2)
+      kz_c = kz - nz;
 
-
-  // write result
-  if (kx < nxo2p1 and ky < ny) {
-
-    if (kx!=0 or ky!=0) {
-
-      phi_fft[kx*NYo2p1+ky][0] /= scaleFactor;
-      phi_fft[kx*NYo2p1+ky][1] /= scaleFactor;
-
-    } else { // enforce mean value is zero
-
-      phi_fft[kx*NYo2p1+ky][0] = 0.0;
-      phi_fft[kx*NYo2p1+ky][1] = 0.0;
-
+    FFTW_REAL scaleFactor=0.0;
+    
+    if (methodNb == 0) {
+      /*
+       * method 0 (from Numerical recipes)
+       */
+      
+      scaleFactor=2*( 
+		     (cos(1.0*2*M_PI*kx/nx) - 1)/(dx*dx) + 
+		     (cos(1.0*2*M_PI*ky/ny) - 1)/(dy*dy) + 
+		     (cos(1.0*2*M_PI*kz/nz) - 1)/(dz*dz) )*(nx*ny*nz); 
+      
+    } else if (methodNb == 1) {
+      /*
+       * method 1 (just from Continuous Fourier transform of Poisson equation)
+       */
+      scaleFactor=-4*M_PI*M_PI*(kx_c*kx_c + ky_c*ky_c + kz_c*kz_c)*nx*ny*nz;
     }
+    
+    // write result
+    if (kx < nxo2p1 and ky < ny) {
+      
+      if (kx!=0 or ky!=0 or kz!=0) {
+	
+    	phi_fft[kx + nxo2p1*ky + nxo2p1*ny*kz][0] /= scaleFactor;
+    	phi_fft[kx + nxo2p1*ky + nxo2p1*ny*kz][1] /= scaleFactor;
+	
+      } else { // enforce mean value is zero
+	
+    	phi_fft[kx + nxo2p1*ky + nxo2p1*ny*kz][0] = 0.0;
+    	phi_fft[kx + nxo2p1*ky + nxo2p1*ny*kz][1] = 0.0;
+	
+      }
   
-  }
+    }
+
+  } // end for kz
   
 } // kernel_poisson_3D
 
@@ -175,7 +179,7 @@ int main(int argc, char **argv)
   
   int NZ2 = 2*(NZ/2+1);
   
-  int NZo2p1 = NZ/2+1;
+  //int NZo2p1 = NZ/2+1;
 
   // method (variant of FFT-based Poisson solver) : 0 or 1
   const int methodNb   = cl.follow(0, "--method");
@@ -293,13 +297,23 @@ int main(int argc, char **argv)
   // (GPU) apply poisson kernel 
   {
     
+    // swap dimension (row-major to column-major order)
+    int nx = NZ;
+    int ny = NY;
+    int nz = NX;
+
+    double dx_c = dz;
+    double dy_c = dy;
+    double dz_c = dx;
+
     dim3 dimBlock(POISSON_3D_DIMX,
 		  POISSON_3D_DIMY);
-    dim3 dimGrid(blocksFor(NX, POISSON_3D_DIMX),
-		 blocksFor(NY, POISSON_3D_DIMY));
+    dim3 dimGrid(blocksFor(nx/2+1, POISSON_3D_DIMX),
+		 blocksFor(ny    , POISSON_3D_DIMY));
+
     kernel_poisson_3d<<<dimGrid, dimBlock>>>(d_phiComplex, 
-					     NX, NY, NZ, 
-					     dx, dy, dz,
+					     nx  , ny  , nz,
+					     dx_c, dy_c, dz_c,
 					     methodNb);
 
   }
@@ -318,7 +332,7 @@ int main(int argc, char **argv)
     double maxVal = rho[0];
     for (int i = 0; i < NX; ++i) {
       for (int j = 0; j < NY; ++j) {
-	for (int j = 0; j < NY; ++j) {
+	for (int k = 0; k < NZ; ++k) {
 	  if (rho[i*NY*NZ2 + j*NZ2 + k] > maxVal)
 	    maxVal = rho[i*NY*NZ2 + j*NZ2 + k];
 	}
@@ -327,7 +341,7 @@ int main(int argc, char **argv)
     
     for (int i = 0; i < NX; ++i) {
       for (int j = 0; j < NY; ++j) {
-	for (int k = 0; k < NZ; ++j) {
+	for (int k = 0; k < NZ; ++k) {
 	  rho[i*NY*NZ2 + j*NZ2 + k] += 1-maxVal;
 	}
       }
@@ -363,45 +377,47 @@ int main(int argc, char **argv)
     for (int i = 0; i < NX; ++i) {
       for (int j = 0; j < NY; ++j) {
 	for (int k = 0; k < NZ; ++k) {
-
-	double sol=0.0;
-
-	if (testCaseNb==TEST_CASE_SIN) {
-
-	  sol =  - sin(2*M_PI*i/NX) * sin(2*M_PI*j/NY) * sin(2*M_PI*k/NZ) / ( (4*M_PI*M_PI)*(1.0/Lx/Lx + 1.0/Ly/Ly + 1.0/Lz/Lz) );
-	
-	} else if (testCaseNb==TEST_CASE_GAUSSIAN) {
-
-	  double x = 1.0*i/NX - x0;
-	  double y = 1.0*j/NY - y0;
-	  double z = 1.0*k/NZ - z0;
-	  sol = exp(-alpha*(x*x+y*y+z*z));
-
-	} else if (testCaseNb==TEST_CASE_UNIFORM_BALL) {
-
-	  double x = 1.0*i/NX - x0;
-	  double y = 1.0*j/NY - y0;
-	  double y = 1.0*k/NZ - z0;
-
-	  double r = sqrt( (x-xC)*(x-xC) + (y-yC)*(y-yC) + (z-zC)*(z-zC) );
 	  
-	  if ( r < R ) {
-	    sol = r*r/6.0;
-	  } else {
-	    sol = -R*R*R/(3*r)+R*R/2.0;
-	  }
-	} /* end testCase */
+	  double sol=0.0;
+	  
+	  if (testCaseNb==TEST_CASE_SIN) {
+	    
+	    sol =  - sin(2*M_PI*i/NX) * sin(2*M_PI*j/NY) * sin(2*M_PI*k/NZ) / ( (4*M_PI*M_PI)*(1.0/Lx/Lx + 1.0/Ly/Ly + 1.0/Lz/Lz) );
+	    
+	  } else if (testCaseNb==TEST_CASE_GAUSSIAN) {
+	    
+	    double x = 1.0*i/NX - x0;
+	    double y = 1.0*j/NY - y0;
+	    double z = 1.0*k/NZ - z0;
+	    sol = exp(-alpha*(x*x+y*y+z*z));
+	    
+	  } else if (testCaseNb==TEST_CASE_UNIFORM_BALL) {
+	    
+	    double x = 1.0*i/NX - x0;
+	    double y = 1.0*j/NY - y0;
+	    double z = 1.0*k/NZ - z0;
+	    
+	    double r = sqrt( (x-xC)*(x-xC) + (y-yC)*(y-yC) + (z-zC)*(z-zC) );
+	    
+	    if ( r < R ) {
+	      sol = r*r/6.0;
+	    } else {
+	      sol = -R*R*R/(3*r)+R*R/2.0;
+	    }
+	  } /* end testCase */
+	  
+	  // compute L2 difference between FFT-based solution (phi) and 
+	  // expected analytical solution
+	  L2_rho += sol*sol;
+	  rho[i*NY*NZ2 + j*NZ2 + k] -=  sol;
+	  L2_diff += rho[i*NY*NZ2 + j*NZ2 + k] * rho[i*NY*NZ2 + j*NZ2 + k];
+	  
+	  solution[i*NY*NZ2 + j*NZ2 + k] = sol;
 
-	// compute L2 difference between FFT-based solution (phi) and 
-	// expected analytical solution
-	L2_rho += sol*sol;
-	rho[i*NY*NZ2 + j*NZ2 + k] -=  sol;
-	L2_diff += rho[i*NY*NZ2 + j*NZ2 + k] * rho[i*NY*NZ2 + j*NZ2 + k];
-
-	solution[i*NY*NZ2+j*NZ2+k] = sol;
-      }
-    }
-
+	} // end for k
+      } // end for j
+    } // end for i
+      
     std::cout << "L2 error between phi and exact solution : " 
 	      <<  L2_diff/L2_rho << std::endl;
 
