@@ -129,9 +129,9 @@ if test "x$with_fftw3" = "xyes"; then
       FFTW3_CFLAGS="-I$FFTW3_PATH/include"
       FFTW3_INC_DIR="$FFTW3_PATH/include"
       FFTW3_CPPFLAGS="$FFTW3_CFLAGS"
-      FFTW3_LDFLAGS="-L$THE_FFTW3_LIBDIR -lfftw3"
+      FFTW3_LDFLAGS="-L$THE_FFTW3_LIBDIR -lfftw3 -lfftw3f"
       if test "x$with_fftw3_mpi" = "xyes"; then
-      	 FFTW3_LDFLAGS="-L$FFTW3_PATH/lib -lfftw3_mpi -lfftw3"
+      	 FFTW3_LDFLAGS="-L$FFTW3_PATH/lib -lfftw3_mpi -lfftw3f_mpi -lfftw3 -lfftw3f"
       fi
       AC_MSG_RESULT([yes])
   
