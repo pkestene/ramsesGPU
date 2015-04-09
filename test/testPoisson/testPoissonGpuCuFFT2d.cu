@@ -11,6 +11,9 @@
  * Test case 1:  rho(x,y) = 4*alpha*(alpha*(x^2+y^2)-1)*exp(-alpha*(x^2+y^2))
  * Test case 2:  rho(x,y) = ( r=sqrt(x^2+y^2) < R ) ? 1 : 0 
  *
+ * Example of use:
+ * ./testPoissonGpuCuFFT2d --nx 64 --ny 64 --method 1 --test 2
+ *
  * \author Pierre Kestener
  * \date April 8, 2015
  */
@@ -101,7 +104,8 @@ void kernel_poisson_2d(FFTW_COMPLEX *phi_fft, int NX, int NY,
   const int ky = __mul24(by, POISSON_2D_DIMY) + ty;
 
   // centered frequency
-  int kx_c, ky_c;
+  int kx_c = kx;
+  int ky_c = ky;
 
   int NYo2p1 = NY/2+1;
 
@@ -279,8 +283,8 @@ int main(int argc, char **argv)
     
     dim3 dimBlock(POISSON_2D_DIMX,
 		  POISSON_2D_DIMY);
-    dim3 dimGrid(blocksFor(NX, POISSON_2D_DIMX),
-		 blocksFor(NY, POISSON_2D_DIMY));
+    dim3 dimGrid(blocksFor(NX    , POISSON_2D_DIMX),
+		 blocksFor(NYo2p1, POISSON_2D_DIMY));
     kernel_poisson_2d<<<dimGrid, dimBlock>>>(d_phiComplex, 
 					     NX, NY, dx, dy, 
 					     methodNb);
