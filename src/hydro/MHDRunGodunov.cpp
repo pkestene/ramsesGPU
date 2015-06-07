@@ -609,277 +609,733 @@ namespace hydroSimu {
 					  real_t dt, int nStep)
   {
 
+    // update boundaries
+    TIMER_START(timerBoundaries);
+    make_all_boundaries(d_UOld);
+    TIMER_STOP(timerBoundaries);
+
+    // easier for time integration later
+    d_UOld.copyTo(d_UNew);
+
+    // gravity term not implemented ?
+    if (dimType == THREE_D and gravityEnabled and (implementationVersion < 4) ) {
+      std::cerr << "Gravity is not implemented in versions 0 to 3 of 3D MHD.\n";
+      std::cerr << "Use implementationVersion=4 instead !\n";
+    }
+
     // inner domain integration
     TIMER_START(timerGodunov);
+
+    if (implementationVersion == 0) {
+  
+      godunov_unsplit_gpu_v0(d_UOld, d_UNew, dt, nStep);
+  
+    } else if (implementationVersion == 1) {
+
+      godunov_unsplit_gpu_v1(d_UOld, d_UNew, dt, nStep);
+    
+    } else if (implementationVersion == 2) {
+    
+      godunov_unsplit_gpu_v2(d_UOld, d_UNew, dt, nStep);
+
+    } else if (implementationVersion == 3) {
+    
+      godunov_unsplit_gpu_v3(d_UOld, d_UNew, dt, nStep);
+
+    } else if (implementationVersion == 4) {
+    
+      godunov_unsplit_gpu_v4(d_UOld, d_UNew, dt, nStep);
+
+    } // end implementationVersion == 4
+
+    TIMER_STOP(timerGodunov);
+
+  } // MHDRunGodunov::godunov_unsplit_gpu
+
+  // =======================================================
+  // =======================================================
+  void MHDRunGodunov::godunov_unsplit_gpu_v0(DeviceArray<real_t>& d_UOld, 
+					     DeviceArray<real_t>& d_UNew,
+					     real_t dt, int nStep)
+  {
+
     if (dimType == TWO_D) {
 
-      if (implementationVersion == 0) {
-	
-	// 2D Godunov unsplit kernel
-	dim3 dimBlock(UNSPLIT_BLOCK_DIMX_2D,
-		      UNSPLIT_BLOCK_DIMY_2D);
-	
-	dim3 dimGrid(blocksFor(isize, UNSPLIT_BLOCK_INNER_DIMX_2D), 
-		     blocksFor(jsize, UNSPLIT_BLOCK_INNER_DIMY_2D));
-	kernel_godunov_unsplit_mhd_2d<<<dimGrid, dimBlock>>>(d_UOld.data(), 
-							     d_UNew.data(),
-							     d_UOld.pitch(), 
-							     d_UOld.dimx(), 
-							     d_UOld.dimy(), 
-							     dt / dx, 
-							     dt / dy,
-							     dt,
-							     gravityEnabled);
-	checkCudaError("MHDRunGodunov :: kernel_godunov_unsplit_mhd_2d error");
-
-	// gravity source term
-	if (gravityEnabled) {
-	  compute_gravity_source_term(d_UNew, d_UOld, dt);
-	}
-	
-      } else if (implementationVersion == 1) {
-
-	// NOTE : gravity source term is not implemented here
-	// use implementation version 0 instead
-
-	if (gravityEnabled) {
-	  std::cerr << "Gravity is not implemented in version 1 of 2D MHD.\n";
-	  std::cerr << "Use version 0 instead !\n";
-	}
-
-	{
-
-	  TIMER_START(timerTrace);
-	  // 2D Godunov unsplit kernel
-	  dim3 dimBlock(UNSPLIT_BLOCK_DIMX_2D_V1,
-			UNSPLIT_BLOCK_DIMY_2D_V1);
-	  
-	  dim3 dimGrid(blocksFor(isize, UNSPLIT_BLOCK_INNER_DIMX_2D_V1), 
-		       blocksFor(jsize, UNSPLIT_BLOCK_INNER_DIMY_2D_V1));
-	  kernel_godunov_unsplit_mhd_2d_v1<<<dimGrid, dimBlock>>>(d_UOld.data(), 
-								  d_UNew.data(),
-								  d_qm_x.data(),
-								  d_qm_y.data(),
-								  d_qEdge_RT.data(),
-								  d_qEdge_RB.data(),
-								  d_qEdge_LT.data(),
-								  d_emf.data(),
-								  d_UOld.pitch(), 
-								  d_UOld.dimx(), 
-								  d_UOld.dimy(), 
-								  dt / dx, 
-								  dt / dy,
-								  dt);
-	  checkCudaError("MHDRunGodunov :: kernel_godunov_unsplit_mhd_2d_v1 error");
-	  TIMER_STOP(timerTrace);
-	}
-
-	{
-	  TIMER_START(timerUpdate);
-	  // 2D MHD kernel for constraint transport (CT) update
-	  dim3 dimBlock(UNSPLIT_BLOCK_DIMX_2D_V1_EMF,
-			UNSPLIT_BLOCK_DIMY_2D_V1_EMF);
-	  
-	  dim3 dimGrid(blocksFor(isize, UNSPLIT_BLOCK_DIMX_2D_V1_EMF), 
-		       blocksFor(jsize, UNSPLIT_BLOCK_DIMY_2D_V1_EMF));
-	  kernel_mhd_2d_update_emf_v1<<<dimGrid, dimBlock>>>(d_UOld.data(), 
-							     d_UNew.data(),
-							     d_emf.data(),
-							     d_UOld.pitch(), 
-							     d_UOld.dimx(), 
-							     d_UOld.dimy(), 
-							     dt / dx, 
-							     dt / dy,
-							     dt);
-	  checkCudaError("MHDRunGodunov :: kernel_mhd_2d_update_emf_v1 error");
-	  TIMER_STOP(timerUpdate);
-	}
-
-	TIMER_START(timerDissipative);
-	{
-	  // update borders
-	  real_t &nu  = _gParams.nu;
-	  real_t &eta = _gParams.eta;
-	  if (nu>0 or eta>0) {
-	    make_all_boundaries(d_UNew);
-	  }
-
-	  if (eta>0) {
-	    // update magnetic field with resistivity emf
-	    compute_resistivity_emf_2d(d_UNew, d_emf);
-	    compute_ct_update_2d      (d_UNew, d_emf, dt);
-
-	    real_t &cIso = _gParams.cIso;
-	    if (cIso<=0) { // non-isothermal simulations
-	      // compute energy flux
-	      compute_resistivity_energy_flux_2d(d_UNew, d_qm_x, d_qm_y, dt);
-	      compute_hydro_update_energy       (d_UNew, d_qm_x, d_qm_y);
-	    }
-	  }
-
-	  // compute viscosity
-	  if (nu>0) {
-	    DeviceArray<real_t> &d_flux_x = d_qm_x;
-	    DeviceArray<real_t> &d_flux_y = d_qm_y;
-	    
-	    compute_viscosity_flux(d_UNew, d_flux_x, d_flux_y, dt);
-	    compute_hydro_update  (d_UNew, d_flux_x, d_flux_y);
-	  } // end compute viscosity force / update  
-	  
-	} // end compute viscosity
-	TIMER_STOP(timerDissipative);
-
-      } // end implementationVersion == 1
-
-    } else { // THREE_D
-	
-      // gravity term not implemented here
-      // use implementation version 4
+      // 2D Godunov unsplit kernel
+      dim3 dimBlock(UNSPLIT_BLOCK_DIMX_2D,
+		    UNSPLIT_BLOCK_DIMY_2D);
       
-      if (gravityEnabled and (implementationVersion < 4) ) {
-	std::cerr << "Gravity is not implemented in versions 0 to 3 of 3D MHD.\n";
-	std::cerr << "Use implementationVersion=4 instead !\n";
+      dim3 dimGrid(blocksFor(isize, UNSPLIT_BLOCK_INNER_DIMX_2D), 
+		   blocksFor(jsize, UNSPLIT_BLOCK_INNER_DIMY_2D));
+      kernel_godunov_unsplit_mhd_2d<<<dimGrid, dimBlock>>>(d_UOld.data(), 
+							   d_UNew.data(),
+							   d_UOld.pitch(), 
+							   d_UOld.dimx(), 
+							   d_UOld.dimy(), 
+							   dt / dx, 
+							   dt / dy,
+							   dt,
+							   gravityEnabled);
+      checkCudaError("MHDRunGodunov :: kernel_godunov_unsplit_mhd_2d error");
+      
+      // gravity source term
+      if (gravityEnabled) {
+	compute_gravity_source_term(d_UNew, d_UOld, dt);
       }
+      
+    } else { // THREE_D
 
+      // unimplemented
+      std::cerr << "MHDRunGodunov::godunov_unsplit_gpu_v0 does not implement a 3D version" << std::endl;
+      std::cerr << "3D GPU MHD implementation version 0 Will never be implemented ! To poor performances expected." << std::endl;
 
+    } // 3D
 
-      if (implementationVersion == 0) {
-	std::cout << "3D GPU MHD implementation version 0 Will never be implemented ! To poor performances expected." << std::endl;
+  } // MHDRunGodunov::godunov_unsplit_gpu_v0
+
+  // =======================================================
+  // =======================================================
+  void MHDRunGodunov::godunov_unsplit_gpu_v1(DeviceArray<real_t>& d_UOld, 
+					     DeviceArray<real_t>& d_UNew,
+					     real_t dt, int nStep)
+  {
+
+    if (dimType == TWO_D) {
+
+      // NOTE : gravity source term is not implemented here
+      // use implementation version 0 instead
+      
+      if (gravityEnabled) {
+	std::cerr << "Gravity is not implemented in version 1 of 2D MHD.\n";
+	std::cerr << "Use version 0 instead !\n";
       }
-
-      if (implementationVersion == 1) {
+      
+      {
 	
-	// 3D Godunov unsplit kernel    
-	dim3 dimBlock(UNSPLIT_BLOCK_DIMX_3D_V1,
-		      UNSPLIT_BLOCK_DIMY_3D_V1);
-	dim3 dimGrid(blocksFor(isize, UNSPLIT_BLOCK_INNER_DIMX_3D_V1), 
-		     blocksFor(jsize, UNSPLIT_BLOCK_INNER_DIMY_3D_V1));
-	kernel_godunov_unsplit_mhd_3d_v1<<<dimGrid, dimBlock>>>(d_UOld.data(), 
-								d_UNew.data(), 
+	TIMER_START(timerTrace);
+	// 2D Godunov unsplit kernel
+	dim3 dimBlock(UNSPLIT_BLOCK_DIMX_2D_V1,
+		      UNSPLIT_BLOCK_DIMY_2D_V1);
+	
+	dim3 dimGrid(blocksFor(isize, UNSPLIT_BLOCK_INNER_DIMX_2D_V1), 
+		     blocksFor(jsize, UNSPLIT_BLOCK_INNER_DIMY_2D_V1));
+	kernel_godunov_unsplit_mhd_2d_v1<<<dimGrid, dimBlock>>>(d_UOld.data(), 
+								d_UNew.data(),
 								d_qm_x.data(),
 								d_qm_y.data(),
-								d_qm_z.data(),
 								d_qEdge_RT.data(),
 								d_qEdge_RB.data(),
 								d_qEdge_LT.data(),
-								d_qEdge_RT2.data(),
-								d_qEdge_RB2.data(),
-								d_qEdge_LT2.data(),
-								d_qEdge_RT3.data(),
-								d_qEdge_RB3.data(),
-								d_qEdge_LT3.data(),
+								d_emf.data(),
 								d_UOld.pitch(), 
 								d_UOld.dimx(), 
 								d_UOld.dimy(), 
-								d_UOld.dimz(),
 								dt / dx, 
 								dt / dy,
-								dt / dz,
 								dt);
-	checkCudaError("MHDRunGodunov :: kernel_godunov_unsplit_mhd_3d_v1 error");
+	checkCudaError("MHDRunGodunov :: kernel_godunov_unsplit_mhd_2d_v1 error");
+	TIMER_STOP(timerTrace);
       }
-
-      if (implementationVersion == 2) {
-	std::cout << "3D GPU MHD implementation version 2 is NOT implemented !" << std::endl;
+      
+      {
+	TIMER_START(timerUpdate);
+	// 2D MHD kernel for constraint transport (CT) update
+	dim3 dimBlock(UNSPLIT_BLOCK_DIMX_2D_V1_EMF,
+		      UNSPLIT_BLOCK_DIMY_2D_V1_EMF);
+	
+	dim3 dimGrid(blocksFor(isize, UNSPLIT_BLOCK_DIMX_2D_V1_EMF), 
+		     blocksFor(jsize, UNSPLIT_BLOCK_DIMY_2D_V1_EMF));
+	kernel_mhd_2d_update_emf_v1<<<dimGrid, dimBlock>>>(d_UOld.data(), 
+							   d_UNew.data(),
+							   d_emf.data(),
+							   d_UOld.pitch(), 
+							   d_UOld.dimx(), 
+							   d_UOld.dimy(), 
+							   dt / dx, 
+							   dt / dy,
+							   dt);
+	checkCudaError("MHDRunGodunov :: kernel_mhd_2d_update_emf_v1 error");
+	TIMER_STOP(timerUpdate);
       }
-
-      if (implementationVersion == 3 or implementationVersion == 4) {
-	
-	TIMER_START(timerPrimVar);
-	{
-	  // 3D primitive variables computation kernel    
-	  dim3 dimBlock(PRIM_VAR_MHD_BLOCK_DIMX_3D,
-			PRIM_VAR_MHD_BLOCK_DIMY_3D);
-	  dim3 dimGrid(blocksFor(isize, PRIM_VAR_MHD_BLOCK_DIMX_3D), 
-		       blocksFor(jsize, PRIM_VAR_MHD_BLOCK_DIMY_3D));
-	  kernel_mhd_compute_primitive_variables_3D<<<dimGrid, 
-	    dimBlock>>>(d_UOld.data(), 
-			d_Q.data(),
-			d_UOld.pitch(),
-			d_UOld.dimx(),
-			d_UOld.dimy(), 
-			d_UOld.dimz(),
-			dt);
-	  checkCudaError("MHDRunGodunov :: kernel_mhd_compute_primitive_variables_3D error");
-	
+      
+      TIMER_START(timerDissipative);
+      {
+	// update borders
+	real_t &nu  = _gParams.nu;
+	real_t &eta = _gParams.eta;
+	if (nu>0 or eta>0) {
+	  make_all_boundaries(d_UNew);
 	}
-	TIMER_STOP(timerPrimVar);
-
-	TIMER_START(timerElecField);
-	{
-	  // 3D Electric field computation kernel    
-	  dim3 dimBlock(ELEC_FIELD_BLOCK_DIMX_3D_V3,
-			ELEC_FIELD_BLOCK_DIMY_3D_V3);
-	  dim3 dimGrid(blocksFor(isize, ELEC_FIELD_BLOCK_INNER_DIMX_3D_V3), 
-		       blocksFor(jsize, ELEC_FIELD_BLOCK_INNER_DIMY_3D_V3));
-	  kernel_mhd_compute_elec_field<<<dimGrid, dimBlock>>>(d_UOld.data(), 
-							       d_Q.data(),
-							       d_elec.data(),
-							       d_UOld.pitch(), 
-							       d_UOld.dimx(), 
-							       d_UOld.dimy(), 
-							       d_UOld.dimz(),
-							       dt);
-	  checkCudaError("MHDRunGodunov :: kernel_mhd_compute_elec_field error");
-
-	  if (dumpDataForDebugEnabled) {
-	    d_elec.copyToHost(h_debug2);
-            outputHdf5Debug(h_debug2, "elec_", nStep);
+	
+	if (eta>0) {
+	  // update magnetic field with resistivity emf
+	  compute_resistivity_emf_2d(d_UNew, d_emf);
+	  compute_ct_update_2d      (d_UNew, d_emf, dt);
+	  
+	  real_t &cIso = _gParams.cIso;
+	  if (cIso<=0) { // non-isothermal simulations
+	      // compute energy flux
+	    compute_resistivity_energy_flux_2d(d_UNew, d_qm_x, d_qm_y, dt);
+	    compute_hydro_update_energy       (d_UNew, d_qm_x, d_qm_y);
 	  }
-	
 	}
-	TIMER_STOP(timerElecField);
-
-	TIMER_START(timerMagSlopes);
-	{
-	  // magnetic slopes computations
-	  dim3 dimBlock(MAG_SLOPES_BLOCK_DIMX_3D_V3,
-			MAG_SLOPES_BLOCK_DIMY_3D_V3);
-	  dim3 dimGrid(blocksFor(isize, MAG_SLOPES_BLOCK_INNER_DIMX_3D_V3), 
-		       blocksFor(jsize, MAG_SLOPES_BLOCK_INNER_DIMY_3D_V3));
-	  kernel_mhd_compute_mag_slopes<<<dimGrid, dimBlock>>>(d_UOld.data(), 
-							       d_dA.data(),
-							       d_dB.data(),
-							       d_dC.data(),
-							       d_UOld.pitch(), 
-							       d_UOld.dimx(), 
-							       d_UOld.dimy(), 
-							       d_UOld.dimz() );
-	  checkCudaError("MHDRunGodunov :: kernel_mhd_compute_mag_slopes error");
-
-	}
-	TIMER_STOP(timerMagSlopes);
-							     
-      } // end implementation 3 or 4
-
-      if (implementationVersion == 3) {
 	
-	TIMER_START(timerTraceUpdate);
-	{
-	  // trace and update
-	  dim3 dimBlock(TRACE_BLOCK_DIMX_3D_V3,
-			TRACE_BLOCK_DIMY_3D_V3);
-	  dim3 dimGrid(blocksFor(isize, TRACE_BLOCK_INNER_DIMX_3D_V3), 
-		       blocksFor(jsize, TRACE_BLOCK_INNER_DIMY_3D_V3));
-	  kernel_mhd_compute_trace<<<dimGrid, dimBlock>>>(d_UOld.data(), 
-							  d_UNew.data(), 
-							  d_Q.data(),
-							  d_dA.data(),
-							  d_dB.data(),
-							  d_dC.data(),
-							  d_elec.data(),
-							  d_qm_x.data(),
-							  d_qm_y.data(),
-							  d_qm_z.data(),
-							  d_qEdge_RT.data(),
-							  d_qEdge_RB.data(),
-							  d_qEdge_LT.data(),
-							  d_qEdge_RT2.data(),
-							  d_qEdge_RB2.data(),
-							  d_qEdge_LT2.data(),
-							  d_qEdge_RT3.data(),
-							  d_qEdge_RB3.data(),
-							  d_qEdge_LT3.data(),
+	// compute viscosity
+	if (nu>0) {
+	  DeviceArray<real_t> &d_flux_x = d_qm_x;
+	  DeviceArray<real_t> &d_flux_y = d_qm_y;
+	  
+	  compute_viscosity_flux(d_UNew, d_flux_x, d_flux_y, dt);
+	  compute_hydro_update  (d_UNew, d_flux_x, d_flux_y);
+	} // end compute viscosity force / update  
+	
+      } // end compute viscosity
+      TIMER_STOP(timerDissipative);
+
+    } else { // 3D
+
+      // 3D Godunov unsplit kernel    
+      dim3 dimBlock(UNSPLIT_BLOCK_DIMX_3D_V1,
+		    UNSPLIT_BLOCK_DIMY_3D_V1);
+      dim3 dimGrid(blocksFor(isize, UNSPLIT_BLOCK_INNER_DIMX_3D_V1), 
+		   blocksFor(jsize, UNSPLIT_BLOCK_INNER_DIMY_3D_V1));
+      kernel_godunov_unsplit_mhd_3d_v1<<<dimGrid, dimBlock>>>(d_UOld.data(), 
+							      d_UNew.data(), 
+							      d_qm_x.data(),
+							      d_qm_y.data(),
+							      d_qm_z.data(),
+							      d_qEdge_RT.data(),
+							      d_qEdge_RB.data(),
+							      d_qEdge_LT.data(),
+							      d_qEdge_RT2.data(),
+							      d_qEdge_RB2.data(),
+							      d_qEdge_LT2.data(),
+							      d_qEdge_RT3.data(),
+							      d_qEdge_RB3.data(),
+							      d_qEdge_LT3.data(),
+							      d_UOld.pitch(), 
+							      d_UOld.dimx(), 
+							      d_UOld.dimy(), 
+							      d_UOld.dimz(),
+							      dt / dx, 
+							      dt / dy,
+							      dt / dz,
+							      dt);
+      checkCudaError("MHDRunGodunov :: kernel_godunov_unsplit_mhd_3d_v1 error");
+
+    }
+
+  } // MHDRunGodunov::godunov_unsplit_gpu_v1
+
+  // =======================================================
+  // =======================================================
+  void MHDRunGodunov::godunov_unsplit_gpu_v2(DeviceArray<real_t>& d_UOld, 
+					     DeviceArray<real_t>& d_UNew,
+					     real_t dt, int nStep)
+  {
+
+    std::cerr << "2D / 3D GPU MHD implementation version 2 are NOT implemented !" << std::endl;
+
+
+  } // MHDRunGodunov::godunov_unsplit_gpu_v2
+
+  // =======================================================
+  // =======================================================
+  void MHDRunGodunov::godunov_unsplit_gpu_v3(DeviceArray<real_t>& d_UOld, 
+					     DeviceArray<real_t>& d_UNew,
+					     real_t dt, int nStep)
+  {
+
+    TIMER_START(timerPrimVar);
+    {
+      // 3D primitive variables computation kernel    
+      dim3 dimBlock(PRIM_VAR_MHD_BLOCK_DIMX_3D,
+		    PRIM_VAR_MHD_BLOCK_DIMY_3D);
+      dim3 dimGrid(blocksFor(isize, PRIM_VAR_MHD_BLOCK_DIMX_3D), 
+		   blocksFor(jsize, PRIM_VAR_MHD_BLOCK_DIMY_3D));
+      kernel_mhd_compute_primitive_variables_3D<<<dimGrid, 
+	dimBlock>>>(d_UOld.data(), 
+		    d_Q.data(),
+		    d_UOld.pitch(),
+		    d_UOld.dimx(),
+		    d_UOld.dimy(), 
+		    d_UOld.dimz(),
+		    dt);
+      checkCudaError("MHDRunGodunov :: kernel_mhd_compute_primitive_variables_3D error");
+      
+    }
+    TIMER_STOP(timerPrimVar);
+    
+    TIMER_START(timerElecField);
+    {
+      // 3D Electric field computation kernel    
+      dim3 dimBlock(ELEC_FIELD_BLOCK_DIMX_3D_V3,
+		    ELEC_FIELD_BLOCK_DIMY_3D_V3);
+      dim3 dimGrid(blocksFor(isize, ELEC_FIELD_BLOCK_INNER_DIMX_3D_V3), 
+		   blocksFor(jsize, ELEC_FIELD_BLOCK_INNER_DIMY_3D_V3));
+      kernel_mhd_compute_elec_field<<<dimGrid, dimBlock>>>(d_UOld.data(), 
+							   d_Q.data(),
+							   d_elec.data(),
+							   d_UOld.pitch(), 
+							   d_UOld.dimx(), 
+							   d_UOld.dimy(), 
+							   d_UOld.dimz(),
+							   dt);
+      checkCudaError("MHDRunGodunov :: kernel_mhd_compute_elec_field error");
+      
+      if (dumpDataForDebugEnabled) {
+	d_elec.copyToHost(h_debug2);
+	outputHdf5Debug(h_debug2, "elec_", nStep);
+      }
+      
+    }
+    TIMER_STOP(timerElecField);
+    
+    TIMER_START(timerMagSlopes);
+    {
+      // magnetic slopes computations
+      dim3 dimBlock(MAG_SLOPES_BLOCK_DIMX_3D_V3,
+		    MAG_SLOPES_BLOCK_DIMY_3D_V3);
+      dim3 dimGrid(blocksFor(isize, MAG_SLOPES_BLOCK_INNER_DIMX_3D_V3), 
+		   blocksFor(jsize, MAG_SLOPES_BLOCK_INNER_DIMY_3D_V3));
+      kernel_mhd_compute_mag_slopes<<<dimGrid, dimBlock>>>(d_UOld.data(), 
+							   d_dA.data(),
+							   d_dB.data(),
+							   d_dC.data(),
+							   d_UOld.pitch(), 
+							   d_UOld.dimx(), 
+							   d_UOld.dimy(), 
+							   d_UOld.dimz() );
+      checkCudaError("MHDRunGodunov :: kernel_mhd_compute_mag_slopes error");
+      
+    }
+    TIMER_STOP(timerMagSlopes);
+    
+    TIMER_START(timerTraceUpdate);
+    {
+      // trace and update
+      dim3 dimBlock(TRACE_BLOCK_DIMX_3D_V3,
+		    TRACE_BLOCK_DIMY_3D_V3);
+      dim3 dimGrid(blocksFor(isize, TRACE_BLOCK_INNER_DIMX_3D_V3), 
+		   blocksFor(jsize, TRACE_BLOCK_INNER_DIMY_3D_V3));
+      kernel_mhd_compute_trace<<<dimGrid, dimBlock>>>(d_UOld.data(), 
+						      d_UNew.data(), 
+						      d_Q.data(),
+						      d_dA.data(),
+						      d_dB.data(),
+						      d_dC.data(),
+						      d_elec.data(),
+						      d_qm_x.data(),
+						      d_qm_y.data(),
+						      d_qm_z.data(),
+						      d_qEdge_RT.data(),
+						      d_qEdge_RB.data(),
+						      d_qEdge_LT.data(),
+						      d_qEdge_RT2.data(),
+						      d_qEdge_RB2.data(),
+						      d_qEdge_LT2.data(),
+						      d_qEdge_RT3.data(),
+						      d_qEdge_RB3.data(),
+						      d_qEdge_LT3.data(),
+						      d_UOld.pitch(), 
+						      d_UOld.dimx(), 
+						      d_UOld.dimy(), 
+						      d_UOld.dimz(),
+						      dt / dx, 
+						      dt / dy,
+						      dt / dz,
+						      dt );
+      checkCudaError("MHDRunGodunov :: kernel_mhd_compute_trace error");
+
+      // dump data for debug
+      if (dumpDataForDebugEnabled) {
+	d_dA.copyToHost(h_debug2);
+	outputHdf5Debug(h_debug2, "dA_", nStep);
+	d_dB.copyToHost(h_debug2);
+	outputHdf5Debug(h_debug2, "dB_", nStep);
+	d_dC.copyToHost(h_debug2);
+	outputHdf5Debug(h_debug2, "dC_", nStep);
+	    
+	d_qm_x.copyToHost(h_debug);
+	outputHdf5Debug(h_debug, "qm_x_", nStep);
+	d_qm_y.copyToHost(h_debug);
+	outputHdf5Debug(h_debug, "qm_y_", nStep);
+	d_qm_z.copyToHost(h_debug);
+	outputHdf5Debug(h_debug, "qm_z_", nStep);
+	    
+	/*d_qp_x.copyToHost(h_debug);
+	  outputHdf5Debug(h_debug, "qp_x_", nStep);
+	  d_qp_y.copyToHost(h_debug);
+	  outputHdf5Debug(h_debug, "qp_y_", nStep);
+	  d_qp_z.copyToHost(h_debug);
+	  outputHdf5Debug(h_debug, "qp_z_", nStep);*/
+	    
+	d_qEdge_RT.copyToHost(h_debug);
+	outputHdf5Debug(h_debug, "qEdge_RT_", nStep);
+	d_qEdge_RB.copyToHost(h_debug);
+	outputHdf5Debug(h_debug, "qEdge_RB_", nStep);
+	d_qEdge_LT.copyToHost(h_debug);
+	outputHdf5Debug(h_debug, "qEdge_LT_", nStep);
+	/*d_qEdge_LB.copyToHost(h_debug);
+	  outputHdf5Debug(h_debug, "qEdge_LB_", nStep);*/
+
+	// do something to get fluxes and emf arrays...
+
+      } // end dumpDataForDebugEnabled
+	      
+    } // kernel_mhd_compute_trace
+    TIMER_STOP(timerTraceUpdate);
+
+    TIMER_START(timerDissipative);
+    // update borders
+    real_t &nu  = _gParams.nu;
+    real_t &eta = _gParams.eta;
+    if (nu>0 or eta>0) {
+      make_all_boundaries(d_UNew);
+    }
+
+    if (eta>0) {
+      // update magnetic field with resistivity emf
+      compute_resistivity_emf_3d(d_UNew, d_emf);
+      compute_ct_update_3d      (d_UNew, d_emf, dt);
+	  
+      real_t &cIso = _gParams.cIso;
+      if (cIso<=0) { // non-isothermal simulations
+	// compute energy flux
+	compute_resistivity_energy_flux_3d(d_UNew, d_qm_x, d_qm_y, d_qm_z, dt);
+	compute_hydro_update_energy       (d_UNew, d_qm_x, d_qm_y, d_qm_z);
+      }
+    }
+
+    // compute viscosity
+    if (nu>0) {
+      DeviceArray<real_t> &d_flux_x = d_qm_x;
+      DeviceArray<real_t> &d_flux_y = d_qm_y;
+      DeviceArray<real_t> &d_flux_z = d_qm_z;
+	  
+      compute_viscosity_flux(d_UNew, d_flux_x, d_flux_y, d_flux_z, dt);
+      compute_hydro_update  (d_UNew, d_flux_x, d_flux_y, d_flux_z );
+    } // end compute viscosity force / update  
+    TIMER_STOP(timerDissipative);
+
+    /*
+     * random forcing
+     */
+    if (randomForcingEnabled) {
+	  
+      real_t norm = compute_random_forcing_normalization(d_UNew, dt);
+	  
+      add_random_forcing(d_UNew, dt, norm);
+	  
+    }
+    if (randomForcingOrnsteinUhlenbeckEnabled) {
+	  
+      // add forcing field in real space
+      pForcingOrnsteinUhlenbeck->add_forcing_field(d_UNew, dt);
+	  
+    }
+  
+  } // MHDRunGodunov::godunov_unsplit_gpu_v3
+  
+  // =======================================================
+  // =======================================================
+  void MHDRunGodunov::godunov_unsplit_gpu_v4(DeviceArray<real_t>& d_UOld, 
+					     DeviceArray<real_t>& d_UNew,
+					     real_t dt, int nStep)
+  {
+
+    TIMER_START(timerPrimVar);
+    {
+      // 3D primitive variables computation kernel    
+      dim3 dimBlock(PRIM_VAR_MHD_BLOCK_DIMX_3D,
+		    PRIM_VAR_MHD_BLOCK_DIMY_3D);
+      dim3 dimGrid(blocksFor(isize, PRIM_VAR_MHD_BLOCK_DIMX_3D), 
+		   blocksFor(jsize, PRIM_VAR_MHD_BLOCK_DIMY_3D));
+      kernel_mhd_compute_primitive_variables_3D<<<dimGrid, 
+	dimBlock>>>(d_UOld.data(), 
+		    d_Q.data(),
+		    d_UOld.pitch(),
+		    d_UOld.dimx(),
+		    d_UOld.dimy(), 
+		    d_UOld.dimz(),
+		    dt);
+      checkCudaError("MHDRunGodunov :: kernel_mhd_compute_primitive_variables_3D error");
+	
+    }
+    TIMER_STOP(timerPrimVar);
+
+    TIMER_START(timerElecField);
+    {
+      // 3D Electric field computation kernel    
+      dim3 dimBlock(ELEC_FIELD_BLOCK_DIMX_3D_V3,
+		    ELEC_FIELD_BLOCK_DIMY_3D_V3);
+      dim3 dimGrid(blocksFor(isize, ELEC_FIELD_BLOCK_INNER_DIMX_3D_V3), 
+		   blocksFor(jsize, ELEC_FIELD_BLOCK_INNER_DIMY_3D_V3));
+      kernel_mhd_compute_elec_field<<<dimGrid, dimBlock>>>(d_UOld.data(), 
+							   d_Q.data(),
+							   d_elec.data(),
+							   d_UOld.pitch(), 
+							   d_UOld.dimx(), 
+							   d_UOld.dimy(), 
+							   d_UOld.dimz(),
+							   dt);
+      checkCudaError("MHDRunGodunov :: kernel_mhd_compute_elec_field error");
+
+      if (dumpDataForDebugEnabled) {
+	d_elec.copyToHost(h_debug2);
+	outputHdf5Debug(h_debug2, "elec_", nStep);
+      }
+	
+    }
+    TIMER_STOP(timerElecField);
+
+    TIMER_START(timerMagSlopes);
+    {
+      // magnetic slopes computations
+      dim3 dimBlock(MAG_SLOPES_BLOCK_DIMX_3D_V3,
+		    MAG_SLOPES_BLOCK_DIMY_3D_V3);
+      dim3 dimGrid(blocksFor(isize, MAG_SLOPES_BLOCK_INNER_DIMX_3D_V3), 
+		   blocksFor(jsize, MAG_SLOPES_BLOCK_INNER_DIMY_3D_V3));
+      kernel_mhd_compute_mag_slopes<<<dimGrid, dimBlock>>>(d_UOld.data(), 
+							   d_dA.data(),
+							   d_dB.data(),
+							   d_dC.data(),
+							   d_UOld.pitch(), 
+							   d_UOld.dimx(), 
+							   d_UOld.dimy(), 
+							   d_UOld.dimz() );
+      checkCudaError("MHDRunGodunov :: kernel_mhd_compute_mag_slopes error");
+
+    }
+    TIMER_STOP(timerMagSlopes);
+
+    TIMER_START(timerTrace);
+    // trace
+    {
+      dim3 dimBlock(TRACE_BLOCK_DIMX_3D_V4,
+		    TRACE_BLOCK_DIMY_3D_V4);
+      dim3 dimGrid(blocksFor(isize, TRACE_BLOCK_INNER_DIMX_3D_V4), 
+		   blocksFor(jsize, TRACE_BLOCK_INNER_DIMY_3D_V4));
+      kernel_mhd_compute_trace_v4<<<dimGrid, dimBlock>>>(d_UOld.data(),
+							 d_Q.data(),
+							 d_dA.data(),
+							 d_dB.data(),
+							 d_dC.data(),
+							 d_elec.data(),
+							 d_qm_x.data(),
+							 d_qm_y.data(),
+							 d_qm_z.data(),
+							 d_qp_x.data(),
+							 d_qp_y.data(),
+							 d_qp_z.data(),
+							 d_qEdge_RT.data(),
+							 d_qEdge_RB.data(),
+							 d_qEdge_LT.data(),
+							 d_qEdge_LB.data(),
+							 d_qEdge_RT2.data(),
+							 d_qEdge_RB2.data(),
+							 d_qEdge_LT2.data(),
+							 d_qEdge_LB2.data(),
+							 d_qEdge_RT3.data(),
+							 d_qEdge_RB3.data(),
+							 d_qEdge_LT3.data(),
+							 d_qEdge_LB3.data(),
+							 d_UOld.pitch(), 
+							 d_UOld.dimx(), 
+							 d_UOld.dimy(), 
+							 d_UOld.dimz(),
+							 dt / dx, 
+							 dt / dy,
+							 dt / dz,
+							 dt);
+      checkCudaError("MHDRunGodunov kernel_mhd_compute_trace_v4 error");
+
+      // dump data for debug
+      if (dumpDataForDebugEnabled) {
+	d_dA.copyToHost(h_debug2);
+	outputHdf5Debug(h_debug2, "dA_", nStep);
+	d_dB.copyToHost(h_debug2);
+	outputHdf5Debug(h_debug2, "dB_", nStep);
+	d_dC.copyToHost(h_debug2);
+	outputHdf5Debug(h_debug2, "dC_", nStep);
+	    
+	d_qm_x.copyToHost(h_debug);
+	outputHdf5Debug(h_debug, "qm_x_", nStep);
+	d_qm_y.copyToHost(h_debug);
+	outputHdf5Debug(h_debug, "qm_y_", nStep);
+	d_qm_z.copyToHost(h_debug);
+	outputHdf5Debug(h_debug, "qm_z_", nStep);
+	    
+	/*d_qp_x.copyToHost(h_debug);
+	  outputHdf5Debug(h_debug, "qp_x_", nStep);
+	  d_qp_y.copyToHost(h_debug);
+	  outputHdf5Debug(h_debug, "qp_y_", nStep);
+	  d_qp_z.copyToHost(h_debug);
+	  outputHdf5Debug(h_debug, "qp_z_", nStep);*/
+	    
+	d_qEdge_RT.copyToHost(h_debug);
+	outputHdf5Debug(h_debug, "qEdge_RT_", nStep);
+	d_qEdge_RB.copyToHost(h_debug);
+	outputHdf5Debug(h_debug, "qEdge_RB_", nStep);
+	d_qEdge_LT.copyToHost(h_debug);
+	outputHdf5Debug(h_debug, "qEdge_LT_", nStep);
+	/*d_qEdge_LB.copyToHost(h_debug);
+	  outputHdf5Debug(h_debug, "qEdge_LB_", nStep);*/
+
+	// do something to get fluxes and emf arrays...
+
+      } // end dumpDataForDebugEnabled
+
+      // gravity predictor
+      if (gravityEnabled) {
+	dim3 dimBlock(GRAV_PRED_BLOCK_DIMX_3D_V4,
+		      GRAV_PRED_BLOCK_DIMY_3D_V4);
+	dim3 dimGrid(blocksFor(isize, GRAV_PRED_BLOCK_DIMX_3D_V4), 
+		     blocksFor(jsize, GRAV_PRED_BLOCK_DIMY_3D_V4));
+	kernel_mhd_compute_gravity_predictor_v4<<<dimGrid, 
+	  dimBlock>>>(d_qm_x.data(),
+		      d_qm_y.data(),
+		      d_qm_z.data(),
+		      d_qp_x.data(),
+		      d_qp_y.data(),
+		      d_qp_z.data(),
+		      d_qEdge_RT.data(),
+		      d_qEdge_RB.data(),
+		      d_qEdge_LT.data(),
+		      d_qEdge_LB.data(),
+		      d_qEdge_RT2.data(),
+		      d_qEdge_RB2.data(),
+		      d_qEdge_LT2.data(),
+		      d_qEdge_LB2.data(),
+		      d_qEdge_RT3.data(),
+		      d_qEdge_RB3.data(),
+		      d_qEdge_LT3.data(),
+		      d_qEdge_LB3.data(),
+		      d_UOld.pitch(), 
+		      d_UOld.dimx(), 
+		      d_UOld.dimy(), 
+		      d_UOld.dimz(),
+		      dt);
+	checkCudaError("MHDRunGodunov kernel_mhd_compute_gravity_predictor_v4 error");
+	  
+      } // end gravity predictor
+
+    } // end trace
+    TIMER_STOP(timerTrace);
+	
+    TIMER_START(timerUpdate);	
+    // update hydro
+    // {
+    //   dim3 dimBlock(UPDATE_BLOCK_DIMX_3D_V4_OLD,
+    // 		UPDATE_BLOCK_DIMY_3D_V4_OLD);
+    //   dim3 dimGrid(blocksFor(isize, UPDATE_BLOCK_INNER_DIMX_3D_V4_OLD), 
+    // 	       blocksFor(jsize, UPDATE_BLOCK_INNER_DIMY_3D_V4_OLD));
+    //   kernel_mhd_flux_update_hydro_v4_old<<<dimGrid, dimBlock>>>(d_UOld.data(),
+    // 							 d_UNew.data(),
+    // 							 d_qm_x.data(),
+    // 							 d_qm_y.data(),
+    // 							 d_qm_z.data(),
+    // 							 d_qp_x.data(),
+    // 							 d_qp_y.data(),
+    // 							 d_qp_z.data(),
+    // 							 d_qEdge_RT.data(),
+    // 							 d_qEdge_RB.data(),
+    // 							 d_qEdge_LT.data(),
+    // 							 d_qEdge_LB.data(),
+    // 							 d_qEdge_RT2.data(),
+    // 							 d_qEdge_RB2.data(),
+    // 							 d_qEdge_LT2.data(),
+    // 							 d_qEdge_LB2.data(),
+    // 							 d_qEdge_RT3.data(),
+    // 							 d_qEdge_RB3.data(),
+    // 							 d_qEdge_LT3.data(),
+    // 							 d_qEdge_LB3.data(),
+    // 							 d_emf.data(),
+    // 							 d_UOld.pitch(), 
+    // 							 d_UOld.dimx(), 
+    // 							 d_UOld.dimy(), 
+    // 							 d_UOld.dimz(),
+    // 							 dt / dx, 
+    // 							 dt / dy,
+    // 							 dt / dz,
+    // 							 dt );
+    //   checkCudaError("MHDRunGodunov kernel_mhd_flux_update_hydro_v4 error");
+
+    // } // end update hydro
+    {
+      dim3 dimBlock(UPDATE_BLOCK_DIMX_3D_V4,
+		    UPDATE_BLOCK_DIMY_3D_V4);
+      dim3 dimGrid(blocksFor(isize, UPDATE_BLOCK_INNER_DIMX_3D_V4), 
+		   blocksFor(jsize, UPDATE_BLOCK_INNER_DIMY_3D_V4));
+      kernel_mhd_flux_update_hydro_v4<<<dimGrid, dimBlock>>>(d_UOld.data(),
+							     d_UNew.data(),
+							     d_qm_x.data(),
+							     d_qm_y.data(),
+							     d_qm_z.data(),
+							     d_qp_x.data(),
+							     d_qp_y.data(),
+							     d_qp_z.data(),
+							     d_UOld.pitch(), 
+							     d_UOld.dimx(), 
+							     d_UOld.dimy(), 
+							     d_UOld.dimz(),
+							     dt / dx, 
+							     dt / dy,
+							     dt / dz,
+							     dt );
+      checkCudaError("MHDRunGodunov kernel_mhd_flux_update_hydro_v4 error");
+
+    } // end update hydro
+
+    // gravity source term
+    if (gravityEnabled) {
+      compute_gravity_source_term(d_UNew, d_UOld, dt);
+    }
+    TIMER_STOP(timerUpdate);
+	
+    TIMER_START(timerEmf);
+    // compute emf
+    {
+      dim3 dimBlock(COMPUTE_EMF_BLOCK_DIMX_3D_V4,
+		    COMPUTE_EMF_BLOCK_DIMY_3D_V4);
+      dim3 dimGrid(blocksFor(isize, COMPUTE_EMF_BLOCK_DIMX_3D_V4), 
+		   blocksFor(jsize, COMPUTE_EMF_BLOCK_DIMY_3D_V4));
+      kernel_mhd_compute_emf_v4<<<dimGrid, dimBlock>>>(d_qEdge_RT.data(),
+						       d_qEdge_RB.data(),
+						       d_qEdge_LT.data(),
+						       d_qEdge_LB.data(),
+						       d_qEdge_RT2.data(),
+						       d_qEdge_RB2.data(),
+						       d_qEdge_LT2.data(),
+						       d_qEdge_LB2.data(),
+						       d_qEdge_RT3.data(),
+						       d_qEdge_RB3.data(),
+						       d_qEdge_LT3.data(),
+						       d_qEdge_LB3.data(),
+						       d_emf.data(),
+						       d_UOld.pitch(), 
+						       d_UOld.dimx(), 
+						       d_UOld.dimy(), 
+						       d_UOld.dimz(),
+						       dt / dx, 
+						       dt / dy,
+						       dt / dz,
+						       dt );
+      checkCudaError("MHDRunGodunov kernel_mhd_compute_emf_v4 error");
+
+    } // end compute emf
+    TIMER_STOP(timerEmf);
+
+    TIMER_START(timerCtUpdate);
+    // update magnetic field
+    {
+      dim3 dimBlock(UPDATE_CT_BLOCK_DIMX_3D_V4,
+		    UPDATE_CT_BLOCK_DIMY_3D_V4);
+      dim3 dimGrid(blocksFor(isize, UPDATE_CT_BLOCK_DIMX_3D_V4), 
+		   blocksFor(jsize, UPDATE_CT_BLOCK_DIMY_3D_V4));
+      kernel_mhd_flux_update_ct_v4<<<dimGrid, dimBlock>>>(d_UOld.data(),
+							  d_UNew.data(),
+							  d_emf.data(),
 							  d_UOld.pitch(), 
 							  d_UOld.dimx(), 
 							  d_UOld.dimy(), 
@@ -888,401 +1344,60 @@ namespace hydroSimu {
 							  dt / dy,
 							  dt / dz,
 							  dt );
-	  checkCudaError("MHDRunGodunov :: kernel_mhd_compute_trace error");
-
-	  // dump data for debug
-          if (dumpDataForDebugEnabled) {
-	    d_dA.copyToHost(h_debug2);
-	    outputHdf5Debug(h_debug2, "dA_", nStep);
-	    d_dB.copyToHost(h_debug2);
-	    outputHdf5Debug(h_debug2, "dB_", nStep);
-	    d_dC.copyToHost(h_debug2);
-	    outputHdf5Debug(h_debug2, "dC_", nStep);
-	    
-	    d_qm_x.copyToHost(h_debug);
-	    outputHdf5Debug(h_debug, "qm_x_", nStep);
-	    d_qm_y.copyToHost(h_debug);
-	    outputHdf5Debug(h_debug, "qm_y_", nStep);
-	    d_qm_z.copyToHost(h_debug);
-	    outputHdf5Debug(h_debug, "qm_z_", nStep);
-	    
-	    /*d_qp_x.copyToHost(h_debug);
-	      outputHdf5Debug(h_debug, "qp_x_", nStep);
-	      d_qp_y.copyToHost(h_debug);
-	      outputHdf5Debug(h_debug, "qp_y_", nStep);
-	      d_qp_z.copyToHost(h_debug);
-	      outputHdf5Debug(h_debug, "qp_z_", nStep);*/
-	    
-	    d_qEdge_RT.copyToHost(h_debug);
-	    outputHdf5Debug(h_debug, "qEdge_RT_", nStep);
-	    d_qEdge_RB.copyToHost(h_debug);
-	    outputHdf5Debug(h_debug, "qEdge_RB_", nStep);
-	    d_qEdge_LT.copyToHost(h_debug);
-	    outputHdf5Debug(h_debug, "qEdge_LT_", nStep);
-	    /*d_qEdge_LB.copyToHost(h_debug);
-	      outputHdf5Debug(h_debug, "qEdge_LB_", nStep);*/
-
-	    // do something to get fluxes and emf arrays...
-
-	  } // end dumpDataForDebugEnabled
-	      
-	} // kernel_mhd_compute_trace
-	TIMER_STOP(timerTraceUpdate);
-
-	TIMER_START(timerDissipative);
-	// update borders
-	real_t &nu  = _gParams.nu;
-	real_t &eta = _gParams.eta;
-	if (nu>0 or eta>0) {
-	  make_all_boundaries(d_UNew);
-	}
-
-	if (eta>0) {
-	  // update magnetic field with resistivity emf
-	  compute_resistivity_emf_3d(d_UNew, d_emf);
-	  compute_ct_update_3d      (d_UNew, d_emf, dt);
-	  
-	  real_t &cIso = _gParams.cIso;
-	  if (cIso<=0) { // non-isothermal simulations
-	    // compute energy flux
-	    compute_resistivity_energy_flux_3d(d_UNew, d_qm_x, d_qm_y, d_qm_z, dt);
-	    compute_hydro_update_energy       (d_UNew, d_qm_x, d_qm_y, d_qm_z);
-	  }
-	}
-
-	// compute viscosity
-	if (nu>0) {
-	  DeviceArray<real_t> &d_flux_x = d_qm_x;
-	  DeviceArray<real_t> &d_flux_y = d_qm_y;
-	  DeviceArray<real_t> &d_flux_z = d_qm_z;
-	  
-	  compute_viscosity_flux(d_UNew, d_flux_x, d_flux_y, d_flux_z, dt);
-	  compute_hydro_update  (d_UNew, d_flux_x, d_flux_y, d_flux_z );
-	} // end compute viscosity force / update  
-	TIMER_STOP(timerDissipative);
-
-	/*
-	 * random forcing
-	 */
-	if (randomForcingEnabled) {
-	  
-	  real_t norm = compute_random_forcing_normalization(d_UNew, dt);
-	  
-	  add_random_forcing(d_UNew, dt, norm);
-	  
-	}
-	if (randomForcingOrnsteinUhlenbeckEnabled) {
-	  
-	  // add forcing field in real space
-	  pForcingOrnsteinUhlenbeck->add_forcing_field(d_UNew, dt);
-	  
-	}
-
-      } // end implementation version 3
-
-      if (implementationVersion == 4) {
-
-	TIMER_START(timerTrace);
-	// trace
-	{
-	  dim3 dimBlock(TRACE_BLOCK_DIMX_3D_V4,
-			TRACE_BLOCK_DIMY_3D_V4);
-	  dim3 dimGrid(blocksFor(isize, TRACE_BLOCK_INNER_DIMX_3D_V4), 
-		       blocksFor(jsize, TRACE_BLOCK_INNER_DIMY_3D_V4));
-	  kernel_mhd_compute_trace_v4<<<dimGrid, dimBlock>>>(d_UOld.data(),
-							     d_Q.data(),
-							     d_dA.data(),
-							     d_dB.data(),
-							     d_dC.data(),
-							     d_elec.data(),
-							     d_qm_x.data(),
-							     d_qm_y.data(),
-							     d_qm_z.data(),
-							     d_qp_x.data(),
-							     d_qp_y.data(),
-							     d_qp_z.data(),
-							     d_qEdge_RT.data(),
-							     d_qEdge_RB.data(),
-							     d_qEdge_LT.data(),
-							     d_qEdge_LB.data(),
-							     d_qEdge_RT2.data(),
-							     d_qEdge_RB2.data(),
-							     d_qEdge_LT2.data(),
-							     d_qEdge_LB2.data(),
-							     d_qEdge_RT3.data(),
-							     d_qEdge_RB3.data(),
-							     d_qEdge_LT3.data(),
-							     d_qEdge_LB3.data(),
-							     d_UOld.pitch(), 
-							     d_UOld.dimx(), 
-							     d_UOld.dimy(), 
-							     d_UOld.dimz(),
-							     dt / dx, 
-							     dt / dy,
-							     dt / dz,
-							     dt);
-	  checkCudaError("MHDRunGodunov kernel_mhd_compute_trace_v4 error");
-
-	  // dump data for debug
-          if (dumpDataForDebugEnabled) {
-	    d_dA.copyToHost(h_debug2);
-	    outputHdf5Debug(h_debug2, "dA_", nStep);
-	    d_dB.copyToHost(h_debug2);
-	    outputHdf5Debug(h_debug2, "dB_", nStep);
-	    d_dC.copyToHost(h_debug2);
-	    outputHdf5Debug(h_debug2, "dC_", nStep);
-	    
-	    d_qm_x.copyToHost(h_debug);
-	    outputHdf5Debug(h_debug, "qm_x_", nStep);
-	    d_qm_y.copyToHost(h_debug);
-	    outputHdf5Debug(h_debug, "qm_y_", nStep);
-	    d_qm_z.copyToHost(h_debug);
-	    outputHdf5Debug(h_debug, "qm_z_", nStep);
-	    
-	    /*d_qp_x.copyToHost(h_debug);
-	      outputHdf5Debug(h_debug, "qp_x_", nStep);
-	      d_qp_y.copyToHost(h_debug);
-	      outputHdf5Debug(h_debug, "qp_y_", nStep);
-	      d_qp_z.copyToHost(h_debug);
-	      outputHdf5Debug(h_debug, "qp_z_", nStep);*/
-	    
-	    d_qEdge_RT.copyToHost(h_debug);
-	    outputHdf5Debug(h_debug, "qEdge_RT_", nStep);
-	    d_qEdge_RB.copyToHost(h_debug);
-	    outputHdf5Debug(h_debug, "qEdge_RB_", nStep);
-	    d_qEdge_LT.copyToHost(h_debug);
-	    outputHdf5Debug(h_debug, "qEdge_LT_", nStep);
-	    /*d_qEdge_LB.copyToHost(h_debug);
-	      outputHdf5Debug(h_debug, "qEdge_LB_", nStep);*/
-
-	    // do something to get fluxes and emf arrays...
-
-	  } // end dumpDataForDebugEnabled
-
-	  // gravity predictor
-	  if (gravityEnabled) {
-	    dim3 dimBlock(GRAV_PRED_BLOCK_DIMX_3D_V4,
-			  GRAV_PRED_BLOCK_DIMY_3D_V4);
-	    dim3 dimGrid(blocksFor(isize, GRAV_PRED_BLOCK_DIMX_3D_V4), 
-			 blocksFor(jsize, GRAV_PRED_BLOCK_DIMY_3D_V4));
-	    kernel_mhd_compute_gravity_predictor_v4<<<dimGrid, 
-	      dimBlock>>>(d_qm_x.data(),
-			  d_qm_y.data(),
-			  d_qm_z.data(),
-			  d_qp_x.data(),
-			  d_qp_y.data(),
-			  d_qp_z.data(),
-			  d_qEdge_RT.data(),
-			  d_qEdge_RB.data(),
-			  d_qEdge_LT.data(),
-			  d_qEdge_LB.data(),
-			  d_qEdge_RT2.data(),
-			  d_qEdge_RB2.data(),
-			  d_qEdge_LT2.data(),
-			  d_qEdge_LB2.data(),
-			  d_qEdge_RT3.data(),
-			  d_qEdge_RB3.data(),
-			  d_qEdge_LT3.data(),
-			  d_qEdge_LB3.data(),
-			  d_UOld.pitch(), 
-			  d_UOld.dimx(), 
-			  d_UOld.dimy(), 
-			  d_UOld.dimz(),
-			  dt);
-	    checkCudaError("MHDRunGodunov kernel_mhd_compute_gravity_predictor_v4 error");
-	  
-	  } // end gravity predictor
-
-	} // end trace
-	TIMER_STOP(timerTrace);
+      checkCudaError("MHDRunGodunov kernel_mhd_flux_update_ct_v4 error");
+    } // update magnetic field
+    TIMER_STOP(timerCtUpdate);
 	
-	TIMER_START(timerUpdate);	
-	// update hydro
-	// {
-	//   dim3 dimBlock(UPDATE_BLOCK_DIMX_3D_V4_OLD,
-	// 		UPDATE_BLOCK_DIMY_3D_V4_OLD);
-	//   dim3 dimGrid(blocksFor(isize, UPDATE_BLOCK_INNER_DIMX_3D_V4_OLD), 
-	// 	       blocksFor(jsize, UPDATE_BLOCK_INNER_DIMY_3D_V4_OLD));
-	//   kernel_mhd_flux_update_hydro_v4_old<<<dimGrid, dimBlock>>>(d_UOld.data(),
-	// 							 d_UNew.data(),
-	// 							 d_qm_x.data(),
-	// 							 d_qm_y.data(),
-	// 							 d_qm_z.data(),
-	// 							 d_qp_x.data(),
-	// 							 d_qp_y.data(),
-	// 							 d_qp_z.data(),
-	// 							 d_qEdge_RT.data(),
-	// 							 d_qEdge_RB.data(),
-	// 							 d_qEdge_LT.data(),
-	// 							 d_qEdge_LB.data(),
-	// 							 d_qEdge_RT2.data(),
-	// 							 d_qEdge_RB2.data(),
-	// 							 d_qEdge_LT2.data(),
-	// 							 d_qEdge_LB2.data(),
-	// 							 d_qEdge_RT3.data(),
-	// 							 d_qEdge_RB3.data(),
-	// 							 d_qEdge_LT3.data(),
-	// 							 d_qEdge_LB3.data(),
-	// 							 d_emf.data(),
-	// 							 d_UOld.pitch(), 
-	// 							 d_UOld.dimx(), 
-	// 							 d_UOld.dimy(), 
-	// 							 d_UOld.dimz(),
-	// 							 dt / dx, 
-	// 							 dt / dy,
-	// 							 dt / dz,
-	// 							 dt );
-	//   checkCudaError("MHDRunGodunov kernel_mhd_flux_update_hydro_v4 error");
+    TIMER_START(timerDissipative);
+    // update borders
+    real_t &nu  = _gParams.nu;
+    real_t &eta = _gParams.eta;
+    if (nu>0 or eta>0) {
+      make_all_boundaries(d_UNew);
+    }
 
-	// } // end update hydro
-	{
-	  dim3 dimBlock(UPDATE_BLOCK_DIMX_3D_V4,
-			UPDATE_BLOCK_DIMY_3D_V4);
-	  dim3 dimGrid(blocksFor(isize, UPDATE_BLOCK_INNER_DIMX_3D_V4), 
-		       blocksFor(jsize, UPDATE_BLOCK_INNER_DIMY_3D_V4));
-	  kernel_mhd_flux_update_hydro_v4<<<dimGrid, dimBlock>>>(d_UOld.data(),
-								 d_UNew.data(),
-								 d_qm_x.data(),
-								 d_qm_y.data(),
-								 d_qm_z.data(),
-								 d_qp_x.data(),
-								 d_qp_y.data(),
-								 d_qp_z.data(),
-								 d_UOld.pitch(), 
-								 d_UOld.dimx(), 
-								 d_UOld.dimy(), 
-								 d_UOld.dimz(),
-								 dt / dx, 
-								 dt / dy,
-								 dt / dz,
-								 dt );
-	  checkCudaError("MHDRunGodunov kernel_mhd_flux_update_hydro_v4 error");
-
-	} // end update hydro
-
-	// gravity source term
-	if (gravityEnabled) {
-	  compute_gravity_source_term(d_UNew, d_UOld, dt);
-	}
-	TIMER_STOP(timerUpdate);
+    if (eta>0) {
+      // update magnetic field with resistivity emf
+      compute_resistivity_emf_3d(d_UNew, d_emf);
+      compute_ct_update_3d      (d_UNew, d_emf, dt);
+	  
+      real_t &cIso = _gParams.cIso;
+      if (cIso<=0) { // non-isothermal simulations
+	// compute energy flux
+	compute_resistivity_energy_flux_3d(d_UNew, d_qm_x, d_qm_y, d_qm_z, dt);
+	compute_hydro_update_energy       (d_UNew, d_qm_x, d_qm_y, d_qm_z);
+      }
+    }
 	
-	TIMER_START(timerEmf);
-	// compute emf
-	{
-	  dim3 dimBlock(COMPUTE_EMF_BLOCK_DIMX_3D_V4,
-			COMPUTE_EMF_BLOCK_DIMY_3D_V4);
-	  dim3 dimGrid(blocksFor(isize, COMPUTE_EMF_BLOCK_DIMX_3D_V4), 
-		       blocksFor(jsize, COMPUTE_EMF_BLOCK_DIMY_3D_V4));
-	  kernel_mhd_compute_emf_v4<<<dimGrid, dimBlock>>>(d_qEdge_RT.data(),
-							   d_qEdge_RB.data(),
-							   d_qEdge_LT.data(),
-							   d_qEdge_LB.data(),
-							   d_qEdge_RT2.data(),
-							   d_qEdge_RB2.data(),
-							   d_qEdge_LT2.data(),
-							   d_qEdge_LB2.data(),
-							   d_qEdge_RT3.data(),
-							   d_qEdge_RB3.data(),
-							   d_qEdge_LT3.data(),
-							   d_qEdge_LB3.data(),
-							   d_emf.data(),
-							   d_UOld.pitch(), 
-							   d_UOld.dimx(), 
-							   d_UOld.dimy(), 
-							   d_UOld.dimz(),
-							   dt / dx, 
-							   dt / dy,
-							   dt / dz,
-							   dt );
-	  checkCudaError("MHDRunGodunov kernel_mhd_compute_emf_v4 error");
-
-	} // end compute emf
-	TIMER_STOP(timerEmf);
-
-	TIMER_START(timerCtUpdate);
-	// update magnetic field
-	{
-	  dim3 dimBlock(UPDATE_CT_BLOCK_DIMX_3D_V4,
-			UPDATE_CT_BLOCK_DIMY_3D_V4);
-	  dim3 dimGrid(blocksFor(isize, UPDATE_CT_BLOCK_DIMX_3D_V4), 
-		       blocksFor(jsize, UPDATE_CT_BLOCK_DIMY_3D_V4));
-	  kernel_mhd_flux_update_ct_v4<<<dimGrid, dimBlock>>>(d_UOld.data(),
-							      d_UNew.data(),
-							      d_emf.data(),
-							      d_UOld.pitch(), 
-							      d_UOld.dimx(), 
-							      d_UOld.dimy(), 
-							      d_UOld.dimz(),
-							      dt / dx, 
-							      dt / dy,
-							      dt / dz,
-							      dt );
-	  checkCudaError("MHDRunGodunov kernel_mhd_flux_update_ct_v4 error");
-	} // update magnetic field
-	TIMER_STOP(timerCtUpdate);
-	
-	TIMER_START(timerDissipative);
-	// update borders
-	real_t &nu  = _gParams.nu;
-	real_t &eta = _gParams.eta;
-	if (nu>0 or eta>0) {
-	  make_all_boundaries(d_UNew);
-	}
-
-	if (eta>0) {
-	  // update magnetic field with resistivity emf
-	  compute_resistivity_emf_3d(d_UNew, d_emf);
-	  compute_ct_update_3d      (d_UNew, d_emf, dt);
+    // compute viscosity
+    if (nu>0) {
+      DeviceArray<real_t> &d_flux_x = d_qm_x;
+      DeviceArray<real_t> &d_flux_y = d_qm_y;
+      DeviceArray<real_t> &d_flux_z = d_qm_z;
 	  
-	  real_t &cIso = _gParams.cIso;
-	  if (cIso<=0) { // non-isothermal simulations
-	    // compute energy flux
-	    compute_resistivity_energy_flux_3d(d_UNew, d_qm_x, d_qm_y, d_qm_z, dt);
-	    compute_hydro_update_energy       (d_UNew, d_qm_x, d_qm_y, d_qm_z);
-	  }
-	}
-	
-	// compute viscosity
-	if (nu>0) {
-	  DeviceArray<real_t> &d_flux_x = d_qm_x;
-	  DeviceArray<real_t> &d_flux_y = d_qm_y;
-	  DeviceArray<real_t> &d_flux_z = d_qm_z;
-	  
-	  compute_viscosity_flux(d_UNew, d_flux_x, d_flux_y, d_flux_z, dt);
-	  compute_hydro_update  (d_UNew, d_flux_x, d_flux_y, d_flux_z );
-	} // end compute viscosity force / update  
-	TIMER_STOP(timerDissipative);
-
-	/*
-	 * random forcing
-	 */
-	if (randomForcingEnabled) {
-	  
-	  real_t norm = compute_random_forcing_normalization(d_UNew, dt);
-	  
-	  add_random_forcing(d_UNew, dt, norm);
-	  
-	}
-	if (randomForcingOrnsteinUhlenbeckEnabled) {
-	  
-	  // add forcing field in real space
-	  pForcingOrnsteinUhlenbeck->add_forcing_field(d_UNew, dt);
-	  
-	}
-
-      } // end implementationVersion == 4
-
-    } // end THREE_D
-    TIMER_STOP(timerGodunov);
+      compute_viscosity_flux(d_UNew, d_flux_x, d_flux_y, d_flux_z, dt);
+      compute_hydro_update  (d_UNew, d_flux_x, d_flux_y, d_flux_z );
+    } // end compute viscosity force / update  
+    TIMER_STOP(timerDissipative);
 
     /*
-     * update boundaries
+     * random forcing
      */
-    TIMER_START(timerBoundaries);
-    make_all_boundaries(d_UNew);
-    TIMER_STOP(timerBoundaries);
+    if (randomForcingEnabled) {
+	  
+      real_t norm = compute_random_forcing_normalization(d_UNew, dt);
+	  
+      add_random_forcing(d_UNew, dt, norm);
+	  
+    }
+    if (randomForcingOrnsteinUhlenbeckEnabled) {
+	  
+      // add forcing field in real space
+      pForcingOrnsteinUhlenbeck->add_forcing_field(d_UNew, dt);
+	  
+    }
 
-  } // MHDRunGodunov::godunov_unsplit_gpu
+  } // MHDRunGodunov::godunov_unsplit_gpu_v4
 
 #else // CPU version
 
