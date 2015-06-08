@@ -115,6 +115,7 @@ namespace hydroSimu {
     , d_gravity()
 #endif // __CUDACC__
     , gravityEnabled(false)
+    , selfGravityEnabled(false)
     , h_randomForcing()
 #ifdef __CUDACC__
     , d_randomForcing()
@@ -246,9 +247,12 @@ namespace hydroSimu {
     } // end if problem turbulence-Ornstein-Uhlenbeck
 
     /*
-     * Gravity enabled
+     * Gravity enabled (either static or self).
+     * self-gravity requires a poisson solver (FFT-based).
      */
-    gravityEnabled = configMap.getBool("gravity", "enabled", false);
+    staticGravityEnabled = configMap.getBool("gravity", "static", false);
+    selfGravityEnabled = configMap.getBool("gravity", "self", false);
+    gravityEnabled = staticGravityEnabled || selfGravityEnabled;
 
     // enforce gravityEnabled for some problems
     if ( !problem.compare("Rayleigh-Taylor") or 

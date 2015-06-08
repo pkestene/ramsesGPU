@@ -575,6 +575,8 @@ namespace hydroSimu {
 
     //! gravity enabled 
     bool gravityEnabled;
+    bool staticGravityEnabled;
+    bool selfGravityEnabled;
 
     /*
      * random forcing data arrays (3 components)
