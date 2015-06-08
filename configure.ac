@@ -294,6 +294,7 @@ AM_CONDITIONAL(HAVE_PNETCDF, test "$with_pnetcdf" = "yes")
 # ------------------------------------------------------------------------------
 CONFIGURE_HEADLINE([ FFTW3 support ])
 AX_LIB_FFTW3_DOUBLE()
+AM_CONDITIONAL(HAVE_FFTW3, test "$with_fftw3" = "yes")
 AM_CONDITIONAL(HAVE_FFTW3_MPI, test "$with_fftw3_mpi" = "yes")
 
 # ------------------------------------------------------------------------------
