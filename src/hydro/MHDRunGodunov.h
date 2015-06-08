@@ -176,6 +176,29 @@ namespace hydroSimu {
 				HostArray<real_t>& h_UNew, 
 				real_t dt, int nStep);
 
+    //! unplitVersion = 1
+    //! memory footprint is medium
+    //! reconstructed (trace) states are stored
+    //! then perform Riemann flux computation and update
+    void godunov_unsplit_cpu_v1(HostArray<real_t>& d_UOld, 
+				HostArray<real_t>& d_UNew, 
+				real_t dt, int nStep);
+
+    //! unplitVersion = 2
+    //! Nont implemented
+    void godunov_unsplit_cpu_v2(HostArray<real_t>& d_UOld, 
+				HostArray<real_t>& d_UNew, 
+				real_t dt, int nStep);
+
+    //! unplitVersion = 3
+    void godunov_unsplit_cpu_v3(HostArray<real_t>& d_UOld,
+				HostArray<real_t>& d_UNew,
+				real_t dt, int nStep);
+
+    //! unplitVersion = 4
+    void godunov_unsplit_cpu_v4(HostArray<real_t>& d_UOld,
+				HostArray<real_t>& d_UNew,
+				real_t dt, int nStep);
 
 #endif // __CUDAC__
 
