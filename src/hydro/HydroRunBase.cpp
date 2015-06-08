@@ -115,6 +115,7 @@ namespace hydroSimu {
     , d_gravity()
 #endif // __CUDACC__
     , gravityEnabled(false)
+    , staticGravityEnabled(false)
     , selfGravityEnabled(false)
     , h_randomForcing()
 #ifdef __CUDACC__
