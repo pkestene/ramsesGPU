@@ -27,9 +27,12 @@ NVCCFLAGS  += --compiler-options -I$(top_srcdir)/src/utils/cnpy
 # ===================================================
 # PROGRAMS
 # ===================================================
-bin_PROGRAMS = testPoissonCpuFFTW2d testPoissonCpuFFTW3d
+bin_PROGRAMS =
+if HAVE_FFTW3
+bin_PROGRAMS += testPoissonCpuFFTW2d testPoissonCpuFFTW3d
 if USE_DOUBLE_PRECISION
 bin_PROGRAMS += testPoissonCpuFFTW2d_double testPoissonCpuFFTW3d_double
+endif
 endif
 
 if USE_CUDA
@@ -41,7 +44,7 @@ endif
 
 
 
-
+if HAVE_FFTW3
 #
 # testPoissonCpuFFTW2d
 #
@@ -74,6 +77,7 @@ testPoissonCpuFFTW3d_double_SOURCES  = testPoissonCpuFFTW3d.cpp
 testPoissonCpuFFTW3d_double_CPPFLAGS = -DUSE_DOUBLE $(AM_CPPFLAGS) -I$(top_srcdir)/src/utils/cnpy -I$(top_srcdir)/src/hydro 
 testPoissonCpuFFTW3d_double_LDFLAGS  = $(AM_LDFLAGS) $(FFTW3_LDFLAGS) ../../src/utils/cnpy/libCNpy.la
 
+endif
 endif
 
 ###############################################################################
