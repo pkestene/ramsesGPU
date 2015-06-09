@@ -163,7 +163,7 @@ namespace hydroSimu {
 	implementationVersion = 4;
       std::cout << "################################################################" << std::endl;
       std::cout << "WARNING : you should review your parameter file and set MHD/implementationVersion"
-		<< " to a valid number (0, 1, 2 or 3 currently)" << std::endl;
+		<< " to a valid number (0, 1, 2, 3 or 4 currently)" << std::endl;
       std::cout << "implementation version is forced to the default value" << std::endl;
       std::cout << "################################################################" << std::endl;
     }
@@ -171,7 +171,9 @@ namespace hydroSimu {
 
     
 
-    // extra memory allocation for a specific implementation version
+    /*
+     * extra memory allocation for a specific implementation version
+     */
     if (implementationVersion >= 1) { // less memory scrooge version
 #ifdef __CUDACC__
       if (dimType == TWO_D) {
