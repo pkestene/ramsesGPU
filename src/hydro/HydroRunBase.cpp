@@ -6820,11 +6820,17 @@ namespace hydroSimu {
     // reset domain
     memset(h_U.data(),0,h_U.sizeBytes());
 
+    // Riemann config number
     int nb=riemannConfId;
     if (nb<0)
       nb=0;
     else if (nb>NB_RIEMANN_CONFIG-1)
       nb=NB_RIEMANN_CONFIG-1;
+
+    // get the location of the transition point
+    real_t xt = configMap.getFloat("riemann2d", "x",  0.5);
+    real_t yt = configMap.getFloat("riemann2d", "y",  0.5);
+
 
     real_t q1[NVAR_2D],q2[NVAR_2D],q3[NVAR_2D],q4[NVAR_2D];
 
@@ -6853,12 +6859,27 @@ namespace hydroSimu {
     primToCons_2D(q3,_gParams.gamma0);
     primToCons_2D(q4,_gParams.gamma0);  
 
-    for( int j = ghostWidth; j < jsize-ghostWidth; ++j)
-      for( int i = ghostWidth; i < isize-ghostWidth; ++i)
-	{
+    real_t &xMin = _gParams.xMin;
+    real_t &yMin = _gParams.yMin;
+    real_t &zMin = _gParams.zMin;
+
+    real_t &xMax = _gParams.xMax;
+    real_t &yMax = _gParams.yMax;
+    real_t &zMax = _gParams.zMax;
+
+    real_t Lx = xMax-xMin;
+    real_t Ly = yMax-yMin;
+    real_t Lz = zMax-zMin;
+
+    for( int j = ghostWidth; j < jsize-ghostWidth; ++j) {
+      real_t y = yMin + dy/2 + (j-ghostWidth)*dy;
+
+      for( int i = ghostWidth; i < isize-ghostWidth; ++i) {
+	real_t x = xMin + dx/2 + (i-ghostWidth)*dx;
 	
-	  if (i<(ghostWidth+nx/2)) {
-	    if (j<(ghostWidth+ny/2)) {
+	
+	  if (x<xt) {
+	    if (y<yt) {
 	      // quarter 3
 	      h_U(i,j,ID) = q3[ID];
 	      h_U(i,j,IP) = q3[IP];
@@ -6872,7 +6893,7 @@ namespace hydroSimu {
 	      h_U(i,j,IV) = q2[IV];
 	    }
 	  } else {
-	    if (j<(ghostWidth+ny/2)) {
+	    if (y<yt) {
 	      // quarter 4
 	      h_U(i,j,ID) = q4[ID];
 	      h_U(i,j,IP) = q4[IP];
@@ -6886,7 +6907,8 @@ namespace hydroSimu {
 	      h_U(i,j,IV) = q1[IV];
 	    }     
 	  }
-	}
+      } // end for i
+    } // end for j
 
     if (ghostWidth == 2) {
       /* fill corner values */
