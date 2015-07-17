@@ -328,7 +328,26 @@ int main(int argc, char **argv)
       }
     }
     
-  }
+  } // TEST_CASE_GAUSSIAN
+
+  if (testCaseNb==TEST_CASE_UNIFORM_DISK) {
+    // compute min value
+
+    double minVal = rho[0];
+    for (int i = 0; i < NX; ++i) {
+      for (int j = 0; j < NY; ++j) {
+	if (rho[i*NY2 + j] < minVal)
+	  minVal = rho[i*NY2 + j];
+      }
+    }
+    
+    for (int i = 0; i < NX; ++i) {
+      for (int j = 0; j < NY; ++j) {
+	rho[i*NY2 + j] -= minVal;
+      }
+    }
+    
+  } // TEST_CASE_UNIFORM_DISK
 
 
   // save numerical solution
@@ -342,9 +361,6 @@ int main(int argc, char **argv)
    */
   // compute sum of square ( phi - solution) / sum of square (solution)
   {
-    double L2_diff = 0.0;
-    double L2_rho  = 0.0;
-
     // uniform disk function center
     double xC = cl.follow((double) 0.0, "--xC");
     double yC = cl.follow((double) 0.0, "--yC");
@@ -380,15 +396,47 @@ int main(int argc, char **argv)
 	  }
 	} /* end testCase */
 
-	// compute L2 difference between FFT-based solution (phi) and 
-	// expected analytical solution
+	solution[i*NY2+j] = sol;
+
+      } // end for j
+    } // end for i
+
+    if (testCaseNb==TEST_CASE_UNIFORM_DISK) {
+      // compute min value of solution
+      double minVal = solution[0];
+      for (int i = 0; i < NX; ++i) {
+	for (int j = 0; j < NY; ++j) {
+	  if (solution[i*NY2+j] < minVal)
+	    minVal = solution[i*NY2+j];
+	} // end for j
+      } // end for i
+
+      for (int i = 0; i < NX; ++i) {
+	for (int j = 0; j < NY; ++j) {
+	  solution[i*NY2+j] -= minVal;
+	} // end for j
+      } // end for i
+
+    } // end TEST_CASE_UNIFORM_DISK
+
+    // compute L2 difference between FFT-based solution (phi) and 
+    // expected analytical solution
+    double L2_diff = 0.0;
+    double L2_rho  = 0.0;
+
+    for (int i = 0; i < NX; ++i) {
+      for (int j = 0; j < NY; ++j) {
+
+	double sol = solution[i*NY2+j];
+
 	L2_rho += sol*sol;
+
+	// rho now contains error
 	rho[i*NY2 + j] -=  sol;
 	L2_diff += rho[i*NY2 + j] * rho[i*NY2 + j];
 
-	solution[i*NY2+j] = sol;
-      }
-    }
+      } // end for j
+    } // end for i
 
     std::cout << "L2 error between phi and exact solution : " 
 	      <<  L2_diff/L2_rho << std::endl;

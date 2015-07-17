@@ -8,7 +8,7 @@
  * method 1 : just divide right hand side by -(kx^2+ky^2+kz^2) in Fourier
  *
  * Test case 0:  rho(x,y,z) = sin(2*pi*x/Lx)*sin(2*pi*y/Ly)*sin(2*pi*z/Lz)
- * Test case 1:  rho(x,y,z) = 4*alpha*(alpha*(x^2+y^2+z^2)-1)*exp(-alpha*(x^2+y^2+z^2))
+ * Test case 1:  rho(x,y,z) = (4*alpha*alpha*(x^2+y^2+z^2)-6*alpha)*exp(-alpha*(x^2+y^2+z^2))
  * Test case 2:  rho(x,y,z) = ( r=sqrt(x^2+y^2+z^2) < R ) ? 1 : 0 
  *
  * Example of use:
@@ -243,27 +243,36 @@ int main(int argc, char **argv)
     for (int j = 0; j < NY; ++j) {
       for (int k = 0; k < NZ; ++k) {
 
-	double x = 1.0*i/NX - x0;
-	double y = 1.0*j/NY - y0;
-	double z = 1.0*k/NZ - z0;
 
 	if (testCaseNb==TEST_CASE_SIN) {
 	  
+	  double x = 1.0*i/NX;
+	  double y = 1.0*j/NY;
+	  double z = 1.0*k/NZ;
+
 	  rho[i*NY*NZ2 + j*NZ2 + k] =  sin(2*M_PI*x) * sin(2*M_PI*y) * sin(2*M_PI*z);
 	  
 	} else if (testCaseNb==TEST_CASE_GAUSSIAN) {
-	  
-	  rho[i*NY*NZ2 + j*NZ2 + k] = 4*alpha*(alpha*(x*x+y*y+z*z)-1)*exp(-alpha*(x*x+y*y+z*z));
+
+	  double x = 1.0*i/NX - x0;
+	  double y = 1.0*j/NY - y0;
+	  double z = 1.0*k/NZ - z0;
+
+	  rho[i*NY*NZ2 + j*NZ2 + k] = (4*alpha*alpha*(x*x+y*y+z*z)-6*alpha)*exp(-alpha*(x*x+y*y+z*z));
 	  
 	} else if (testCaseNb==TEST_CASE_UNIFORM_BALL) {
 	  
+	  double x = 1.0*i/NX;
+	  double y = 1.0*j/NY;
+	  double z = 1.0*k/NZ;
+
 	  // uniform ball function center
-	  double xC = cl.follow((double) 0.0, "--xC");
-	  double yC = cl.follow((double) 0.0, "--yC");
-	  double zC = cl.follow((double) 0.0, "--zC");
+	  double xC = cl.follow((double) 0.5, "--xC");
+	  double yC = cl.follow((double) 0.5, "--yC");
+	  double zC = cl.follow((double) 0.5, "--zC");
 	  
 	  // uniform ball radius
-	  double R = cl.follow(0.02, "--radius");
+	  double R = cl.follow(0.1, "--radius");
 	  
 	  double r = sqrt( (x-xC)*(x-xC) + (y-yC)*(y-yC) + (z-zC)*(z-zC) );
 	  
@@ -347,13 +356,36 @@ int main(int argc, char **argv)
       }
     }
     
-  }
+  } // end TEST_CASE_GAUSSIAN
+
+  if (testCaseNb==TEST_CASE_UNIFORM_BALL) {
+    // compute min value
+
+    double minVal = rho[0];
+    for (int i = 0; i < NX; ++i) {
+      for (int j = 0; j < NY; ++j) {
+	for (int k = 0; k < NZ; ++k) {
+	  if (rho[i*NY*NZ2 + j*NZ2 + k] < minVal)
+	    minVal = rho[i*NY*NZ2 + j*NZ2 + k];
+	}
+      }
+    }
+    
+    for (int i = 0; i < NX; ++i) {
+      for (int j = 0; j < NY; ++j) {
+	for (int k = 0; k < NZ; ++k) {
+	  rho[i*NY*NZ2 + j*NZ2 + k] -= minVal;
+	}
+      }
+    }
+    
+  } // end TEST_CASE_UNIFORM_BALL
 
 
   // save numerical solution
   {
     const unsigned int shape[] = {(unsigned int) NX, 
-				  (unsigned int) NY, 
+				  (unsigned int) NY,
 				  (unsigned int) NZ2};
     cnpy::npy_save("phi.npy",rho,shape,3,"w");
   }
@@ -363,26 +395,31 @@ int main(int argc, char **argv)
    */
   // compute sum of square ( phi - solution) / sum of square (solution)
   {
-    double L2_diff = 0.0;
-    double L2_rho  = 0.0;
-
     // uniform ball function center
-    double xC = cl.follow((double) 0.0, "--xC");
-    double yC = cl.follow((double) 0.0, "--yC");
-    double zC = cl.follow((double) 0.0, "--zC");
+    double xC = cl.follow((double) 0.5, "--xC");
+    double yC = cl.follow((double) 0.5, "--yC");
+    double zC = cl.follow((double) 0.5, "--zC");
 
     // uniform ball radius
-    double R = cl.follow(0.02, "--radius");
+    double R = cl.follow(0.1, "--radius");
 
     for (int i = 0; i < NX; ++i) {
       for (int j = 0; j < NY; ++j) {
 	for (int k = 0; k < NZ; ++k) {
-	  
+
 	  double sol=0.0;
 	  
 	  if (testCaseNb==TEST_CASE_SIN) {
 	    
-	    sol =  - sin(2*M_PI*i/NX) * sin(2*M_PI*j/NY) * sin(2*M_PI*k/NZ) / ( (4*M_PI*M_PI)*(1.0/Lx/Lx + 1.0/Ly/Ly + 1.0/Lz/Lz) );
+	    double x = 1.0*i/NX;
+	    double y = 1.0*j/NY;
+	    double z = 1.0*k/NZ;
+
+	    sol =  - 
+	      sin(2*M_PI*x) * 
+	      sin(2*M_PI*y) * 
+	      sin(2*M_PI*z) / 
+	      ( (4*M_PI*M_PI)*(1.0/Lx/Lx + 1.0/Ly/Ly + 1.0/Lz/Lz) );
 	    
 	  } else if (testCaseNb==TEST_CASE_GAUSSIAN) {
 	    
@@ -393,9 +430,9 @@ int main(int argc, char **argv)
 	    
 	  } else if (testCaseNb==TEST_CASE_UNIFORM_BALL) {
 	    
-	    double x = 1.0*i/NX - x0;
-	    double y = 1.0*j/NY - y0;
-	    double z = 1.0*k/NZ - z0;
+	    double x = 1.0*i/NX;
+	    double y = 1.0*j/NY;
+	    double z = 1.0*k/NZ;
 	    
 	    double r = sqrt( (x-xC)*(x-xC) + (y-yC)*(y-yC) + (z-zC)*(z-zC) );
 	    
@@ -405,26 +442,64 @@ int main(int argc, char **argv)
 	      sol = -R*R*R/(3*r)+R*R/2.0;
 	    }
 	  } /* end testCase */
+
+	  solution[i*NY*NZ2 + j*NZ2 + k] = sol;
 	  
-	  // compute L2 difference between FFT-based solution (phi) and 
-	  // expected analytical solution
+	} // end for k
+      } // end for j
+    } // end for i
+    
+    if (testCaseNb==TEST_CASE_UNIFORM_BALL) {
+      // compute min value of solution
+      double minVal = solution[0];
+      for (int i = 0; i < NX; ++i) {
+	for (int j = 0; j < NY; ++j) {
+	  for (int k = 0; k < NZ; ++k) {
+	    if (solution[i*NY*NZ2 + j*NZ2 + k] < minVal)
+	      minVal = solution[i*NY*NZ2 + j*NZ2 + k];
+	  }
+	}
+      }
+
+      for (int i = 0; i < NX; ++i) {
+	for (int j = 0; j < NY; ++j) {
+	  for (int k = 0; k < NZ; ++k) {
+	    solution[i*NY*NZ2 + j*NZ2 + k] -= minVal;
+	  }
+	}
+      }
+      
+    } // end TEST_CASE_UNIFORM_BALL
+
+
+    // compute L2 difference between FFT-based solution (phi) and 
+    // expected analytical solution
+    double L2_diff = 0.0;
+    double L2_rho  = 0.0;
+    
+    for (int i = 0; i < NX; ++i) {
+      for (int j = 0; j < NY; ++j) {
+	for (int k = 0; k < NZ; ++k) {
+
+	  double sol = solution[i*NY*NZ2 + j*NZ2 + k];
+
 	  L2_rho += sol*sol;
+
+	  // rho now contains error
 	  rho[i*NY*NZ2 + j*NZ2 + k] -=  sol;
 	  L2_diff += rho[i*NY*NZ2 + j*NZ2 + k] * rho[i*NY*NZ2 + j*NZ2 + k];
-	  
-	  solution[i*NY*NZ2 + j*NZ2 + k] = sol;
 
 	} // end for k
       } // end for j
     } // end for i
-      
-    std::cout << "L2 error between phi and exact solution : " 
+
+    std::cout << "L2 relative error between phi and exact solution : " 
 	      <<  L2_diff/L2_rho << std::endl;
 
     // save error array
     {
       const unsigned int shape[] = {(unsigned int) NX, 
-				    (unsigned int) NY, 
+				    (unsigned int) NY,
 				    (unsigned int) NZ2};
       cnpy::npy_save("error.npy",rho,shape,3,"w");
     }
@@ -432,7 +507,7 @@ int main(int argc, char **argv)
     // save analytical solution
     {
       const unsigned int shape[] = {(unsigned int) NX, 
-				    (unsigned int) NY, 
+				    (unsigned int) NY,
 				    (unsigned int) NZ2};
       cnpy::npy_save("solution.npy",solution,shape,3,"w");
     }
