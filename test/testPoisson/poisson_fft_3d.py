@@ -1,5 +1,7 @@
 """
-   Mini benchmark for FFT-based Poisson solver.
+   Mini testbench for FFT-based Poisson solver.
+
+   P. Kestener, June 6 2015.
 
 """
 
@@ -42,7 +44,7 @@ def initData(data,testCase):
 
         print("data shape %d %d %d") % ( exactSolution.shape[0] , exactSolution.shape[1] , exactSolution.shape[2] )
         
-    # Gaussian
+    # Gaussian shape
     elif testCase==1:
 
         x = 1.0*np.arange(Nx)/Nx - x0
