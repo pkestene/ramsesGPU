@@ -452,8 +452,8 @@ AM_CONDITIONAL(HAVE_GLUT, test "$GLUT_AM_COND" = "yes")
 # ------------------------------------------------------------------------------
 #    Enable/disable Qt Gui building
 # ------------------------------------------------------------------------------
-CONFIGURE_HEADLINE([ QT ])
-AX_QTGUI([opengl])
+#CONFIGURE_HEADLINE([ QT ])
+#AX_QTGUI([opengl])
 
 # ------------------------------------------------------------------------------
 # DOC OPTIONS
@@ -483,7 +483,6 @@ AC_CONFIG_FILES([
 	src/utils/mpiUtils/Makefile
 	src/utils/IO/Makefile
 	src/utils/cnpy/Makefile
-	src/qtGui/qtHelloWorld/Makefile
 	src/analysis/powerSpectrum/Makefile
 	src/analysis/readSlice/Makefile
 	src/analysis/structureFunctions/Makefile
@@ -526,7 +525,6 @@ AC_MSG_RESULT([
 	* GPU/CUDA enabled       : $want_cuda
 	* CUDA tools version     : $NVCC_VERSION (NVCCFLAGS = $NVCCFLAGS)
 	* GLUT-based GUI enable  : $GLUT_AM_COND
-	* QT-based GUI enable    : $enable_qtgui
 	* VTK enabled            : $have_vtk ($VTK_LIBRARY_PATH)
 	*                        : vtk libs: $VTK_LIBS
 	* HDF5 enabled           : $with_hdf5 ($HDF5_VERSION)
