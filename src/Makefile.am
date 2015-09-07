@@ -58,9 +58,9 @@ MAINTAINERCLEANFILES = $(srcdir)/Makefile.in
 
 AUTOMAKE_OPTIONS = subdir-objects
 SUBDIRS = hydro utils .
-if ENABLE_QTGUI
-SUBDIRS += ./qtGui/qtHelloWorld	
-endif
+# if ENABLE_QTGUI
+# SUBDIRS += ./qtGui/qtHelloWorld	
+# endif
 
 #VTK_CPPFLAGS=
 if HAVE_VTK
@@ -85,9 +85,9 @@ if USE_MIXED_PRECISION
 EXTRA_FLAGS += -DUSE_MIXED_PRECISION
 endif
 
-AM_CXXFLAGS = -I$(srcdir)/hydro -I$(srcdir)/utils/config -I$(srcdir)/utils/monitoring $(CUDA_CFLAGS) $(QT_CXXFLAGS) $(VTK_CPPFLAGS) $(TIMING_FLAGS)
-AM_CFLAGS   = $(CUDA_CFLAGS) $(QT_CPPFLAGS) $(VTK_CPPFLAGS) $(TIMING_FLAGS)
-AM_CPPFLAGS = -I$(srcdir)/hydro -I$(srcdir)/utils/config -I$(srcdir)/utils/monitoring $(CUDA_CFLAGS) $(QT_CPPFLAGS) $(VTK_CPPFLAGS) $(TIMING_FLAGS)
+AM_CXXFLAGS = -I$(srcdir)/hydro -I$(srcdir)/utils/config -I$(srcdir)/utils/monitoring $(CUDA_CFLAGS) $(VTK_CPPFLAGS) $(TIMING_FLAGS)
+AM_CFLAGS   = $(CUDA_CFLAGS) $(VTK_CPPFLAGS) $(TIMING_FLAGS)
+AM_CPPFLAGS = -I$(srcdir)/hydro -I$(srcdir)/utils/config -I$(srcdir)/utils/monitoring $(CUDA_CFLAGS) $(VTK_CPPFLAGS) $(TIMING_FLAGS)
 AM_LDFLAGS  = $(VTK_LDFLAGS) $(VTK_LIBS) 
 AM_FCFLAGS  = -fno-underscoring
 #NVCCFLAGS  += --host-compilation=c++
@@ -96,10 +96,7 @@ NVCCFLAGS  += --compiler-options -I$(srcdir) \
 	--compiler-options -I$(srcdir)/hydro \
 	--compiler-options -I$(srcdir)/utils/config \
 	--compiler-options -I$(srcdir)/utils/monitoring \
-	--compiler-options -I$(srcdir)/glutGui \
-	--compiler-options -I$(srcdir)/qtGui/qtHydro2d 
-NVCCFLAGS += $(addprefix --compiler-options ,$(QT_CPPFLAGS)) 
-NVCCFLAGS += $(addprefix --compiler-options ,$(QT_CXXFLAGS))
+	--compiler-options -I$(srcdir)/glutGui 
 NVCCFLAGS += --compiler-options -fno-strict-aliasing
 NVCCFLAGS += $(addprefix --compiler-options ,$(VTK_CPPFLAGS) )
 NVCCFLAGS += --compiler-options -Wno-unused-function
@@ -489,33 +486,33 @@ endif
 ## Some applications with a QT-based GUI
 ###############################################
 ###############################################
-if ENABLE_QTGUI
-bin_PROGRAMS += euler2d_cpu_qt
+# if ENABLE_QTGUI
+# bin_PROGRAMS += euler2d_cpu_qt
 
-# ===================================================
-# euler2d_cpu_qt
-# ===================================================
-euler2d_cpu_qt_SOURCES = \
-	hydro/gl_util.h \
-	qtGui/qtHydro2d/HydroWidget.h \
-	qtGui/qtHydro2d/HydroWidget.cpp \
-	qtGui/qtHydro2d/MainWindow.h \
-	qtGui/qtHydro2d/MainWindow.cpp \
-	qtGui/qtHydro2d/main.cpp 
-euler2d_cpu_qt_CXXFLAGS = $(GM_CFLAGS) $(GM_FLAGS_SUPP) -fPIC
-euler2d_cpu_qt_LDADD   = $(GM_LIBS) $(QT_LIBS) hydro/libhydroCpu.la utils/config/libIniConfig.la utils/monitoring/libMonitoring.la utils/cnpy/libCNpy.la $(PAPI_LDFLAGS)
-euler2d_cpu_qt_LDFLAGS = $(AM_LDFLAGS) $(GLEW_LIBS)
+# # ===================================================
+# # euler2d_cpu_qt
+# # ===================================================
+# euler2d_cpu_qt_SOURCES = \
+# 	hydro/gl_util.h \
+# 	qtGui/qtHydro2d/HydroWidget.h \
+# 	qtGui/qtHydro2d/HydroWidget.cpp \
+# 	qtGui/qtHydro2d/MainWindow.h \
+# 	qtGui/qtHydro2d/MainWindow.cpp \
+# 	qtGui/qtHydro2d/main.cpp 
+# euler2d_cpu_qt_CXXFLAGS = $(GM_CFLAGS) $(GM_FLAGS_SUPP) -fPIC
+# euler2d_cpu_qt_LDADD   = $(GM_LIBS) $(QT_LIBS) hydro/libhydroCpu.la utils/config/libIniConfig.la utils/monitoring/libMonitoring.la utils/cnpy/libCNpy.la $(PAPI_LDFLAGS)
+# euler2d_cpu_qt_LDFLAGS = $(AM_LDFLAGS) $(GLEW_LIBS)
 
-moc_gen_sources = \
-	qtGui/qtHydro2d/HydroWidget.moc.cpp \
-	qtGui/qtHydro2d/MainWindow.moc.cpp
+# moc_gen_sources = \
+# 	qtGui/qtHydro2d/HydroWidget.moc.cpp \
+# 	qtGui/qtHydro2d/MainWindow.moc.cpp
 
-gen_sources = $(moc_gen_sources) 
+# gen_sources = $(moc_gen_sources) 
 
-nodist_euler2d_cpu_qt_SOURCES = $(gen_sources)
+# nodist_euler2d_cpu_qt_SOURCES = $(gen_sources)
 
-BUILT_SOURCES += $(moc_gen_sources) 
-CLEANFILES += $(moc_gen_sources) 
+# BUILT_SOURCES += $(moc_gen_sources) 
+# CLEANFILES += $(moc_gen_sources) 
 
 # ===================================================
 # euler2d_gpu_qt
@@ -549,7 +546,7 @@ CLEANFILES += $(moc_gen_sources)
 # BUILT_SOURCES += $(moc_gen_sources) 
 # endif
 
-endif
+# endif
 
 ##########################################################
 ##########################################################
