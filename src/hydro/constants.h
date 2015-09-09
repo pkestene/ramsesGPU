@@ -12,6 +12,16 @@
 #include "real_type.h"
 #include "gpu_macros.h"
 
+// some macros to avoid too much unused variable warnings
+#define UNUSED(x) ((void)(x))
+
+#ifdef __GNUC__
+#define UNUSED_FUNCTION __attribute__ ((unused))
+#else
+#define UNUSED_FUNCTION
+#endif
+
+
 // memory alignment 
 #if defined(__CUDACC__) // NVCC
 #define MY_ALIGN(n) __align__(n)

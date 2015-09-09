@@ -176,6 +176,10 @@ namespace hydroSimu {
 				HostArray<real_t>& h_UNew, 
 				real_t dt, int nStep);
 
+    void godunov_unsplit_cpu_v0_old(HostArray<real_t>& h_UOld, 
+				    HostArray<real_t>& h_UNew, 
+				    real_t dt, int nStep);
+
     //! unplitVersion = 1
     //! memory footprint is medium
     //! reconstructed (trace) states are stored
