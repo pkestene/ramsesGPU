@@ -8,14 +8,14 @@
 module load cuda/6.5 hdf5/parallel-1.8.13-gnu48-static pnetcdf/1.4.1
 module load papi/5.3.0_nocuda
 
-module load cuda/7.0 hdf5/parallel-1.8.13-gnu48-static pnetcdf/1.4.1
+module load cuda/7.5 hdf5/parallel-1.8.13-gnu48-static pnetcdf/1.4.1
 module load papi/5.3.0_nocuda
 
 # cpu only build
 ../configure --with-cuda=no --enable-timing --with-vtk-version=-6.0 --enable-double --with-cuda-fast-math=no --with-pnetcdf=/home/pkestene/local/pnetcdf-1.4.1 --with-hdf5=$HDF5_ROOT/bin/h5pcc --with-fftw3 --with-fftw3-mpi FFTW3_LIBDIR=/usr/lib/x86_64-linux-gnu --enable-mpi --with-papi=/home/pkestene/local/papi-5.3.0_nocuda
 
 # gpu build
-../configure --with-cuda=/usr/local/cuda-7.0 --enable-timing --with-vtk-version=-6.0 --enable-double --with-cuda-fast-math=no --with-pnetcdf=/home/pkestene/local/pnetcdf-1.4.1 --with-hdf5=$HDF5_BIN_DIR/h5pcc --with-fftw3 --with-fftw3-mpi FFTW3_LIBDIR=/usr/lib/x86_64-linux-gnu --enable-mpi --with-netcdf=no --disable-qtgui --disable-glutgui
+../configure --with-cuda=/usr/local/cuda-7.5 --enable-timing --with-vtk-version=-6.0 --enable-double --with-cuda-fast-math=no --with-pnetcdf=/home/pkestene/local/pnetcdf-1.4.1 --with-hdf5=$HDF5_BIN_DIR/h5pcc --with-fftw3 --with-fftw3-mpi FFTW3_LIBDIR=/usr/lib/x86_64-linux-gnu --enable-mpi --with-netcdf=no --disable-qtgui --disable-glutgui
 
 ##########
 # sandrine
