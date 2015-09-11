@@ -361,8 +361,8 @@ void trace_unsplit_mhd_2d(real_t qNb[3][3][NVAR_MHD],
 __DEVICE__
 void trace_unsplit_mhd_2d_face(real_t q[NVAR_MHD],
 			       real_t dq[2][NVAR_MHD],
-			       real_t bfNb[TWO_D*2],
-			       real_t dbf[4],
+			       real_t bfNb[TWO_D*3],
+			       real_t dbf[TWO_D][3],
 			       real_t Ez[2][2],
 			       real_t dtdx,
 			       real_t dtdy,
@@ -395,8 +395,8 @@ void trace_unsplit_mhd_2d_face(real_t q[NVAR_MHD],
   // Face centered variables
   real_t AL =  bfNb[0];
   real_t AR =  bfNb[1];
-  real_t BL =  bfNb[2];
-  real_t BR =  bfNb[3];
+  real_t BL =  bfNb[4];
+  real_t BR =  bfNb[5];
 
   // TODO LATER : compute xL, xR and xC using ::gParam
   // this is only needed when doing cylindrical or spherical coordinates
@@ -420,10 +420,10 @@ void trace_unsplit_mhd_2d_face(real_t q[NVAR_MHD],
   real_t dAy = dq[IY][IA] * HALF_F;
  
   // Face centered TVD slopes in transverse direction
-  real_t dALy = HALF_F * dbf[0];
-  real_t dBLx = HALF_F * dbf[1];
-  real_t dARy = HALF_F * dbf[2];
-  real_t dBRx = HALF_F * dbf[3];
+  real_t dALy = HALF_F * dbf[IY][0];
+  real_t dBLx = HALF_F * dbf[IX][1];
+  real_t dARy = HALF_F * dbf[IY][0];
+  real_t dBRx = HALF_F * dbf[IX][1];
   
   // Cell centered slopes in normal direction
   real_t dAx = HALF_F * (AR - AL);
@@ -584,7 +584,7 @@ void trace_unsplit_mhd_2d_face(real_t q[NVAR_MHD],
     qRecons[IP] = FMAX(smallp *qRecons[ID], qRecons[IP]);
   }
 
-} // trace_unsplit_mhd_2d_by_direction
+} // trace_unsplit_mhd_2d_face
 
 /**
  * 3D Trace computations for unsplit Godunov scheme.
