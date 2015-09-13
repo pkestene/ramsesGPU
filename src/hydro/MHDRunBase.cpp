@@ -1391,6 +1391,8 @@ namespace hydroSimu {
     const double d0    = (double) (_gParams.gamma0*p0);
     const double v0    = 1.0;
 
+    //srand48(12);
+
     real_t &xMin = _gParams.xMin;
     real_t &yMin = _gParams.yMin;
     real_t &zMin = _gParams.zMin;
@@ -1410,7 +1412,7 @@ namespace hydroSimu {
 	  double xPos = xMin + dx/2 + (i-ghostWidth)*dx;
 
 	  // density initialization
-	  h_U(i,j,ID)  = static_cast<real_t>(d0);
+	  h_U(i,j,ID)  = static_cast<real_t>(d0); // + drand48()*0.01;
           
 	  // rho*vx
 	  h_U(i,j,IU)  = static_cast<real_t>(-d0*v0*sin(yPos*TwoPi));

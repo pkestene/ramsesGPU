@@ -55,6 +55,15 @@
 # include <omp.h>
 #endif
 
+/** a dummy device-only swap function */
+static void swap_v(real_t& a, real_t& b) {
+   
+  real_t tmp = a;
+  a = b;
+  b = tmp; 
+   
+} // swap_v
+
 namespace hydroSimu {
 
   ////////////////////////////////////////////////////////////////////////////////
@@ -1411,7 +1420,7 @@ namespace hydroSimu {
   {
 
     /*
-     * update h_Uold boundary, before updating h_U
+     * update h_UOld boundary, before updating h_U
      */
     TIMER_START(timerBoundaries);
     make_all_boundaries(h_UOld);
@@ -1494,14 +1503,13 @@ namespace hydroSimu {
 	  
 	  // primitive variables (local array)
 	  real_t qLoc[NVAR_MHD];
-	  real_t qLocNeighbor[NVAR_MHD];
 	  real_t qNeighbors[2*TWO_D][NVAR_MHD];
 	  
 	  // slopes
 	  real_t dq[TWO_D][NVAR_MHD];
-	  real_t dqNeighbor[TWO_D][NVAR_MHD];
 	  real_t dbf[TWO_D][THREE_D];
 	  real_t bfNb[6];
+	  real_t dAB[TWO_D*2];
 
 	  // reconstructed state on cell faces
 	  // aka riemann solver input
@@ -1511,7 +1519,6 @@ namespace hydroSimu {
 	  real_t qright_y[NVAR_MHD];
 	  
 	  // riemann solver output
-	  real_t qgdnv[NVAR_MHD];
 	  real_t flux_x[NVAR_MHD];
 	  real_t flux_y[NVAR_MHD];
 
@@ -1553,15 +1560,36 @@ namespace hydroSimu {
 					qNeighbors[3],
 					dq);
 	  
-	  // 2. compute mag slopes
-	  bfNb[0] =  h_Q(i  ,j  ,IA);
-	  bfNb[1] =  h_Q(i  ,j+1,IA);
-	  bfNb[2] =  h_Q(i  ,j-1,IA);
-	  bfNb[3] =  h_Q(i  ,j  ,IB);
-	  bfNb[4] =  h_Q(i+1,j  ,IB);
-	  bfNb[5] =  h_Q(i-1,j  ,IB);
+	  // 2. compute mag slopes (i,j)
+	  bfNb[0] =  h_UOld(i  ,j  ,IA);
+	  bfNb[1] =  h_UOld(i  ,j+1,IA);
+	  bfNb[2] =  h_UOld(i  ,j-1,IA);
+	  bfNb[3] =  h_UOld(i  ,j  ,IB);
+	  bfNb[4] =  h_UOld(i+1,j  ,IB);
+	  bfNb[5] =  h_UOld(i-1,j  ,IB);
 	  slope_unsplit_mhd_2d(bfNb, dbf);
-	  
+	  dAB[0] = dbf[IY][IX];
+	  dAB[1] = dbf[IX][IY];
+
+	  // (i+1,j  )
+	  bfNb[0] =  h_UOld(i+1,j  ,IA);
+	  bfNb[1] =  h_UOld(i+1,j+1,IA);
+	  bfNb[2] =  h_UOld(i+1,j-1,IA);
+	  bfNb[3] =  h_UOld(i+1,j  ,IB);
+	  bfNb[4] =  h_UOld(i+2,j  ,IB);
+	  bfNb[5] =  h_UOld(i  ,j  ,IB);
+	  slope_unsplit_mhd_2d(bfNb, dbf);
+	  dAB[2] = dbf[IY][IX];
+
+	  // (i  ,j+1)
+	  bfNb[0] =  h_UOld(i  ,j+1,IA);
+	  bfNb[1] =  h_UOld(i  ,j+2,IA);
+	  bfNb[2] =  h_UOld(i  ,j  ,IA);
+	  bfNb[3] =  h_UOld(i  ,j+1,IB);
+	  bfNb[4] =  h_UOld(i+1,j+1,IB);
+	  bfNb[5] =  h_UOld(i-1,j+1,IB);
+	  slope_unsplit_mhd_2d(bfNb, dbf);
+	  dAB[3] = dbf[IX][IY];
 
 	  // 3. compute Ez
 	  for (int di=0; di<2; di++)
@@ -1579,11 +1607,11 @@ namespace hydroSimu {
 				   h_Q(centerX  ,centerY-1,IV) + 
 				   h_Q(centerX  ,centerY  ,IV) );
 	      
-	      real_t A  = 0.5  *  (h_Q(centerX  ,centerY-1,IA) + 
-				   h_Q(centerX  ,centerY  ,IA) );
+	      real_t A  = 0.5  *  (h_UOld(centerX  ,centerY-1,IA) + 
+				   h_UOld(centerX  ,centerY  ,IA) );
 	      
-	      real_t B  = 0.5  *  (h_Q(centerX-1,centerY  ,IB) + 
-				   h_Q(centerX  ,centerY  ,IB) );
+	      real_t B  = 0.5  *  (h_UOld(centerX-1,centerY  ,IB) + 
+				   h_UOld(centerX  ,centerY  ,IB) );
 	      
 	      Ez[di][dj] = u*B-v*A;
 	    }
@@ -1595,18 +1623,30 @@ namespace hydroSimu {
 	  // in current cell
 	  xPos = ::gParams.xMin + dx/2 + (i-ghostWidth)*dx;
 
+	  // (i,j)
+	  bfNb[0] =  h_UOld(i  ,j  ,IA);
+	  bfNb[1] =  h_UOld(i+1,j  ,IA);
+	  bfNb[2] =  h_UOld(i  ,j  ,IB);
+	  bfNb[3] =  h_UOld(i  ,j+1,IB);
+
+
 	  // left interface : right state
-	  trace_unsplit_mhd_2d_face(qLoc, dq, bfNb, dbf, Ez,
+	  trace_unsplit_mhd_2d_face(qLoc, dq, bfNb, dAB, Ez,
 				    dtdx, dtdy, xPos, FACE_XMIN,
 				    qright_x);
 
 	  // left interface : right state
-	  trace_unsplit_mhd_2d_face(qLoc, dq, bfNb, dbf, Ez,
+	  trace_unsplit_mhd_2d_face(qLoc, dq, bfNb, dAB, Ez,
 				    dtdx, dtdy, xPos, FACE_YMIN,
 				    qright_y);
 
+	  // swap qright_y
+	  swap_v(qright_y[IU], qright_y[IV]);
+	  swap_v(qright_y[IA], qright_y[IB]);
+
+
 	  // qEdge_LB
-	  trace_unsplit_mhd_2d_face(qLoc, dq, bfNb, dbf, Ez,
+	  trace_unsplit_mhd_2d_face(qLoc, dq, bfNb, dAB, Ez,
 				    dtdx, dtdy, xPos, EDGE_LB,
 				    qEdge_LB);
 	  
@@ -1634,15 +1674,36 @@ namespace hydroSimu {
 					qNeighbors[3],
 					dq);
 	  
-	  // 2. compute mag slopes
-	  bfNb[0] =  h_Q(i-1,j  ,IA);
-	  bfNb[1] =  h_Q(i-1,j+1,IA);
-	  bfNb[2] =  h_Q(i-1,j-1,IA);
-	  bfNb[3] =  h_Q(i-1,j  ,IB);
-	  bfNb[4] =  h_Q(i  ,j  ,IB);
-	  bfNb[5] =  h_Q(i-2,j  ,IB);
+	  // 2. compute mag slopes (i-1,j)
+	  bfNb[0] =  h_UOld(i-1,j  ,IA);
+	  bfNb[1] =  h_UOld(i-1,j+1,IA);
+	  bfNb[2] =  h_UOld(i-1,j-1,IA);
+	  bfNb[3] =  h_UOld(i-1,j  ,IB);
+	  bfNb[4] =  h_UOld(i  ,j  ,IB);
+	  bfNb[5] =  h_UOld(i-2,j  ,IB);
 	  slope_unsplit_mhd_2d(bfNb, dbf);
+	  dAB[0] = dbf[IY][IX];
+	  dAB[1] = dbf[IX][IY];
+
+	  // (i  ,j  )
+	  bfNb[0] =  h_UOld(i  ,j  ,IA);
+	  bfNb[1] =  h_UOld(i  ,j+1,IA);
+	  bfNb[2] =  h_UOld(i  ,j-1,IA);
+	  bfNb[3] =  h_UOld(i  ,j  ,IB);
+	  bfNb[4] =  h_UOld(i+1,j  ,IB);
+	  bfNb[5] =  h_UOld(i-1,j  ,IB);
+	  slope_unsplit_mhd_2d(bfNb, dbf);
+	  dAB[2] = dbf[IY][IX];
 	  
+	  // (i-1,j+1)
+	  bfNb[0] =  h_UOld(i-1,j+1,IA);
+	  bfNb[1] =  h_UOld(i-1,j+2,IA);
+	  bfNb[2] =  h_UOld(i-1,j  ,IA);
+	  bfNb[3] =  h_UOld(i-1,j+1,IB);
+	  bfNb[4] =  h_UOld(i  ,j+1,IB);
+	  bfNb[5] =  h_UOld(i-2,j+1,IB);
+	  slope_unsplit_mhd_2d(bfNb, dbf);
+	  dAB[3] = dbf[IX][IY];
 
 	  // 3. compute Ez
 	  for (int di=0; di<2; di++)
@@ -1660,11 +1721,11 @@ namespace hydroSimu {
 				   h_Q(centerX  ,centerY-1,IV) + 
 				   h_Q(centerX  ,centerY  ,IV) );
 	      
-	      real_t A  = 0.5  *  (h_Q(centerX  ,centerY-1,IA) + 
-				   h_Q(centerX  ,centerY  ,IA) );
+	      real_t A  = 0.5  *  (h_UOld(centerX  ,centerY-1,IA) + 
+				   h_UOld(centerX  ,centerY  ,IA) );
 	      
-	      real_t B  = 0.5  *  (h_Q(centerX-1,centerY  ,IB) + 
-				   h_Q(centerX  ,centerY  ,IB) );
+	      real_t B  = 0.5  *  (h_UOld(centerX-1,centerY  ,IB) + 
+				   h_UOld(centerX  ,centerY  ,IB) );
 	      
 	      Ez[di][dj] = u*B-v*A;
 	    }
@@ -1676,13 +1737,19 @@ namespace hydroSimu {
 	  // in current cell
 	  xPos = ::gParams.xMin + dx/2 + (i-1-ghostWidth)*dx;
 
+	  // (i-1,j)
+	  bfNb[0] =  h_UOld(i-1,j  ,IA);
+	  bfNb[1] =  h_UOld(i  ,j  ,IA);
+	  bfNb[2] =  h_UOld(i-1,j  ,IB);
+	  bfNb[3] =  h_UOld(i-1,j+1,IB);
+
 	  // left interface : left state
-	  trace_unsplit_mhd_2d_face(qLoc, dq, bfNb, dbf, Ez,
+	  trace_unsplit_mhd_2d_face(qLoc, dq, bfNb, dAB, Ez,
 				    dtdx, dtdy, xPos, FACE_XMAX,
 				    qleft_x);	    
 
 	  // qEdge_RB
-	  trace_unsplit_mhd_2d_face(qLoc, dq, bfNb, dbf, Ez,
+	  trace_unsplit_mhd_2d_face(qLoc, dq, bfNb, dAB, Ez,
 				    dtdx, dtdy, xPos, EDGE_RB,
 				    qEdge_RB);
 
@@ -1710,15 +1777,36 @@ namespace hydroSimu {
 					qNeighbors[3],
 					dq);
 	  
-	  // 2. compute mag slopes
-	  bfNb[0] =  h_Q(i  ,j-1,IA);
-	  bfNb[1] =  h_Q(i  ,j  ,IA);
-	  bfNb[2] =  h_Q(i  ,j-2,IA);
-	  bfNb[3] =  h_Q(i  ,j-1,IB);
-	  bfNb[4] =  h_Q(i+1,j-1,IB);
-	  bfNb[5] =  h_Q(i-1,j-1,IB);
+	  // 2. compute mag slopes (i,j-1)
+	  bfNb[0] =  h_UOld(i  ,j-1,IA);
+	  bfNb[1] =  h_UOld(i  ,j  ,IA);
+	  bfNb[2] =  h_UOld(i  ,j-2,IA);
+	  bfNb[3] =  h_UOld(i  ,j-1,IB);
+	  bfNb[4] =  h_UOld(i+1,j-1,IB);
+	  bfNb[5] =  h_UOld(i-1,j-1,IB);
 	  slope_unsplit_mhd_2d(bfNb, dbf);
-	  
+	  dAB[0] = dbf[IY][IX];
+	  dAB[1] = dbf[IX][IY];
+
+	  // (i+1,j-1)
+	  bfNb[0] =  h_UOld(i+1,j-1,IA);
+	  bfNb[1] =  h_UOld(i+1,j  ,IA);
+	  bfNb[2] =  h_UOld(i+1,j-2,IA);
+	  bfNb[3] =  h_UOld(i+1,j-1,IB);
+	  bfNb[4] =  h_UOld(i+2,j-1,IB);
+	  bfNb[5] =  h_UOld(i  ,j-1,IB);
+	  slope_unsplit_mhd_2d(bfNb, dbf);
+	  dAB[2] = dbf[IY][IX];
+
+	  // (i,j)
+	  bfNb[0] =  h_UOld(i  ,j  ,IA);
+	  bfNb[1] =  h_UOld(i  ,j+1,IA);
+	  bfNb[2] =  h_UOld(i  ,j-1,IA);
+	  bfNb[3] =  h_UOld(i  ,j  ,IB);
+	  bfNb[4] =  h_UOld(i+1,j  ,IB);
+	  bfNb[5] =  h_UOld(i-1,j  ,IB);
+	  slope_unsplit_mhd_2d(bfNb, dbf);
+	  dAB[3] = dbf[IX][IY];
 
 	  // 3. compute Ez
 	  for (int di=0; di<2; di++)
@@ -1736,11 +1824,11 @@ namespace hydroSimu {
 				   h_Q(centerX  ,centerY-1,IV) + 
 				   h_Q(centerX  ,centerY  ,IV) );
 	      
-	      real_t A  = 0.5  *  (h_Q(centerX  ,centerY-1,IA) + 
-				   h_Q(centerX  ,centerY  ,IA) );
+	      real_t A  = 0.5  *  (h_UOld(centerX  ,centerY-1,IA) + 
+				   h_UOld(centerX  ,centerY  ,IA) );
 	      
-	      real_t B  = 0.5  *  (h_Q(centerX-1,centerY  ,IB) + 
-				   h_Q(centerX  ,centerY  ,IB) );
+	      real_t B  = 0.5  *  (h_UOld(centerX-1,centerY  ,IB) + 
+				   h_UOld(centerX  ,centerY  ,IB) );
 	      
 	      Ez[di][dj] = u*B-v*A;
 	    }
@@ -1752,13 +1840,24 @@ namespace hydroSimu {
 	  // in current cell
 	  xPos = ::gParams.xMin + dx/2 + (i-ghostWidth)*dx;
 
+	  // (i,j-1)
+	  bfNb[0] =  h_UOld(i  ,j-1,IA);
+	  bfNb[1] =  h_UOld(i+1,j-1,IA);
+	  bfNb[2] =  h_UOld(i  ,j-1,IB);
+	  bfNb[3] =  h_UOld(i  ,j  ,IB);
+
 	  // left interface : left state
-	  trace_unsplit_mhd_2d_face(qLoc, dq, bfNb, dbf, Ez,
-				    dtdx, dtdy, xPos, FACE_XMIN,
+	  trace_unsplit_mhd_2d_face(qLoc, dq, bfNb, dAB, Ez,
+				    dtdx, dtdy, xPos, FACE_YMAX,
 				    qleft_y);
 
+	  // swap qleft_y
+	  swap_v(qleft_y[IU], qleft_y[IV]);
+	  swap_v(qleft_y[IA], qleft_y[IB]);
+
+
 	  // qEdge_LT
-	  trace_unsplit_mhd_2d_face(qLoc, dq, bfNb, dbf, Ez,
+	  trace_unsplit_mhd_2d_face(qLoc, dq, bfNb, dAB, Ez,
 				    dtdx, dtdy, xPos, EDGE_LT,
 				    qEdge_LT);
 
@@ -1786,15 +1885,37 @@ namespace hydroSimu {
 					qNeighbors[3],
 					dq);
 	  
-	  // 2. compute mag slopes
-	  bfNb[0] =  h_Q(i-1,j-1,IA);
-	  bfNb[1] =  h_Q(i-1,j  ,IA);
-	  bfNb[2] =  h_Q(i-1,j-2,IA);
-	  bfNb[3] =  h_Q(i-1,j-1,IB);
-	  bfNb[4] =  h_Q(i  ,j-1,IB);
-	  bfNb[5] =  h_Q(i-2,j-1,IB);
+	  // 2. compute mag slopes (i-1,j-1)
+	  bfNb[0] =  h_UOld(i-1,j-1,IA);
+	  bfNb[1] =  h_UOld(i-1,j  ,IA);
+	  bfNb[2] =  h_UOld(i-1,j-2,IA);
+	  bfNb[3] =  h_UOld(i-1,j-1,IB);
+	  bfNb[4] =  h_UOld(i  ,j-1,IB);
+	  bfNb[5] =  h_UOld(i-2,j-1,IB);
 	  slope_unsplit_mhd_2d(bfNb, dbf);
+	  dAB[0] = dbf[IY][IX];
+	  dAB[1] = dbf[IX][IY];
 	  
+	  // (i  ,j-1)
+	  bfNb[0] =  h_UOld(i  ,j-1,IA);
+	  bfNb[1] =  h_UOld(i  ,j  ,IA);
+	  bfNb[2] =  h_UOld(i  ,j-2,IA);
+	  bfNb[3] =  h_UOld(i  ,j-1,IB);
+	  bfNb[4] =  h_UOld(i+1,j-1,IB);
+	  bfNb[5] =  h_UOld(i-1,j-1,IB);
+	  slope_unsplit_mhd_2d(bfNb, dbf);
+	  dAB[2] = dbf[IY][IX];
+
+	  // (i-1,j  )
+	  bfNb[0] =  h_UOld(i-1,j  ,IA);
+	  bfNb[1] =  h_UOld(i-1,j+1,IA);
+	  bfNb[2] =  h_UOld(i-1,j-1,IA);
+	  bfNb[3] =  h_UOld(i-1,j  ,IB);
+	  bfNb[4] =  h_UOld(i  ,j  ,IB);
+	  bfNb[5] =  h_UOld(i-2,j  ,IB);
+	  slope_unsplit_mhd_2d(bfNb, dbf);
+	  dAB[3] = dbf[IX][IY];
+
 	  // 3. compute Ez
 	  for (int di=0; di<2; di++)
 	    for (int dj=0; dj<2; dj++) {
@@ -1811,11 +1932,11 @@ namespace hydroSimu {
 				   h_Q(centerX  ,centerY-1,IV) + 
 				   h_Q(centerX  ,centerY  ,IV) );
 	      
-	      real_t A  = 0.5  *  (h_Q(centerX  ,centerY-1,IA) + 
-				   h_Q(centerX  ,centerY  ,IA) );
+	      real_t A  = 0.5  *  (h_UOld(centerX  ,centerY-1,IA) + 
+				   h_UOld(centerX  ,centerY  ,IA) );
 	      
-	      real_t B  = 0.5  *  (h_Q(centerX-1,centerY  ,IB) + 
-				   h_Q(centerX  ,centerY  ,IB) );
+	      real_t B  = 0.5  *  (h_UOld(centerX-1,centerY  ,IB) + 
+				   h_UOld(centerX  ,centerY  ,IB) );
 	      
 	      Ez[di][dj] = u*B-v*A;
 	    }
@@ -1826,8 +1947,14 @@ namespace hydroSimu {
 	  // in current cell
 	  xPos = ::gParams.xMin + dx/2 + (i-1-ghostWidth)*dx;
 
+	  // (i-1,j-1)
+	  bfNb[0] =  h_UOld(i-1,j-1,IA);
+	  bfNb[1] =  h_UOld(i  ,j-1,IA);
+	  bfNb[2] =  h_UOld(i-1,j-1,IB);
+	  bfNb[3] =  h_UOld(i-1,j  ,IB);
+
 	  // qEdge_RT
-	  trace_unsplit_mhd_2d_face(qLoc, dq, bfNb, dbf, Ez,
+	  trace_unsplit_mhd_2d_face(qLoc, dq, bfNb, dAB, Ez,
 				    dtdx, dtdy, xPos, EDGE_RT,
 				    qEdge_RT);
 
@@ -1863,7 +1990,7 @@ namespace hydroSimu {
 	    qEdge_LB[IV] += HALF_F * dt * h_gravity(i,j,IY);
 	    
 	  }
-
+	  
 	  // compute hydro flux_x
 	  riemann_mhd(qleft_x,qright_x,flux_x);
 
@@ -1936,7 +2063,7 @@ namespace hydroSimu {
 	  // actually compute emfZ
 	  real_t emfZ = compute_emf<EMFZ>(qEdge_emfZ);
 	  h_emf(i,j,I_EMFZ) = emfZ;
-	  
+
 	} // end for j
       } // end for i
       
@@ -1947,8 +2074,7 @@ namespace hydroSimu {
 	for (int i=ghostWidth; i<isize-ghostWidth+1; i++) {
 	  // left-face B-field
 	  h_UNew(i  ,j  ,IA) += ( h_emf(i  ,j+1, I_EMFZ) - h_emf(i,j, I_EMFZ) )*dtdy;
-	  h_UNew(i  ,j  ,IB) -= ( h_emf(i+1,j  , I_EMFZ) - h_emf(i,j, I_EMFZ) )*dtdx;
-	  
+	  h_UNew(i  ,j  ,IB) -= ( h_emf(i+1,j  , I_EMFZ) - h_emf(i,j, I_EMFZ) )*dtdx;	  
 	} // end for i
       } // end for j
       
@@ -2020,9 +2146,9 @@ namespace hydroSimu {
 		  } // end for di
 		    
 		    
-		    // prepare bfNb : bf (face centered mag field) in the
-		    // 4-by-4-by-4 neighborhood
-		    // note that current cell (ii,jj,kk) is in bfNb[1][1][1]
+		  // prepare bfNb : bf (face centered mag field) in the
+		  // 4-by-4-by-4 neighborhood
+		  // note that current cell (ii,jj,kk) is in bfNb[1][1][1]
 		  for (int di=0; di<4; di++) {
 		    for (int dj=0; dj<4; dj++) {
 		      for (int dk=0; dk<4; dk++) {
@@ -3139,8 +3265,7 @@ namespace hydroSimu {
 	for (int i=ghostWidth; i<isize-ghostWidth+1; i++) {
 	  // left-face B-field
 	  h_UNew(i  ,j  ,IA) += ( h_emf(i  ,j+1, I_EMFZ) - h_emf(i,j, I_EMFZ) )*dtdy;
-	  h_UNew(i  ,j  ,IB) -= ( h_emf(i+1,j  , I_EMFZ) - h_emf(i,j, I_EMFZ) )*dtdx;
-		    
+	  h_UNew(i  ,j  ,IB) -= ( h_emf(i+1,j  , I_EMFZ) - h_emf(i,j, I_EMFZ) )*dtdx;		    
 	} // end for i
       } // end for j
       TIMER_STOP(timerCtUpdate);
