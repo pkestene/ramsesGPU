@@ -9,8 +9,9 @@ http://www.maisondelasimulation.fr/projects/RAMSES-GPU/html/index.html
 
 - Quickstart for building RAMSES-GPU using autotools
 
- * configure --with-cuda=<path to CUDA toolkit root directory> 
- * make (or make -j N to speed-up compilation time; you might need to execute make several times when using option -j)
+ 0. make sure to have up-to-date autotools on you build system (autoconf, automake, libtool, m4); then run `sh autogen.sh`
+ 1. configure --with-cuda=<path to CUDA toolkit root directory> 
+ 2. make (or make -j N to speed-up compilation time; you might need to execute make several times when using option -j)
 
 Note: make sure to have CUDA toolkit installed, and environment variables PATH and LD_LIBRARY_PATH correctly set.
 
