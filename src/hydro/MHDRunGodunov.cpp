@@ -1495,9 +1495,6 @@ namespace hydroSimu {
 
     if (dimType == TWO_D) {
       
-      // store what's needed to computed EMF's
-      //real_t qEdge_emf[2][2][4][NVAR_MHD];
-      
       for (int j=ghostWidth; j<jsize-ghostWidth+1; j++) {
 	for (int i=ghostWidth; i<isize-ghostWidth+1; i++) {
 	  
@@ -2085,329 +2082,230 @@ namespace hydroSimu {
       
     } else { // THREE_D - implementation version 0
     
-      // we need to store qm/qp/qEdge for current position (x,y,z) and
-      // neighbors in a 2-by-2-by-2 cube
-      // that is 8 positions in total
-
-      real_t qm_x[2][2][2][NVAR_MHD];
-      real_t qm_y[2][2][2][NVAR_MHD];
-      real_t qm_z[2][2][2][NVAR_MHD];
-	
-      real_t qp_x[2][2][2][NVAR_MHD];
-      real_t qp_y[2][2][2][NVAR_MHD];
-      real_t qp_z[2][2][2][NVAR_MHD];
-
-      // store what's needed to computed EMF's
-      real_t qEdge_emf[2][2][2][4][3][NVAR_MHD];
-
-#ifdef _OPENMP
-#pragma omp parallel default(shared) private(qm_x,qm_y,qm_z,qp_x,qp_y,qp_z,qEdge_emf)
-#pragma omp for collapse(3) schedule(auto)
-#endif // _OPEMP
       for (int k=ghostWidth; k<ksize-ghostWidth+1; k++) {
 	for (int j=ghostWidth; j<jsize-ghostWidth+1; j++) {
 	  for (int i=ghostWidth; i<isize-ghostWidth+1; i++) {
-	      
-	    real_t qNb[3][3][3][NVAR_MHD];
-	    real_t bfNb[4][4][4][3];
-	    real_t qm[THREE_D][NVAR_MHD];
-	    real_t qp[THREE_D][NVAR_MHD];
-	    real_t qEdge[4][3][NVAR_MHD]; // array for qRT, qRB, qLT, qLB
-	    real_t c=0;
-	      
-	    // compute qm, qp for the 2x2x2 positions
-	    for (int posZ=0; posZ<2; posZ++) {
-	      for (int posY=0; posY<2; posY++) {
-		for (int posX=0; posX<2; posX++) {
-		    
-		  int ii=i-posX;
-		  int jj=j-posY;
-		  int kk=k-posZ;
-		    
-		    
-		  /*
-		   * compute qm, qp and qEdge (qRT, qRB, qLT, qLB)
-		   */
-		    
-		  // prepare qNb : q state in the 3-by-3-by-3 neighborhood
-		  // note that current cell (ii,jj,kk) is in qNb[1][1][1]
-		  // also note that the effective stencil is 4-by-4-by-4 since
-		  // computation of primitive variable (q) requires mag
-		  // field on the right (see computePrimitives_MHD_3D)
-		  for (int di=0; di<3; di++) {
-		    for (int dj=0; dj<3; dj++) {
-		      for (int dk=0; dk<3; dk++) {
-			for (int iVar=0; iVar < NVAR_MHD; iVar++) {
-			  int indexLoc = (ii+di-1)+(jj+dj-1)*isize+(kk+dk-1)*isize*jsize; // centered index
-			  getPrimitiveVector(Q, arraySize, indexLoc, qNb[di][dj][dk]);
-			} // end for iVar
-		      } // end for dk
-		    } // end for dj
-		  } // end for di
-		    
-		    
-		  // prepare bfNb : bf (face centered mag field) in the
-		  // 4-by-4-by-4 neighborhood
-		  // note that current cell (ii,jj,kk) is in bfNb[1][1][1]
-		  for (int di=0; di<4; di++) {
-		    for (int dj=0; dj<4; dj++) {
-		      for (int dk=0; dk<4; dk++) {
-			int indexLoc = (ii+di-1)+(jj+dj-1)*isize+(kk+dk-1)*isize*jsize;
-			getMagField(U, arraySize, indexLoc, bfNb[di][dj][dk]);
-		      } // end for dk
-		    } // end for dj
-		  } // end for di
-		    
-		  real_t xPos = ::gParams.xMin + dx/2 + (ii-ghostWidth)*dx;
-		    
-		  // compute trace 3d finally !!! 
-		  trace_unsplit_mhd_3d(qNb, bfNb, c, dtdx, dtdy, dtdz, xPos, qm, qp, qEdge);
+	    
+	    // primitive variables (local array)
+	    real_t qLoc[NVAR_MHD];
+	    real_t qNeighbors[2*THREE_D][NVAR_MHD];
+	    
+	    // slopes
+	    real_t dq[THREE_D][NVAR_MHD];
+	    real_t dbf[THREE_D][THREE_D];
+	    real_t bfNb[3*5];
+	    real_t dABC[3*4];
+	    
+	    // reconstructed state on cell faces
+	    // aka riemann solver input
+	    real_t qleft_x[NVAR_MHD];
+	    real_t qleft_y[NVAR_MHD];
+	    real_t qright_x[NVAR_MHD];
+	    real_t qright_y[NVAR_MHD];
+	    
+	    // riemann solver output
+	    real_t flux_x[NVAR_MHD];
+	    real_t flux_y[NVAR_MHD];
+	    
+	    // emf
+	    real_t Ez[2][2];
+	    real_t qEdge_RT[NVAR_MHD];
+	    real_t qEdge_RB[NVAR_MHD];
+	    real_t qEdge_LT[NVAR_MHD];
+	    real_t qEdge_LB[NVAR_MHD];
+	    
+	    // other variables
+	    real_t xPos;
 
-		  // store qm, qp, qEdge : only what is really needed
-		  for (int ivar=0; ivar<NVAR_MHD; ivar++) {
-		    qm_x[posX][posY][posZ][ivar] = qm[0][ivar];
-		    qp_x[posX][posY][posZ][ivar] = qp[0][ivar];
-		    qm_y[posX][posY][posZ][ivar] = qm[1][ivar];
-		    qp_y[posX][posY][posZ][ivar] = qp[1][ivar];
-		    qm_z[posX][posY][posZ][ivar] = qm[2][ivar];
-		    qp_z[posX][posY][posZ][ivar] = qp[2][ivar];
-		      
-		    qEdge_emf[posX][posY][posZ][IRT][0][ivar] = qEdge[IRT][0][ivar]; 
-		    qEdge_emf[posX][posY][posZ][IRB][0][ivar] = qEdge[IRB][0][ivar]; 
-		    qEdge_emf[posX][posY][posZ][ILT][0][ivar] = qEdge[ILT][0][ivar]; 
-		    qEdge_emf[posX][posY][posZ][ILB][0][ivar] = qEdge[ILB][0][ivar]; 
+	    //
+	    // X-direction
+	    //
 
-		    qEdge_emf[posX][posY][posZ][IRT][1][ivar] = qEdge[IRT][1][ivar]; 
-		    qEdge_emf[posX][posY][posZ][IRB][1][ivar] = qEdge[IRB][1][ivar]; 
-		    qEdge_emf[posX][posY][posZ][ILT][1][ivar] = qEdge[ILT][1][ivar]; 
-		    qEdge_emf[posX][posY][posZ][ILB][1][ivar] = qEdge[ILB][1][ivar]; 
+	    ////////////////
+	    // compute RIGHT state for riemann problem (i,j,k)
+	    ////////////////
+	    
+	    // get primitive variables state vector
+	    for ( int iVar=0; iVar<nbVar; iVar++ ) {
+	      
+	      qLoc[iVar]          = h_Q(i  ,j  ,k  ,iVar);
+	      qNeighbors[0][iVar] = h_Q(i+1,j  ,k  ,iVar);
+	      qNeighbors[1][iVar] = h_Q(i-1,j  ,k  ,iVar);
+	      qNeighbors[2][iVar] = h_Q(i  ,j+1,k  ,iVar);
+	      qNeighbors[3][iVar] = h_Q(i  ,j-1,k  ,iVar);
+	      qNeighbors[4][iVar] = h_Q(i  ,j  ,k+1,iVar);
+	      qNeighbors[5][iVar] = h_Q(i  ,j  ,k-1,iVar);
+	      
+	    } // end for iVar
+	    
+	    // 1. compute hydro slopes
+	    // compute slopes in left neighbor along X
+	    slope_unsplit_hydro_3d(qLoc, 
+				   qNeighbors[0],
+				   qNeighbors[1],
+				   qNeighbors[2],
+				   qNeighbors[3],
+				   qNeighbors[4],
+				   qNeighbors[5],
+				   dq);
+	      
+	    // 2. compute mag slopes @(i,j,k)
+	    bfNb[0]  =  h_UOld(i  ,j  ,k  ,IA);
+	    bfNb[1]  =  h_UOld(i  ,j+1,k  ,IA);
+	    bfNb[2]  =  h_UOld(i  ,j-1,k  ,IA);
+	    bfNb[3]  =  h_UOld(i  ,j  ,k+1,IA);
+	    bfNb[4]  =  h_UOld(i  ,j  ,k-1,IA);
 
-		    qEdge_emf[posX][posY][posZ][IRT][2][ivar] = qEdge[IRT][2][ivar]; 
-		    qEdge_emf[posX][posY][posZ][IRB][2][ivar] = qEdge[IRB][2][ivar]; 
-		    qEdge_emf[posX][posY][posZ][ILT][2][ivar] = qEdge[ILT][2][ivar]; 
-		    qEdge_emf[posX][posY][posZ][ILB][2][ivar] = qEdge[ILB][2][ivar]; 
+	    bfNb[5]  =  h_UOld(i  ,j  ,k  ,IB);
+	    bfNb[6]  =  h_UOld(i+1,j  ,k  ,IB);
+	    bfNb[7]  =  h_UOld(i-1,j  ,k  ,IB);
+	    bfNb[8]  =  h_UOld(i  ,j  ,k+1,IB);
+	    bfNb[9]  =  h_UOld(i  ,j  ,k-1,IB);
+
+	    bfNb[10] =  h_UOld(i  ,j  ,k  ,IC);
+	    bfNb[11] =  h_UOld(i+1,j  ,k  ,IC);
+	    bfNb[12] =  h_UOld(i-1,j  ,k  ,IC);
+	    bfNb[13] =  h_UOld(i  ,j+1,k  ,IC);
+	    bfNb[14] =  h_UOld(i  ,j-1,k  ,IC);
+
+	    slope_unsplit_mhd_3d(bfNb, dbf);
+	    // get transverse mag slopes
+	    //dABC[0] = dbf[IY][IX];
+	    //dABC[1] = dbf[IX][IY];
 
 
-		  } // end for ivar
-		    
-		} // end for posZ
+	    // // compute hydro flux_x
+	    // riemann_mhd(qleft,qright,flux_x);
+	    	      
+	    // // compute hydro flux_y
+	    // riemann_mhd(qleft,qright,flux_y);
+	      
+	    // // compute hydro flux_z
+	    // riemann_mhd(qleft,qright,flux_z);
+	      
+	    // /*
+	    //  * update mhd array
+	    //  */
+	    // if ( i > ghostWidth       and 
+	    // 	 j < jsize-ghostWidth and 
+	    // 	 k < ksize-ghostWidth ) {
+	    //   h_UNew(i-1,j  ,k  ,ID) -= flux_x[ID]*dtdx;
+	    //   h_UNew(i-1,j  ,k  ,IP) -= flux_x[IP]*dtdx;
+	    //   h_UNew(i-1,j  ,k  ,IU) -= flux_x[IU]*dtdx;
+	    //   h_UNew(i-1,j  ,k  ,IV) -= flux_x[IV]*dtdx;
+	    //   h_UNew(i-1,j  ,k  ,IW) -= flux_x[IW]*dtdx;
+	    // }
+	      
+	    // if ( i < isize-ghostWidth and 
+	    // 	 j < jsize-ghostWidth and 
+	    // 	 k < ksize-ghostWidth ) {
+	    //   h_UNew(i  ,j  ,k  ,ID) += flux_x[ID]*dtdx;
+	    //   h_UNew(i  ,j  ,k  ,IP) += flux_x[IP]*dtdx;
+	    //   h_UNew(i  ,j  ,k  ,IU) += flux_x[IU]*dtdx;
+	    //   h_UNew(i  ,j  ,k  ,IV) += flux_x[IV]*dtdx;
+	    //   h_UNew(i  ,j  ,k  ,IW) += flux_x[IW]*dtdx;
+	    // }
+	      
+	    // if ( i < isize-ghostWidth and
+	    // 	 j > ghostWidth       and
+	    // 	 k < ksize-ghostWidth ) {
+	    //   h_UNew(i  ,j-1,k  ,ID) -= flux_y[ID]*dtdy;
+	    //   h_UNew(i  ,j-1,k  ,IP) -= flux_y[IP]*dtdy;
+	    //   h_UNew(i  ,j-1,k  ,IU) -= flux_y[IV]*dtdy; // IU and IV swapped
+	    //   h_UNew(i  ,j-1,k  ,IV) -= flux_y[IU]*dtdy; // IU and IV swapped
+	    //   h_UNew(i  ,j-1,k  ,IW) -= flux_y[IW]*dtdy;
+	    // }
+	      
+	    // if ( i < isize-ghostWidth and 
+	    // 	 j < jsize-ghostWidth and 
+	    // 	 k < ksize-ghostWidth ) {
+	    //   h_UNew(i  ,j  ,k  ,ID) += flux_y[ID]*dtdy;
+	    //   h_UNew(i  ,j  ,k  ,IP) += flux_y[IP]*dtdy;
+	    //   h_UNew(i  ,j  ,k  ,IU) += flux_y[IV]*dtdy; // IU and IV swapped
+	    //   h_UNew(i  ,j  ,k  ,IV) += flux_y[IU]*dtdy; // IU and IV swapped
+	    //   h_UNew(i  ,j  ,k  ,IW) += flux_y[IW]*dtdy;
+	    // }
+	      
+	    // if ( i < isize-ghostWidth and 
+	    // 	 j < jsize-ghostWidth and
+	    // 	 k > ghostWidth ) {
+	    //   h_UNew(i  ,j  ,k-1,ID) -= flux_z[ID]*dtdz;
+	    //   h_UNew(i  ,j  ,k-1,IP) -= flux_z[IP]*dtdz;
+	    //   h_UNew(i  ,j  ,k-1,IU) -= flux_z[IW]*dtdz; // IU and IW swapped
+	    //   h_UNew(i  ,j  ,k-1,IV) -= flux_z[IV]*dtdz;
+	    //   h_UNew(i  ,j  ,k-1,IW) -= flux_z[IU]*dtdz; // IU and IW swapped
+	    // }
+	      
+	    // if ( i < isize-ghostWidth and 
+	    // 	 j < jsize-ghostWidth and 
+	    // 	 k < ksize-ghostWidth ) {
+	    //   h_UNew(i  ,j  ,k  ,ID) += flux_z[ID]*dtdz;
+	    //   h_UNew(i  ,j  ,k  ,IP) += flux_z[IP]*dtdz;
+	    //   h_UNew(i  ,j  ,k  ,IU) += flux_z[IW]*dtdz; // IU and IW swapped
+	    //   h_UNew(i  ,j  ,k  ,IV) += flux_z[IV]*dtdz;
+	    //   h_UNew(i  ,j  ,k  ,IW) += flux_z[IU]*dtdz; // IU and IW swapped
+	    // }
+	      
+	    // // now compute EMF's and update magnetic field variables
+	    // // see DUMSES routine named cmp_mag_flx (TAKE CARE of index
+	    // // shift appearing in calling arguments)
+	    // real_t qEdge_emfX[4][NVAR_MHD];
+	    // real_t qEdge_emfY[4][NVAR_MHD];
+	    // real_t qEdge_emfZ[4][NVAR_MHD];
 
-	      } // end for posY
+	    // // preparation for calling compute_emf (equivalent to cmp_mag_flx
+	    // // in DUMSES)
+	    // // in the following, the 3 first indexes in qEdge_emf array play
+	    // // the same offset role as in the calling argument of cmp_mag_flx 
+	    // // in DUMSES (if you see what I mean ?!)
 
-	    } // end for posX
-	      
-	      
-	    real_riemann_t qleft[NVAR_MHD];
-	    real_riemann_t qright[NVAR_MHD];
-	    real_riemann_t flux_x[NVAR_MHD];
-	    real_riemann_t flux_y[NVAR_MHD];
-	    real_riemann_t flux_z[NVAR_MHD];
-	    //real_t xPos = ::gParams.xMin + dx/2 + (i-ghostWidth)*dx;
+	    // // actually compute emfZ 
+	    // for (int iVar=0; iVar<NVAR_MHD; iVar++) {
+	    //   qEdge_emfZ[IRT][iVar] = qEdge_emf[1][1][0][IRT][2][iVar]; 
+	    //   qEdge_emfZ[IRB][iVar] = qEdge_emf[1][0][0][IRB][2][iVar]; 
+	    //   qEdge_emfZ[ILT][iVar] = qEdge_emf[0][1][0][ILT][2][iVar]; 
+	    //   qEdge_emfZ[ILB][iVar] = qEdge_emf[0][0][0][ILB][2][iVar]; 
+	    // }
+	    // real_t emfZ = compute_emf<EMFZ>(qEdge_emfZ);
 
-	    /*
-	     * Solve Riemann problem at X-interfaces and compute
-	     * X-fluxes
-	     *
-	     * Note that continuity of normal component of magnetic
-	     * field is ensured inside riemann_mhd routine.
-	     */
-	      
+	    // // actually compute emfY (take care that RB and LT are
+	    // // swapped !!!)
+	    // for (int iVar=0; iVar<NVAR_MHD; iVar++) {
+	    //   qEdge_emfY[IRT][iVar] = qEdge_emf[1][0][1][IRT][1][iVar]; 
+	    //   qEdge_emfY[IRB][iVar] = qEdge_emf[0][0][1][ILT][1][iVar]; // ! swap
+	    //   qEdge_emfY[ILT][iVar] = qEdge_emf[1][0][0][IRB][1][iVar]; // ! swap
+	    //   qEdge_emfY[ILB][iVar] = qEdge_emf[0][0][0][ILB][1][iVar]; 
+	    // }
+	    // real_t emfY = compute_emf<EMFY>(qEdge_emfY);
 
-	    qleft[ID]   = qm_x[1][0][0][ID];
-	    qleft[IP]   = qm_x[1][0][0][IP];
-	    qleft[IU]   = qm_x[1][0][0][IU];
-	    qleft[IV]   = qm_x[1][0][0][IV];
-	    qleft[IW]   = qm_x[1][0][0][IW];
-	    qleft[IA]   = qm_x[1][0][0][IA];
-	    qleft[IB]   = qm_x[1][0][0][IB];
-	    qleft[IC]   = qm_x[1][0][0][IC];
+	    // // actually compute emfX
+	    // for (int iVar=0; iVar<NVAR_MHD; iVar++) {
+	    //   qEdge_emfX[IRT][iVar] = qEdge_emf[0][1][1][IRT][0][iVar]; 
+	    //   qEdge_emfX[IRB][iVar] = qEdge_emf[0][1][0][IRB][0][iVar];
+	    //   qEdge_emfX[ILT][iVar] = qEdge_emf[0][0][1][ILT][0][iVar];
+	    //   qEdge_emfX[ILB][iVar] = qEdge_emf[0][0][0][ILB][0][iVar]; 
+	    // }
+	    // real_t emfX = compute_emf<EMFX>(qEdge_emfX);
 
-	    qright[ID]  = qp_x[0][0][0][ID];
-	    qright[IP]  = qp_x[0][0][0][IP];
-	    qright[IU]  = qp_x[0][0][0][IU];
-	    qright[IV]  = qp_x[0][0][0][IV];
-	    qright[IW]  = qp_x[0][0][0][IW];
-	    qright[IA]  = qp_x[0][0][0][IA];
-	    qright[IB]  = qp_x[0][0][0][IB];
-	    qright[IC]  = qp_x[0][0][0][IC];
+	    // // now update h_UNew with emfZ
+	    // // (Constrained transport for face-centered B-field)
+	    // h_UNew(i  ,j  ,k  ,IA) -= emfZ*dtdy;
+	    // h_UNew(i  ,j-1,k  ,IA) += emfZ*dtdy;
 	      
-	    // compute hydro flux_x
-	    riemann_mhd(qleft,qright,flux_x);
-	      
-	    /*
-	     * Solve Riemann problem at Y-interfaces and compute
-	     * Y-fluxes
-	     */
-	    qleft[ID]   = qm_y[0][1][0][ID];
-	    qleft[IP]   = qm_y[0][1][0][IP];
-	    qleft[IU]   = qm_y[0][1][0][IV]; // watchout IU, IV permutation
-	    qleft[IV]   = qm_y[0][1][0][IU]; // watchout IU, IV permutation
-	    qleft[IW]   = qm_y[0][1][0][IW];
-	    qleft[IA]   = qm_y[0][1][0][IB]; // watchout IA, IB permutation
-	    qleft[IB]   = qm_y[0][1][0][IA]; // watchout IA, IB permutation
-	    qleft[IC]   = qm_y[0][1][0][IC];
-	      
-	    qright[ID]  = qp_y[0][0][0][ID];
-	    qright[IP]  = qp_y[0][0][0][IP];
-	    qright[IU]  = qp_y[0][0][0][IV]; // watchout IU, IV permutation
-	    qright[IV]  = qp_y[0][0][0][IU]; // watchout IU, IV permutation
-	    qright[IW]  = qp_y[0][0][0][IW];
-	    qright[IA]  = qp_y[0][0][0][IB]; // watchout IA, IB permutation
-	    qright[IB]  = qp_y[0][0][0][IA]; // watchout IA, IB permutation
-	    qright[IC]  = qp_y[0][0][0][IC];
-	      
-	    // compute hydro flux_y
-	    riemann_mhd(qleft,qright,flux_y);
-	      
-	    /*
-	     * Solve Riemann problem at Z-interfaces and compute
-	     * Z-fluxes
-	     */
-	    qleft[ID]   = qm_z[0][0][1][ID];
-	    qleft[IP]   = qm_z[0][0][1][IP];
-	    qleft[IU]   = qm_z[0][0][1][IW]; // watchout IU, IW permutation
-	    qleft[IV]   = qm_z[0][0][1][IV];
-	    qleft[IW]   = qm_z[0][0][1][IU]; // watchout IU, IW permutation
-	    qleft[IA]   = qm_z[0][0][1][IC]; // watchout IA, IC permutation
-	    qleft[IB]   = qm_z[0][0][1][IB];
-	    qleft[IC]   = qm_z[0][0][1][IA]; // watchout IA, IC permutation
-	      
-	    qright[ID]  = qp_z[0][0][0][ID];
-	    qright[IP]  = qp_z[0][0][0][IP];
-	    qright[IU]  = qp_z[0][0][0][IW]; // watchout IU, IW permutation
-	    qright[IV]  = qp_z[0][0][0][IV];
-	    qright[IW]  = qp_z[0][0][0][IU]; // watchout IU, IW permutation
-	    qright[IA]  = qp_z[0][0][0][IC]; // watchout IA, IC permutation
-	    qright[IB]  = qp_z[0][0][0][IB];
-	    qright[IC]  = qp_z[0][0][0][IA]; // watchout IA, IC permutation
-	      
-	    // compute hydro flux_z
-	    riemann_mhd(qleft,qright,flux_z);
-	      
-	      
-	    /*
-	     * update mhd array
-	     */
-	    if ( i > ghostWidth       and 
-		 j < jsize-ghostWidth and 
-		 k < ksize-ghostWidth ) {
-	      h_UNew(i-1,j  ,k  ,ID) -= flux_x[ID]*dtdx;
-	      h_UNew(i-1,j  ,k  ,IP) -= flux_x[IP]*dtdx;
-	      h_UNew(i-1,j  ,k  ,IU) -= flux_x[IU]*dtdx;
-	      h_UNew(i-1,j  ,k  ,IV) -= flux_x[IV]*dtdx;
-	      h_UNew(i-1,j  ,k  ,IW) -= flux_x[IW]*dtdx;
-	    }
-	      
-	    if ( i < isize-ghostWidth and 
-		 j < jsize-ghostWidth and 
-		 k < ksize-ghostWidth ) {
-	      h_UNew(i  ,j  ,k  ,ID) += flux_x[ID]*dtdx;
-	      h_UNew(i  ,j  ,k  ,IP) += flux_x[IP]*dtdx;
-	      h_UNew(i  ,j  ,k  ,IU) += flux_x[IU]*dtdx;
-	      h_UNew(i  ,j  ,k  ,IV) += flux_x[IV]*dtdx;
-	      h_UNew(i  ,j  ,k  ,IW) += flux_x[IW]*dtdx;
-	    }
-	      
-	    if ( i < isize-ghostWidth and
-		 j > ghostWidth       and
-		 k < ksize-ghostWidth ) {
-	      h_UNew(i  ,j-1,k  ,ID) -= flux_y[ID]*dtdy;
-	      h_UNew(i  ,j-1,k  ,IP) -= flux_y[IP]*dtdy;
-	      h_UNew(i  ,j-1,k  ,IU) -= flux_y[IV]*dtdy; // IU and IV swapped
-	      h_UNew(i  ,j-1,k  ,IV) -= flux_y[IU]*dtdy; // IU and IV swapped
-	      h_UNew(i  ,j-1,k  ,IW) -= flux_y[IW]*dtdy;
-	    }
-	      
-	    if ( i < isize-ghostWidth and 
-		 j < jsize-ghostWidth and 
-		 k < ksize-ghostWidth ) {
-	      h_UNew(i  ,j  ,k  ,ID) += flux_y[ID]*dtdy;
-	      h_UNew(i  ,j  ,k  ,IP) += flux_y[IP]*dtdy;
-	      h_UNew(i  ,j  ,k  ,IU) += flux_y[IV]*dtdy; // IU and IV swapped
-	      h_UNew(i  ,j  ,k  ,IV) += flux_y[IU]*dtdy; // IU and IV swapped
-	      h_UNew(i  ,j  ,k  ,IW) += flux_y[IW]*dtdy;
-	    }
-	      
-	    if ( i < isize-ghostWidth and 
-		 j < jsize-ghostWidth and
-		 k > ghostWidth ) {
-	      h_UNew(i  ,j  ,k-1,ID) -= flux_z[ID]*dtdz;
-	      h_UNew(i  ,j  ,k-1,IP) -= flux_z[IP]*dtdz;
-	      h_UNew(i  ,j  ,k-1,IU) -= flux_z[IW]*dtdz; // IU and IW swapped
-	      h_UNew(i  ,j  ,k-1,IV) -= flux_z[IV]*dtdz;
-	      h_UNew(i  ,j  ,k-1,IW) -= flux_z[IU]*dtdz; // IU and IW swapped
-	    }
-	      
-	    if ( i < isize-ghostWidth and 
-		 j < jsize-ghostWidth and 
-		 k < ksize-ghostWidth ) {
-	      h_UNew(i  ,j  ,k  ,ID) += flux_z[ID]*dtdz;
-	      h_UNew(i  ,j  ,k  ,IP) += flux_z[IP]*dtdz;
-	      h_UNew(i  ,j  ,k  ,IU) += flux_z[IW]*dtdz; // IU and IW swapped
-	      h_UNew(i  ,j  ,k  ,IV) += flux_z[IV]*dtdz;
-	      h_UNew(i  ,j  ,k  ,IW) += flux_z[IU]*dtdz; // IU and IW swapped
-	    }
-	      
-	    // now compute EMF's and update magnetic field variables
-	    // see DUMSES routine named cmp_mag_flx (TAKE CARE of index
-	    // shift appearing in calling arguments)
-	    real_t qEdge_emfX[4][NVAR_MHD];
-	    real_t qEdge_emfY[4][NVAR_MHD];
-	    real_t qEdge_emfZ[4][NVAR_MHD];
+	    // h_UNew(i  ,j  ,k  ,IB) += emfZ*dtdx;  
+	    // h_UNew(i-1,j  ,k  ,IB) -= emfZ*dtdx;
 
-	    // preparation for calling compute_emf (equivalent to cmp_mag_flx
-	    // in DUMSES)
-	    // in the following, the 3 first indexes in qEdge_emf array play
-	    // the same offset role as in the calling argument of cmp_mag_flx 
-	    // in DUMSES (if you see what I mean ?!)
-
-	    // actually compute emfZ 
-	    for (int iVar=0; iVar<NVAR_MHD; iVar++) {
-	      qEdge_emfZ[IRT][iVar] = qEdge_emf[1][1][0][IRT][2][iVar]; 
-	      qEdge_emfZ[IRB][iVar] = qEdge_emf[1][0][0][IRB][2][iVar]; 
-	      qEdge_emfZ[ILT][iVar] = qEdge_emf[0][1][0][ILT][2][iVar]; 
-	      qEdge_emfZ[ILB][iVar] = qEdge_emf[0][0][0][ILB][2][iVar]; 
-	    }
-	    real_t emfZ = compute_emf<EMFZ>(qEdge_emfZ);
-
-	    // actually compute emfY (take care that RB and LT are
-	    // swapped !!!)
-	    for (int iVar=0; iVar<NVAR_MHD; iVar++) {
-	      qEdge_emfY[IRT][iVar] = qEdge_emf[1][0][1][IRT][1][iVar]; 
-	      qEdge_emfY[IRB][iVar] = qEdge_emf[0][0][1][ILT][1][iVar]; // ! swap
-	      qEdge_emfY[ILT][iVar] = qEdge_emf[1][0][0][IRB][1][iVar]; // ! swap
-	      qEdge_emfY[ILB][iVar] = qEdge_emf[0][0][0][ILB][1][iVar]; 
-	    }
-	    real_t emfY = compute_emf<EMFY>(qEdge_emfY);
-
-	    // actually compute emfX
-	    for (int iVar=0; iVar<NVAR_MHD; iVar++) {
-	      qEdge_emfX[IRT][iVar] = qEdge_emf[0][1][1][IRT][0][iVar]; 
-	      qEdge_emfX[IRB][iVar] = qEdge_emf[0][1][0][IRB][0][iVar];
-	      qEdge_emfX[ILT][iVar] = qEdge_emf[0][0][1][ILT][0][iVar];
-	      qEdge_emfX[ILB][iVar] = qEdge_emf[0][0][0][ILB][0][iVar]; 
-	    }
-	    real_t emfX = compute_emf<EMFX>(qEdge_emfX);
-
-	    // now update h_UNew with emfZ
-	    // (Constrained transport for face-centered B-field)
-	    h_UNew(i  ,j  ,k  ,IA) -= emfZ*dtdy;
-	    h_UNew(i  ,j-1,k  ,IA) += emfZ*dtdy;
+	    // // now update h_UNew with emfY, emfX
+	    // h_UNew(i  ,j  ,k  ,IA) += emfY*dtdz;
+	    // h_UNew(i  ,j  ,k-1,IA) -= emfY*dtdz;
 	      
-	    h_UNew(i  ,j  ,k  ,IB) += emfZ*dtdx;  
-	    h_UNew(i-1,j  ,k  ,IB) -= emfZ*dtdx;
-
-	    // now update h_UNew with emfY, emfX
-	    h_UNew(i  ,j  ,k  ,IA) += emfY*dtdz;
-	    h_UNew(i  ,j  ,k-1,IA) -= emfY*dtdz;
+	    // h_UNew(i  ,j  ,k  ,IB) -= emfX*dtdz;
+	    // h_UNew(i  ,j  ,k-1,IB) += emfX*dtdz;
 	      
-	    h_UNew(i  ,j  ,k  ,IB) -= emfX*dtdz;
-	    h_UNew(i  ,j  ,k-1,IB) += emfX*dtdz;
-	      
-	    h_UNew(i  ,j  ,k  ,IC) -= emfY*dtdx;
-	    h_UNew(i-1,j  ,k  ,IC) += emfY*dtdx;
-	    h_UNew(i  ,j  ,k  ,IC) += emfX*dtdy;
-	    h_UNew(i  ,j-1,k  ,IC) -= emfX*dtdy;
+	    // h_UNew(i  ,j  ,k  ,IC) -= emfY*dtdx;
+	    // h_UNew(i-1,j  ,k  ,IC) += emfY*dtdx;
+	    // h_UNew(i  ,j  ,k  ,IC) += emfX*dtdy;
+	    // h_UNew(i  ,j-1,k  ,IC) -= emfX*dtdy;
 	      
 
 	  } // end for i
@@ -4362,7 +4260,7 @@ namespace hydroSimu {
 				     dq);
 	    } // end slope_type = 0,1,2
 	      
-	      // get face-centered magnetic components
+	    // get face-centered magnetic components
 	    bfNb[0] = h_UOld(i  ,j  ,k  ,IA);
 	    bfNb[1] = h_UOld(i+1,j  ,k  ,IA);
 	    bfNb[2] = h_UOld(i  ,j  ,k  ,IB);
