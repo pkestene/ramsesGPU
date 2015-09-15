@@ -351,7 +351,8 @@ void trace_unsplit_mhd_2d(real_t qNb[3][3][NVAR_MHD],
  * \param[in]  q          primitive variables state in current cell
  * \param[in]  dq         primitive variable slopes
  * \param[in]  bfNb       face centered magnetic field
- * \param[in]  dbf        face-centered magnetic slopes in transverse direction dBx/dy and dBy/dx
+ * \param[in]  dAB        face-centered magnetic slopes in transverse direction dBx/dy and dBy/dx
+ * \param[in]  Ez         electric field
  * \param[in]  dtdx       dt over dx
  * \param[in]  dtdy       dt over dy
  * \param[in]  xPos       x location of current cell (needed for shear computation)
@@ -1204,6 +1205,446 @@ void trace_unsplit_mhd_3d(real_t qNb[3][3][3][NVAR_MHD],
   qLB_Z[IP] = FMAX(smallp /** qLB_Z[ID]*/, qLB_Z[IP]);
   
 } //trace_unsplit_mhd_3d
+
+/**
+ * 3D Trace computations for unsplit Godunov scheme.
+ *
+ * \note Note that this routine uses global variables iorder, scheme and
+ * slope_type.
+ *
+ * \note Note that is routine is loosely adapted from trace3d found in 
+ * Dumses and in Ramses sources (sub-dir mhd, file umuscl.f90) to be now a one cell 
+ * computation. 
+ *
+ * \param[in]  q          primitive variables state in current cell.
+ * \param[in]  dq         primitive variable slopes
+ * \param[in]  bfNb       face centered magnetic field 
+ * \param[in]  dABC       face-centered magnetic slopes in transverse direction dBx/dy, dBy/dx, etc ...
+ * \param[in]  Exyz       electric field
+ * \param[in]  dtdx       dt over dx
+ * \param[in]  dtdy       dt over dy
+ * \param[in]  dtdz       dt over dy
+ * \param[in]  xPos       x location of current cell (needed for shear computation)
+ * \param[in]  locationId identify which cell face or edge is to be reconstructed
+ * \param[out] qRecons    the reconstructed state
+ *
+ */
+__DEVICE__
+void trace_unsplit_mhd_3d_face(real_t q[NVAR_MHD],
+			       real_t dq[3][NVAR_MHD],
+			       real_t bfNb[THREE_D*5],
+			       real_t dABC[THREE_D*4],
+			       real_t Exyz[THREE_D][2][2],
+			       real_t dtdx,
+			       real_t dtdy,
+			       real_t dtdz,
+			       real_t xPos,
+			       int locationId,
+			       real_t (&qRecons)[NVAR_MHD])
+{
+  real_t &smallR = ::gParams.smallr;
+  real_t &smallp = ::gParams.smallp;
+  real_t &gamma  = ::gParams.gamma0;
+  real_t &Omega0 = ::gParams.Omega0;
+  real_t &dx     = ::gParams.dx;
+
+  // neighborhood sizes
+  enum {Q_SIZE=3, BF_SIZE = 4};
+
+  // index of current cell in the neighborhood
+  enum {CENTER=1};
+
+  // Edge centered electric field in X, Y and Z directions
+  real_t &ELL = Exyz[IX][0][0];
+  real_t &ELR = Exyz[IX][0][1];
+  real_t &ERL = Exyz[IX][1][0];
+  real_t &ERR = Exyz[IX][1][1];
+
+  real_t &FLL = Exyz[IY][0][0];
+  real_t &FLR = Exyz[IY][0][1];
+  real_t &FRL = Exyz[IY][1][0];
+  real_t &FRR = Exyz[IY][1][1];
+  
+  real_t &GLL = Exyz[IZ][0][0];
+  real_t &GLR = Exyz[IZ][0][1];
+  real_t &GRL = Exyz[IZ][1][0];
+  real_t &GRR = Exyz[IZ][1][1];
+  
+  // Cell centered values
+  real_t r = q[ID];
+  real_t p = q[IP];
+  real_t u = q[IU];
+  real_t v = q[IV];
+  real_t w = q[IW];            
+  real_t A = q[IA];
+  real_t B = q[IB];
+  real_t C = q[IC];            
+  
+  // Face centered variables
+  real_t AL =  bfNb[0];
+  real_t AR =  bfNb[1];
+  real_t BL =  bfNb[2];
+  real_t BR =  bfNb[3];
+  real_t CL =  bfNb[4];
+  real_t CR =  bfNb[5];
+
+  // Cell centered TVD slopes in X direction
+  real_t drx = dq[IX][ID] * HALF_F;
+  real_t dpx = dq[IX][IP] * HALF_F;
+  real_t dux = dq[IX][IU] * HALF_F;
+  real_t dvx = dq[IX][IV] * HALF_F;
+  real_t dwx = dq[IX][IW] * HALF_F;
+  real_t dCx = dq[IX][IC] * HALF_F;
+  real_t dBx = dq[IX][IB] * HALF_F;
+  
+  // Cell centered TVD slopes in Y direction
+  real_t dry = dq[IY][ID] * HALF_F;
+  real_t dpy = dq[IY][IP] * HALF_F;
+  real_t duy = dq[IY][IU] * HALF_F;
+  real_t dvy = dq[IY][IV] * HALF_F;
+  real_t dwy = dq[IY][IW] * HALF_F;
+  real_t dCy = dq[IY][IC] * HALF_F;
+  real_t dAy = dq[IY][IA] * HALF_F;
+
+  // Cell centered TVD slopes in Z direction
+  real_t drz = dq[IZ][ID] * HALF_F;
+  real_t dpz = dq[IZ][IP] * HALF_F;
+  real_t duz = dq[IZ][IU] * HALF_F;
+  real_t dvz = dq[IZ][IV] * HALF_F;
+  real_t dwz = dq[IZ][IW] * HALF_F;
+  real_t dAz = dq[IZ][IA] * HALF_F;
+  real_t dBz = dq[IZ][IB] * HALF_F;
+
+  /*
+   * Face centered TVD slopes in transverse direction
+   */
+  real_t dALy = HALF_F * dABC[0];
+  real_t dALz = HALF_F * dABC[1];
+  real_t dBLx = HALF_F * dABC[2];
+  real_t dBLz = HALF_F * dABC[3];
+  real_t dCLx = HALF_F * dABC[4];
+  real_t dCLy = HALF_F * dABC[5];
+ 
+  real_t dARy = HALF_F * dABC[6];
+  real_t dARz = HALF_F * dABC[7];
+
+  real_t dBRx = HALF_F * dABC[8];
+  real_t dBRz = HALF_F * dABC[9];
+
+  real_t dCRx = HALF_F * dABC[10];
+  real_t dCRy = HALF_F * dABC[11];
+
+  // Cell centered slopes in normal direction
+  real_t dAx = HALF_F * (AR - AL);
+  real_t dBy = HALF_F * (BR - BL);
+  real_t dCz = HALF_F * (CR - CL);
+
+  // Source terms (including transverse derivatives)
+  real_t sr0, su0, sv0, sw0, sp0, sA0, sB0, sC0;
+  real_t sAL0, sAR0, sBL0, sBR0, sCL0, sCR0;
+
+  if (true /*cartesian*/) {
+
+    sr0 = (-u*drx-dux*r)              *dtdx + (-v*dry-dvy*r)              *dtdy + (-w*drz-dwz*r)              *dtdz;
+    su0 = (-u*dux-(dpx+B*dBx+C*dCx)/r)*dtdx + (-v*duy+B*dAy/r)            *dtdy + (-w*duz+C*dAz/r)            *dtdz; 
+    sv0 = (-u*dvx+A*dBx/r)            *dtdx + (-v*dvy-(dpy+A*dAy+C*dCy)/r)*dtdy + (-w*dvz+C*dBz/r)            *dtdz;
+    sw0 = (-u*dwx+A*dCx/r)            *dtdx + (-v*dwy+B*dCy/r)            *dtdy + (-w*dwz-(dpz+A*dAz+B*dBz)/r)*dtdz; 
+    sp0 = (-u*dpx-dux*gamma*p)        *dtdx + (-v*dpy-dvy*gamma*p)        *dtdy + (-w*dpz-dwz*gamma*p)        *dtdz;
+    sA0 =                                     (u*dBy+B*duy-v*dAy-A*dvy)   *dtdy + (u*dCz+C*duz-w*dAz-A*dwz)   *dtdz;
+    sB0 = (v*dAx+A*dvx-u*dBx-B*dux)   *dtdx +                                     (v*dCz+C*dvz-w*dBz-B*dwz)   *dtdz; 
+    sC0 = (w*dAx+A*dwx-u*dCx-C*dux)   *dtdx + (w*dBy+B*dwy-v*dCy-C*dvy)   *dtdy;
+    if (Omega0>0) {
+      real_t shear = -1.5 * Omega0 *xPos;
+      sr0 = sr0 -  shear*dry*dtdy;
+      su0 = su0 -  shear*duy*dtdy;
+      sv0 = sv0 -  shear*dvy*dtdy;
+      sw0 = sw0 -  shear*dwy*dtdy;
+      sp0 = sp0 -  shear*dpy*dtdy;
+      sA0 = sA0 -  shear*dAy*dtdy;
+      sB0 = sB0 + (shear*dAx - 1.5 * Omega0 * A * dx)*dtdx + shear*dBz*dtdz;
+      sC0 = sC0 -  shear*dCy*dtdy;
+    }
+	
+    // Face-centered B-field
+    sAL0 = +(GLR-GLL)*dtdy*HALF_F -(FLR-FLL)*dtdz*HALF_F;
+    sAR0 = +(GRR-GRL)*dtdy*HALF_F -(FRR-FRL)*dtdz*HALF_F;
+    sBL0 = -(GRL-GLL)*dtdx*HALF_F +(ELR-ELL)*dtdz*HALF_F;
+    sBR0 = -(GRR-GLR)*dtdx*HALF_F +(ERR-ERL)*dtdz*HALF_F;
+    sCL0 = +(FRL-FLL)*dtdx*HALF_F -(ERL-ELL)*dtdy*HALF_F;
+    sCR0 = +(FRR-FLR)*dtdx*HALF_F -(ERR-ELR)*dtdy*HALF_F;
+
+  } // end cartesian
+
+  // Update in time the  primitive variables
+  r = r + sr0;
+  u = u + su0;
+  v = v + sv0;
+  w = w + sw0;
+  p = p + sp0;
+  A = A + sA0;
+  B = B + sB0;
+  C = C + sC0;
+  
+  AL = AL + sAL0;
+  AR = AR + sAR0;
+  BL = BL + sBL0;
+  BR = BR + sBR0;
+  CL = CL + sCL0;
+  CR = CR + sCR0;
+
+  if (locationId == FACE_XMIN) {
+    // Face averaged right state at left interface
+    qRecons[ID] = r - drx;
+    qRecons[IU] = u - dux;
+    qRecons[IV] = v - dvx;
+    qRecons[IW] = w - dwx;
+    qRecons[IP] = p - dpx;
+    qRecons[IA] = AL;
+    qRecons[IB] = B - dBx;
+    qRecons[IC] = C - dCx;
+    qRecons[ID] = FMAX(smallR,  qRecons[ID]);
+    qRecons[IP] = FMAX(smallp /** qRecons[ID]*/, qRecons[IP]);
+  }
+
+  else if (locationId == FACE_XMAX) {
+    // Face averaged left state at right interface
+    qRecons[ID] = r + drx;
+    qRecons[IU] = u + dux;
+    qRecons[IV] = v + dvx;
+    qRecons[IW] = w + dwx;
+    qRecons[IP] = p + dpx;
+    qRecons[IA] = AR;
+    qRecons[IB] = B + dBx;
+    qRecons[IC] = C + dCx;
+    qRecons[ID] = FMAX(smallR,  qRecons[ID]);
+    qRecons[IP] = FMAX(smallp /** qRecons[ID]*/, qRecons[IP]);
+  }
+
+  else if (locationId == FACE_YMIN) {
+    // Face averaged top state at bottom interface
+    qRecons[ID] = r - dry;
+    qRecons[IU] = u - duy;
+    qRecons[IV] = v - dvy;
+    qRecons[IW] = w - dwy;
+    qRecons[IP] = p - dpy;
+    qRecons[IA] = A - dAy;
+    qRecons[IB] = BL;
+    qRecons[IC] = C - dCy;
+    qRecons[ID] = FMAX(smallR,  qRecons[ID]);
+    qRecons[IP] = FMAX(smallp /** qRecons[ID]*/, qRecons[IP]);
+  }
+  
+  else if (locationId == FACE_YMAX) {
+    // Face averaged bottom state at top interface
+    qRecons[ID] = r + dry;
+    qRecons[IU] = u + duy;
+    qRecons[IV] = v + dvy;
+    qRecons[IW] = w + dwy;
+    qRecons[IP] = p + dpy;
+    qRecons[IA] = A + dAy;
+    qRecons[IB] = BR;
+    qRecons[IC] = C + dCy;
+    qRecons[ID] = FMAX(smallR,  qRecons[ID]);
+    qRecons[IP] = FMAX(smallp /** qRecons[ID]*/, qRecons[IP]);
+  }
+
+  else if (locationId == FACE_ZMIN) {
+    // Face averaged front state at back interface
+    qRecons[ID] = r - drz;
+    qRecons[IU] = u - duz;
+    qRecons[IV] = v - dvz;
+    qRecons[IW] = w - dwz;
+    qRecons[IP] = p - dpz;
+    qRecons[IA] = A - dAz;
+    qRecons[IB] = B - dBz;
+    qRecons[IC] = CL;
+    qRecons[ID] = FMAX(smallR,  qRecons[ID]);
+    qRecons[IP] = FMAX(smallp /** qRecons[ID]*/, qRecons[IP]);
+  }
+
+  else if (locationId == FACE_ZMAX) {
+    // Face averaged back state at front interface
+    qRecons[ID] = r + drz;
+    qRecons[IU] = u + duz;
+    qRecons[IV] = v + dvz;
+    qRecons[IW] = w + dwz;
+    qRecons[IP] = p + dpz;
+    qRecons[IA] = A + dAz;
+    qRecons[IB] = B + dBz;
+    qRecons[IC] = CR;
+    qRecons[ID] = FMAX(smallR,  qRecons[ID]);
+    qRecons[IP] = FMAX(smallp /** qRecons[ID]*/, qRecons[IP]);
+  }
+
+  else if (locationId == EDGE_RT_X) {
+    // X-edge averaged right-top corner state (RT->LL)
+    qRecons[ID] = r + (+dry+drz);
+    qRecons[IU] = u + (+duy+duz);
+    qRecons[IV] = v + (+dvy+dvz);
+    qRecons[IW] = w + (+dwy+dwz);
+    qRecons[IP] = p + (+dpy+dpz);
+    qRecons[IA] = A + (+dAy+dAz);
+    qRecons[IB] = BR+ (   +dBRz);
+    qRecons[IC] = CR+ (+dCRy   );
+    qRecons[ID] = FMAX(smallR,  qRecons[ID]);
+    qRecons[IP] = FMAX(smallp /** qRecons[ID]*/, qRecons[IP]);
+  }
+
+  else if (locationId == EDGE_RB_X) {
+    // X-edge averaged right-bottom corner state (RB->LR)
+    qRecons[ID] = r + (+dry-drz);
+    qRecons[IU] = u + (+duy-duz);
+    qRecons[IV] = v + (+dvy-dvz);
+    qRecons[IW] = w + (+dwy-dwz);
+    qRecons[IP] = p + (+dpy-dpz);
+    qRecons[IA] = A + (+dAy-dAz);
+    qRecons[IB] = BR+ (   -dBRz);
+    qRecons[IC] = CL+ (+dCLy   );
+    qRecons[ID] = FMAX(smallR,  qRecons[ID]);
+    qRecons[IP] = FMAX(smallp /** qRecons[ID]*/, qRecons[IP]);
+  }
+
+  else if (locationId == EDGE_LT_X) {
+    // X-edge averaged left-top corner state (LT->RL)
+    qRecons[ID] = r + (-dry+drz);
+    qRecons[IU] = u + (-duy+duz);
+    qRecons[IV] = v + (-dvy+dvz);
+    qRecons[IW] = w + (-dwy+dwz);
+    qRecons[IP] = p + (-dpy+dpz);
+    qRecons[IA] = A + (-dAy+dAz);
+    qRecons[IB] = BL+ (   +dBLz);
+    qRecons[IC] = CR+ (-dCRy   );
+    qRecons[ID] = FMAX(smallR,  qRecons[ID]);
+    qRecons[IP] = FMAX(smallp /** qRecons[ID]*/, qRecons[IP]);
+  }
+
+  else if (locationId == EDGE_LB_X) {
+    // X-edge averaged left-bottom corner state (LB->RR)
+    qRecons[ID] = r + (-dry-drz);
+    qRecons[IU] = u + (-duy-duz);
+    qRecons[IV] = v + (-dvy-dvz);
+    qRecons[IW] = w + (-dwy-dwz);
+    qRecons[IP] = p + (-dpy-dpz);
+    qRecons[IA] = A + (-dAy-dAz);
+    qRecons[IB] = BL+ (   -dBLz);
+    qRecons[IC] = CL+ (-dCLy   );
+    qRecons[ID] = FMAX(smallR,  qRecons[ID]);
+    qRecons[IP] = FMAX(smallp /** qRecons[ID]*/, qRecons[IP]);
+  }
+
+  else if (locationId == EDGE_RT_Y) {
+    // Y-edge averaged right-top corner state (RT->LL)
+    qRecons[ID] = r + (+drx+drz);
+    qRecons[IU] = u + (+dux+duz);
+    qRecons[IV] = v + (+dvx+dvz);
+    qRecons[IW] = w + (+dwx+dwz);
+    qRecons[IP] = p + (+dpx+dpz);
+    qRecons[IA] = AR+ (   +dARz);
+    qRecons[IB] = B + (+dBx+dBz);
+    qRecons[IC] = CR+ (+dCRx   );
+    qRecons[ID] = FMAX(smallR,  qRecons[ID]);
+    qRecons[IP] = FMAX(smallp /** qRecons[ID]*/, qRecons[IP]);
+  }
+
+  else if (locationId == EDGE_RB_Y) {
+    // Y-edge averaged right-bottom corner state (RB->LR)
+    qRecons[ID] = r + (+drx-drz);
+    qRecons[IU] = u + (+dux-duz);
+    qRecons[IV] = v + (+dvx-dvz);
+    qRecons[IW] = w + (+dwx-dwz);
+    qRecons[IP] = p + (+dpx-dpz);
+    qRecons[IA] = AR+ (   -dARz);
+    qRecons[IB] = B + (+dBx-dBz);
+    qRecons[IC] = CL+ (+dCLx   );
+    qRecons[ID] = FMAX(smallR,  qRecons[ID]);
+    qRecons[IP] = FMAX(smallp /** qRecons[ID]*/, qRecons[IP]);
+  }
+
+  else if (locationId == EDGE_LT_Y) {
+    // Y-edge averaged left-top corner state (LT->RL)
+    qRecons[ID] = r + (-drx+drz);
+    qRecons[IU] = u + (-dux+duz);
+    qRecons[IV] = v + (-dvx+dvz);
+    qRecons[IW] = w + (-dwx+dwz);
+    qRecons[IP] = p + (-dpx+dpz);
+    qRecons[IA] = AL+ (   +dALz);
+    qRecons[IB] = B + (-dBx+dBz);
+    qRecons[IC] = CR+ (-dCRx   );
+    qRecons[ID] = FMAX(smallR,  qRecons[ID]);
+    qRecons[IP] = FMAX(smallp /** qRecons[ID]*/, qRecons[IP]);
+  }
+
+  else if (locationId == EDGE_LB_Y) {
+    // Y-edge averaged left-bottom corner state (LB->RR)
+    qRecons[ID] = r + (-drx-drz);
+    qRecons[IU] = u + (-dux-duz);
+    qRecons[IV] = v + (-dvx-dvz);
+    qRecons[IW] = w + (-dwx-dwz);
+    qRecons[IP] = p + (-dpx-dpz);
+    qRecons[IA] = AL+ (   -dALz);
+    qRecons[IB] = B + (-dBx-dBz);
+    qRecons[IC] = CL+ (-dCLx   );
+    qRecons[ID] = FMAX(smallR,  qRecons[ID]);
+    qRecons[IP] = FMAX(smallp /** qRecons[ID]*/, qRecons[IP]);
+  }
+
+  else if (locationId == EDGE_RT_Z) {
+    // Z-edge averaged right-top corner state (RT->LL)
+    qRecons[ID] = r + (+drx+dry);
+    qRecons[IU] = u + (+dux+duy);
+    qRecons[IV] = v + (+dvx+dvy);
+    qRecons[IW] = w + (+dwx+dwy);
+    qRecons[IP] = p + (+dpx+dpy);
+    qRecons[IA] = AR+ (   +dARy);
+    qRecons[IB] = BR+ (+dBRx   );
+    qRecons[IC] = C + (+dCx+dCy);
+    qRecons[ID] = FMAX(smallR,  qRecons[ID]);
+    qRecons[IP] = FMAX(smallp /** qRecons[ID]*/, qRecons[IP]);
+  }
+
+  else if (locationId == EDGE_RB_Z) {
+    // Z-edge averaged right-bottom corner state (RB->LR)
+    qRecons[ID] = r + (+drx-dry);
+    qRecons[IU] = u + (+dux-duy);
+    qRecons[IV] = v + (+dvx-dvy);
+    qRecons[IW] = w + (+dwx-dwy);
+    qRecons[IP] = p + (+dpx-dpy);
+    qRecons[IA] = AR+ (   -dARy);
+    qRecons[IB] = BL+ (+dBLx   );
+    qRecons[IC] = C + (+dCx-dCy);
+    qRecons[ID] = FMAX(smallR,  qRecons[ID]);
+    qRecons[IP] = FMAX(smallp /** qRecons[ID]*/, qRecons[IP]);
+  }
+
+  else if (locationId == EDGE_LT_Z) {
+    // Z-edge averaged left-top corner state (LT->RL)
+    qRecons[ID] = r + (-drx+dry);
+    qRecons[IU] = u + (-dux+duy);
+    qRecons[IV] = v + (-dvx+dvy);
+    qRecons[IW] = w + (-dwx+dwy);
+    qRecons[IP] = p + (-dpx+dpy);
+    qRecons[IA] = AL+ (   +dALy);
+    qRecons[IB] = BR+ (-dBRx   );
+    qRecons[IC] = C + (-dCx+dCy);
+    qRecons[ID] = FMAX(smallR,  qRecons[ID]);
+    qRecons[IP] = FMAX(smallp /** qRecons[ID]*/, qRecons[IP]);
+  }
+
+  else if (locationId == EDGE_LB_Z) {
+    // Z-edge averaged left-bottom corner state (LB->RR)
+    qRecons[ID] = r + (-drx-dry);
+    qRecons[IU] = u + (-dux-duy);
+    qRecons[IV] = v + (-dvx-dvy);
+    qRecons[IW] = w + (-dwx-dwy);
+    qRecons[IP] = p + (-dpx-dpy);
+    qRecons[IA] = AL+ (   -dALy);
+    qRecons[IB] = BL+ (-dBLx   );
+    qRecons[IC] = C + (-dCx-dCy);
+    qRecons[ID] = FMAX(smallR,  qRecons[ID]);
+    qRecons[IP] = FMAX(smallp /** qRecons[ID]*/, qRecons[IP]);
+  }
+
+} //trace_unsplit_mhd_3d_face
 
 /**
  * This another implementation of trace computations simpler than 

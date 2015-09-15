@@ -78,10 +78,26 @@ enum FaceEdgeIdType {
   FACE_YMAX=3,
   FACE_ZMIN=4,
   FACE_ZMAX=5,
+
   EDGE_RT  =6,
   EDGE_RB  =7,
   EDGE_LT  =8,
-  EDGE_LB  =9
+  EDGE_LB  =9,
+
+  EDGE_RT_X  =10,
+  EDGE_RB_X  =11,
+  EDGE_LT_X  =12,
+  EDGE_LB_X  =13,
+
+  EDGE_RT_Y  =14,
+  EDGE_RB_Y  =15,
+  EDGE_LT_Y  =16,
+  EDGE_LB_Y  =17,
+
+  EDGE_RT_Z  =18,
+  EDGE_RB_Z  =19,
+  EDGE_LT_Z  =20,
+  EDGE_LB_Z  =21
 };
 
 
