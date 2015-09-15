@@ -2082,6 +2082,9 @@ namespace hydroSimu {
       
     } else { // THREE_D - implementation version 0
     
+      // Omega0
+      real_t &Omega0 = ::gParams.Omega0;
+
       for (int k=ghostWidth; k<ksize-ghostWidth+1; k++) {
 	for (int j=ghostWidth; j<jsize-ghostWidth+1; j++) {
 	  for (int i=ghostWidth; i<isize-ghostWidth+1; i++) {
@@ -2093,9 +2096,9 @@ namespace hydroSimu {
 	    // slopes
 	    real_t dq[THREE_D][NVAR_MHD];
 	    real_t dbf[THREE_D][THREE_D];
-	    real_t bfNb[3*5];
-	    real_t dABC[3*4];
-	    
+	    real_t bfNb[THREE_D*5];
+	    real_t dABC[THREE_D*4];
+
 	    // reconstructed state on cell faces
 	    // aka riemann solver input
 	    real_t qleft_x[NVAR_MHD];
@@ -2108,7 +2111,7 @@ namespace hydroSimu {
 	    real_t flux_y[NVAR_MHD];
 	    
 	    // emf
-	    real_t Ez[2][2];
+	    real_t Exyz[THREE_D][2][2];
 	    real_t qEdge_RT[NVAR_MHD];
 	    real_t qEdge_RB[NVAR_MHD];
 	    real_t qEdge_LT[NVAR_MHD];
@@ -2170,9 +2173,177 @@ namespace hydroSimu {
 
 	    slope_unsplit_mhd_3d(bfNb, dbf);
 	    // get transverse mag slopes
-	    //dABC[0] = dbf[IY][IX];
-	    //dABC[1] = dbf[IX][IY];
+	    dABC[0] = dbf[IY][IX];
+	    dABC[1] = dbf[IZ][IX];
+	    dABC[2] = dbf[IX][IY];
+	    dABC[3] = dbf[IZ][IY];
+	    dABC[4] = dbf[IX][IZ];
+	    dABC[5] = dbf[IY][IZ];
 
+	    // change neighbors to i+1, j, k and recompute dbf
+	    bfNb[0]  =  h_UOld(i+1,j  ,k  ,IA);
+	    bfNb[1]  =  h_UOld(i+1,j+1,k  ,IA);
+	    bfNb[2]  =  h_UOld(i+1,j-1,k  ,IA);
+	    bfNb[3]  =  h_UOld(i+1,j  ,k+1,IA);
+	    bfNb[4]  =  h_UOld(i+1,j  ,k-1,IA);
+
+	    bfNb[5]  =  h_UOld(i+1,j  ,k  ,IB);
+	    bfNb[6]  =  h_UOld(i+2,j  ,k  ,IB);
+	    bfNb[7]  =  h_UOld(i  ,j  ,k  ,IB);
+	    bfNb[8]  =  h_UOld(i+1,j  ,k+1,IB);
+	    bfNb[9]  =  h_UOld(i+1,j  ,k-1,IB);
+
+	    bfNb[10] =  h_UOld(i+1,j  ,k  ,IC);
+	    bfNb[11] =  h_UOld(i+2,j  ,k  ,IC);
+	    bfNb[12] =  h_UOld(i  ,j  ,k  ,IC);
+	    bfNb[13] =  h_UOld(i+1,j+1,k  ,IC);
+	    bfNb[14] =  h_UOld(i+1,j-1,k  ,IC);
+
+	    slope_unsplit_mhd_3d(bfNb, dbf);
+	    // get transverse mag slopes
+	    dABC[6] = dbf[IY][IX];
+	    dABC[7] = dbf[IZ][IX];
+	    
+	    // change neighbors to i, j+1, k and recompute dbf
+	    bfNb[0]  =  h_UOld(i  ,j+1,k  ,IA);
+	    bfNb[1]  =  h_UOld(i  ,j+2,k  ,IA);
+	    bfNb[2]  =  h_UOld(i  ,j  ,k  ,IA);
+	    bfNb[3]  =  h_UOld(i  ,j+1,k+1,IA);
+	    bfNb[4]  =  h_UOld(i  ,j+1,k-1,IA);
+
+	    bfNb[5]  =  h_UOld(i  ,j+1,k  ,IB);
+	    bfNb[6]  =  h_UOld(i+1,j+1,k  ,IB);
+	    bfNb[7]  =  h_UOld(i-1,j+1,k  ,IB);
+	    bfNb[8]  =  h_UOld(i  ,j+1,k+1,IB);
+	    bfNb[9]  =  h_UOld(i  ,j+1,k-1,IB);
+
+	    bfNb[10] =  h_UOld(i  ,j+1,k  ,IC);
+	    bfNb[11] =  h_UOld(i+1,j+1,k  ,IC);
+	    bfNb[12] =  h_UOld(i-1,j+1,k  ,IC);
+	    bfNb[13] =  h_UOld(i  ,j+2,k  ,IC);
+	    bfNb[14] =  h_UOld(i  ,j  ,k  ,IC);
+
+	    slope_unsplit_mhd_3d(bfNb, dbf);
+	    dABC[8] = dbf[IX][IY];
+	    dABC[9] = dbf[IZ][IY];
+
+	    // change neighbors to i, j, k+1 and recompute dbf
+	    bfNb[0]  =  h_UOld(i  ,j  ,k+1,IA);
+	    bfNb[1]  =  h_UOld(i  ,j+1,k+1,IA);
+	    bfNb[2]  =  h_UOld(i  ,j-1,k+1,IA);
+	    bfNb[3]  =  h_UOld(i  ,j  ,k+2,IA);
+	    bfNb[4]  =  h_UOld(i  ,j  ,k  ,IA);
+
+	    bfNb[5]  =  h_UOld(i  ,j  ,k+1,IB);
+	    bfNb[6]  =  h_UOld(i+1,j  ,k+1,IB);
+	    bfNb[7]  =  h_UOld(i-1,j  ,k+1,IB);
+	    bfNb[8]  =  h_UOld(i  ,j  ,k+2,IB);
+	    bfNb[9]  =  h_UOld(i  ,j  ,k  ,IB);
+
+	    bfNb[10] =  h_UOld(i  ,j  ,k+1,IC);
+	    bfNb[11] =  h_UOld(i+1,j  ,k+1,IC);
+	    bfNb[12] =  h_UOld(i-1,j  ,k+1,IC);
+	    bfNb[13] =  h_UOld(i  ,j+1,k+1,IC);
+	    bfNb[14] =  h_UOld(i  ,j-1,k+1,IC);
+
+	    slope_unsplit_mhd_3d(bfNb, dbf);
+	    dABC[10] = dbf[IX][IZ];
+	    dABC[11] = dbf[IY][IZ];
+
+	    // compute Ex,Ey,Ez (electric field components)
+	    for (int dj=0; dj<2; dj++) {
+	      for (int dk=0; dk<2; dk++) {
+	    
+	        int centerX = i;
+	        int centerY = j+dj;
+	        int centerZ = k+dk;
+	    
+	        real_t v = 0.25 * (h_Q(centerX,centerY-1,centerZ-1,IV) +
+				   h_Q(centerX,centerY-1,centerZ  ,IV) +
+				   h_Q(centerX,centerY  ,centerZ-1,IV) +
+				   h_Q(centerX,centerY  ,centerZ  ,IV) );
+
+	        real_t w = 0.25 * (h_Q(centerX,centerY-1,centerZ-1,IW) +
+				   h_Q(centerX,centerY-1,centerZ  ,IW) +
+				   h_Q(centerX,centerY  ,centerZ-1,IW) +
+				   h_Q(centerX,centerY  ,centerZ  ,IW) );
+
+	        real_t B = 0.5 * (h_UOld(centerX,centerY  ,centerZ-1,IY) +
+				  h_UOld(centerX,centerY  ,centerZ  ,IY) );
+
+	        real_t C = 0.5 * (h_UOld(centerX,centerY-1,centerZ  ,IZ) +
+				  h_UOld(centerX,centerY  ,centerZ  ,IZ) );
+	    
+	        Exyz[IX][dj][dk] = v*C-w*B;
+		
+	        if (/* cartesian */ Omega0>0 /* and not fargo*/) {
+		  real_t shear = -1.5 * Omega0 * xPos;
+		  Exyz[IX][dj][dk] += shear*C;
+	        }
+		
+	      } // end for dk
+	    } // end for dj
+  
+	    for (int di=0; di<2; di++) {
+	      for (int dk=0; dk<2; dk++) {
+	    
+	        int centerX = i+di;
+	        int centerY = j;
+	        int centerZ = k+dk;
+	    
+	        real_t u = 0.25 * (h_Q(centerX-1,centerY,centerZ-1,IU) + 
+				   h_Q(centerX-1,centerY,centerZ  ,IU) + 
+				   h_Q(centerX  ,centerY,centerZ-1,IU) + 
+				   h_Q(centerX  ,centerY,centerZ  ,IU) );
+  
+	        real_t w = 0.25 * (h_Q(centerX-1,centerY,centerZ-1,IW) +
+				   h_Q(centerX-1,centerY,centerZ  ,IW) +
+				   h_Q(centerX  ,centerY,centerZ-1,IW) +
+				   h_Q(centerX  ,centerY,centerZ  ,IW) );
+		
+	        real_t A = 0.5 * (h_UOld(centerX  ,centerY,centerZ-1,IX) + 
+				  h_UOld(centerX  ,centerY,centerZ  ,IX) );
+
+	        real_t C = 0.5 * (h_UOld(centerX-1,centerY,centerZ  ,IZ) +
+				  h_UOld(centerX  ,centerY,centerZ  ,IZ) );
+
+	        Exyz[IY][di][dk] = w*A-u*C;
+		
+	      } // end for dk
+	    } // end for di
+	    
+	    for (int di=0; di<2; di++) {
+	      for (int dj=0; dj<2; dj++) {
+
+	        int centerX = i+di;
+	        int centerY = j+dj;
+	        int centerZ = k;
+
+	        real_t u  = 0.25 *  (h_Q(centerX-1,centerY-1,centerZ,IU) + 
+				     h_Q(centerX-1,centerY  ,centerZ,IU) + 
+				     h_Q(centerX  ,centerY-1,centerZ,IU) + 
+				     h_Q(centerX  ,centerY  ,centerZ,IU) ); 
+		
+	        real_t v  = 0.25 *  (h_Q(centerX-1,centerY-1,centerZ,IV) +
+				     h_Q(centerX-1,centerY  ,centerZ,IV) +
+				     h_Q(centerX  ,centerY-1,centerZ,IV) + 
+				     h_Q(centerX  ,centerY  ,centerZ,IV) );
+		
+	        real_t A  = 0.5  * (h_UOld(centerX  ,centerY-1,centerZ,IA) + 
+				    h_UOld(centerX  ,centerY  ,centerZ,IA) );
+		
+	        real_t B  = 0.5  * (h_UOld(centerX-1,centerY  ,centerZ,IB) + 
+				    h_UOld(centerX  ,centerY  ,centerZ,IB) );
+	    
+	        Exyz[IZ][di][dj] = u*B-v*A;
+		
+	        if (/* cartesian */ Omega0>0 /* and not fargo*/) {
+		  real_t shear = -1.5 * Omega0 * (xPos - dx/2);
+		  Exyz[IZ][di][dj] -= shear*A;
+	        }
+		
+	      } // end for dj
+	    } // end for di
 
 	    // // compute hydro flux_x
 	    // riemann_mhd(qleft,qright,flux_x);
