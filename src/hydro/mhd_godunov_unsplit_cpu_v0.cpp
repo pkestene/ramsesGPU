@@ -21,27 +21,14 @@ namespace hydroSimu {
 					     HostArray<real_t>& h_UNew, 
 					     real_t dt, int nStep)
   {
-
-    /*void godunov_unsplit_cpu_v0_implem(HostArray<real_t>& h_UOld, 
-				       HostArray<real_t>& h_UNew, 
-				       HostArray<real_t>& h_Q,
-				       real_t dt, 
-				       real_t dx, real_t dy, real_t dz)*/
   
     (void) nStep;
     real_t dtdx = dt/dx;
     real_t dtdy = dt/dy;
     real_t dtdz = dt/dz;
     
-    // conservative variable domain array
-    real_t *U = h_UOld.data();
-    
-    // primitive variable domain array
-    real_t *Q = h_Q.data();
-
-    // section / domain size
-    int arraySize = h_Q.section();
-
+    ////////////////////////////////////////////////     
+    ////////////////////////////////////////////////     
     if (dimType == TWO_D) {
       
       for (int j=ghostWidth; j<jsize-ghostWidth+1; j++) {
@@ -629,8 +616,13 @@ namespace hydroSimu {
       if (gravityEnabled) {
 	compute_gravity_source_term(h_UNew, h_UOld, dt);
       }
-      
+ 
+
+      ////////////////////////////////////////////////     
+      ////////////////////////////////////////////////     
     } else { // THREE_D - implementation version 0
+      ////////////////////////////////////////////////
+      ////////////////////////////////////////////////     
     
       // Omega0
       real_t &Omega0 = ::gParams.Omega0;
@@ -673,24 +665,28 @@ namespace hydroSimu {
 	    // other variables
 	    real_t xPos;
 
-	    //
-	    // X-direction
-	    //
+	    int ic=i;
+	    int jc=j;
+	    int kc=k;
 
-	    ////////////////
-	    // compute RIGHT states for riemann problem (i,j,k)
-	    ////////////////
-	    
+	    ///////////////////////////////////////////////
+	    // compute reconstructed states at (i,j,k)
+	    ///////////////////////////////////////////////
+	    ic=i;
+	    jc=j;
+	    kc=k;
+	    xPos = ::gParams.xMin + dx/2 + (ic-ghostWidth)*dx;
+
 	    // get primitive variables state vector
 	    for ( int iVar=0; iVar<nbVar; iVar++ ) {
 	      
-	      qLoc[iVar]          = h_Q(i  ,j  ,k  ,iVar);
-	      qNeighbors[0][iVar] = h_Q(i+1,j  ,k  ,iVar);
-	      qNeighbors[1][iVar] = h_Q(i-1,j  ,k  ,iVar);
-	      qNeighbors[2][iVar] = h_Q(i  ,j+1,k  ,iVar);
-	      qNeighbors[3][iVar] = h_Q(i  ,j-1,k  ,iVar);
-	      qNeighbors[4][iVar] = h_Q(i  ,j  ,k+1,iVar);
-	      qNeighbors[5][iVar] = h_Q(i  ,j  ,k-1,iVar);
+	      qLoc[iVar]          = h_Q(ic  ,jc  ,kc  ,iVar);
+	      qNeighbors[0][iVar] = h_Q(ic+1,jc  ,kc  ,iVar);
+	      qNeighbors[1][iVar] = h_Q(ic-1,jc  ,kc  ,iVar);
+	      qNeighbors[2][iVar] = h_Q(ic  ,jc+1,kc  ,iVar);
+	      qNeighbors[3][iVar] = h_Q(ic  ,jc-1,kc  ,iVar);
+	      qNeighbors[4][iVar] = h_Q(ic  ,jc  ,kc+1,iVar);
+	      qNeighbors[5][iVar] = h_Q(ic  ,jc  ,kc-1,iVar);
 	      
 	    } // end for iVar
 	    
@@ -705,24 +701,24 @@ namespace hydroSimu {
 				   qNeighbors[5],
 				   dq);
 	      
-	    // 2. compute mag slopes @(i,j,k)
-	    bfNb[0]  =  h_UOld(i  ,j  ,k  ,IA);
-	    bfNb[1]  =  h_UOld(i  ,j+1,k  ,IA);
-	    bfNb[2]  =  h_UOld(i  ,j-1,k  ,IA);
-	    bfNb[3]  =  h_UOld(i  ,j  ,k+1,IA);
-	    bfNb[4]  =  h_UOld(i  ,j  ,k-1,IA);
+	    // 2. compute mag slopes @(ic,jc,kc)
+	    bfNb[0]  =  h_UOld(ic  ,jc  ,kc  ,IA);
+	    bfNb[1]  =  h_UOld(ic  ,jc+1,kc  ,IA);
+	    bfNb[2]  =  h_UOld(ic  ,jc-1,kc  ,IA);
+	    bfNb[3]  =  h_UOld(ic  ,jc  ,kc+1,IA);
+	    bfNb[4]  =  h_UOld(ic  ,jc  ,kc-1,IA);
 
-	    bfNb[5]  =  h_UOld(i  ,j  ,k  ,IB);
-	    bfNb[6]  =  h_UOld(i+1,j  ,k  ,IB);
-	    bfNb[7]  =  h_UOld(i-1,j  ,k  ,IB);
-	    bfNb[8]  =  h_UOld(i  ,j  ,k+1,IB);
-	    bfNb[9]  =  h_UOld(i  ,j  ,k-1,IB);
+	    bfNb[5]  =  h_UOld(ic  ,jc  ,kc  ,IB);
+	    bfNb[6]  =  h_UOld(ic+1,jc  ,kc  ,IB);
+	    bfNb[7]  =  h_UOld(ic-1,jc  ,kc  ,IB);
+	    bfNb[8]  =  h_UOld(ic  ,jc  ,kc+1,IB);
+	    bfNb[9]  =  h_UOld(ic  ,jc  ,kc-1,IB);
 
-	    bfNb[10] =  h_UOld(i  ,j  ,k  ,IC);
-	    bfNb[11] =  h_UOld(i+1,j  ,k  ,IC);
-	    bfNb[12] =  h_UOld(i-1,j  ,k  ,IC);
-	    bfNb[13] =  h_UOld(i  ,j+1,k  ,IC);
-	    bfNb[14] =  h_UOld(i  ,j-1,k  ,IC);
+	    bfNb[10] =  h_UOld(ic  ,jc  ,kc  ,IC);
+	    bfNb[11] =  h_UOld(ic+1,jc  ,kc  ,IC);
+	    bfNb[12] =  h_UOld(ic-1,jc  ,kc  ,IC);
+	    bfNb[13] =  h_UOld(ic  ,jc+1,kc  ,IC);
+	    bfNb[14] =  h_UOld(ic  ,jc-1,kc  ,IC);
 
 	    slope_unsplit_mhd_3d(bfNb, dbf);
 	    // get transverse mag slopes
@@ -733,71 +729,71 @@ namespace hydroSimu {
 	    dABC[4] = dbf[IX][IZ];
 	    dABC[5] = dbf[IY][IZ];
 
-	    // change neighbors to i+1, j, k and recompute dbf
-	    bfNb[0]  =  h_UOld(i+1,j  ,k  ,IA);
-	    bfNb[1]  =  h_UOld(i+1,j+1,k  ,IA);
-	    bfNb[2]  =  h_UOld(i+1,j-1,k  ,IA);
-	    bfNb[3]  =  h_UOld(i+1,j  ,k+1,IA);
-	    bfNb[4]  =  h_UOld(i+1,j  ,k-1,IA);
+	    // change neighbors to ic+1, jc, kc and recompute dbf
+	    bfNb[0]  =  h_UOld(ic+1,jc  ,kc  ,IA);
+	    bfNb[1]  =  h_UOld(ic+1,jc+1,kc  ,IA);
+	    bfNb[2]  =  h_UOld(ic+1,jc-1,kc  ,IA);
+	    bfNb[3]  =  h_UOld(ic+1,jc  ,kc+1,IA);
+	    bfNb[4]  =  h_UOld(ic+1,jc  ,kc-1,IA);
 
-	    bfNb[5]  =  h_UOld(i+1,j  ,k  ,IB);
-	    bfNb[6]  =  h_UOld(i+2,j  ,k  ,IB);
-	    bfNb[7]  =  h_UOld(i  ,j  ,k  ,IB);
-	    bfNb[8]  =  h_UOld(i+1,j  ,k+1,IB);
-	    bfNb[9]  =  h_UOld(i+1,j  ,k-1,IB);
+	    bfNb[5]  =  h_UOld(ic+1,jc  ,kc  ,IB);
+	    bfNb[6]  =  h_UOld(ic+2,jc  ,kc  ,IB);
+	    bfNb[7]  =  h_UOld(ic  ,jc  ,kc  ,IB);
+	    bfNb[8]  =  h_UOld(ic+1,jc  ,kc+1,IB);
+	    bfNb[9]  =  h_UOld(ic+1,jc  ,kc-1,IB);
 
-	    bfNb[10] =  h_UOld(i+1,j  ,k  ,IC);
-	    bfNb[11] =  h_UOld(i+2,j  ,k  ,IC);
-	    bfNb[12] =  h_UOld(i  ,j  ,k  ,IC);
-	    bfNb[13] =  h_UOld(i+1,j+1,k  ,IC);
-	    bfNb[14] =  h_UOld(i+1,j-1,k  ,IC);
+	    bfNb[10] =  h_UOld(ic+1,jc  ,kc  ,IC);
+	    bfNb[11] =  h_UOld(ic+2,jc  ,kc  ,IC);
+	    bfNb[12] =  h_UOld(ic  ,jc  ,kc  ,IC);
+	    bfNb[13] =  h_UOld(ic+1,jc+1,kc  ,IC);
+	    bfNb[14] =  h_UOld(ic+1,jc-1,kc  ,IC);
 
 	    slope_unsplit_mhd_3d(bfNb, dbf);
 	    // get transverse mag slopes
 	    dABC[6] = dbf[IY][IX];
 	    dABC[7] = dbf[IZ][IX];
 	    
-	    // change neighbors to i, j+1, k and recompute dbf
-	    bfNb[0]  =  h_UOld(i  ,j+1,k  ,IA);
-	    bfNb[1]  =  h_UOld(i  ,j+2,k  ,IA);
-	    bfNb[2]  =  h_UOld(i  ,j  ,k  ,IA);
-	    bfNb[3]  =  h_UOld(i  ,j+1,k+1,IA);
-	    bfNb[4]  =  h_UOld(i  ,j+1,k-1,IA);
+	    // change neighbors to ic, jc+1, kc and recompute dbf
+	    bfNb[0]  =  h_UOld(ic  ,jc+1,kc  ,IA);
+	    bfNb[1]  =  h_UOld(ic  ,jc+2,kc  ,IA);
+	    bfNb[2]  =  h_UOld(ic  ,jc  ,kc  ,IA);
+	    bfNb[3]  =  h_UOld(ic  ,jc+1,kc+1,IA);
+	    bfNb[4]  =  h_UOld(ic  ,jc+1,kc-1,IA);
 
-	    bfNb[5]  =  h_UOld(i  ,j+1,k  ,IB);
-	    bfNb[6]  =  h_UOld(i+1,j+1,k  ,IB);
-	    bfNb[7]  =  h_UOld(i-1,j+1,k  ,IB);
-	    bfNb[8]  =  h_UOld(i  ,j+1,k+1,IB);
-	    bfNb[9]  =  h_UOld(i  ,j+1,k-1,IB);
+	    bfNb[5]  =  h_UOld(ic  ,jc+1,kc  ,IB);
+	    bfNb[6]  =  h_UOld(ic+1,jc+1,kc  ,IB);
+	    bfNb[7]  =  h_UOld(ic-1,jc+1,kc  ,IB);
+	    bfNb[8]  =  h_UOld(ic  ,jc+1,kc+1,IB);
+	    bfNb[9]  =  h_UOld(ic  ,jc+1,kc-1,IB);
 
-	    bfNb[10] =  h_UOld(i  ,j+1,k  ,IC);
-	    bfNb[11] =  h_UOld(i+1,j+1,k  ,IC);
-	    bfNb[12] =  h_UOld(i-1,j+1,k  ,IC);
-	    bfNb[13] =  h_UOld(i  ,j+2,k  ,IC);
-	    bfNb[14] =  h_UOld(i  ,j  ,k  ,IC);
+	    bfNb[10] =  h_UOld(ic  ,jc+1,kc  ,IC);
+	    bfNb[11] =  h_UOld(ic+1,jc+1,kc  ,IC);
+	    bfNb[12] =  h_UOld(ic-1,jc+1,kc  ,IC);
+	    bfNb[13] =  h_UOld(ic  ,jc+2,kc  ,IC);
+	    bfNb[14] =  h_UOld(ic  ,jc  ,kc  ,IC);
 
 	    slope_unsplit_mhd_3d(bfNb, dbf);
 	    dABC[8] = dbf[IX][IY];
 	    dABC[9] = dbf[IZ][IY];
 
-	    // change neighbors to i, j, k+1 and recompute dbf
-	    bfNb[0]  =  h_UOld(i  ,j  ,k+1,IA);
-	    bfNb[1]  =  h_UOld(i  ,j+1,k+1,IA);
-	    bfNb[2]  =  h_UOld(i  ,j-1,k+1,IA);
-	    bfNb[3]  =  h_UOld(i  ,j  ,k+2,IA);
-	    bfNb[4]  =  h_UOld(i  ,j  ,k  ,IA);
+	    // change neighbors to ic, jc, kc+1 and recompute dbf
+	    bfNb[0]  =  h_UOld(ic  ,jc  ,kc+1,IA);
+	    bfNb[1]  =  h_UOld(ic  ,jc+1,kc+1,IA);
+	    bfNb[2]  =  h_UOld(ic  ,jc-1,kc+1,IA);
+	    bfNb[3]  =  h_UOld(ic  ,jc  ,kc+2,IA);
+	    bfNb[4]  =  h_UOld(ic  ,jc  ,kc  ,IA);
 
-	    bfNb[5]  =  h_UOld(i  ,j  ,k+1,IB);
-	    bfNb[6]  =  h_UOld(i+1,j  ,k+1,IB);
-	    bfNb[7]  =  h_UOld(i-1,j  ,k+1,IB);
-	    bfNb[8]  =  h_UOld(i  ,j  ,k+2,IB);
-	    bfNb[9]  =  h_UOld(i  ,j  ,k  ,IB);
+	    bfNb[5]  =  h_UOld(ic  ,jc  ,kc+1,IB);
+	    bfNb[6]  =  h_UOld(ic+1,jc  ,kc+1,IB);
+	    bfNb[7]  =  h_UOld(ic-1,jc  ,kc+1,IB);
+	    bfNb[8]  =  h_UOld(ic  ,jc  ,kc+2,IB);
+	    bfNb[9]  =  h_UOld(ic  ,jc  ,kc  ,IB);
 
-	    bfNb[10] =  h_UOld(i  ,j  ,k+1,IC);
-	    bfNb[11] =  h_UOld(i+1,j  ,k+1,IC);
-	    bfNb[12] =  h_UOld(i-1,j  ,k+1,IC);
-	    bfNb[13] =  h_UOld(i  ,j+1,k+1,IC);
-	    bfNb[14] =  h_UOld(i  ,j-1,k+1,IC);
+	    bfNb[10] =  h_UOld(ic  ,jc  ,kc+1,IC);
+	    bfNb[11] =  h_UOld(ic+1,jc  ,kc+1,IC);
+	    bfNb[12] =  h_UOld(ic-1,jc  ,kc+1,IC);
+	    bfNb[13] =  h_UOld(ic  ,jc+1,kc+1,IC);
+	    bfNb[14] =  h_UOld(ic  ,jc-1,kc+1,IC);
 
 	    slope_unsplit_mhd_3d(bfNb, dbf);
 	    dABC[10] = dbf[IX][IZ];
@@ -807,9 +803,9 @@ namespace hydroSimu {
 	    for (int dj=0; dj<2; dj++) {
 	      for (int dk=0; dk<2; dk++) {
 	    
-		int centerX = i;
-		int centerY = j+dj;
-		int centerZ = k+dk;
+		int centerX = ic;
+		int centerY = jc+dj;
+		int centerZ = kc+dk;
 	    
 		real_t v = 0.25 * (h_Q(centerX,centerY-1,centerZ-1,IV) +
 				   h_Q(centerX,centerY-1,centerZ  ,IV) +
@@ -840,9 +836,9 @@ namespace hydroSimu {
 	    for (int di=0; di<2; di++) {
 	      for (int dk=0; dk<2; dk++) {
 	    
-		int centerX = i+di;
-		int centerY = j;
-		int centerZ = k+dk;
+		int centerX = ic+di;
+		int centerY = jc;
+		int centerZ = kc+dk;
 	    
 		real_t u = 0.25 * (h_Q(centerX-1,centerY,centerZ-1,IU) + 
 				   h_Q(centerX-1,centerY,centerZ  ,IU) + 
@@ -868,9 +864,9 @@ namespace hydroSimu {
 	    for (int di=0; di<2; di++) {
 	      for (int dj=0; dj<2; dj++) {
 
-		int centerX = i+di;
-		int centerY = j+dj;
-		int centerZ = k;
+		int centerX = ic+di;
+		int centerY = jc+dj;
+		int centerZ = kc;
 
 		real_t u  = 0.25 *  (h_Q(centerX-1,centerY-1,centerZ,IU) + 
 				     h_Q(centerX-1,centerY  ,centerZ,IU) + 
@@ -902,16 +898,14 @@ namespace hydroSimu {
 	    //
 	    // Compute reconstructed states at left interface along X 
 	    // in current cell
-	    xPos = ::gParams.xMin + dx/2 + (i-ghostWidth)*dx;
 	    
-	    // (i,j,k)
-	    bfNb2[0] =  h_UOld(i  ,j  ,k  ,IA);
-	    bfNb2[1] =  h_UOld(i+1,j  ,k  ,IA);
-	    bfNb2[2] =  h_UOld(i  ,j  ,k  ,IB);
-	    bfNb2[3] =  h_UOld(i  ,j+1,k  ,IB);
-	    bfNb2[4] =  h_UOld(i  ,j  ,k  ,IC);
-	    bfNb2[5] =  h_UOld(i  ,j  ,k+1,IC);
-
+	    // (ic,jc,kc)
+	    bfNb2[0] =  h_UOld(ic  ,jc  ,kc  ,IA);
+	    bfNb2[1] =  h_UOld(ic+1,jc  ,kc  ,IA);
+	    bfNb2[2] =  h_UOld(ic  ,jc  ,kc  ,IB);
+	    bfNb2[3] =  h_UOld(ic  ,jc+1,kc  ,IB);
+	    bfNb2[4] =  h_UOld(ic  ,jc  ,kc  ,IC);
+	    bfNb2[5] =  h_UOld(ic  ,jc  ,kc+1,IC);
 
 	    // left interface : right state along x
 	    trace_unsplit_mhd_3d_face(qLoc, dq, bfNb2, dABC, Exyz,
@@ -936,139 +930,1622 @@ namespace hydroSimu {
 	    swap_v(qright_z[IU], qright_z[IW]);
 	    swap_v(qright_z[IA], qright_z[IC]);
 
+
+	    // EDGE_LB_Z
+	    trace_unsplit_mhd_3d_face(qLoc, dq, bfNb2, dABC, Exyz,
+				      dtdx, dtdy, dtdz, xPos, EDGE_LB_Z,
+				      qEdge_emfZ[ILB] );
+
+	    // EDGE_LB_Y
+	    trace_unsplit_mhd_3d_face(qLoc, dq, bfNb2, dABC, Exyz,
+				      dtdx, dtdy, dtdz, xPos, EDGE_LB_Y,
+				      qEdge_emfY[ILB] );
+
+	    // EDGE_LB_Y
+	    trace_unsplit_mhd_3d_face(qLoc, dq, bfNb2, dABC, Exyz,
+				      dtdx, dtdy, dtdz, xPos, EDGE_LB_X,
+				      qEdge_emfX[ILB] );
+
+	    ///////////////////////////////////////////////
+	    // compute reconstructed states at (i-1,j,k)
+	    ///////////////////////////////////////////////
+	    ic=i-1;
+	    jc=j;
+	    kc=k;
+	    xPos = ::gParams.xMin + dx/2 + (ic-ghostWidth)*dx;
+	    
+	    // get primitive variables state vector
+	    for ( int iVar=0; iVar<nbVar; iVar++ ) {
+	      
+	      qLoc[iVar]          = h_Q(ic  ,jc  ,kc  ,iVar);
+	      qNeighbors[0][iVar] = h_Q(ic+1,jc  ,kc  ,iVar);
+	      qNeighbors[1][iVar] = h_Q(ic-1,jc  ,kc  ,iVar);
+	      qNeighbors[2][iVar] = h_Q(ic  ,jc+1,kc  ,iVar);
+	      qNeighbors[3][iVar] = h_Q(ic  ,jc-1,kc  ,iVar);
+	      qNeighbors[4][iVar] = h_Q(ic  ,jc  ,kc+1,iVar);
+	      qNeighbors[5][iVar] = h_Q(ic  ,jc  ,kc-1,iVar);
+	      
+	    } // end for iVar
+	    
+	    // 1. compute hydro slopes
+	    // compute slopes in left neighbor along X
+	    slope_unsplit_hydro_3d(qLoc, 
+				   qNeighbors[0],
+				   qNeighbors[1],
+				   qNeighbors[2],
+				   qNeighbors[3],
+				   qNeighbors[4],
+				   qNeighbors[5],
+				   dq);
+	      
+	    // 2. compute mag slopes @(ic,jc,kc)
+	    bfNb[0]  =  h_UOld(ic  ,jc  ,kc  ,IA);
+	    bfNb[1]  =  h_UOld(ic  ,jc+1,kc  ,IA);
+	    bfNb[2]  =  h_UOld(ic  ,jc-1,kc  ,IA);
+	    bfNb[3]  =  h_UOld(ic  ,jc  ,kc+1,IA);
+	    bfNb[4]  =  h_UOld(ic  ,jc  ,kc-1,IA);
+
+	    bfNb[5]  =  h_UOld(ic  ,jc  ,kc  ,IB);
+	    bfNb[6]  =  h_UOld(ic+1,jc  ,kc  ,IB);
+	    bfNb[7]  =  h_UOld(ic-1,jc  ,kc  ,IB);
+	    bfNb[8]  =  h_UOld(ic  ,jc  ,kc+1,IB);
+	    bfNb[9]  =  h_UOld(ic  ,jc  ,kc-1,IB);
+
+	    bfNb[10] =  h_UOld(ic  ,jc  ,kc  ,IC);
+	    bfNb[11] =  h_UOld(ic+1,jc  ,kc  ,IC);
+	    bfNb[12] =  h_UOld(ic-1,jc  ,kc  ,IC);
+	    bfNb[13] =  h_UOld(ic  ,jc+1,kc  ,IC);
+	    bfNb[14] =  h_UOld(ic  ,jc-1,kc  ,IC);
+
+	    slope_unsplit_mhd_3d(bfNb, dbf);
+	    // get transverse mag slopes
+	    dABC[0] = dbf[IY][IX];
+	    dABC[1] = dbf[IZ][IX];
+	    dABC[2] = dbf[IX][IY];
+	    dABC[3] = dbf[IZ][IY];
+	    dABC[4] = dbf[IX][IZ];
+	    dABC[5] = dbf[IY][IZ];
+
+	    // change neighbors to ic+1, jc, kc and recompute dbf
+	    bfNb[0]  =  h_UOld(ic+1,jc  ,kc  ,IA);
+	    bfNb[1]  =  h_UOld(ic+1,jc+1,kc  ,IA);
+	    bfNb[2]  =  h_UOld(ic+1,jc-1,kc  ,IA);
+	    bfNb[3]  =  h_UOld(ic+1,jc  ,kc+1,IA);
+	    bfNb[4]  =  h_UOld(ic+1,jc  ,kc-1,IA);
+
+	    bfNb[5]  =  h_UOld(ic+1,jc  ,kc  ,IB);
+	    bfNb[6]  =  h_UOld(ic+2,jc  ,kc  ,IB);
+	    bfNb[7]  =  h_UOld(ic  ,jc  ,kc  ,IB);
+	    bfNb[8]  =  h_UOld(ic+1,jc  ,kc+1,IB);
+	    bfNb[9]  =  h_UOld(ic+1,jc  ,kc-1,IB);
+
+	    bfNb[10] =  h_UOld(ic+1,jc  ,kc  ,IC);
+	    bfNb[11] =  h_UOld(ic+2,jc  ,kc  ,IC);
+	    bfNb[12] =  h_UOld(ic  ,jc  ,kc  ,IC);
+	    bfNb[13] =  h_UOld(ic+1,jc+1,kc  ,IC);
+	    bfNb[14] =  h_UOld(ic+1,jc-1,kc  ,IC);
+
+	    slope_unsplit_mhd_3d(bfNb, dbf);
+	    // get transverse mag slopes
+	    dABC[6] = dbf[IY][IX];
+	    dABC[7] = dbf[IZ][IX];
+	    
+	    // change neighbors to ic, jc+1, kc and recompute dbf
+	    bfNb[0]  =  h_UOld(ic  ,jc+1,kc  ,IA);
+	    bfNb[1]  =  h_UOld(ic  ,jc+2,kc  ,IA);
+	    bfNb[2]  =  h_UOld(ic  ,jc  ,kc  ,IA);
+	    bfNb[3]  =  h_UOld(ic  ,jc+1,kc+1,IA);
+	    bfNb[4]  =  h_UOld(ic  ,jc+1,kc-1,IA);
+
+	    bfNb[5]  =  h_UOld(ic  ,jc+1,kc  ,IB);
+	    bfNb[6]  =  h_UOld(ic+1,jc+1,kc  ,IB);
+	    bfNb[7]  =  h_UOld(ic-1,jc+1,kc  ,IB);
+	    bfNb[8]  =  h_UOld(ic  ,jc+1,kc+1,IB);
+	    bfNb[9]  =  h_UOld(ic  ,jc+1,kc-1,IB);
+
+	    bfNb[10] =  h_UOld(ic  ,jc+1,kc  ,IC);
+	    bfNb[11] =  h_UOld(ic+1,jc+1,kc  ,IC);
+	    bfNb[12] =  h_UOld(ic-1,jc+1,kc  ,IC);
+	    bfNb[13] =  h_UOld(ic  ,jc+2,kc  ,IC);
+	    bfNb[14] =  h_UOld(ic  ,jc  ,kc  ,IC);
+
+	    slope_unsplit_mhd_3d(bfNb, dbf);
+	    dABC[8] = dbf[IX][IY];
+	    dABC[9] = dbf[IZ][IY];
+
+	    // change neighbors to ic, jc, kc+1 and recompute dbf
+	    bfNb[0]  =  h_UOld(ic  ,jc  ,kc+1,IA);
+	    bfNb[1]  =  h_UOld(ic  ,jc+1,kc+1,IA);
+	    bfNb[2]  =  h_UOld(ic  ,jc-1,kc+1,IA);
+	    bfNb[3]  =  h_UOld(ic  ,jc  ,kc+2,IA);
+	    bfNb[4]  =  h_UOld(ic  ,jc  ,kc  ,IA);
+
+	    bfNb[5]  =  h_UOld(ic  ,jc  ,kc+1,IB);
+	    bfNb[6]  =  h_UOld(ic+1,jc  ,kc+1,IB);
+	    bfNb[7]  =  h_UOld(ic-1,jc  ,kc+1,IB);
+	    bfNb[8]  =  h_UOld(ic  ,jc  ,kc+2,IB);
+	    bfNb[9]  =  h_UOld(ic  ,jc  ,kc  ,IB);
+
+	    bfNb[10] =  h_UOld(ic  ,jc  ,kc+1,IC);
+	    bfNb[11] =  h_UOld(ic+1,jc  ,kc+1,IC);
+	    bfNb[12] =  h_UOld(ic-1,jc  ,kc+1,IC);
+	    bfNb[13] =  h_UOld(ic  ,jc+1,kc+1,IC);
+	    bfNb[14] =  h_UOld(ic  ,jc-1,kc+1,IC);
+
+	    slope_unsplit_mhd_3d(bfNb, dbf);
+	    dABC[10] = dbf[IX][IZ];
+	    dABC[11] = dbf[IY][IZ];
+
+	    // 3. compute Ex,Ey,Ez (electric field components)
+	    for (int dj=0; dj<2; dj++) {
+	      for (int dk=0; dk<2; dk++) {
+	    
+		int centerX = ic;
+		int centerY = jc+dj;
+		int centerZ = kc+dk;
+	    
+		real_t v = 0.25 * (h_Q(centerX,centerY-1,centerZ-1,IV) +
+				   h_Q(centerX,centerY-1,centerZ  ,IV) +
+				   h_Q(centerX,centerY  ,centerZ-1,IV) +
+				   h_Q(centerX,centerY  ,centerZ  ,IV) );
+
+		real_t w = 0.25 * (h_Q(centerX,centerY-1,centerZ-1,IW) +
+				   h_Q(centerX,centerY-1,centerZ  ,IW) +
+				   h_Q(centerX,centerY  ,centerZ-1,IW) +
+				   h_Q(centerX,centerY  ,centerZ  ,IW) );
+
+		real_t B = 0.5 * (h_UOld(centerX,centerY  ,centerZ-1,IY) +
+				  h_UOld(centerX,centerY  ,centerZ  ,IY) );
+
+		real_t C = 0.5 * (h_UOld(centerX,centerY-1,centerZ  ,IZ) +
+				  h_UOld(centerX,centerY  ,centerZ  ,IZ) );
+	    
+		Exyz[IX][dj][dk] = v*C-w*B;
+		
+		if (/* cartesian */ Omega0>0 /* and not fargo*/) {
+		  real_t shear = -1.5 * Omega0 * xPos;
+		  Exyz[IX][dj][dk] += shear*C;
+		}
+		
+	      } // end for dk
+	    } // end for dj
+  
+	    for (int di=0; di<2; di++) {
+	      for (int dk=0; dk<2; dk++) {
+	    
+		int centerX = ic+di;
+		int centerY = jc;
+		int centerZ = kc+dk;
+	    
+		real_t u = 0.25 * (h_Q(centerX-1,centerY,centerZ-1,IU) + 
+				   h_Q(centerX-1,centerY,centerZ  ,IU) + 
+				   h_Q(centerX  ,centerY,centerZ-1,IU) + 
+				   h_Q(centerX  ,centerY,centerZ  ,IU) );
+  
+		real_t w = 0.25 * (h_Q(centerX-1,centerY,centerZ-1,IW) +
+				   h_Q(centerX-1,centerY,centerZ  ,IW) +
+				   h_Q(centerX  ,centerY,centerZ-1,IW) +
+				   h_Q(centerX  ,centerY,centerZ  ,IW) );
+		
+		real_t A = 0.5 * (h_UOld(centerX  ,centerY,centerZ-1,IX) + 
+				  h_UOld(centerX  ,centerY,centerZ  ,IX) );
+
+		real_t C = 0.5 * (h_UOld(centerX-1,centerY,centerZ  ,IZ) +
+				  h_UOld(centerX  ,centerY,centerZ  ,IZ) );
+
+		Exyz[IY][di][dk] = w*A-u*C;
+		
+	      } // end for dk
+	    } // end for di
+	    
+	    for (int di=0; di<2; di++) {
+	      for (int dj=0; dj<2; dj++) {
+
+		int centerX = ic+di;
+		int centerY = jc+dj;
+		int centerZ = kc;
+
+		real_t u  = 0.25 *  (h_Q(centerX-1,centerY-1,centerZ,IU) + 
+				     h_Q(centerX-1,centerY  ,centerZ,IU) + 
+				     h_Q(centerX  ,centerY-1,centerZ,IU) + 
+				     h_Q(centerX  ,centerY  ,centerZ,IU) ); 
+		
+		real_t v  = 0.25 *  (h_Q(centerX-1,centerY-1,centerZ,IV) +
+				     h_Q(centerX-1,centerY  ,centerZ,IV) +
+				     h_Q(centerX  ,centerY-1,centerZ,IV) + 
+				     h_Q(centerX  ,centerY  ,centerZ,IV) );
+		
+		real_t A  = 0.5  * (h_UOld(centerX  ,centerY-1,centerZ,IA) + 
+				    h_UOld(centerX  ,centerY  ,centerZ,IA) );
+		
+		real_t B  = 0.5  * (h_UOld(centerX-1,centerY  ,centerZ,IB) + 
+				    h_UOld(centerX  ,centerY  ,centerZ,IB) );
+	    
+		Exyz[IZ][di][dj] = u*B-v*A;
+		
+		if (/* cartesian */ Omega0>0 /* and not fargo*/) {
+		  real_t shear = -1.5 * Omega0 * (xPos - dx/2);
+		  Exyz[IZ][di][dj] -= shear*A;
+		}
+		
+	      } // end for dj
+	    } // end for di
+
+	    // 4. perform trace reconstruction
+	    //
+	    // Compute reconstructed states at left interface along X 
+	    // in current cell
+	    
+	    // (ic,jc,kc)
+	    bfNb2[0] =  h_UOld(ic  ,jc  ,kc  ,IA);
+	    bfNb2[1] =  h_UOld(ic+1,jc  ,kc  ,IA);
+	    bfNb2[2] =  h_UOld(ic  ,jc  ,kc  ,IB);
+	    bfNb2[3] =  h_UOld(ic  ,jc+1,kc  ,IB);
+	    bfNb2[4] =  h_UOld(ic  ,jc  ,kc  ,IC);
+	    bfNb2[5] =  h_UOld(ic  ,jc  ,kc+1,IC);
+
+	    // left interface : left state along x
+	    trace_unsplit_mhd_3d_face(qLoc, dq, bfNb2, dABC, Exyz,
+				      dtdx, dtdy, dtdz, xPos, FACE_XMAX,
+				      qleft_x);
+
 	    // compute hydro flux_x
-	    //riemann_mhd(qleft,qright,flux_x);
+	    riemann_mhd(qleft_x,qright_x,flux_x);
 	    	      
+	    // EDGE_RB_Z
+	    trace_unsplit_mhd_3d_face(qLoc, dq, bfNb2, dABC, Exyz,
+				      dtdx, dtdy, dtdz, xPos, EDGE_RB_Z,
+				      qEdge_emfZ[IRB] );
+	    
+	    // EDGE_RB_Y (swapped with LT)
+	    trace_unsplit_mhd_3d_face(qLoc, dq, bfNb2, dABC, Exyz,
+				      dtdx, dtdy, dtdz, xPos, EDGE_RB_Y,
+				      qEdge_emfY[ILT] );
+	    
+
+	    ///////////////////////////////////////////////
+	    // compute reconstructed states at (i,j-1,k)
+	    ///////////////////////////////////////////////
+	    ic=i;
+	    jc=j-1;
+	    kc=k;
+	    xPos = ::gParams.xMin + dx/2 + (ic-ghostWidth)*dx;
+	    
+	    // get primitive variables state vector
+	    for ( int iVar=0; iVar<nbVar; iVar++ ) {
+	      
+	      qLoc[iVar]          = h_Q(ic  ,jc  ,kc  ,iVar);
+	      qNeighbors[0][iVar] = h_Q(ic+1,jc  ,kc  ,iVar);
+	      qNeighbors[1][iVar] = h_Q(ic-1,jc  ,kc  ,iVar);
+	      qNeighbors[2][iVar] = h_Q(ic  ,jc+1,kc  ,iVar);
+	      qNeighbors[3][iVar] = h_Q(ic  ,jc-1,kc  ,iVar);
+	      qNeighbors[4][iVar] = h_Q(ic  ,jc  ,kc+1,iVar);
+	      qNeighbors[5][iVar] = h_Q(ic  ,jc  ,kc-1,iVar);
+	      
+	    } // end for iVar
+	    
+	    // 1. compute hydro slopes
+	    // compute slopes in left neighbor along X
+	    slope_unsplit_hydro_3d(qLoc, 
+				   qNeighbors[0],
+				   qNeighbors[1],
+				   qNeighbors[2],
+				   qNeighbors[3],
+				   qNeighbors[4],
+				   qNeighbors[5],
+				   dq);
+	      
+	    // 2. compute mag slopes @(ic,jc,kc)
+	    bfNb[0]  =  h_UOld(ic  ,jc  ,kc  ,IA);
+	    bfNb[1]  =  h_UOld(ic  ,jc+1,kc  ,IA);
+	    bfNb[2]  =  h_UOld(ic  ,jc-1,kc  ,IA);
+	    bfNb[3]  =  h_UOld(ic  ,jc  ,kc+1,IA);
+	    bfNb[4]  =  h_UOld(ic  ,jc  ,kc-1,IA);
+
+	    bfNb[5]  =  h_UOld(ic  ,jc  ,kc  ,IB);
+	    bfNb[6]  =  h_UOld(ic+1,jc  ,kc  ,IB);
+	    bfNb[7]  =  h_UOld(ic-1,jc  ,kc  ,IB);
+	    bfNb[8]  =  h_UOld(ic  ,jc  ,kc+1,IB);
+	    bfNb[9]  =  h_UOld(ic  ,jc  ,kc-1,IB);
+
+	    bfNb[10] =  h_UOld(ic  ,jc  ,kc  ,IC);
+	    bfNb[11] =  h_UOld(ic+1,jc  ,kc  ,IC);
+	    bfNb[12] =  h_UOld(ic-1,jc  ,kc  ,IC);
+	    bfNb[13] =  h_UOld(ic  ,jc+1,kc  ,IC);
+	    bfNb[14] =  h_UOld(ic  ,jc-1,kc  ,IC);
+
+	    slope_unsplit_mhd_3d(bfNb, dbf);
+	    // get transverse mag slopes
+	    dABC[0] = dbf[IY][IX];
+	    dABC[1] = dbf[IZ][IX];
+	    dABC[2] = dbf[IX][IY];
+	    dABC[3] = dbf[IZ][IY];
+	    dABC[4] = dbf[IX][IZ];
+	    dABC[5] = dbf[IY][IZ];
+
+	    // change neighbors to ic+1, jc, kc and recompute dbf
+	    bfNb[0]  =  h_UOld(ic+1,jc  ,kc  ,IA);
+	    bfNb[1]  =  h_UOld(ic+1,jc+1,kc  ,IA);
+	    bfNb[2]  =  h_UOld(ic+1,jc-1,kc  ,IA);
+	    bfNb[3]  =  h_UOld(ic+1,jc  ,kc+1,IA);
+	    bfNb[4]  =  h_UOld(ic+1,jc  ,kc-1,IA);
+
+	    bfNb[5]  =  h_UOld(ic+1,jc  ,kc  ,IB);
+	    bfNb[6]  =  h_UOld(ic+2,jc  ,kc  ,IB);
+	    bfNb[7]  =  h_UOld(ic  ,jc  ,kc  ,IB);
+	    bfNb[8]  =  h_UOld(ic+1,jc  ,kc+1,IB);
+	    bfNb[9]  =  h_UOld(ic+1,jc  ,kc-1,IB);
+
+	    bfNb[10] =  h_UOld(ic+1,jc  ,kc  ,IC);
+	    bfNb[11] =  h_UOld(ic+2,jc  ,kc  ,IC);
+	    bfNb[12] =  h_UOld(ic  ,jc  ,kc  ,IC);
+	    bfNb[13] =  h_UOld(ic+1,jc+1,kc  ,IC);
+	    bfNb[14] =  h_UOld(ic+1,jc-1,kc  ,IC);
+
+	    slope_unsplit_mhd_3d(bfNb, dbf);
+	    // get transverse mag slopes
+	    dABC[6] = dbf[IY][IX];
+	    dABC[7] = dbf[IZ][IX];
+	    
+	    // change neighbors to ic, jc+1, kc and recompute dbf
+	    bfNb[0]  =  h_UOld(ic  ,jc+1,kc  ,IA);
+	    bfNb[1]  =  h_UOld(ic  ,jc+2,kc  ,IA);
+	    bfNb[2]  =  h_UOld(ic  ,jc  ,kc  ,IA);
+	    bfNb[3]  =  h_UOld(ic  ,jc+1,kc+1,IA);
+	    bfNb[4]  =  h_UOld(ic  ,jc+1,kc-1,IA);
+
+	    bfNb[5]  =  h_UOld(ic  ,jc+1,kc  ,IB);
+	    bfNb[6]  =  h_UOld(ic+1,jc+1,kc  ,IB);
+	    bfNb[7]  =  h_UOld(ic-1,jc+1,kc  ,IB);
+	    bfNb[8]  =  h_UOld(ic  ,jc+1,kc+1,IB);
+	    bfNb[9]  =  h_UOld(ic  ,jc+1,kc-1,IB);
+
+	    bfNb[10] =  h_UOld(ic  ,jc+1,kc  ,IC);
+	    bfNb[11] =  h_UOld(ic+1,jc+1,kc  ,IC);
+	    bfNb[12] =  h_UOld(ic-1,jc+1,kc  ,IC);
+	    bfNb[13] =  h_UOld(ic  ,jc+2,kc  ,IC);
+	    bfNb[14] =  h_UOld(ic  ,jc  ,kc  ,IC);
+
+	    slope_unsplit_mhd_3d(bfNb, dbf);
+	    dABC[8] = dbf[IX][IY];
+	    dABC[9] = dbf[IZ][IY];
+
+	    // change neighbors to ic, jc, kc+1 and recompute dbf
+	    bfNb[0]  =  h_UOld(ic  ,jc  ,kc+1,IA);
+	    bfNb[1]  =  h_UOld(ic  ,jc+1,kc+1,IA);
+	    bfNb[2]  =  h_UOld(ic  ,jc-1,kc+1,IA);
+	    bfNb[3]  =  h_UOld(ic  ,jc  ,kc+2,IA);
+	    bfNb[4]  =  h_UOld(ic  ,jc  ,kc  ,IA);
+
+	    bfNb[5]  =  h_UOld(ic  ,jc  ,kc+1,IB);
+	    bfNb[6]  =  h_UOld(ic+1,jc  ,kc+1,IB);
+	    bfNb[7]  =  h_UOld(ic-1,jc  ,kc+1,IB);
+	    bfNb[8]  =  h_UOld(ic  ,jc  ,kc+2,IB);
+	    bfNb[9]  =  h_UOld(ic  ,jc  ,kc  ,IB);
+
+	    bfNb[10] =  h_UOld(ic  ,jc  ,kc+1,IC);
+	    bfNb[11] =  h_UOld(ic+1,jc  ,kc+1,IC);
+	    bfNb[12] =  h_UOld(ic-1,jc  ,kc+1,IC);
+	    bfNb[13] =  h_UOld(ic  ,jc+1,kc+1,IC);
+	    bfNb[14] =  h_UOld(ic  ,jc-1,kc+1,IC);
+
+	    slope_unsplit_mhd_3d(bfNb, dbf);
+	    dABC[10] = dbf[IX][IZ];
+	    dABC[11] = dbf[IY][IZ];
+
+	    // 3. compute Ex,Ey,Ez (electric field components)
+	    for (int dj=0; dj<2; dj++) {
+	      for (int dk=0; dk<2; dk++) {
+	    
+		int centerX = ic;
+		int centerY = jc+dj;
+		int centerZ = kc+dk;
+	    
+		real_t v = 0.25 * (h_Q(centerX,centerY-1,centerZ-1,IV) +
+				   h_Q(centerX,centerY-1,centerZ  ,IV) +
+				   h_Q(centerX,centerY  ,centerZ-1,IV) +
+				   h_Q(centerX,centerY  ,centerZ  ,IV) );
+
+		real_t w = 0.25 * (h_Q(centerX,centerY-1,centerZ-1,IW) +
+				   h_Q(centerX,centerY-1,centerZ  ,IW) +
+				   h_Q(centerX,centerY  ,centerZ-1,IW) +
+				   h_Q(centerX,centerY  ,centerZ  ,IW) );
+
+		real_t B = 0.5 * (h_UOld(centerX,centerY  ,centerZ-1,IY) +
+				  h_UOld(centerX,centerY  ,centerZ  ,IY) );
+
+		real_t C = 0.5 * (h_UOld(centerX,centerY-1,centerZ  ,IZ) +
+				  h_UOld(centerX,centerY  ,centerZ  ,IZ) );
+	    
+		Exyz[IX][dj][dk] = v*C-w*B;
+		
+		if (/* cartesian */ Omega0>0 /* and not fargo*/) {
+		  real_t shear = -1.5 * Omega0 * xPos;
+		  Exyz[IX][dj][dk] += shear*C;
+		}
+		
+	      } // end for dk
+	    } // end for dj
+  
+	    for (int di=0; di<2; di++) {
+	      for (int dk=0; dk<2; dk++) {
+	    
+		int centerX = ic+di;
+		int centerY = jc;
+		int centerZ = kc+dk;
+	    
+		real_t u = 0.25 * (h_Q(centerX-1,centerY,centerZ-1,IU) + 
+				   h_Q(centerX-1,centerY,centerZ  ,IU) + 
+				   h_Q(centerX  ,centerY,centerZ-1,IU) + 
+				   h_Q(centerX  ,centerY,centerZ  ,IU) );
+  
+		real_t w = 0.25 * (h_Q(centerX-1,centerY,centerZ-1,IW) +
+				   h_Q(centerX-1,centerY,centerZ  ,IW) +
+				   h_Q(centerX  ,centerY,centerZ-1,IW) +
+				   h_Q(centerX  ,centerY,centerZ  ,IW) );
+		
+		real_t A = 0.5 * (h_UOld(centerX  ,centerY,centerZ-1,IX) + 
+				  h_UOld(centerX  ,centerY,centerZ  ,IX) );
+
+		real_t C = 0.5 * (h_UOld(centerX-1,centerY,centerZ  ,IZ) +
+				  h_UOld(centerX  ,centerY,centerZ  ,IZ) );
+
+		Exyz[IY][di][dk] = w*A-u*C;
+		
+	      } // end for dk
+	    } // end for di
+	    
+	    for (int di=0; di<2; di++) {
+	      for (int dj=0; dj<2; dj++) {
+
+		int centerX = ic+di;
+		int centerY = jc+dj;
+		int centerZ = kc;
+
+		real_t u  = 0.25 *  (h_Q(centerX-1,centerY-1,centerZ,IU) + 
+				     h_Q(centerX-1,centerY  ,centerZ,IU) + 
+				     h_Q(centerX  ,centerY-1,centerZ,IU) + 
+				     h_Q(centerX  ,centerY  ,centerZ,IU) ); 
+		
+		real_t v  = 0.25 *  (h_Q(centerX-1,centerY-1,centerZ,IV) +
+				     h_Q(centerX-1,centerY  ,centerZ,IV) +
+				     h_Q(centerX  ,centerY-1,centerZ,IV) + 
+				     h_Q(centerX  ,centerY  ,centerZ,IV) );
+		
+		real_t A  = 0.5  * (h_UOld(centerX  ,centerY-1,centerZ,IA) + 
+				    h_UOld(centerX  ,centerY  ,centerZ,IA) );
+		
+		real_t B  = 0.5  * (h_UOld(centerX-1,centerY  ,centerZ,IB) + 
+				    h_UOld(centerX  ,centerY  ,centerZ,IB) );
+	    
+		Exyz[IZ][di][dj] = u*B-v*A;
+		
+		if (/* cartesian */ Omega0>0 /* and not fargo*/) {
+		  real_t shear = -1.5 * Omega0 * (xPos - dx/2);
+		  Exyz[IZ][di][dj] -= shear*A;
+		}
+		
+	      } // end for dj
+	    } // end for di
+
+	    // 4. perform trace reconstruction
+	    //
+	    // Compute reconstructed states at left interface along X 
+	    // in current cell
+	    
+	    // (ic,jc,kc)
+	    bfNb2[0] =  h_UOld(ic  ,jc  ,kc  ,IA);
+	    bfNb2[1] =  h_UOld(ic+1,jc  ,kc  ,IA);
+	    bfNb2[2] =  h_UOld(ic  ,jc  ,kc  ,IB);
+	    bfNb2[3] =  h_UOld(ic  ,jc+1,kc  ,IB);
+	    bfNb2[4] =  h_UOld(ic  ,jc  ,kc  ,IC);
+	    bfNb2[5] =  h_UOld(ic  ,jc  ,kc+1,IC);
+
+	    // left interface : left state along y
+	    trace_unsplit_mhd_3d_face(qLoc, dq, bfNb2, dABC, Exyz,
+				      dtdx, dtdy, dtdz, xPos, FACE_YMAX,
+				      qleft_y);
+
+	    // swap qleft_y
+	    swap_v(qleft_y[IU], qleft_y[IV]);
+	    swap_v(qleft_y[IA], qleft_y[IB]);
+
 	    // compute hydro flux_y
-	    //riemann_mhd(qleft,qright,flux_y);
+	    riemann_mhd(qleft_y,qright_y,flux_y);
 	      
+
+	    // EDGE_LT_Z
+	    trace_unsplit_mhd_3d_face(qLoc, dq, bfNb2, dABC, Exyz,
+				      dtdx, dtdy, dtdz, xPos, EDGE_LT_Z,
+				      qEdge_emfZ[ILT] );
+
+	    // EDGE_RB_X
+	    trace_unsplit_mhd_3d_face(qLoc, dq, bfNb2, dABC, Exyz,
+				      dtdx, dtdy, dtdz, xPos, EDGE_RB_X,
+				      qEdge_emfX[IRB] );
+
+	    ///////////////////////////////////////////////
+	    // compute reconstructed states at (i,j,k-1)
+	    ///////////////////////////////////////////////
+	    ic=i;
+	    jc=j;
+	    kc=k-1;
+	    xPos = ::gParams.xMin + dx/2 + (ic-ghostWidth)*dx;
+	    
+	    // get primitive variables state vector
+	    for ( int iVar=0; iVar<nbVar; iVar++ ) {
+	      
+	      qLoc[iVar]          = h_Q(ic  ,jc  ,kc  ,iVar);
+	      qNeighbors[0][iVar] = h_Q(ic+1,jc  ,kc  ,iVar);
+	      qNeighbors[1][iVar] = h_Q(ic-1,jc  ,kc  ,iVar);
+	      qNeighbors[2][iVar] = h_Q(ic  ,jc+1,kc  ,iVar);
+	      qNeighbors[3][iVar] = h_Q(ic  ,jc-1,kc  ,iVar);
+	      qNeighbors[4][iVar] = h_Q(ic  ,jc  ,kc+1,iVar);
+	      qNeighbors[5][iVar] = h_Q(ic  ,jc  ,kc-1,iVar);
+	      
+	    } // end for iVar
+	    
+	    // 1. compute hydro slopes
+	    // compute slopes in left neighbor along X
+	    slope_unsplit_hydro_3d(qLoc, 
+				   qNeighbors[0],
+				   qNeighbors[1],
+				   qNeighbors[2],
+				   qNeighbors[3],
+				   qNeighbors[4],
+				   qNeighbors[5],
+				   dq);
+	      
+	    // 2. compute mag slopes @(ic,jc,kc)
+	    bfNb[0]  =  h_UOld(ic  ,jc  ,kc  ,IA);
+	    bfNb[1]  =  h_UOld(ic  ,jc+1,kc  ,IA);
+	    bfNb[2]  =  h_UOld(ic  ,jc-1,kc  ,IA);
+	    bfNb[3]  =  h_UOld(ic  ,jc  ,kc+1,IA);
+	    bfNb[4]  =  h_UOld(ic  ,jc  ,kc-1,IA);
+
+	    bfNb[5]  =  h_UOld(ic  ,jc  ,kc  ,IB);
+	    bfNb[6]  =  h_UOld(ic+1,jc  ,kc  ,IB);
+	    bfNb[7]  =  h_UOld(ic-1,jc  ,kc  ,IB);
+	    bfNb[8]  =  h_UOld(ic  ,jc  ,kc+1,IB);
+	    bfNb[9]  =  h_UOld(ic  ,jc  ,kc-1,IB);
+
+	    bfNb[10] =  h_UOld(ic  ,jc  ,kc  ,IC);
+	    bfNb[11] =  h_UOld(ic+1,jc  ,kc  ,IC);
+	    bfNb[12] =  h_UOld(ic-1,jc  ,kc  ,IC);
+	    bfNb[13] =  h_UOld(ic  ,jc+1,kc  ,IC);
+	    bfNb[14] =  h_UOld(ic  ,jc-1,kc  ,IC);
+
+	    slope_unsplit_mhd_3d(bfNb, dbf);
+	    // get transverse mag slopes
+	    dABC[0] = dbf[IY][IX];
+	    dABC[1] = dbf[IZ][IX];
+	    dABC[2] = dbf[IX][IY];
+	    dABC[3] = dbf[IZ][IY];
+	    dABC[4] = dbf[IX][IZ];
+	    dABC[5] = dbf[IY][IZ];
+
+	    // change neighbors to ic+1, jc, kc and recompute dbf
+	    bfNb[0]  =  h_UOld(ic+1,jc  ,kc  ,IA);
+	    bfNb[1]  =  h_UOld(ic+1,jc+1,kc  ,IA);
+	    bfNb[2]  =  h_UOld(ic+1,jc-1,kc  ,IA);
+	    bfNb[3]  =  h_UOld(ic+1,jc  ,kc+1,IA);
+	    bfNb[4]  =  h_UOld(ic+1,jc  ,kc-1,IA);
+
+	    bfNb[5]  =  h_UOld(ic+1,jc  ,kc  ,IB);
+	    bfNb[6]  =  h_UOld(ic+2,jc  ,kc  ,IB);
+	    bfNb[7]  =  h_UOld(ic  ,jc  ,kc  ,IB);
+	    bfNb[8]  =  h_UOld(ic+1,jc  ,kc+1,IB);
+	    bfNb[9]  =  h_UOld(ic+1,jc  ,kc-1,IB);
+
+	    bfNb[10] =  h_UOld(ic+1,jc  ,kc  ,IC);
+	    bfNb[11] =  h_UOld(ic+2,jc  ,kc  ,IC);
+	    bfNb[12] =  h_UOld(ic  ,jc  ,kc  ,IC);
+	    bfNb[13] =  h_UOld(ic+1,jc+1,kc  ,IC);
+	    bfNb[14] =  h_UOld(ic+1,jc-1,kc  ,IC);
+
+	    slope_unsplit_mhd_3d(bfNb, dbf);
+	    // get transverse mag slopes
+	    dABC[6] = dbf[IY][IX];
+	    dABC[7] = dbf[IZ][IX];
+	    
+	    // change neighbors to ic, jc+1, kc and recompute dbf
+	    bfNb[0]  =  h_UOld(ic  ,jc+1,kc  ,IA);
+	    bfNb[1]  =  h_UOld(ic  ,jc+2,kc  ,IA);
+	    bfNb[2]  =  h_UOld(ic  ,jc  ,kc  ,IA);
+	    bfNb[3]  =  h_UOld(ic  ,jc+1,kc+1,IA);
+	    bfNb[4]  =  h_UOld(ic  ,jc+1,kc-1,IA);
+
+	    bfNb[5]  =  h_UOld(ic  ,jc+1,kc  ,IB);
+	    bfNb[6]  =  h_UOld(ic+1,jc+1,kc  ,IB);
+	    bfNb[7]  =  h_UOld(ic-1,jc+1,kc  ,IB);
+	    bfNb[8]  =  h_UOld(ic  ,jc+1,kc+1,IB);
+	    bfNb[9]  =  h_UOld(ic  ,jc+1,kc-1,IB);
+
+	    bfNb[10] =  h_UOld(ic  ,jc+1,kc  ,IC);
+	    bfNb[11] =  h_UOld(ic+1,jc+1,kc  ,IC);
+	    bfNb[12] =  h_UOld(ic-1,jc+1,kc  ,IC);
+	    bfNb[13] =  h_UOld(ic  ,jc+2,kc  ,IC);
+	    bfNb[14] =  h_UOld(ic  ,jc  ,kc  ,IC);
+
+	    slope_unsplit_mhd_3d(bfNb, dbf);
+	    dABC[8] = dbf[IX][IY];
+	    dABC[9] = dbf[IZ][IY];
+
+	    // change neighbors to ic, jc, kc+1 and recompute dbf
+	    bfNb[0]  =  h_UOld(ic  ,jc  ,kc+1,IA);
+	    bfNb[1]  =  h_UOld(ic  ,jc+1,kc+1,IA);
+	    bfNb[2]  =  h_UOld(ic  ,jc-1,kc+1,IA);
+	    bfNb[3]  =  h_UOld(ic  ,jc  ,kc+2,IA);
+	    bfNb[4]  =  h_UOld(ic  ,jc  ,kc  ,IA);
+
+	    bfNb[5]  =  h_UOld(ic  ,jc  ,kc+1,IB);
+	    bfNb[6]  =  h_UOld(ic+1,jc  ,kc+1,IB);
+	    bfNb[7]  =  h_UOld(ic-1,jc  ,kc+1,IB);
+	    bfNb[8]  =  h_UOld(ic  ,jc  ,kc+2,IB);
+	    bfNb[9]  =  h_UOld(ic  ,jc  ,kc  ,IB);
+
+	    bfNb[10] =  h_UOld(ic  ,jc  ,kc+1,IC);
+	    bfNb[11] =  h_UOld(ic+1,jc  ,kc+1,IC);
+	    bfNb[12] =  h_UOld(ic-1,jc  ,kc+1,IC);
+	    bfNb[13] =  h_UOld(ic  ,jc+1,kc+1,IC);
+	    bfNb[14] =  h_UOld(ic  ,jc-1,kc+1,IC);
+
+	    slope_unsplit_mhd_3d(bfNb, dbf);
+	    dABC[10] = dbf[IX][IZ];
+	    dABC[11] = dbf[IY][IZ];
+
+	    // 3. compute Ex,Ey,Ez (electric field components)
+	    for (int dj=0; dj<2; dj++) {
+	      for (int dk=0; dk<2; dk++) {
+	    
+		int centerX = ic;
+		int centerY = jc+dj;
+		int centerZ = kc+dk;
+	    
+		real_t v = 0.25 * (h_Q(centerX,centerY-1,centerZ-1,IV) +
+				   h_Q(centerX,centerY-1,centerZ  ,IV) +
+				   h_Q(centerX,centerY  ,centerZ-1,IV) +
+				   h_Q(centerX,centerY  ,centerZ  ,IV) );
+
+		real_t w = 0.25 * (h_Q(centerX,centerY-1,centerZ-1,IW) +
+				   h_Q(centerX,centerY-1,centerZ  ,IW) +
+				   h_Q(centerX,centerY  ,centerZ-1,IW) +
+				   h_Q(centerX,centerY  ,centerZ  ,IW) );
+
+		real_t B = 0.5 * (h_UOld(centerX,centerY  ,centerZ-1,IY) +
+				  h_UOld(centerX,centerY  ,centerZ  ,IY) );
+
+		real_t C = 0.5 * (h_UOld(centerX,centerY-1,centerZ  ,IZ) +
+				  h_UOld(centerX,centerY  ,centerZ  ,IZ) );
+	    
+		Exyz[IX][dj][dk] = v*C-w*B;
+		
+		if (/* cartesian */ Omega0>0 /* and not fargo*/) {
+		  real_t shear = -1.5 * Omega0 * xPos;
+		  Exyz[IX][dj][dk] += shear*C;
+		}
+		
+	      } // end for dk
+	    } // end for dj
+  
+	    for (int di=0; di<2; di++) {
+	      for (int dk=0; dk<2; dk++) {
+	    
+		int centerX = ic+di;
+		int centerY = jc;
+		int centerZ = kc+dk;
+	    
+		real_t u = 0.25 * (h_Q(centerX-1,centerY,centerZ-1,IU) + 
+				   h_Q(centerX-1,centerY,centerZ  ,IU) + 
+				   h_Q(centerX  ,centerY,centerZ-1,IU) + 
+				   h_Q(centerX  ,centerY,centerZ  ,IU) );
+  
+		real_t w = 0.25 * (h_Q(centerX-1,centerY,centerZ-1,IW) +
+				   h_Q(centerX-1,centerY,centerZ  ,IW) +
+				   h_Q(centerX  ,centerY,centerZ-1,IW) +
+				   h_Q(centerX  ,centerY,centerZ  ,IW) );
+		
+		real_t A = 0.5 * (h_UOld(centerX  ,centerY,centerZ-1,IX) + 
+				  h_UOld(centerX  ,centerY,centerZ  ,IX) );
+
+		real_t C = 0.5 * (h_UOld(centerX-1,centerY,centerZ  ,IZ) +
+				  h_UOld(centerX  ,centerY,centerZ  ,IZ) );
+
+		Exyz[IY][di][dk] = w*A-u*C;
+		
+	      } // end for dk
+	    } // end for di
+	    
+	    for (int di=0; di<2; di++) {
+	      for (int dj=0; dj<2; dj++) {
+
+		int centerX = ic+di;
+		int centerY = jc+dj;
+		int centerZ = kc;
+
+		real_t u  = 0.25 *  (h_Q(centerX-1,centerY-1,centerZ,IU) + 
+				     h_Q(centerX-1,centerY  ,centerZ,IU) + 
+				     h_Q(centerX  ,centerY-1,centerZ,IU) + 
+				     h_Q(centerX  ,centerY  ,centerZ,IU) ); 
+		
+		real_t v  = 0.25 *  (h_Q(centerX-1,centerY-1,centerZ,IV) +
+				     h_Q(centerX-1,centerY  ,centerZ,IV) +
+				     h_Q(centerX  ,centerY-1,centerZ,IV) + 
+				     h_Q(centerX  ,centerY  ,centerZ,IV) );
+		
+		real_t A  = 0.5  * (h_UOld(centerX  ,centerY-1,centerZ,IA) + 
+				    h_UOld(centerX  ,centerY  ,centerZ,IA) );
+		
+		real_t B  = 0.5  * (h_UOld(centerX-1,centerY  ,centerZ,IB) + 
+				    h_UOld(centerX  ,centerY  ,centerZ,IB) );
+	    
+		Exyz[IZ][di][dj] = u*B-v*A;
+		
+		if (/* cartesian */ Omega0>0 /* and not fargo*/) {
+		  real_t shear = -1.5 * Omega0 * (xPos - dx/2);
+		  Exyz[IZ][di][dj] -= shear*A;
+		}
+		
+	      } // end for dj
+	    } // end for di
+
+	    // 4. perform trace reconstruction
+	    //
+	    // Compute reconstructed states at left interface along X 
+	    // in current cell
+	    
+	    // (ic,jc,kc)
+	    bfNb2[0] =  h_UOld(ic  ,jc  ,kc  ,IA);
+	    bfNb2[1] =  h_UOld(ic+1,jc  ,kc  ,IA);
+	    bfNb2[2] =  h_UOld(ic  ,jc  ,kc  ,IB);
+	    bfNb2[3] =  h_UOld(ic  ,jc+1,kc  ,IB);
+	    bfNb2[4] =  h_UOld(ic  ,jc  ,kc  ,IC);
+	    bfNb2[5] =  h_UOld(ic  ,jc  ,kc+1,IC);
+
+	    // left interface : left state along z
+	    trace_unsplit_mhd_3d_face(qLoc, dq, bfNb2, dABC, Exyz,
+				      dtdx, dtdy, dtdz, xPos, FACE_ZMAX,
+				      qleft_z);
+
+	    // swap qleft_z
+	    swap_v(qleft_z[IU], qleft_z[IW]);
+	    swap_v(qleft_z[IA], qleft_z[IC]);
+
 	    // compute hydro flux_z
-	    //riemann_mhd(qleft,qright,flux_z);
+	    riemann_mhd(qleft_z,qright_z,flux_z);
 	      
-	    // /*
-	    //  * update mhd array
-	    //  */
-	    // if ( i > ghostWidth       and 
-	    // 	 j < jsize-ghostWidth and 
-	    // 	 k < ksize-ghostWidth ) {
-	    //   h_UNew(i-1,j  ,k  ,ID) -= flux_x[ID]*dtdx;
-	    //   h_UNew(i-1,j  ,k  ,IP) -= flux_x[IP]*dtdx;
-	    //   h_UNew(i-1,j  ,k  ,IU) -= flux_x[IU]*dtdx;
-	    //   h_UNew(i-1,j  ,k  ,IV) -= flux_x[IV]*dtdx;
-	    //   h_UNew(i-1,j  ,k  ,IW) -= flux_x[IW]*dtdx;
-	    // }
-	      
-	    // if ( i < isize-ghostWidth and 
-	    // 	 j < jsize-ghostWidth and 
-	    // 	 k < ksize-ghostWidth ) {
-	    //   h_UNew(i  ,j  ,k  ,ID) += flux_x[ID]*dtdx;
-	    //   h_UNew(i  ,j  ,k  ,IP) += flux_x[IP]*dtdx;
-	    //   h_UNew(i  ,j  ,k  ,IU) += flux_x[IU]*dtdx;
-	    //   h_UNew(i  ,j  ,k  ,IV) += flux_x[IV]*dtdx;
-	    //   h_UNew(i  ,j  ,k  ,IW) += flux_x[IW]*dtdx;
-	    // }
-	      
-	    // if ( i < isize-ghostWidth and
-	    // 	 j > ghostWidth       and
-	    // 	 k < ksize-ghostWidth ) {
-	    //   h_UNew(i  ,j-1,k  ,ID) -= flux_y[ID]*dtdy;
-	    //   h_UNew(i  ,j-1,k  ,IP) -= flux_y[IP]*dtdy;
-	    //   h_UNew(i  ,j-1,k  ,IU) -= flux_y[IV]*dtdy; // IU and IV swapped
-	    //   h_UNew(i  ,j-1,k  ,IV) -= flux_y[IU]*dtdy; // IU and IV swapped
-	    //   h_UNew(i  ,j-1,k  ,IW) -= flux_y[IW]*dtdy;
-	    // }
-	      
-	    // if ( i < isize-ghostWidth and 
-	    // 	 j < jsize-ghostWidth and 
-	    // 	 k < ksize-ghostWidth ) {
-	    //   h_UNew(i  ,j  ,k  ,ID) += flux_y[ID]*dtdy;
-	    //   h_UNew(i  ,j  ,k  ,IP) += flux_y[IP]*dtdy;
-	    //   h_UNew(i  ,j  ,k  ,IU) += flux_y[IV]*dtdy; // IU and IV swapped
-	    //   h_UNew(i  ,j  ,k  ,IV) += flux_y[IU]*dtdy; // IU and IV swapped
-	    //   h_UNew(i  ,j  ,k  ,IW) += flux_y[IW]*dtdy;
-	    // }
-	      
-	    // if ( i < isize-ghostWidth and 
-	    // 	 j < jsize-ghostWidth and
-	    // 	 k > ghostWidth ) {
-	    //   h_UNew(i  ,j  ,k-1,ID) -= flux_z[ID]*dtdz;
-	    //   h_UNew(i  ,j  ,k-1,IP) -= flux_z[IP]*dtdz;
-	    //   h_UNew(i  ,j  ,k-1,IU) -= flux_z[IW]*dtdz; // IU and IW swapped
-	    //   h_UNew(i  ,j  ,k-1,IV) -= flux_z[IV]*dtdz;
-	    //   h_UNew(i  ,j  ,k-1,IW) -= flux_z[IU]*dtdz; // IU and IW swapped
-	    // }
-	      
-	    // if ( i < isize-ghostWidth and 
-	    // 	 j < jsize-ghostWidth and 
-	    // 	 k < ksize-ghostWidth ) {
-	    //   h_UNew(i  ,j  ,k  ,ID) += flux_z[ID]*dtdz;
-	    //   h_UNew(i  ,j  ,k  ,IP) += flux_z[IP]*dtdz;
-	    //   h_UNew(i  ,j  ,k  ,IU) += flux_z[IW]*dtdz; // IU and IW swapped
-	    //   h_UNew(i  ,j  ,k  ,IV) += flux_z[IV]*dtdz;
-	    //   h_UNew(i  ,j  ,k  ,IW) += flux_z[IU]*dtdz; // IU and IW swapped
-	    // }
-	      
-	    // // now compute EMF's and update magnetic field variables
-	    // // see DUMSES routine named cmp_mag_flx (TAKE CARE of index
-	    // // shift appearing in calling arguments)
-	    // real_t qEdge_emfX[4][NVAR_MHD];
-	    // real_t qEdge_emfY[4][NVAR_MHD];
-	    // real_t qEdge_emfZ[4][NVAR_MHD];
+	    // EDGE_LT_Y (!swap)
+	    trace_unsplit_mhd_3d_face(qLoc, dq, bfNb2, dABC, Exyz,
+				      dtdx, dtdy, dtdz, xPos, EDGE_LT_Y,
+				      qEdge_emfY[IRB] );
 
-	    // // preparation for calling compute_emf (equivalent to cmp_mag_flx
-	    // // in DUMSES)
-	    // // in the following, the 3 first indexes in qEdge_emf array play
-	    // // the same offset role as in the calling argument of cmp_mag_flx 
-	    // // in DUMSES (if you see what I mean ?!)
+	    // EDGE_LT_X
+	    trace_unsplit_mhd_3d_face(qLoc, dq, bfNb2, dABC, Exyz,
+				      dtdx, dtdy, dtdz, xPos, EDGE_LT_X,
+				      qEdge_emfX[ILT] );
 
-	    // // actually compute emfZ 
-	    // for (int iVar=0; iVar<NVAR_MHD; iVar++) {
-	    //   qEdge_emfZ[IRT][iVar] = qEdge_emf[1][1][0][IRT][2][iVar]; 
-	    //   qEdge_emfZ[IRB][iVar] = qEdge_emf[1][0][0][IRB][2][iVar]; 
-	    //   qEdge_emfZ[ILT][iVar] = qEdge_emf[0][1][0][ILT][2][iVar]; 
-	    //   qEdge_emfZ[ILB][iVar] = qEdge_emf[0][0][0][ILB][2][iVar]; 
-	    // }
-	    // real_t emfZ = compute_emf<EMFZ>(qEdge_emfZ);
-
-	    // // actually compute emfY (take care that RB and LT are
-	    // // swapped !!!)
-	    // for (int iVar=0; iVar<NVAR_MHD; iVar++) {
-	    //   qEdge_emfY[IRT][iVar] = qEdge_emf[1][0][1][IRT][1][iVar]; 
-	    //   qEdge_emfY[IRB][iVar] = qEdge_emf[0][0][1][ILT][1][iVar]; // ! swap
-	    //   qEdge_emfY[ILT][iVar] = qEdge_emf[1][0][0][IRB][1][iVar]; // ! swap
-	    //   qEdge_emfY[ILB][iVar] = qEdge_emf[0][0][0][ILB][1][iVar]; 
-	    // }
-	    // real_t emfY = compute_emf<EMFY>(qEdge_emfY);
-
-	    // // actually compute emfX
-	    // for (int iVar=0; iVar<NVAR_MHD; iVar++) {
-	    //   qEdge_emfX[IRT][iVar] = qEdge_emf[0][1][1][IRT][0][iVar]; 
-	    //   qEdge_emfX[IRB][iVar] = qEdge_emf[0][1][0][IRB][0][iVar];
-	    //   qEdge_emfX[ILT][iVar] = qEdge_emf[0][0][1][ILT][0][iVar];
-	    //   qEdge_emfX[ILB][iVar] = qEdge_emf[0][0][0][ILB][0][iVar]; 
-	    // }
-	    // real_t emfX = compute_emf<EMFX>(qEdge_emfX);
-
-	    // // now update h_UNew with emfZ
-	    // // (Constrained transport for face-centered B-field)
-	    // h_UNew(i  ,j  ,k  ,IA) -= emfZ*dtdy;
-	    // h_UNew(i  ,j-1,k  ,IA) += emfZ*dtdy;
+	    /*
+	     * update mhd array
+	     */
+	    if ( i > ghostWidth       and 
+	    	 j < jsize-ghostWidth and 
+	    	 k < ksize-ghostWidth ) {
+	      h_UNew(i-1,j  ,k  ,ID) -= flux_x[ID]*dtdx;
+	      h_UNew(i-1,j  ,k  ,IP) -= flux_x[IP]*dtdx;
+	      h_UNew(i-1,j  ,k  ,IU) -= flux_x[IU]*dtdx;
+	      h_UNew(i-1,j  ,k  ,IV) -= flux_x[IV]*dtdx;
+	      h_UNew(i-1,j  ,k  ,IW) -= flux_x[IW]*dtdx;
+	    }
 	      
-	    // h_UNew(i  ,j  ,k  ,IB) += emfZ*dtdx;  
-	    // h_UNew(i-1,j  ,k  ,IB) -= emfZ*dtdx;
+	    if ( i < isize-ghostWidth and 
+	    	 j < jsize-ghostWidth and 
+	    	 k < ksize-ghostWidth ) {
+	      h_UNew(i  ,j  ,k  ,ID) += flux_x[ID]*dtdx;
+	      h_UNew(i  ,j  ,k  ,IP) += flux_x[IP]*dtdx;
+	      h_UNew(i  ,j  ,k  ,IU) += flux_x[IU]*dtdx;
+	      h_UNew(i  ,j  ,k  ,IV) += flux_x[IV]*dtdx;
+	      h_UNew(i  ,j  ,k  ,IW) += flux_x[IW]*dtdx;
+	    }
+	      
+	    if ( i < isize-ghostWidth and
+	    	 j > ghostWidth       and
+	    	 k < ksize-ghostWidth ) {
+	      h_UNew(i  ,j-1,k  ,ID) -= flux_y[ID]*dtdy;
+	      h_UNew(i  ,j-1,k  ,IP) -= flux_y[IP]*dtdy;
+	      h_UNew(i  ,j-1,k  ,IU) -= flux_y[IV]*dtdy; // IU and IV swapped
+	      h_UNew(i  ,j-1,k  ,IV) -= flux_y[IU]*dtdy; // IU and IV swapped
+	      h_UNew(i  ,j-1,k  ,IW) -= flux_y[IW]*dtdy;
+	    }
+	      
+	    if ( i < isize-ghostWidth and 
+	    	 j < jsize-ghostWidth and 
+	    	 k < ksize-ghostWidth ) {
+	      h_UNew(i  ,j  ,k  ,ID) += flux_y[ID]*dtdy;
+	      h_UNew(i  ,j  ,k  ,IP) += flux_y[IP]*dtdy;
+	      h_UNew(i  ,j  ,k  ,IU) += flux_y[IV]*dtdy; // IU and IV swapped
+	      h_UNew(i  ,j  ,k  ,IV) += flux_y[IU]*dtdy; // IU and IV swapped
+	      h_UNew(i  ,j  ,k  ,IW) += flux_y[IW]*dtdy;
+	    }
+	      
+	    if ( i < isize-ghostWidth and 
+	    	 j < jsize-ghostWidth and
+	    	 k > ghostWidth ) {
+	      h_UNew(i  ,j  ,k-1,ID) -= flux_z[ID]*dtdz;
+	      h_UNew(i  ,j  ,k-1,IP) -= flux_z[IP]*dtdz;
+	      h_UNew(i  ,j  ,k-1,IU) -= flux_z[IW]*dtdz; // IU and IW swapped
+	      h_UNew(i  ,j  ,k-1,IV) -= flux_z[IV]*dtdz;
+	      h_UNew(i  ,j  ,k-1,IW) -= flux_z[IU]*dtdz; // IU and IW swapped
+	    }
+	      
+	    if ( i < isize-ghostWidth and 
+	    	 j < jsize-ghostWidth and 
+	    	 k < ksize-ghostWidth ) {
+	      h_UNew(i  ,j  ,k  ,ID) += flux_z[ID]*dtdz;
+	      h_UNew(i  ,j  ,k  ,IP) += flux_z[IP]*dtdz;
+	      h_UNew(i  ,j  ,k  ,IU) += flux_z[IW]*dtdz; // IU and IW swapped
+	      h_UNew(i  ,j  ,k  ,IV) += flux_z[IV]*dtdz;
+	      h_UNew(i  ,j  ,k  ,IW) += flux_z[IU]*dtdz; // IU and IW swapped
+	    }
+	      
+	    ///////////////////////////////////////////////
+	    // compute reconstructed states at (i-1,j-1,k)
+	    ///////////////////////////////////////////////
+	    ic=i-1;
+	    jc=j-1;
+	    kc=k;
+	    xPos = ::gParams.xMin + dx/2 + (ic-ghostWidth)*dx;
 
-	    // // now update h_UNew with emfY, emfX
-	    // h_UNew(i  ,j  ,k  ,IA) += emfY*dtdz;
-	    // h_UNew(i  ,j  ,k-1,IA) -= emfY*dtdz;
+	    // get primitive variables state vector
+	    for ( int iVar=0; iVar<nbVar; iVar++ ) {
 	      
-	    // h_UNew(i  ,j  ,k  ,IB) -= emfX*dtdz;
-	    // h_UNew(i  ,j  ,k-1,IB) += emfX*dtdz;
+	      qLoc[iVar]          = h_Q(ic  ,jc  ,kc  ,iVar);
+	      qNeighbors[0][iVar] = h_Q(ic+1,jc  ,kc  ,iVar);
+	      qNeighbors[1][iVar] = h_Q(ic-1,jc  ,kc  ,iVar);
+	      qNeighbors[2][iVar] = h_Q(ic  ,jc+1,kc  ,iVar);
+	      qNeighbors[3][iVar] = h_Q(ic  ,jc-1,kc  ,iVar);
+	      qNeighbors[4][iVar] = h_Q(ic  ,jc  ,kc+1,iVar);
+	      qNeighbors[5][iVar] = h_Q(ic  ,jc  ,kc-1,iVar);
 	      
-	    // h_UNew(i  ,j  ,k  ,IC) -= emfY*dtdx;
-	    // h_UNew(i-1,j  ,k  ,IC) += emfY*dtdx;
-	    // h_UNew(i  ,j  ,k  ,IC) += emfX*dtdy;
-	    // h_UNew(i  ,j-1,k  ,IC) -= emfX*dtdy;
+	    } // end for iVar
+	    
+	    // 1. compute hydro slopes
+	    // compute slopes in left neighbor along X
+	    slope_unsplit_hydro_3d(qLoc, 
+				   qNeighbors[0],
+				   qNeighbors[1],
+				   qNeighbors[2],
+				   qNeighbors[3],
+				   qNeighbors[4],
+				   qNeighbors[5],
+				   dq);
 	      
+	    // 2. compute mag slopes @(ic,jc,kc)
+	    bfNb[0]  =  h_UOld(ic  ,jc  ,kc  ,IA);
+	    bfNb[1]  =  h_UOld(ic  ,jc+1,kc  ,IA);
+	    bfNb[2]  =  h_UOld(ic  ,jc-1,kc  ,IA);
+	    bfNb[3]  =  h_UOld(ic  ,jc  ,kc+1,IA);
+	    bfNb[4]  =  h_UOld(ic  ,jc  ,kc-1,IA);
+
+	    bfNb[5]  =  h_UOld(ic  ,jc  ,kc  ,IB);
+	    bfNb[6]  =  h_UOld(ic+1,jc  ,kc  ,IB);
+	    bfNb[7]  =  h_UOld(ic-1,jc  ,kc  ,IB);
+	    bfNb[8]  =  h_UOld(ic  ,jc  ,kc+1,IB);
+	    bfNb[9]  =  h_UOld(ic  ,jc  ,kc-1,IB);
+
+	    bfNb[10] =  h_UOld(ic  ,jc  ,kc  ,IC);
+	    bfNb[11] =  h_UOld(ic+1,jc  ,kc  ,IC);
+	    bfNb[12] =  h_UOld(ic-1,jc  ,kc  ,IC);
+	    bfNb[13] =  h_UOld(ic  ,jc+1,kc  ,IC);
+	    bfNb[14] =  h_UOld(ic  ,jc-1,kc  ,IC);
+
+	    slope_unsplit_mhd_3d(bfNb, dbf);
+	    // get transverse mag slopes
+	    dABC[0] = dbf[IY][IX];
+	    dABC[1] = dbf[IZ][IX];
+	    dABC[2] = dbf[IX][IY];
+	    dABC[3] = dbf[IZ][IY];
+	    dABC[4] = dbf[IX][IZ];
+	    dABC[5] = dbf[IY][IZ];
+
+	    // change neighbors to ic+1, jc, kc and recompute dbf
+	    bfNb[0]  =  h_UOld(ic+1,jc  ,kc  ,IA);
+	    bfNb[1]  =  h_UOld(ic+1,jc+1,kc  ,IA);
+	    bfNb[2]  =  h_UOld(ic+1,jc-1,kc  ,IA);
+	    bfNb[3]  =  h_UOld(ic+1,jc  ,kc+1,IA);
+	    bfNb[4]  =  h_UOld(ic+1,jc  ,kc-1,IA);
+
+	    bfNb[5]  =  h_UOld(ic+1,jc  ,kc  ,IB);
+	    bfNb[6]  =  h_UOld(ic+2,jc  ,kc  ,IB);
+	    bfNb[7]  =  h_UOld(ic  ,jc  ,kc  ,IB);
+	    bfNb[8]  =  h_UOld(ic+1,jc  ,kc+1,IB);
+	    bfNb[9]  =  h_UOld(ic+1,jc  ,kc-1,IB);
+
+	    bfNb[10] =  h_UOld(ic+1,jc  ,kc  ,IC);
+	    bfNb[11] =  h_UOld(ic+2,jc  ,kc  ,IC);
+	    bfNb[12] =  h_UOld(ic  ,jc  ,kc  ,IC);
+	    bfNb[13] =  h_UOld(ic+1,jc+1,kc  ,IC);
+	    bfNb[14] =  h_UOld(ic+1,jc-1,kc  ,IC);
+
+	    slope_unsplit_mhd_3d(bfNb, dbf);
+	    // get transverse mag slopes
+	    dABC[6] = dbf[IY][IX];
+	    dABC[7] = dbf[IZ][IX];
+	    
+	    // change neighbors to ic, jc+1, kc and recompute dbf
+	    bfNb[0]  =  h_UOld(ic  ,jc+1,kc  ,IA);
+	    bfNb[1]  =  h_UOld(ic  ,jc+2,kc  ,IA);
+	    bfNb[2]  =  h_UOld(ic  ,jc  ,kc  ,IA);
+	    bfNb[3]  =  h_UOld(ic  ,jc+1,kc+1,IA);
+	    bfNb[4]  =  h_UOld(ic  ,jc+1,kc-1,IA);
+
+	    bfNb[5]  =  h_UOld(ic  ,jc+1,kc  ,IB);
+	    bfNb[6]  =  h_UOld(ic+1,jc+1,kc  ,IB);
+	    bfNb[7]  =  h_UOld(ic-1,jc+1,kc  ,IB);
+	    bfNb[8]  =  h_UOld(ic  ,jc+1,kc+1,IB);
+	    bfNb[9]  =  h_UOld(ic  ,jc+1,kc-1,IB);
+
+	    bfNb[10] =  h_UOld(ic  ,jc+1,kc  ,IC);
+	    bfNb[11] =  h_UOld(ic+1,jc+1,kc  ,IC);
+	    bfNb[12] =  h_UOld(ic-1,jc+1,kc  ,IC);
+	    bfNb[13] =  h_UOld(ic  ,jc+2,kc  ,IC);
+	    bfNb[14] =  h_UOld(ic  ,jc  ,kc  ,IC);
+
+	    slope_unsplit_mhd_3d(bfNb, dbf);
+	    dABC[8] = dbf[IX][IY];
+	    dABC[9] = dbf[IZ][IY];
+
+	    // change neighbors to ic, jc, kc+1 and recompute dbf
+	    bfNb[0]  =  h_UOld(ic  ,jc  ,kc+1,IA);
+	    bfNb[1]  =  h_UOld(ic  ,jc+1,kc+1,IA);
+	    bfNb[2]  =  h_UOld(ic  ,jc-1,kc+1,IA);
+	    bfNb[3]  =  h_UOld(ic  ,jc  ,kc+2,IA);
+	    bfNb[4]  =  h_UOld(ic  ,jc  ,kc  ,IA);
+
+	    bfNb[5]  =  h_UOld(ic  ,jc  ,kc+1,IB);
+	    bfNb[6]  =  h_UOld(ic+1,jc  ,kc+1,IB);
+	    bfNb[7]  =  h_UOld(ic-1,jc  ,kc+1,IB);
+	    bfNb[8]  =  h_UOld(ic  ,jc  ,kc+2,IB);
+	    bfNb[9]  =  h_UOld(ic  ,jc  ,kc  ,IB);
+
+	    bfNb[10] =  h_UOld(ic  ,jc  ,kc+1,IC);
+	    bfNb[11] =  h_UOld(ic+1,jc  ,kc+1,IC);
+	    bfNb[12] =  h_UOld(ic-1,jc  ,kc+1,IC);
+	    bfNb[13] =  h_UOld(ic  ,jc+1,kc+1,IC);
+	    bfNb[14] =  h_UOld(ic  ,jc-1,kc+1,IC);
+
+	    slope_unsplit_mhd_3d(bfNb, dbf);
+	    dABC[10] = dbf[IX][IZ];
+	    dABC[11] = dbf[IY][IZ];
+
+	    // 3. compute Ex,Ey,Ez (electric field components)
+	    for (int dj=0; dj<2; dj++) {
+	      for (int dk=0; dk<2; dk++) {
+	    
+		int centerX = ic;
+		int centerY = jc+dj;
+		int centerZ = kc+dk;
+	    
+		real_t v = 0.25 * (h_Q(centerX,centerY-1,centerZ-1,IV) +
+				   h_Q(centerX,centerY-1,centerZ  ,IV) +
+				   h_Q(centerX,centerY  ,centerZ-1,IV) +
+				   h_Q(centerX,centerY  ,centerZ  ,IV) );
+
+		real_t w = 0.25 * (h_Q(centerX,centerY-1,centerZ-1,IW) +
+				   h_Q(centerX,centerY-1,centerZ  ,IW) +
+				   h_Q(centerX,centerY  ,centerZ-1,IW) +
+				   h_Q(centerX,centerY  ,centerZ  ,IW) );
+
+		real_t B = 0.5 * (h_UOld(centerX,centerY  ,centerZ-1,IY) +
+				  h_UOld(centerX,centerY  ,centerZ  ,IY) );
+
+		real_t C = 0.5 * (h_UOld(centerX,centerY-1,centerZ  ,IZ) +
+				  h_UOld(centerX,centerY  ,centerZ  ,IZ) );
+	    
+		Exyz[IX][dj][dk] = v*C-w*B;
+		
+		if (/* cartesian */ Omega0>0 /* and not fargo*/) {
+		  real_t shear = -1.5 * Omega0 * xPos;
+		  Exyz[IX][dj][dk] += shear*C;
+		}
+		
+	      } // end for dk
+	    } // end for dj
+  
+	    for (int di=0; di<2; di++) {
+	      for (int dk=0; dk<2; dk++) {
+	    
+		int centerX = ic+di;
+		int centerY = jc;
+		int centerZ = kc+dk;
+	    
+		real_t u = 0.25 * (h_Q(centerX-1,centerY,centerZ-1,IU) + 
+				   h_Q(centerX-1,centerY,centerZ  ,IU) + 
+				   h_Q(centerX  ,centerY,centerZ-1,IU) + 
+				   h_Q(centerX  ,centerY,centerZ  ,IU) );
+  
+		real_t w = 0.25 * (h_Q(centerX-1,centerY,centerZ-1,IW) +
+				   h_Q(centerX-1,centerY,centerZ  ,IW) +
+				   h_Q(centerX  ,centerY,centerZ-1,IW) +
+				   h_Q(centerX  ,centerY,centerZ  ,IW) );
+		
+		real_t A = 0.5 * (h_UOld(centerX  ,centerY,centerZ-1,IX) + 
+				  h_UOld(centerX  ,centerY,centerZ  ,IX) );
+
+		real_t C = 0.5 * (h_UOld(centerX-1,centerY,centerZ  ,IZ) +
+				  h_UOld(centerX  ,centerY,centerZ  ,IZ) );
+
+		Exyz[IY][di][dk] = w*A-u*C;
+		
+	      } // end for dk
+	    } // end for di
+	    
+	    for (int di=0; di<2; di++) {
+	      for (int dj=0; dj<2; dj++) {
+
+		int centerX = ic+di;
+		int centerY = jc+dj;
+		int centerZ = kc;
+
+		real_t u  = 0.25 *  (h_Q(centerX-1,centerY-1,centerZ,IU) + 
+				     h_Q(centerX-1,centerY  ,centerZ,IU) + 
+				     h_Q(centerX  ,centerY-1,centerZ,IU) + 
+				     h_Q(centerX  ,centerY  ,centerZ,IU) ); 
+		
+		real_t v  = 0.25 *  (h_Q(centerX-1,centerY-1,centerZ,IV) +
+				     h_Q(centerX-1,centerY  ,centerZ,IV) +
+				     h_Q(centerX  ,centerY-1,centerZ,IV) + 
+				     h_Q(centerX  ,centerY  ,centerZ,IV) );
+		
+		real_t A  = 0.5  * (h_UOld(centerX  ,centerY-1,centerZ,IA) + 
+				    h_UOld(centerX  ,centerY  ,centerZ,IA) );
+		
+		real_t B  = 0.5  * (h_UOld(centerX-1,centerY  ,centerZ,IB) + 
+				    h_UOld(centerX  ,centerY  ,centerZ,IB) );
+	    
+		Exyz[IZ][di][dj] = u*B-v*A;
+		
+		if (/* cartesian */ Omega0>0 /* and not fargo*/) {
+		  real_t shear = -1.5 * Omega0 * (xPos - dx/2);
+		  Exyz[IZ][di][dj] -= shear*A;
+		}
+		
+	      } // end for dj
+	    } // end for di
+
+	    // 4. perform trace reconstruction
+	    //
+	    // Compute reconstructed states at left interface along X 
+	    // in current cell
+	    
+	    // (ic,jc,kc)
+	    bfNb2[0] =  h_UOld(ic  ,jc  ,kc  ,IA);
+	    bfNb2[1] =  h_UOld(ic+1,jc  ,kc  ,IA);
+	    bfNb2[2] =  h_UOld(ic  ,jc  ,kc  ,IB);
+	    bfNb2[3] =  h_UOld(ic  ,jc+1,kc  ,IB);
+	    bfNb2[4] =  h_UOld(ic  ,jc  ,kc  ,IC);
+	    bfNb2[5] =  h_UOld(ic  ,jc  ,kc+1,IC);
+
+	    // EDGE_RT_Z
+	    trace_unsplit_mhd_3d_face(qLoc, dq, bfNb2, dABC, Exyz,
+				      dtdx, dtdy, dtdz, xPos, EDGE_RT_Z,
+				      qEdge_emfZ[IRT] );
+	    
+	    ///////////////////////////////////////////////
+	    // compute reconstructed states at (i-1,j,k-1)
+	    ///////////////////////////////////////////////
+	    ic=i-1;
+	    jc=j;
+	    kc=k-1;
+	    xPos = ::gParams.xMin + dx/2 + (ic-ghostWidth)*dx;
+
+	    // get primitive variables state vector
+	    for ( int iVar=0; iVar<nbVar; iVar++ ) {
+	      
+	      qLoc[iVar]          = h_Q(ic  ,jc  ,kc  ,iVar);
+	      qNeighbors[0][iVar] = h_Q(ic+1,jc  ,kc  ,iVar);
+	      qNeighbors[1][iVar] = h_Q(ic-1,jc  ,kc  ,iVar);
+	      qNeighbors[2][iVar] = h_Q(ic  ,jc+1,kc  ,iVar);
+	      qNeighbors[3][iVar] = h_Q(ic  ,jc-1,kc  ,iVar);
+	      qNeighbors[4][iVar] = h_Q(ic  ,jc  ,kc+1,iVar);
+	      qNeighbors[5][iVar] = h_Q(ic  ,jc  ,kc-1,iVar);
+	      
+	    } // end for iVar
+	    
+	    // 1. compute hydro slopes
+	    // compute slopes in left neighbor along X
+	    slope_unsplit_hydro_3d(qLoc, 
+				   qNeighbors[0],
+				   qNeighbors[1],
+				   qNeighbors[2],
+				   qNeighbors[3],
+				   qNeighbors[4],
+				   qNeighbors[5],
+				   dq);
+	      
+	    // 2. compute mag slopes @(ic,jc,kc)
+	    bfNb[0]  =  h_UOld(ic  ,jc  ,kc  ,IA);
+	    bfNb[1]  =  h_UOld(ic  ,jc+1,kc  ,IA);
+	    bfNb[2]  =  h_UOld(ic  ,jc-1,kc  ,IA);
+	    bfNb[3]  =  h_UOld(ic  ,jc  ,kc+1,IA);
+	    bfNb[4]  =  h_UOld(ic  ,jc  ,kc-1,IA);
+
+	    bfNb[5]  =  h_UOld(ic  ,jc  ,kc  ,IB);
+	    bfNb[6]  =  h_UOld(ic+1,jc  ,kc  ,IB);
+	    bfNb[7]  =  h_UOld(ic-1,jc  ,kc  ,IB);
+	    bfNb[8]  =  h_UOld(ic  ,jc  ,kc+1,IB);
+	    bfNb[9]  =  h_UOld(ic  ,jc  ,kc-1,IB);
+
+	    bfNb[10] =  h_UOld(ic  ,jc  ,kc  ,IC);
+	    bfNb[11] =  h_UOld(ic+1,jc  ,kc  ,IC);
+	    bfNb[12] =  h_UOld(ic-1,jc  ,kc  ,IC);
+	    bfNb[13] =  h_UOld(ic  ,jc+1,kc  ,IC);
+	    bfNb[14] =  h_UOld(ic  ,jc-1,kc  ,IC);
+
+	    slope_unsplit_mhd_3d(bfNb, dbf);
+	    // get transverse mag slopes
+	    dABC[0] = dbf[IY][IX];
+	    dABC[1] = dbf[IZ][IX];
+	    dABC[2] = dbf[IX][IY];
+	    dABC[3] = dbf[IZ][IY];
+	    dABC[4] = dbf[IX][IZ];
+	    dABC[5] = dbf[IY][IZ];
+
+	    // change neighbors to ic+1, jc, kc and recompute dbf
+	    bfNb[0]  =  h_UOld(ic+1,jc  ,kc  ,IA);
+	    bfNb[1]  =  h_UOld(ic+1,jc+1,kc  ,IA);
+	    bfNb[2]  =  h_UOld(ic+1,jc-1,kc  ,IA);
+	    bfNb[3]  =  h_UOld(ic+1,jc  ,kc+1,IA);
+	    bfNb[4]  =  h_UOld(ic+1,jc  ,kc-1,IA);
+
+	    bfNb[5]  =  h_UOld(ic+1,jc  ,kc  ,IB);
+	    bfNb[6]  =  h_UOld(ic+2,jc  ,kc  ,IB);
+	    bfNb[7]  =  h_UOld(ic  ,jc  ,kc  ,IB);
+	    bfNb[8]  =  h_UOld(ic+1,jc  ,kc+1,IB);
+	    bfNb[9]  =  h_UOld(ic+1,jc  ,kc-1,IB);
+
+	    bfNb[10] =  h_UOld(ic+1,jc  ,kc  ,IC);
+	    bfNb[11] =  h_UOld(ic+2,jc  ,kc  ,IC);
+	    bfNb[12] =  h_UOld(ic  ,jc  ,kc  ,IC);
+	    bfNb[13] =  h_UOld(ic+1,jc+1,kc  ,IC);
+	    bfNb[14] =  h_UOld(ic+1,jc-1,kc  ,IC);
+
+	    slope_unsplit_mhd_3d(bfNb, dbf);
+	    // get transverse mag slopes
+	    dABC[6] = dbf[IY][IX];
+	    dABC[7] = dbf[IZ][IX];
+	    
+	    // change neighbors to ic, jc+1, kc and recompute dbf
+	    bfNb[0]  =  h_UOld(ic  ,jc+1,kc  ,IA);
+	    bfNb[1]  =  h_UOld(ic  ,jc+2,kc  ,IA);
+	    bfNb[2]  =  h_UOld(ic  ,jc  ,kc  ,IA);
+	    bfNb[3]  =  h_UOld(ic  ,jc+1,kc+1,IA);
+	    bfNb[4]  =  h_UOld(ic  ,jc+1,kc-1,IA);
+
+	    bfNb[5]  =  h_UOld(ic  ,jc+1,kc  ,IB);
+	    bfNb[6]  =  h_UOld(ic+1,jc+1,kc  ,IB);
+	    bfNb[7]  =  h_UOld(ic-1,jc+1,kc  ,IB);
+	    bfNb[8]  =  h_UOld(ic  ,jc+1,kc+1,IB);
+	    bfNb[9]  =  h_UOld(ic  ,jc+1,kc-1,IB);
+
+	    bfNb[10] =  h_UOld(ic  ,jc+1,kc  ,IC);
+	    bfNb[11] =  h_UOld(ic+1,jc+1,kc  ,IC);
+	    bfNb[12] =  h_UOld(ic-1,jc+1,kc  ,IC);
+	    bfNb[13] =  h_UOld(ic  ,jc+2,kc  ,IC);
+	    bfNb[14] =  h_UOld(ic  ,jc  ,kc  ,IC);
+
+	    slope_unsplit_mhd_3d(bfNb, dbf);
+	    dABC[8] = dbf[IX][IY];
+	    dABC[9] = dbf[IZ][IY];
+
+	    // change neighbors to ic, jc, kc+1 and recompute dbf
+	    bfNb[0]  =  h_UOld(ic  ,jc  ,kc+1,IA);
+	    bfNb[1]  =  h_UOld(ic  ,jc+1,kc+1,IA);
+	    bfNb[2]  =  h_UOld(ic  ,jc-1,kc+1,IA);
+	    bfNb[3]  =  h_UOld(ic  ,jc  ,kc+2,IA);
+	    bfNb[4]  =  h_UOld(ic  ,jc  ,kc  ,IA);
+
+	    bfNb[5]  =  h_UOld(ic  ,jc  ,kc+1,IB);
+	    bfNb[6]  =  h_UOld(ic+1,jc  ,kc+1,IB);
+	    bfNb[7]  =  h_UOld(ic-1,jc  ,kc+1,IB);
+	    bfNb[8]  =  h_UOld(ic  ,jc  ,kc+2,IB);
+	    bfNb[9]  =  h_UOld(ic  ,jc  ,kc  ,IB);
+
+	    bfNb[10] =  h_UOld(ic  ,jc  ,kc+1,IC);
+	    bfNb[11] =  h_UOld(ic+1,jc  ,kc+1,IC);
+	    bfNb[12] =  h_UOld(ic-1,jc  ,kc+1,IC);
+	    bfNb[13] =  h_UOld(ic  ,jc+1,kc+1,IC);
+	    bfNb[14] =  h_UOld(ic  ,jc-1,kc+1,IC);
+
+	    slope_unsplit_mhd_3d(bfNb, dbf);
+	    dABC[10] = dbf[IX][IZ];
+	    dABC[11] = dbf[IY][IZ];
+
+	    // 3. compute Ex,Ey,Ez (electric field components)
+	    for (int dj=0; dj<2; dj++) {
+	      for (int dk=0; dk<2; dk++) {
+	    
+		int centerX = ic;
+		int centerY = jc+dj;
+		int centerZ = kc+dk;
+	    
+		real_t v = 0.25 * (h_Q(centerX,centerY-1,centerZ-1,IV) +
+				   h_Q(centerX,centerY-1,centerZ  ,IV) +
+				   h_Q(centerX,centerY  ,centerZ-1,IV) +
+				   h_Q(centerX,centerY  ,centerZ  ,IV) );
+
+		real_t w = 0.25 * (h_Q(centerX,centerY-1,centerZ-1,IW) +
+				   h_Q(centerX,centerY-1,centerZ  ,IW) +
+				   h_Q(centerX,centerY  ,centerZ-1,IW) +
+				   h_Q(centerX,centerY  ,centerZ  ,IW) );
+
+		real_t B = 0.5 * (h_UOld(centerX,centerY  ,centerZ-1,IY) +
+				  h_UOld(centerX,centerY  ,centerZ  ,IY) );
+
+		real_t C = 0.5 * (h_UOld(centerX,centerY-1,centerZ  ,IZ) +
+				  h_UOld(centerX,centerY  ,centerZ  ,IZ) );
+	    
+		Exyz[IX][dj][dk] = v*C-w*B;
+		
+		if (/* cartesian */ Omega0>0 /* and not fargo*/) {
+		  real_t shear = -1.5 * Omega0 * xPos;
+		  Exyz[IX][dj][dk] += shear*C;
+		}
+		
+	      } // end for dk
+	    } // end for dj
+  
+	    for (int di=0; di<2; di++) {
+	      for (int dk=0; dk<2; dk++) {
+	    
+		int centerX = ic+di;
+		int centerY = jc;
+		int centerZ = kc+dk;
+	    
+		real_t u = 0.25 * (h_Q(centerX-1,centerY,centerZ-1,IU) + 
+				   h_Q(centerX-1,centerY,centerZ  ,IU) + 
+				   h_Q(centerX  ,centerY,centerZ-1,IU) + 
+				   h_Q(centerX  ,centerY,centerZ  ,IU) );
+  
+		real_t w = 0.25 * (h_Q(centerX-1,centerY,centerZ-1,IW) +
+				   h_Q(centerX-1,centerY,centerZ  ,IW) +
+				   h_Q(centerX  ,centerY,centerZ-1,IW) +
+				   h_Q(centerX  ,centerY,centerZ  ,IW) );
+		
+		real_t A = 0.5 * (h_UOld(centerX  ,centerY,centerZ-1,IX) + 
+				  h_UOld(centerX  ,centerY,centerZ  ,IX) );
+
+		real_t C = 0.5 * (h_UOld(centerX-1,centerY,centerZ  ,IZ) +
+				  h_UOld(centerX  ,centerY,centerZ  ,IZ) );
+
+		Exyz[IY][di][dk] = w*A-u*C;
+		
+	      } // end for dk
+	    } // end for di
+	    
+	    for (int di=0; di<2; di++) {
+	      for (int dj=0; dj<2; dj++) {
+
+		int centerX = ic+di;
+		int centerY = jc+dj;
+		int centerZ = kc;
+
+		real_t u  = 0.25 *  (h_Q(centerX-1,centerY-1,centerZ,IU) + 
+				     h_Q(centerX-1,centerY  ,centerZ,IU) + 
+				     h_Q(centerX  ,centerY-1,centerZ,IU) + 
+				     h_Q(centerX  ,centerY  ,centerZ,IU) ); 
+		
+		real_t v  = 0.25 *  (h_Q(centerX-1,centerY-1,centerZ,IV) +
+				     h_Q(centerX-1,centerY  ,centerZ,IV) +
+				     h_Q(centerX  ,centerY-1,centerZ,IV) + 
+				     h_Q(centerX  ,centerY  ,centerZ,IV) );
+		
+		real_t A  = 0.5  * (h_UOld(centerX  ,centerY-1,centerZ,IA) + 
+				    h_UOld(centerX  ,centerY  ,centerZ,IA) );
+		
+		real_t B  = 0.5  * (h_UOld(centerX-1,centerY  ,centerZ,IB) + 
+				    h_UOld(centerX  ,centerY  ,centerZ,IB) );
+	    
+		Exyz[IZ][di][dj] = u*B-v*A;
+		
+		if (/* cartesian */ Omega0>0 /* and not fargo*/) {
+		  real_t shear = -1.5 * Omega0 * (xPos - dx/2);
+		  Exyz[IZ][di][dj] -= shear*A;
+		}
+		
+	      } // end for dj
+	    } // end for di
+
+	    // 4. perform trace reconstruction
+	    //
+	    // Compute reconstructed states at left interface along X 
+	    // in current cell
+	    
+	    // (ic,jc,kc)
+	    bfNb2[0] =  h_UOld(ic  ,jc  ,kc  ,IA);
+	    bfNb2[1] =  h_UOld(ic+1,jc  ,kc  ,IA);
+	    bfNb2[2] =  h_UOld(ic  ,jc  ,kc  ,IB);
+	    bfNb2[3] =  h_UOld(ic  ,jc+1,kc  ,IB);
+	    bfNb2[4] =  h_UOld(ic  ,jc  ,kc  ,IC);
+	    bfNb2[5] =  h_UOld(ic  ,jc  ,kc+1,IC);
+
+	    // EDGE_RT_Y
+	    trace_unsplit_mhd_3d_face(qLoc, dq, bfNb2, dABC, Exyz,
+				      dtdx, dtdy, dtdz, xPos, EDGE_RT_Y,
+				      qEdge_emfY[IRT] );
+
+	    ///////////////////////////////////////////////
+	    // compute reconstructed states at (i,j-1,k-1)
+	    ///////////////////////////////////////////////
+	    ic=i;
+	    jc=j-1;
+	    kc=k-1;
+	    xPos = ::gParams.xMin + dx/2 + (ic-ghostWidth)*dx;
+
+	    // get primitive variables state vector
+	    for ( int iVar=0; iVar<nbVar; iVar++ ) {
+	      
+	      qLoc[iVar]          = h_Q(ic  ,jc  ,kc  ,iVar);
+	      qNeighbors[0][iVar] = h_Q(ic+1,jc  ,kc  ,iVar);
+	      qNeighbors[1][iVar] = h_Q(ic-1,jc  ,kc  ,iVar);
+	      qNeighbors[2][iVar] = h_Q(ic  ,jc+1,kc  ,iVar);
+	      qNeighbors[3][iVar] = h_Q(ic  ,jc-1,kc  ,iVar);
+	      qNeighbors[4][iVar] = h_Q(ic  ,jc  ,kc+1,iVar);
+	      qNeighbors[5][iVar] = h_Q(ic  ,jc  ,kc-1,iVar);
+	      
+	    } // end for iVar
+	    
+	    // 1. compute hydro slopes
+	    // compute slopes in left neighbor along X
+	    slope_unsplit_hydro_3d(qLoc, 
+				   qNeighbors[0],
+				   qNeighbors[1],
+				   qNeighbors[2],
+				   qNeighbors[3],
+				   qNeighbors[4],
+				   qNeighbors[5],
+				   dq);
+	      
+	    // 2. compute mag slopes @(ic,jc,kc)
+	    bfNb[0]  =  h_UOld(ic  ,jc  ,kc  ,IA);
+	    bfNb[1]  =  h_UOld(ic  ,jc+1,kc  ,IA);
+	    bfNb[2]  =  h_UOld(ic  ,jc-1,kc  ,IA);
+	    bfNb[3]  =  h_UOld(ic  ,jc  ,kc+1,IA);
+	    bfNb[4]  =  h_UOld(ic  ,jc  ,kc-1,IA);
+
+	    bfNb[5]  =  h_UOld(ic  ,jc  ,kc  ,IB);
+	    bfNb[6]  =  h_UOld(ic+1,jc  ,kc  ,IB);
+	    bfNb[7]  =  h_UOld(ic-1,jc  ,kc  ,IB);
+	    bfNb[8]  =  h_UOld(ic  ,jc  ,kc+1,IB);
+	    bfNb[9]  =  h_UOld(ic  ,jc  ,kc-1,IB);
+
+	    bfNb[10] =  h_UOld(ic  ,jc  ,kc  ,IC);
+	    bfNb[11] =  h_UOld(ic+1,jc  ,kc  ,IC);
+	    bfNb[12] =  h_UOld(ic-1,jc  ,kc  ,IC);
+	    bfNb[13] =  h_UOld(ic  ,jc+1,kc  ,IC);
+	    bfNb[14] =  h_UOld(ic  ,jc-1,kc  ,IC);
+
+	    slope_unsplit_mhd_3d(bfNb, dbf);
+	    // get transverse mag slopes
+	    dABC[0] = dbf[IY][IX];
+	    dABC[1] = dbf[IZ][IX];
+	    dABC[2] = dbf[IX][IY];
+	    dABC[3] = dbf[IZ][IY];
+	    dABC[4] = dbf[IX][IZ];
+	    dABC[5] = dbf[IY][IZ];
+
+	    // change neighbors to ic+1, jc, kc and recompute dbf
+	    bfNb[0]  =  h_UOld(ic+1,jc  ,kc  ,IA);
+	    bfNb[1]  =  h_UOld(ic+1,jc+1,kc  ,IA);
+	    bfNb[2]  =  h_UOld(ic+1,jc-1,kc  ,IA);
+	    bfNb[3]  =  h_UOld(ic+1,jc  ,kc+1,IA);
+	    bfNb[4]  =  h_UOld(ic+1,jc  ,kc-1,IA);
+
+	    bfNb[5]  =  h_UOld(ic+1,jc  ,kc  ,IB);
+	    bfNb[6]  =  h_UOld(ic+2,jc  ,kc  ,IB);
+	    bfNb[7]  =  h_UOld(ic  ,jc  ,kc  ,IB);
+	    bfNb[8]  =  h_UOld(ic+1,jc  ,kc+1,IB);
+	    bfNb[9]  =  h_UOld(ic+1,jc  ,kc-1,IB);
+
+	    bfNb[10] =  h_UOld(ic+1,jc  ,kc  ,IC);
+	    bfNb[11] =  h_UOld(ic+2,jc  ,kc  ,IC);
+	    bfNb[12] =  h_UOld(ic  ,jc  ,kc  ,IC);
+	    bfNb[13] =  h_UOld(ic+1,jc+1,kc  ,IC);
+	    bfNb[14] =  h_UOld(ic+1,jc-1,kc  ,IC);
+
+	    slope_unsplit_mhd_3d(bfNb, dbf);
+	    // get transverse mag slopes
+	    dABC[6] = dbf[IY][IX];
+	    dABC[7] = dbf[IZ][IX];
+	    
+	    // change neighbors to ic, jc+1, kc and recompute dbf
+	    bfNb[0]  =  h_UOld(ic  ,jc+1,kc  ,IA);
+	    bfNb[1]  =  h_UOld(ic  ,jc+2,kc  ,IA);
+	    bfNb[2]  =  h_UOld(ic  ,jc  ,kc  ,IA);
+	    bfNb[3]  =  h_UOld(ic  ,jc+1,kc+1,IA);
+	    bfNb[4]  =  h_UOld(ic  ,jc+1,kc-1,IA);
+
+	    bfNb[5]  =  h_UOld(ic  ,jc+1,kc  ,IB);
+	    bfNb[6]  =  h_UOld(ic+1,jc+1,kc  ,IB);
+	    bfNb[7]  =  h_UOld(ic-1,jc+1,kc  ,IB);
+	    bfNb[8]  =  h_UOld(ic  ,jc+1,kc+1,IB);
+	    bfNb[9]  =  h_UOld(ic  ,jc+1,kc-1,IB);
+
+	    bfNb[10] =  h_UOld(ic  ,jc+1,kc  ,IC);
+	    bfNb[11] =  h_UOld(ic+1,jc+1,kc  ,IC);
+	    bfNb[12] =  h_UOld(ic-1,jc+1,kc  ,IC);
+	    bfNb[13] =  h_UOld(ic  ,jc+2,kc  ,IC);
+	    bfNb[14] =  h_UOld(ic  ,jc  ,kc  ,IC);
+
+	    slope_unsplit_mhd_3d(bfNb, dbf);
+	    dABC[8] = dbf[IX][IY];
+	    dABC[9] = dbf[IZ][IY];
+
+	    // change neighbors to ic, jc, kc+1 and recompute dbf
+	    bfNb[0]  =  h_UOld(ic  ,jc  ,kc+1,IA);
+	    bfNb[1]  =  h_UOld(ic  ,jc+1,kc+1,IA);
+	    bfNb[2]  =  h_UOld(ic  ,jc-1,kc+1,IA);
+	    bfNb[3]  =  h_UOld(ic  ,jc  ,kc+2,IA);
+	    bfNb[4]  =  h_UOld(ic  ,jc  ,kc  ,IA);
+
+	    bfNb[5]  =  h_UOld(ic  ,jc  ,kc+1,IB);
+	    bfNb[6]  =  h_UOld(ic+1,jc  ,kc+1,IB);
+	    bfNb[7]  =  h_UOld(ic-1,jc  ,kc+1,IB);
+	    bfNb[8]  =  h_UOld(ic  ,jc  ,kc+2,IB);
+	    bfNb[9]  =  h_UOld(ic  ,jc  ,kc  ,IB);
+
+	    bfNb[10] =  h_UOld(ic  ,jc  ,kc+1,IC);
+	    bfNb[11] =  h_UOld(ic+1,jc  ,kc+1,IC);
+	    bfNb[12] =  h_UOld(ic-1,jc  ,kc+1,IC);
+	    bfNb[13] =  h_UOld(ic  ,jc+1,kc+1,IC);
+	    bfNb[14] =  h_UOld(ic  ,jc-1,kc+1,IC);
+
+	    slope_unsplit_mhd_3d(bfNb, dbf);
+	    dABC[10] = dbf[IX][IZ];
+	    dABC[11] = dbf[IY][IZ];
+
+	    // 3. compute Ex,Ey,Ez (electric field components)
+	    for (int dj=0; dj<2; dj++) {
+	      for (int dk=0; dk<2; dk++) {
+	    
+		int centerX = ic;
+		int centerY = jc+dj;
+		int centerZ = kc+dk;
+	    
+		real_t v = 0.25 * (h_Q(centerX,centerY-1,centerZ-1,IV) +
+				   h_Q(centerX,centerY-1,centerZ  ,IV) +
+				   h_Q(centerX,centerY  ,centerZ-1,IV) +
+				   h_Q(centerX,centerY  ,centerZ  ,IV) );
+
+		real_t w = 0.25 * (h_Q(centerX,centerY-1,centerZ-1,IW) +
+				   h_Q(centerX,centerY-1,centerZ  ,IW) +
+				   h_Q(centerX,centerY  ,centerZ-1,IW) +
+				   h_Q(centerX,centerY  ,centerZ  ,IW) );
+
+		real_t B = 0.5 * (h_UOld(centerX,centerY  ,centerZ-1,IY) +
+				  h_UOld(centerX,centerY  ,centerZ  ,IY) );
+
+		real_t C = 0.5 * (h_UOld(centerX,centerY-1,centerZ  ,IZ) +
+				  h_UOld(centerX,centerY  ,centerZ  ,IZ) );
+	    
+		Exyz[IX][dj][dk] = v*C-w*B;
+		
+		if (/* cartesian */ Omega0>0 /* and not fargo*/) {
+		  real_t shear = -1.5 * Omega0 * xPos;
+		  Exyz[IX][dj][dk] += shear*C;
+		}
+		
+	      } // end for dk
+	    } // end for dj
+  
+	    for (int di=0; di<2; di++) {
+	      for (int dk=0; dk<2; dk++) {
+	    
+		int centerX = ic+di;
+		int centerY = jc;
+		int centerZ = kc+dk;
+	    
+		real_t u = 0.25 * (h_Q(centerX-1,centerY,centerZ-1,IU) + 
+				   h_Q(centerX-1,centerY,centerZ  ,IU) + 
+				   h_Q(centerX  ,centerY,centerZ-1,IU) + 
+				   h_Q(centerX  ,centerY,centerZ  ,IU) );
+  
+		real_t w = 0.25 * (h_Q(centerX-1,centerY,centerZ-1,IW) +
+				   h_Q(centerX-1,centerY,centerZ  ,IW) +
+				   h_Q(centerX  ,centerY,centerZ-1,IW) +
+				   h_Q(centerX  ,centerY,centerZ  ,IW) );
+		
+		real_t A = 0.5 * (h_UOld(centerX  ,centerY,centerZ-1,IX) + 
+				  h_UOld(centerX  ,centerY,centerZ  ,IX) );
+
+		real_t C = 0.5 * (h_UOld(centerX-1,centerY,centerZ  ,IZ) +
+				  h_UOld(centerX  ,centerY,centerZ  ,IZ) );
+
+		Exyz[IY][di][dk] = w*A-u*C;
+		
+	      } // end for dk
+	    } // end for di
+	    
+	    for (int di=0; di<2; di++) {
+	      for (int dj=0; dj<2; dj++) {
+
+		int centerX = ic+di;
+		int centerY = jc+dj;
+		int centerZ = kc;
+
+		real_t u  = 0.25 *  (h_Q(centerX-1,centerY-1,centerZ,IU) + 
+				     h_Q(centerX-1,centerY  ,centerZ,IU) + 
+				     h_Q(centerX  ,centerY-1,centerZ,IU) + 
+				     h_Q(centerX  ,centerY  ,centerZ,IU) ); 
+		
+		real_t v  = 0.25 *  (h_Q(centerX-1,centerY-1,centerZ,IV) +
+				     h_Q(centerX-1,centerY  ,centerZ,IV) +
+				     h_Q(centerX  ,centerY-1,centerZ,IV) + 
+				     h_Q(centerX  ,centerY  ,centerZ,IV) );
+		
+		real_t A  = 0.5  * (h_UOld(centerX  ,centerY-1,centerZ,IA) + 
+				    h_UOld(centerX  ,centerY  ,centerZ,IA) );
+		
+		real_t B  = 0.5  * (h_UOld(centerX-1,centerY  ,centerZ,IB) + 
+				    h_UOld(centerX  ,centerY  ,centerZ,IB) );
+	    
+		Exyz[IZ][di][dj] = u*B-v*A;
+		
+		if (/* cartesian */ Omega0>0 /* and not fargo*/) {
+		  real_t shear = -1.5 * Omega0 * (xPos - dx/2);
+		  Exyz[IZ][di][dj] -= shear*A;
+		}
+		
+	      } // end for dj
+	    } // end for di
+
+	    // 4. perform trace reconstruction
+	    //
+	    // Compute reconstructed states at left interface along X 
+	    // in current cell
+	    
+	    // (ic,jc,kc)
+	    bfNb2[0] =  h_UOld(ic  ,jc  ,kc  ,IA);
+	    bfNb2[1] =  h_UOld(ic+1,jc  ,kc  ,IA);
+	    bfNb2[2] =  h_UOld(ic  ,jc  ,kc  ,IB);
+	    bfNb2[3] =  h_UOld(ic  ,jc+1,kc  ,IB);
+	    bfNb2[4] =  h_UOld(ic  ,jc  ,kc  ,IC);
+	    bfNb2[5] =  h_UOld(ic  ,jc  ,kc+1,IC);
+
+	    // EDGE_RT_X
+	    trace_unsplit_mhd_3d_face(qLoc, dq, bfNb2, dABC, Exyz,
+				      dtdx, dtdy, dtdz, xPos, EDGE_RT_X,
+				      qEdge_emfX[IRT] );
+
+
+	    // preparation for calling compute_emf (equivalent to cmp_mag_flx
+	    // in DUMSES)
+	    // in the following, the 3 first indexes in qEdge_emf array play
+	    // the same offset role as in the calling argument of cmp_mag_flx 
+	    // in DUMSES (if you see what I mean ?!)
+
+	    real_t emfZ = compute_emf<EMFZ>(qEdge_emfZ);
+	    real_t emfY = compute_emf<EMFY>(qEdge_emfY);
+	    real_t emfX = compute_emf<EMFX>(qEdge_emfX);
+
+	    // now update h_UNew with emfZ
+	    // (Constrained transport for face-centered B-field)
+	    h_UNew(i  ,j  ,k  ,IA) -= emfZ*dtdy;
+	    h_UNew(i  ,j-1,k  ,IA) += emfZ*dtdy;
+	      
+	    h_UNew(i  ,j  ,k  ,IB) += emfZ*dtdx;  
+	    h_UNew(i-1,j  ,k  ,IB) -= emfZ*dtdx;
+
+	    // now update h_UNew with emfY, emfX
+	    h_UNew(i  ,j  ,k  ,IA) += emfY*dtdz;
+	    h_UNew(i  ,j  ,k-1,IA) -= emfY*dtdz;
+	      
+	    h_UNew(i  ,j  ,k  ,IB) -= emfX*dtdz;
+	    h_UNew(i  ,j  ,k-1,IB) += emfX*dtdz;
+	      
+	    h_UNew(i  ,j  ,k  ,IC) -= emfY*dtdx;
+	    h_UNew(i-1,j  ,k  ,IC) += emfY*dtdx;
+	    h_UNew(i  ,j  ,k  ,IC) += emfX*dtdy;
+	    h_UNew(i  ,j-1,k  ,IC) -= emfX*dtdy;	      
 
 	  } // end for i
 	} // end for j
