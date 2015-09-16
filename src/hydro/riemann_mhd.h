@@ -38,7 +38,7 @@
  * @param[out] flux  : output flux
  *
  */
-__DEVICE__
+__DEVICE__ inline
 void riemann_hll(real_riemann_t   qleft[NVAR_MHD],
 		 real_riemann_t  qright[NVAR_MHD], 
 		 real_riemann_t (&flux)[NVAR_MHD])
@@ -83,7 +83,7 @@ void riemann_hll(real_riemann_t   qleft[NVAR_MHD],
  * @param[in] zero_flux : when riemann_llf is used to compute EMF, zero_flux should be ZERO_F
  *
  */
-__DEVICE__
+__DEVICE__ inline
 void riemann_llf(real_riemann_t   qleft[NVAR_MHD], 
 		 real_riemann_t  qright[NVAR_MHD], 
 		 real_riemann_t (&flux)[NVAR_MHD],
@@ -136,7 +136,7 @@ void riemann_llf(real_riemann_t   qleft[NVAR_MHD],
  * @param[in] qright : input right state
  * @param[out] flux  : output flux
  */
-__DEVICE__
+__DEVICE__ inline
 void riemann_hlld(real_riemann_t   qleft[NVAR_MHD],
 		  real_riemann_t  qright[NVAR_MHD], 
 		  real_riemann_t (&flux)[NVAR_MHD])
@@ -351,7 +351,7 @@ void riemann_hlld(real_riemann_t   qleft[NVAR_MHD],
  *
  * @TODO add a fourth argument to store starState
  */
-__DEVICE__
+__DEVICE__ inline
 void riemann_mhd(real_riemann_t   qleft[NVAR_MHD],
 		 real_riemann_t  qright[NVAR_MHD], 
 		 real_riemann_t (&flux)[NVAR_MHD])
@@ -370,7 +370,7 @@ void riemann_mhd(real_riemann_t   qleft[NVAR_MHD],
 /**
  * max value out of 4
  */
-__DEVICE__
+__DEVICE__ inline
 real_t FMAX4(real_t a0, real_t a1, real_t a2, real_t a3)
 {
   real_t returnVal = a0;
@@ -384,7 +384,7 @@ real_t FMAX4(real_t a0, real_t a1, real_t a2, real_t a3)
 /**
  * min value out of 4
  */
-__DEVICE__
+__DEVICE__ inline
 real_t FMIN4(real_t a0, real_t a1, real_t a2, real_t a3)
 {
   real_t returnVal = a0;
@@ -398,7 +398,7 @@ real_t FMIN4(real_t a0, real_t a1, real_t a2, real_t a3)
 /**
  * max value out of 5
  */
-__DEVICE__
+__DEVICE__ inline
 real_t FMAX5(real_t a0, real_t a1, real_t a2, real_t a3, real_t a4)
 {
   real_t returnVal = a0;
@@ -414,7 +414,7 @@ real_t FMAX5(real_t a0, real_t a1, real_t a2, real_t a3, real_t a4)
  * 2D magnetic riemann solver of type HLLA
  *
  */
-__DEVICE__
+__DEVICE__ inline
 real_t mag_riemann2d_hlla(real_t qLLRR[4][NVAR_MHD],
 			  real_t eLLRR[4])
 {
@@ -462,7 +462,7 @@ real_t mag_riemann2d_hlla(real_t qLLRR[4][NVAR_MHD],
  * 2D magnetic riemann solver of type HLLF
  *
  */
-__DEVICE__
+__DEVICE__ inline
 real_t mag_riemann2d_hllf(real_t qLLRR[4][NVAR_MHD],
 			  real_t eLLRR[4])
 {
@@ -515,7 +515,7 @@ real_t mag_riemann2d_hllf(real_t qLLRR[4][NVAR_MHD],
  * ia, ib, ic : idem for magnetic field
  * That the way ramses/Dumses is !
  */
-__DEVICE__
+__DEVICE__ inline
 real_t mag_riemann2d_llf(real_t qLLRR[4][NVAR_MHD],
 			 real_t eLLRR[4])
 {
@@ -612,7 +612,7 @@ real_t mag_riemann2d_llf(real_t qLLRR[4][NVAR_MHD],
  * 2D magnetic riemann solver of type HLLD
  *
  */
-__DEVICE__
+__DEVICE__ inline
 real_t mag_riemann2d_hlld(real_t qLLRR[4][NVAR_MHD],
 			  real_t eLLRR[4])
 {
@@ -824,7 +824,7 @@ real_t mag_riemann2d_hlld(real_t qLLRR[4][NVAR_MHD],
  * 2D magnetic riemann solver of type HLLD (mixed precision)
  *
  */
-__DEVICE__
+__DEVICE__ inline
 real_t mag_riemann2d_hlld_mixed(real_t qLLRR[4][NVAR_MHD],
 				real_t eLLRR[4])
 {
