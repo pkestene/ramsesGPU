@@ -55,14 +55,14 @@
 # include <omp.h>
 #endif
 
-/** a dummy device-only swap function */
-static void swap_v(real_t& a, real_t& b) {
+// /** a dummy device-only swap function */
+// static void swap_v(real_t& a, real_t& b) {
    
-  real_t tmp = a;
-  a = b;
-  b = tmp; 
+//   real_t tmp = a;
+//   a = b;
+//   b = tmp; 
    
-} // swap_v
+// } // swap_v
 
 namespace hydroSimu {
 
@@ -2703,9 +2703,7 @@ namespace hydroSimu {
     real_t dtdx = dt/dx;
     real_t dtdy = dt/dy;
     real_t dtdz = dt/dz;
-    
-    // conservative variable domain array
-    real_t *U = h_UOld.data();
+    (void) dtdz;
     
     // primitive variable domain array
     real_t *Q = h_Q.data();
@@ -3198,16 +3196,7 @@ namespace hydroSimu {
     real_t dtdx = dt/dx;
     real_t dtdy = dt/dy;
     real_t dtdz = dt/dz;
-    
-    // conservative variable domain array
-    real_t *U = h_UOld.data();
-    
-    // primitive variable domain array
-    real_t *Q = h_Q.data();
-
-    // section / domain size
-    int arraySize = h_Q.section();
-    
+        
     if (dimType == TWO_D) {
       
       std::cout << "implementation version 3/4 are not available for 2D simulation. Designed only for 3D problems." << std::endl;
@@ -3903,6 +3892,10 @@ namespace hydroSimu {
   {
 
     // there is no version 4 (see version 3)
+    (void) h_UOld;
+    (void) h_UNew;
+    (void) dt;
+    (void) nStep;
 
   } // MHDRunGodunov::godunov_unsplit_cpu_v4
 
