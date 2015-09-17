@@ -28,6 +28,7 @@
 
 // include CUDA kernel when necessary
 #ifdef __CUDACC__
+#include "godunov_unsplit_mhd_v0.cuh"
 #include "godunov_unsplit_mhd.cuh"
 #include "shearingBox_utils.cuh"
 #endif // __CUDACC__
@@ -673,21 +674,43 @@ namespace hydroSimu {
     if (dimType == TWO_D) {
 
       // 2D Godunov unsplit kernel
+      // TODO
+      
+    } else { // THREE_D
+
+      // TODO
+
+    } // 3D
+
+  } // MHDRunGodunov::godunov_unsplit_gpu_v0
+
+  // =======================================================
+  // =======================================================
+  void MHDRunGodunov::godunov_unsplit_gpu_v0_old(DeviceArray<real_t>& d_UOld, 
+						 DeviceArray<real_t>& d_UNew,
+						 real_t dt, int nStep)
+  {
+
+    if (dimType == TWO_D) {
+
+      // 2D Godunov unsplit kernel
       dim3 dimBlock(UNSPLIT_BLOCK_DIMX_2D,
 		    UNSPLIT_BLOCK_DIMY_2D);
       
       dim3 dimGrid(blocksFor(isize, UNSPLIT_BLOCK_INNER_DIMX_2D), 
 		   blocksFor(jsize, UNSPLIT_BLOCK_INNER_DIMY_2D));
-      kernel_godunov_unsplit_mhd_2d<<<dimGrid, dimBlock>>>(d_UOld.data(), 
-							   d_UNew.data(),
-							   d_UOld.pitch(), 
-							   d_UOld.dimx(), 
-							   d_UOld.dimy(), 
-							   dt / dx, 
-							   dt / dy,
-							   dt,
-							   gravityEnabled);
-      checkCudaError("MHDRunGodunov :: kernel_godunov_unsplit_mhd_2d error");
+      kernel_godunov_unsplit_mhd_2d_v0_old
+	<<<dimGrid, 
+	dimBlock>>>(d_UOld.data(), 
+		    d_UNew.data(),
+		    d_UOld.pitch(), 
+		    d_UOld.dimx(), 
+		    d_UOld.dimy(), 
+		    dt / dx, 
+		    dt / dy,
+		    dt,
+		    gravityEnabled);
+      checkCudaError("MHDRunGodunov :: kernel_godunov_unsplit_mhd_2d_v0_old error");
       
       // gravity source term
       if (gravityEnabled) {
@@ -702,7 +725,7 @@ namespace hydroSimu {
 
     } // 3D
 
-  } // MHDRunGodunov::godunov_unsplit_gpu_v0
+  } // MHDRunGodunov::godunov_unsplit_gpu_v0_old
 
   // =======================================================
   // =======================================================

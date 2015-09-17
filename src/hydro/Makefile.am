@@ -213,6 +213,7 @@ HYDRO_SRC_CUDA = \
 	godunov_trace_v2.cuh \
 	godunov_unsplit.cuh \
 	godunov_unsplit_mhd.cuh \
+	godunov_unsplit_mhd_v0.cuh \
 	cmpdt.cuh \
 	cmpdt_mhd.cuh \
 	hydro_update.cuh \
