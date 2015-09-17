@@ -817,11 +817,11 @@ namespace hydroSimu {
 				   h_Q(centerX,centerY  ,centerZ-1,IW) +
 				   h_Q(centerX,centerY  ,centerZ  ,IW) );
 
-		real_t B = 0.5 * (h_UOld(centerX,centerY  ,centerZ-1,IY) +
-				  h_UOld(centerX,centerY  ,centerZ  ,IY) );
+		real_t B = 0.5 * (h_UOld(centerX,centerY  ,centerZ-1,IB) +
+				  h_UOld(centerX,centerY  ,centerZ  ,IB) );
 
-		real_t C = 0.5 * (h_UOld(centerX,centerY-1,centerZ  ,IZ) +
-				  h_UOld(centerX,centerY  ,centerZ  ,IZ) );
+		real_t C = 0.5 * (h_UOld(centerX,centerY-1,centerZ  ,IC) +
+				  h_UOld(centerX,centerY  ,centerZ  ,IC) );
 	    
 		Exyz[IX][dj][dk] = v*C-w*B;
 		
@@ -850,11 +850,11 @@ namespace hydroSimu {
 				   h_Q(centerX  ,centerY,centerZ-1,IW) +
 				   h_Q(centerX  ,centerY,centerZ  ,IW) );
 		
-		real_t A = 0.5 * (h_UOld(centerX  ,centerY,centerZ-1,IX) + 
-				  h_UOld(centerX  ,centerY,centerZ  ,IX) );
+		real_t A = 0.5 * (h_UOld(centerX  ,centerY,centerZ-1,IA) + 
+				  h_UOld(centerX  ,centerY,centerZ  ,IA) );
 
-		real_t C = 0.5 * (h_UOld(centerX-1,centerY,centerZ  ,IZ) +
-				  h_UOld(centerX  ,centerY,centerZ  ,IZ) );
+		real_t C = 0.5 * (h_UOld(centerX-1,centerY,centerZ  ,IC) +
+				  h_UOld(centerX  ,centerY,centerZ  ,IC) );
 
 		Exyz[IY][di][dk] = w*A-u*C;
 		
@@ -929,7 +929,6 @@ namespace hydroSimu {
 	    // swap qright_z
 	    swap_v(qright_z[IU], qright_z[IW]);
 	    swap_v(qright_z[IA], qright_z[IC]);
-
 
 	    // EDGE_LB_Z
 	    trace_unsplit_mhd_3d_face(qLoc, dq, bfNb2, dABC, Exyz,
@@ -1094,11 +1093,11 @@ namespace hydroSimu {
 				   h_Q(centerX,centerY  ,centerZ-1,IW) +
 				   h_Q(centerX,centerY  ,centerZ  ,IW) );
 
-		real_t B = 0.5 * (h_UOld(centerX,centerY  ,centerZ-1,IY) +
-				  h_UOld(centerX,centerY  ,centerZ  ,IY) );
+		real_t B = 0.5 * (h_UOld(centerX,centerY  ,centerZ-1,IB) +
+				  h_UOld(centerX,centerY  ,centerZ  ,IB) );
 
-		real_t C = 0.5 * (h_UOld(centerX,centerY-1,centerZ  ,IZ) +
-				  h_UOld(centerX,centerY  ,centerZ  ,IZ) );
+		real_t C = 0.5 * (h_UOld(centerX,centerY-1,centerZ  ,IC) +
+				  h_UOld(centerX,centerY  ,centerZ  ,IC) );
 	    
 		Exyz[IX][dj][dk] = v*C-w*B;
 		
@@ -1127,11 +1126,11 @@ namespace hydroSimu {
 				   h_Q(centerX  ,centerY,centerZ-1,IW) +
 				   h_Q(centerX  ,centerY,centerZ  ,IW) );
 		
-		real_t A = 0.5 * (h_UOld(centerX  ,centerY,centerZ-1,IX) + 
-				  h_UOld(centerX  ,centerY,centerZ  ,IX) );
+		real_t A = 0.5 * (h_UOld(centerX  ,centerY,centerZ-1,IA) + 
+				  h_UOld(centerX  ,centerY,centerZ  ,IA) );
 
-		real_t C = 0.5 * (h_UOld(centerX-1,centerY,centerZ  ,IZ) +
-				  h_UOld(centerX  ,centerY,centerZ  ,IZ) );
+		real_t C = 0.5 * (h_UOld(centerX-1,centerY,centerZ  ,IC) +
+				  h_UOld(centerX  ,centerY,centerZ  ,IC) );
 
 		Exyz[IY][di][dk] = w*A-u*C;
 		
@@ -1351,11 +1350,11 @@ namespace hydroSimu {
 				   h_Q(centerX,centerY  ,centerZ-1,IW) +
 				   h_Q(centerX,centerY  ,centerZ  ,IW) );
 
-		real_t B = 0.5 * (h_UOld(centerX,centerY  ,centerZ-1,IY) +
-				  h_UOld(centerX,centerY  ,centerZ  ,IY) );
+		real_t B = 0.5 * (h_UOld(centerX,centerY  ,centerZ-1,IB) +
+				  h_UOld(centerX,centerY  ,centerZ  ,IB) );
 
-		real_t C = 0.5 * (h_UOld(centerX,centerY-1,centerZ  ,IZ) +
-				  h_UOld(centerX,centerY  ,centerZ  ,IZ) );
+		real_t C = 0.5 * (h_UOld(centerX,centerY-1,centerZ  ,IC) +
+				  h_UOld(centerX,centerY  ,centerZ  ,IC) );
 	    
 		Exyz[IX][dj][dk] = v*C-w*B;
 		
@@ -1384,11 +1383,11 @@ namespace hydroSimu {
 				   h_Q(centerX  ,centerY,centerZ-1,IW) +
 				   h_Q(centerX  ,centerY,centerZ  ,IW) );
 		
-		real_t A = 0.5 * (h_UOld(centerX  ,centerY,centerZ-1,IX) + 
-				  h_UOld(centerX  ,centerY,centerZ  ,IX) );
+		real_t A = 0.5 * (h_UOld(centerX  ,centerY,centerZ-1,IA) + 
+				  h_UOld(centerX  ,centerY,centerZ  ,IA) );
 
-		real_t C = 0.5 * (h_UOld(centerX-1,centerY,centerZ  ,IZ) +
-				  h_UOld(centerX  ,centerY,centerZ  ,IZ) );
+		real_t C = 0.5 * (h_UOld(centerX-1,centerY,centerZ  ,IC) +
+				  h_UOld(centerX  ,centerY,centerZ  ,IC) );
 
 		Exyz[IY][di][dk] = w*A-u*C;
 		
@@ -1612,11 +1611,11 @@ namespace hydroSimu {
 				   h_Q(centerX,centerY  ,centerZ-1,IW) +
 				   h_Q(centerX,centerY  ,centerZ  ,IW) );
 
-		real_t B = 0.5 * (h_UOld(centerX,centerY  ,centerZ-1,IY) +
-				  h_UOld(centerX,centerY  ,centerZ  ,IY) );
+		real_t B = 0.5 * (h_UOld(centerX,centerY  ,centerZ-1,IB) +
+				  h_UOld(centerX,centerY  ,centerZ  ,IB) );
 
-		real_t C = 0.5 * (h_UOld(centerX,centerY-1,centerZ  ,IZ) +
-				  h_UOld(centerX,centerY  ,centerZ  ,IZ) );
+		real_t C = 0.5 * (h_UOld(centerX,centerY-1,centerZ  ,IC) +
+				  h_UOld(centerX,centerY  ,centerZ  ,IC) );
 	    
 		Exyz[IX][dj][dk] = v*C-w*B;
 		
@@ -1645,11 +1644,11 @@ namespace hydroSimu {
 				   h_Q(centerX  ,centerY,centerZ-1,IW) +
 				   h_Q(centerX  ,centerY,centerZ  ,IW) );
 		
-		real_t A = 0.5 * (h_UOld(centerX  ,centerY,centerZ-1,IX) + 
-				  h_UOld(centerX  ,centerY,centerZ  ,IX) );
+		real_t A = 0.5 * (h_UOld(centerX  ,centerY,centerZ-1,IA) + 
+				  h_UOld(centerX  ,centerY,centerZ  ,IA) );
 
-		real_t C = 0.5 * (h_UOld(centerX-1,centerY,centerZ  ,IZ) +
-				  h_UOld(centerX  ,centerY,centerZ  ,IZ) );
+		real_t C = 0.5 * (h_UOld(centerX-1,centerY,centerZ  ,IC) +
+				  h_UOld(centerX  ,centerY,centerZ  ,IC) );
 
 		Exyz[IY][di][dk] = w*A-u*C;
 		
@@ -1935,11 +1934,11 @@ namespace hydroSimu {
 				   h_Q(centerX,centerY  ,centerZ-1,IW) +
 				   h_Q(centerX,centerY  ,centerZ  ,IW) );
 
-		real_t B = 0.5 * (h_UOld(centerX,centerY  ,centerZ-1,IY) +
-				  h_UOld(centerX,centerY  ,centerZ  ,IY) );
+		real_t B = 0.5 * (h_UOld(centerX,centerY  ,centerZ-1,IB) +
+				  h_UOld(centerX,centerY  ,centerZ  ,IB) );
 
-		real_t C = 0.5 * (h_UOld(centerX,centerY-1,centerZ  ,IZ) +
-				  h_UOld(centerX,centerY  ,centerZ  ,IZ) );
+		real_t C = 0.5 * (h_UOld(centerX,centerY-1,centerZ  ,IC) +
+				  h_UOld(centerX,centerY  ,centerZ  ,IC) );
 	    
 		Exyz[IX][dj][dk] = v*C-w*B;
 		
@@ -1968,11 +1967,11 @@ namespace hydroSimu {
 				   h_Q(centerX  ,centerY,centerZ-1,IW) +
 				   h_Q(centerX  ,centerY,centerZ  ,IW) );
 		
-		real_t A = 0.5 * (h_UOld(centerX  ,centerY,centerZ-1,IX) + 
-				  h_UOld(centerX  ,centerY,centerZ  ,IX) );
+		real_t A = 0.5 * (h_UOld(centerX  ,centerY,centerZ-1,IA) + 
+				  h_UOld(centerX  ,centerY,centerZ  ,IA) );
 
-		real_t C = 0.5 * (h_UOld(centerX-1,centerY,centerZ  ,IZ) +
-				  h_UOld(centerX  ,centerY,centerZ  ,IZ) );
+		real_t C = 0.5 * (h_UOld(centerX-1,centerY,centerZ  ,IC) +
+				  h_UOld(centerX  ,centerY,centerZ  ,IC) );
 
 		Exyz[IY][di][dk] = w*A-u*C;
 		
@@ -2178,11 +2177,11 @@ namespace hydroSimu {
 				   h_Q(centerX,centerY  ,centerZ-1,IW) +
 				   h_Q(centerX,centerY  ,centerZ  ,IW) );
 
-		real_t B = 0.5 * (h_UOld(centerX,centerY  ,centerZ-1,IY) +
-				  h_UOld(centerX,centerY  ,centerZ  ,IY) );
+		real_t B = 0.5 * (h_UOld(centerX,centerY  ,centerZ-1,IB) +
+				  h_UOld(centerX,centerY  ,centerZ  ,IB) );
 
-		real_t C = 0.5 * (h_UOld(centerX,centerY-1,centerZ  ,IZ) +
-				  h_UOld(centerX,centerY  ,centerZ  ,IZ) );
+		real_t C = 0.5 * (h_UOld(centerX,centerY-1,centerZ  ,IC) +
+				  h_UOld(centerX,centerY  ,centerZ  ,IC) );
 	    
 		Exyz[IX][dj][dk] = v*C-w*B;
 		
@@ -2211,11 +2210,11 @@ namespace hydroSimu {
 				   h_Q(centerX  ,centerY,centerZ-1,IW) +
 				   h_Q(centerX  ,centerY,centerZ  ,IW) );
 		
-		real_t A = 0.5 * (h_UOld(centerX  ,centerY,centerZ-1,IX) + 
-				  h_UOld(centerX  ,centerY,centerZ  ,IX) );
+		real_t A = 0.5 * (h_UOld(centerX  ,centerY,centerZ-1,IA) + 
+				  h_UOld(centerX  ,centerY,centerZ  ,IA) );
 
-		real_t C = 0.5 * (h_UOld(centerX-1,centerY,centerZ  ,IZ) +
-				  h_UOld(centerX  ,centerY,centerZ  ,IZ) );
+		real_t C = 0.5 * (h_UOld(centerX-1,centerY,centerZ  ,IC) +
+				  h_UOld(centerX  ,centerY,centerZ  ,IC) );
 
 		Exyz[IY][di][dk] = w*A-u*C;
 		
@@ -2421,11 +2420,11 @@ namespace hydroSimu {
 				   h_Q(centerX,centerY  ,centerZ-1,IW) +
 				   h_Q(centerX,centerY  ,centerZ  ,IW) );
 
-		real_t B = 0.5 * (h_UOld(centerX,centerY  ,centerZ-1,IY) +
-				  h_UOld(centerX,centerY  ,centerZ  ,IY) );
+		real_t B = 0.5 * (h_UOld(centerX,centerY  ,centerZ-1,IB) +
+				  h_UOld(centerX,centerY  ,centerZ  ,IB) );
 
-		real_t C = 0.5 * (h_UOld(centerX,centerY-1,centerZ  ,IZ) +
-				  h_UOld(centerX,centerY  ,centerZ  ,IZ) );
+		real_t C = 0.5 * (h_UOld(centerX,centerY-1,centerZ  ,IC) +
+				  h_UOld(centerX,centerY  ,centerZ  ,IC) );
 	    
 		Exyz[IX][dj][dk] = v*C-w*B;
 		
@@ -2454,11 +2453,11 @@ namespace hydroSimu {
 				   h_Q(centerX  ,centerY,centerZ-1,IW) +
 				   h_Q(centerX  ,centerY,centerZ  ,IW) );
 		
-		real_t A = 0.5 * (h_UOld(centerX  ,centerY,centerZ-1,IX) + 
-				  h_UOld(centerX  ,centerY,centerZ  ,IX) );
+		real_t A = 0.5 * (h_UOld(centerX  ,centerY,centerZ-1,IA) + 
+				  h_UOld(centerX  ,centerY,centerZ  ,IA) );
 
-		real_t C = 0.5 * (h_UOld(centerX-1,centerY,centerZ  ,IZ) +
-				  h_UOld(centerX  ,centerY,centerZ  ,IZ) );
+		real_t C = 0.5 * (h_UOld(centerX-1,centerY,centerZ  ,IC) +
+				  h_UOld(centerX  ,centerY,centerZ  ,IC) );
 
 		Exyz[IY][di][dk] = w*A-u*C;
 		
@@ -2522,7 +2521,6 @@ namespace hydroSimu {
 	    // in the following, the 3 first indexes in qEdge_emf array play
 	    // the same offset role as in the calling argument of cmp_mag_flx 
 	    // in DUMSES (if you see what I mean ?!)
-
 	    real_t emfZ = compute_emf<EMFZ>(qEdge_emfZ);
 	    real_t emfY = compute_emf<EMFY>(qEdge_emfY);
 	    real_t emfX = compute_emf<EMFX>(qEdge_emfX);
@@ -2551,10 +2549,59 @@ namespace hydroSimu {
 	} // end for j
       } // end for k
 	
+      TIMER_START(timerDissipative);
+      // update borders
+      real_t &nu  = _gParams.nu;
+      real_t &eta = _gParams.eta;
+      if (nu>0 or eta>0) {
+	make_all_boundaries(h_UNew);
+      }
+
+      if (eta>0) {
+	// update magnetic field with resistivity emf
+	compute_resistivity_emf_3d(h_UNew, h_emf);
+	compute_ct_update_3d      (h_UNew, h_emf, dt);
+
+	real_t &cIso = _gParams.cIso;
+	if (cIso<=0) { // non-isothermal simulations
+	  // compute energy flux
+	  compute_resistivity_energy_flux_3d(h_UNew, h_qm_x, h_qm_y, h_qm_z, dt);
+	  compute_hydro_update_energy       (h_UNew, h_qm_x, h_qm_y, h_qm_z);
+	}
+      }
+
+      // compute viscosity forces
+      if (nu>0) {
+	// re-use h_qm_x and h_qm_y
+	HostArray<real_t> &flux_x = h_qm_x;
+	HostArray<real_t> &flux_y = h_qm_y;
+	HostArray<real_t> &flux_z = h_qm_z;
+	  
+	compute_viscosity_flux(h_UNew, flux_x, flux_y, flux_z, dt);
+	compute_hydro_update  (h_UNew, flux_x, flux_y, flux_z);
+	  
+      } // end compute viscosity force / update
+      TIMER_STOP(timerDissipative);
+	
+      /*
+       * random forcing
+       */
+      if (randomForcingEnabled) {
+	  
+	real_t norm = compute_random_forcing_normalization(h_UNew, dt);
+	  
+	add_random_forcing(h_UNew, dt, norm);
+	  
+      }
+      if (randomForcingOrnsteinUhlenbeckEnabled) {
+	  
+	// add forcing field in real space
+	pForcingOrnsteinUhlenbeck->add_forcing_field(h_UNew, dt);
+	  
+      }
+
     } // end THREE_D
 
-
   } // MHDRunGodunov::godunov_unsplit_cpu_v0
-  //} // mhd_godunov_unsplit_cpu_v0_implem
 
 } // namespace hydroSimu

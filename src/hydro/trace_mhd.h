@@ -1353,6 +1353,7 @@ void trace_unsplit_mhd_3d_face(real_t q[NVAR_MHD],
     sA0 =                                     (u*dBy+B*duy-v*dAy-A*dvy)   *dtdy + (u*dCz+C*duz-w*dAz-A*dwz)   *dtdz;
     sB0 = (v*dAx+A*dvx-u*dBx-B*dux)   *dtdx +                                     (v*dCz+C*dvz-w*dBz-B*dwz)   *dtdz; 
     sC0 = (w*dAx+A*dwx-u*dCx-C*dux)   *dtdx + (w*dBy+B*dwy-v*dCy-C*dvy)   *dtdy;
+    
     if (Omega0>0) {
       real_t shear = -1.5 * Omega0 *xPos;
       sr0 = sr0 -  shear*dry*dtdy;

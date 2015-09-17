@@ -2393,9 +2393,9 @@ namespace hydroSimu {
 	      } // end for dj
 	    } // end for di
 
-	      // prepare bfNb : bf (face centered mag field) in the
-	      // 4-by-4-by-4 neighborhood
-	      // note that current cell (i,j,k) is in bfNb[1][1][1]
+	    // prepare bfNb : bf (face centered mag field) in the
+	    // 4-by-4-by-4 neighborhood
+	    // note that current cell (i,j,k) is in bfNb[1][1][1]
 	    for (int di=0; di<4; di++) {
 	      for (int dj=0; dj<4; dj++) {
 		for (int dk=0; dk<4; dk++) {
@@ -2405,7 +2405,7 @@ namespace hydroSimu {
 	      } // end for dj
 	    } // end for di
 	      
-	      // compute trace 3d finally !!! 
+	    // compute trace 3d finally !!! 
 	    trace_unsplit_mhd_3d(qNb, bfNb, c, dtdx, dtdy, dtdz, xPos, qm, qp, qEdge);
 
 	    // store qm, qp, qEdge : only what is really needed

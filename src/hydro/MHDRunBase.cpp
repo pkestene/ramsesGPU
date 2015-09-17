@@ -3074,6 +3074,8 @@ namespace hydroSimu {
 
       } // end beta > 0
 
+      //srand48(12);
+
       // call hydro initialization routine
       init_hydro_turbulence();
       
@@ -3081,9 +3083,9 @@ namespace hydroSimu {
       for (int k=ghostWidth; k<ksize-ghostWidth; k++)
 	for (int j=ghostWidth; j<jsize-ghostWidth; j++)
 	  for (int i=ghostWidth; i<isize-ghostWidth; i++) {
-	    h_U(i,j,k,IBX) = Bx0;
-	    h_U(i,j,k,IBY) = By0;
-	    h_U(i,j,k,IBZ) = Bz0;
+	    h_U(i,j,k,IBX) = Bx0; //+ drand48()*0.01;
+	    h_U(i,j,k,IBY) = By0; //+ drand48()*0.01;
+	    h_U(i,j,k,IBZ) = Bz0; //+ drand48()*0.01;
 
 	    // update energy
 	    h_U(i,j,k,IP) += 0.5 * (Bx0*Bx0 + By0*By0 + Bz0*Bz0);
