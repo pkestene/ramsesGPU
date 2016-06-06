@@ -84,15 +84,16 @@ __device__ inline void swap_value_(real_riemann_t& a, real_riemann_t& b) {
  * the source term computation must be done outside !!!
 
  */
-__global__ void kernel_godunov_unsplit_mhd_2d_v0_old(const real_t * __restrict__ Uin, 
-						     real_t       *Uout,
-						     int pitch, 
-						     int imax, 
-						     int jmax,
-						     real_t dtdx, 
-						     real_t dtdy,
-						     real_t dt,
-						     bool gravityEnabled)
+__global__ void kernel_godunov_unsplit_mhd_2d_v0(const real_t * __restrict__ Uin, 
+						 const real_t * __restrict__ Q, 
+						 real_t       *Uout,
+						 int pitch, 
+						 int imax, 
+						 int jmax,
+						 real_t dtdx, 
+						 real_t dtdy,
+						 real_t dt,
+						 bool gravityEnabled)
 {
   // Block index
   const int bx = blockIdx.x;
@@ -151,28 +152,21 @@ __global__ void kernel_godunov_unsplit_mhd_2d_v0_old(const real_t * __restrict__
      j >= 0 and j < jmax-1)
     {
       
-      // Gather conservative variables
+      // Gather conservative and primitive variables
       int offset = elemOffset;
-      uIn[ID] = Uin[offset];  offset += arraySize;
-      uIn[IP] = Uin[offset];  offset += arraySize;
-      uIn[IU] = Uin[offset];  offset += arraySize;
-      uIn[IV] = Uin[offset];  offset += arraySize;
-      uIn[IW] = Uin[offset];  offset += arraySize;
-      uIn[IA] = Uin[offset];  offset += arraySize;
-      uIn[IB] = Uin[offset];  offset += arraySize;
-      uIn[IC] = Uin[offset];
+      uIn[ID] = Uin[offset]; q[tx][ty][ID] = Q[offset]; offset += arraySize;
+      uIn[IP] = Uin[offset]; q[tx][ty][IP] = Q[offset]; offset += arraySize;
+      uIn[IU] = Uin[offset]; q[tx][ty][IU] = Q[offset]; offset += arraySize;
+      uIn[IV] = Uin[offset]; q[tx][ty][IV] = Q[offset]; offset += arraySize;
+      uIn[IW] = Uin[offset]; q[tx][ty][IW] = Q[offset]; offset += arraySize;
+      uIn[IA] = Uin[offset]; q[tx][ty][IA] = Q[offset]; offset += arraySize;
+      uIn[IB] = Uin[offset]; q[tx][ty][IB] = Q[offset]; offset += arraySize;
+      uIn[IC] = Uin[offset]; q[tx][ty][IC] = Q[offset];
 
       // set bf (face-centered magnetic field components)
       bf[tx][ty][0] = uIn[IA];
       bf[tx][ty][1] = uIn[IB];
       bf[tx][ty][2] = uIn[IC];
-
-      // go to magnetic field components and get values from neighbors on the right
-      real_t magFieldNeighbors[3];
-      offset = elemOffset + 5 * arraySize;
-      magFieldNeighbors[IX] = Uin[offset+1    ];  offset += arraySize;
-      magFieldNeighbors[IY] = Uin[offset+pitch];
-      magFieldNeighbors[IZ] = ZERO_F;
 
       // copy input state into uOut that will become output state for update
       uOut[ID] = uIn[ID];
@@ -182,10 +176,7 @@ __global__ void kernel_godunov_unsplit_mhd_2d_v0_old(const real_t * __restrict__
       uOut[IW] = uIn[IW];
       uOut[IA] = uIn[IA];
       uOut[IB] = uIn[IB];
-      uOut[IC] = uIn[IC];
- 
-      // Convert to primitive variables
-      constoprim_mhd(uIn, magFieldNeighbors, q[tx][ty], c, dt);
+      uOut[IC] = uIn[IC];     
     }
   __syncthreads();
 
@@ -454,7 +445,7 @@ __global__ void kernel_godunov_unsplit_mhd_2d_v0_old(const real_t * __restrict__
     
     }
 
-} // kernel_godunov_unsplit_2d_mhd_v0_old
+} // kernel_godunov_unsplit_2d_mhd_v0
 
 
 #endif // GODUNOV_UNSPLIT_MHD_V0_CUH_
