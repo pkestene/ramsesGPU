@@ -32,7 +32,7 @@
 /*=======================================================================*/
 
 #include "RandomGen.h"
-#include <math.h>
+#include <cmath>
 #include <cstdlib>
 
 // static member declaration

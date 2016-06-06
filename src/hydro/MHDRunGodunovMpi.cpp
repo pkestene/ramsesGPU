@@ -30,6 +30,7 @@
 
 // include CUDA kernel when necessary
 #ifdef __CUDACC__
+#include "godunov_unsplit_mhd_v0.cuh"
 #include "godunov_unsplit_mhd.cuh"
 #include "shearingBox_utils.cuh"
 #endif // __CUDACC__

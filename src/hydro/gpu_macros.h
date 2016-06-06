@@ -10,7 +10,7 @@
 #define GPU_MACROS_H_
 
 #include <cmath>
-#include "real_type.h"
+//#include "real_type.h"
 
 #ifdef __CUDACC__
 #define __CONSTANT__ __constant__

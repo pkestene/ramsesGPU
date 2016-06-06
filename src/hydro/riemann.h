@@ -117,7 +117,7 @@ void riemann_approx(real_t qleft[NVAR], real_t qright[NVAR],
 	real_t scr = FMAX(spout-spin, gParams.smallc+FABS(spout+spin));
 	real_t frac = HALF_F * (ONE_F + (spout + spin)/scr);
 	//real_t frac = SATURATE();
-	if (isnan(frac))
+	if (ISNAN(frac))
 	  frac = ZERO_F;
 	else
 	  frac = SATURATE(frac);

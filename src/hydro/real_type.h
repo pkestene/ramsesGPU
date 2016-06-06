@@ -13,6 +13,14 @@
 #ifndef REAL_TYPE_H_
 #define REAL_TYPE_H_
 
+#ifdef __CUDACC__
+# include <math_functions.hpp>
+#endif
+
+#include <cmath>
+#include "gpu_macros.h"
+
+
 /**
  * \typedef real_t (alias to float or double)
  */
@@ -45,7 +53,18 @@ typedef real_t real_riemann_t;
 #define SQRT(x) sqrt(x)
 #define FABS(x) fabs(x)
 #define COPYSIGN(x,y) copysign(x,y)
-#define ISNAN(x) isnan(x)
+
+// #if __cplusplus < 201103L
+// # define ISNAN(x) isnan(x)
+// #else
+// # define ISNAN(x) std::isnan(x)
+// #endif
+
+// #ifdef __CUDACC__
+// # define ISNAN(x) isnan(x)
+// #endif
+static inline __DEVICE__ __HOST__ bool  ISNAN(double x) { return  x != x;} 
+
 #define FMOD(x,y) fmod(x,y)
 #define ZERO_F (0.0)
 #define HALF_F (0.5)
@@ -58,7 +77,19 @@ typedef real_t real_riemann_t;
 #define SQRT(x) sqrtf(x)
 #define FABS(x) fabsf(x)
 #define COPYSIGN(x,y) copysignf(x,y)
-#define ISNAN(x) isnanf(x)
+
+// #if __cplusplus < 201103L
+// # define ISNAN(x) isnanf(x)
+// #else
+// # define ISNAN(x) std::isnan(x)
+// #endif
+
+// #ifdef __CUDACC__
+// # define ISNAN(x) isnanf(x)
+// #endif
+
+static inline __DEVICE__ __HOST__ bool  ISNAN(float x) { return  x != x;} 
+
 #define FMOD(x,y) fmodf(x,y)
 #define ZERO_F (0.0f)
 #define HALF_F (0.5f)

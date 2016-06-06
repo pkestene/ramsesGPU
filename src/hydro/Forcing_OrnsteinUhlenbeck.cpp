@@ -25,7 +25,7 @@
 
 // for I/O with numpy readable files
 #include <cnpy.h>
-#include <math.h> // for copysign
+#include <cmath> // for copysign
 
 #ifdef __CUDACC__
 #include "cutil_inline_runtime.h"
