@@ -2217,6 +2217,11 @@ namespace hydroSimu {
 	  real_riemann_t flux_y[NVAR_MHD];
 	  //real_t xPos = ::gParams.xMin + dx/2 + (i-ghostWidth)*dx;
 
+	  for (int iVar=0; iVar<NVAR_MHD; iVar++) {
+	    flux_x[iVar] = 0.0;
+	    flux_y[iVar] = 0.0;
+	  }
+
 	  /*
 	   * Solve Riemann problem at X-interfaces and compute
 	   * X-fluxes
@@ -2471,7 +2476,13 @@ namespace hydroSimu {
 	    real_riemann_t flux_y[NVAR_MHD];
 	    real_riemann_t flux_z[NVAR_MHD];
 	    //real_t xPos = ::gParams.xMin + dx/2 + (i-ghostWidth)*dx;
-			
+
+	    for (int iVar=0; iVar<NVAR_MHD; iVar++) {
+	      flux_x[iVar] = 0.0;
+	      flux_y[iVar] = 0.0;
+	      flux_z[iVar] = 0.0;
+	    }
+
 	    /*
 	     * Solve Riemann problem at X-interfaces and compute
 	     * X-fluxes
@@ -3043,7 +3054,11 @@ namespace hydroSimu {
 	  real_riemann_t flux_y[NVAR_MHD];
 	  //real_t xPos = ::gParams.xMin + dx/2 + (i-ghostWidth)*dx;
  
-	
+	  for (int iVar=0; iVar<NVAR_MHD; iVar++) {
+	    flux_x[iVar] = 0.0;
+	    flux_y[iVar] = 0.0;
+	  }
+	    
 	  /*
 	   * Solve Riemann problem at X-interfaces and compute
 	   * X-fluxes
@@ -3578,6 +3593,12 @@ namespace hydroSimu {
 	    real_riemann_t flux_y[NVAR_MHD];
 	    real_riemann_t flux_z[NVAR_MHD];
 	    //real_t xPos = ::gParams.xMin + dx/2 + (i-ghostWidth)*dx;
+
+	    for (int iVar=0; iVar<NVAR_MHD; iVar++) {
+	      flux_x[iVar] = 0.0;
+	      flux_y[iVar] = 0.0;
+	      flux_z[iVar] = 0.0;
+	    }
 
 	    /*
 	     * Solve Riemann problem at X-interfaces and compute
@@ -4575,7 +4596,12 @@ namespace hydroSimu {
 	  real_riemann_t flux_x[NVAR_MHD];
 	  real_riemann_t flux_y[NVAR_MHD];
 	  real_t xPos = ::gParams.xMin + dx/2 + (i-ghostWidth)*dx;
-	
+
+	  for (int iVar=0; iVar<NVAR_MHD; iVar++) {
+	    flux_x[iVar] = 0.0;
+	    flux_y[iVar] = 0.0;
+	  }
+
 	  /*
 	   * Solve Riemann problem at X-interfaces and compute
 	   * X-fluxes
@@ -5208,6 +5234,12 @@ namespace hydroSimu {
 	    real_riemann_t flux_y[NVAR_MHD];
 	    real_riemann_t flux_z[NVAR_MHD];
 	    real_t xPos = ::gParams.xMin + dx/2 + (i-ghostWidth)*dx;
+
+	    for (int iVar=0; iVar<NVAR_MHD; iVar++) {
+	      flux_x[iVar] = 0.0;
+	      flux_y[iVar] = 0.0;
+	      flux_z[iVar] = 0.0;
+	    }
 
 	    /*
 	     * Solve Riemann problem at X-interfaces and compute

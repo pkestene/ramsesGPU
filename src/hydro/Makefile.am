@@ -173,6 +173,10 @@ HYDRO_SRC += \
 	HydroRunGodunovMpi.cpp \
 	MHDRunGodunovMpi.h \
 	MHDRunGodunovMpi.cpp \
+	mhd_godunov_mpi_unsplit_cpu_v0.cpp \
+	mhd_godunov_mpi_unsplit_cpu_v1.cpp \
+	mhd_godunov_mpi_unsplit_cpu_v2.cpp \
+	mhd_godunov_mpi_unsplit_cpu_v3.cpp \
 	HydroRunGodunovZslabMpi.h \
 	HydroRunGodunovZslabMpi.cpp \
 	MHDRunGodunovZslabMpi.h \

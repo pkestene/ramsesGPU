@@ -109,6 +109,10 @@ namespace hydroSimu {
     void godunov_unsplit_gpu(DeviceArray<real_t>& d_UOld, 
 			     DeviceArray<real_t>& d_UNew,
 			     real_t dt, int nStep);
+
+    void godunov_unsplit_gpu_old(DeviceArray<real_t>& d_UOld, 
+				 DeviceArray<real_t>& d_UNew,
+				 real_t dt, int nStep);
 #else
     //! Actual computation of the godunov integration using unsplit 
     //! scheme on CPU, two array are necessary to make ping-pong (h_UOld and
@@ -116,6 +120,44 @@ namespace hydroSimu {
     void godunov_unsplit_cpu(HostArray<real_t>& h_UOld, 
 			     HostArray<real_t>& h_UNew, 
 			     real_t dt, int nStep);
+
+    // void godunov_unsplit_cpu_old(HostArray<real_t>& h_UOld, 
+    // 				 HostArray<real_t>& h_UNew, 
+    // 				 real_t dt, int nStep);
+
+    //! unplitVersion = 0
+    //! memory footprint is very low
+    //! nothing is stored globally except h_Q
+    //! some redundancy in trace computation
+    void godunov_unsplit_cpu_v0(HostArray<real_t>& h_UOld, 
+				HostArray<real_t>& h_UNew, 
+				real_t dt, int nStep);
+
+    //! unplitVersion = 1
+    //! memory footprint is medium
+    //! reconstructed (trace) states are stored
+    //! then perform Riemann flux computation and update
+    void godunov_unsplit_cpu_v1(HostArray<real_t>& d_UOld, 
+				HostArray<real_t>& d_UNew, 
+				real_t dt, int nStep);
+
+    //! unplitVersion = 2
+    //! Nont implemented
+    void godunov_unsplit_cpu_v2(HostArray<real_t>& d_UOld, 
+				HostArray<real_t>& d_UNew, 
+				real_t dt, int nStep);
+
+    //! unplitVersion = 3
+    void godunov_unsplit_cpu_v3(HostArray<real_t>& d_UOld,
+				HostArray<real_t>& d_UNew,
+				real_t dt, int nStep);
+
+    //! unplitVersion = 4
+    void godunov_unsplit_cpu_v4(HostArray<real_t>& d_UOld,
+				HostArray<real_t>& d_UNew,
+				real_t dt, int nStep);
+
+
 #endif // __CUDAC__
 
     /*
