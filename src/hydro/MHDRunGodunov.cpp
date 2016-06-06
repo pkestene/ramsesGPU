@@ -681,7 +681,6 @@ namespace hydroSimu {
     if (dimType == TWO_D) {
 
       // 2D Godunov unsplit kernel
-      // 2D Godunov unsplit kernel
       dim3 dimBlock(UNSPLIT_BLOCK_DIMX_2D,
 		    UNSPLIT_BLOCK_DIMY_2D);
       
