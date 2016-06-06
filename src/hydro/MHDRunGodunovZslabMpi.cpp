@@ -1259,6 +1259,12 @@ namespace hydroSimu {
 	    //int iG = i + nx*myMpiPos[0];
 	    //real_t xPos = ::gParams.xMin + dx/2 + (iG-ghostWidth)*dx;
 
+	    for (int iVar=0; iVar<NVAR_MHD; iVar++) {
+	      flux_x[iVar] = 0.0;
+	      flux_y[iVar] = 0.0;
+	      flux_z[iVar] = 0.0;
+	    }
+
 	    /*
 	     * Solve Riemann problem at X-interfaces and compute
 	     * X-fluxes
@@ -2832,6 +2838,12 @@ namespace hydroSimu {
 	    real_riemann_t flux_z[NVAR_MHD];
 	    int      iG = i + nx*myMpiPos[0];
 	    real_t xPos = ::gParams.xMin + dx/2 + (iG-ghostWidth)*dx;
+
+	    for (int iVar=0; iVar<NVAR_MHD; iVar++) {
+	      flux_x[iVar] = 0.0;
+	      flux_y[iVar] = 0.0;
+	      flux_z[iVar] = 0.0;
+	    }
 
 	    /*
 	     * Solve Riemann problem at X-interfaces and compute

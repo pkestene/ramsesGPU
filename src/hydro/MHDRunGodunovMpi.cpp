@@ -638,6 +638,45 @@ namespace hydroSimu {
      */
     make_all_boundaries(d_UOld);
 
+    // easier for time integration later
+    d_UOld.copyTo(d_UNew);
+
+    // gravity term not implemented ?
+    if (dimType == THREE_D and gravityEnabled and (implementationVersion < 4) ) {
+      std::cerr << "Gravity is not implemented in versions 0 to 3 of 3D MHD.\n";
+      std::cerr << "Use implementationVersion=4 instead !\n";
+    }
+    
+    // inner domain integration
+    TIMER_START(timerGodunov);
+    
+    // convert conservative variables to primitive ones
+    convertToPrimitives(d_UOld.data(), dt);
+
+    if (implementationVersion == 0) {
+  
+      godunov_unsplit_gpu_v0(d_UOld, d_UNew, dt, nStep);
+  
+    } else if (implementationVersion == 1) {
+
+      godunov_unsplit_gpu_v1(d_UOld, d_UNew, dt, nStep);
+    
+    } else if (implementationVersion == 2) {
+    
+      godunov_unsplit_gpu_v2(d_UOld, d_UNew, dt, nStep);
+
+    } else if (implementationVersion == 3) {
+    
+      godunov_unsplit_gpu_v3(d_UOld, d_UNew, dt, nStep);
+
+    } else if (implementationVersion == 4) {
+    
+      godunov_unsplit_gpu_v4(d_UOld, d_UNew, dt, nStep);
+
+    } // end implementationVersion == 4
+
+    TIMER_STOP(timerGodunov);
+
   } // MHDRunGodunovMpi::godunov_unsplit_gpu
 
   // =======================================================
@@ -659,15 +698,15 @@ namespace hydroSimu {
 	
 	dim3 dimGrid(blocksFor(isize, UNSPLIT_BLOCK_INNER_DIMX_2D), 
 		     blocksFor(jsize, UNSPLIT_BLOCK_INNER_DIMY_2D));
-	kernel_godunov_unsplit_mhd_2d<<<dimGrid, dimBlock>>>(d_UOld.data(), 
-							     d_UNew.data(),
-							     d_UOld.pitch(), 
-							     d_UOld.dimx(), 
-							     d_UOld.dimy(), 
-							     dt / dx, 
-							     dt / dy,
-							     dt,
-							     gravityEnabled);
+	kernel_godunov_unsplit_mhd_2d_v0_old<<<dimGrid, dimBlock>>>(d_UOld.data(), 
+								    d_UNew.data(),
+								    d_UOld.pitch(), 
+								    d_UOld.dimx(), 
+								    d_UOld.dimy(), 
+								    dt / dx, 
+								    dt / dy,
+								    dt,
+								    gravityEnabled);
 	checkCudaErrorMpi("MHDRunGodunovMpi :: kernel_godunov_unsplit_mhd_2d error",myRank);
 
 	// gravity source term
@@ -1196,6 +1235,51 @@ namespace hydroSimu {
     make_all_boundaries(d_UNew);
 
   } // MHDRunGodunovMpi::godunov_unsplit_gpu_old
+
+  // =======================================================
+  // =======================================================
+  void MHDRunGodunovMpi::godunov_unsplit_gpu_v0(DeviceArray<real_t>& d_UOld, 
+						DeviceArray<real_t>& d_UNew,
+						real_t dt, int nStep)
+  {
+
+  } // MHDRunGodunovMpi::godunov_unsplit_gpu_v0
+
+  // =======================================================
+  // =======================================================
+  void MHDRunGodunovMpi::godunov_unsplit_gpu_v1(DeviceArray<real_t>& d_UOld, 
+						DeviceArray<real_t>& d_UNew,
+						real_t dt, int nStep)
+  {
+
+  } // MHDRunGodunovMpi::godunov_unsplit_gpu_v1
+  
+  // =======================================================
+  // =======================================================
+  void MHDRunGodunovMpi::godunov_unsplit_gpu_v2(DeviceArray<real_t>& d_UOld, 
+						DeviceArray<real_t>& d_UNew,
+						real_t dt, int nStep)
+  {
+
+  } // MHDRunGodunovMpi::godunov_unsplit_gpu_v2
+  
+  // =======================================================
+  // =======================================================
+  void MHDRunGodunovMpi::godunov_unsplit_gpu_v3(DeviceArray<real_t>& d_UOld, 
+						DeviceArray<real_t>& d_UNew,
+						real_t dt, int nStep)
+  {
+
+  } // MHDRunGodunovMpi::godunov_unsplit_gpu_v3
+
+  // =======================================================
+  // =======================================================
+  void MHDRunGodunovMpi::godunov_unsplit_gpu_v4(DeviceArray<real_t>& d_UOld, 
+						DeviceArray<real_t>& d_UNew,
+						real_t dt, int nStep)
+  {
+
+  } // MHDRunGodunovMpi::godunov_unsplit_gpu_v4
 
 #else // CPU version
 

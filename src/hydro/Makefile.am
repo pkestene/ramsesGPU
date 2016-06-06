@@ -157,6 +157,9 @@ HYDRO_SRC = \
 	MHDRunGodunov.h \
 	MHDRunGodunov.cpp \
 	mhd_godunov_unsplit_cpu_v0.cpp \
+	mhd_godunov_unsplit_cpu_v1.cpp \
+	mhd_godunov_unsplit_cpu_v2.cpp \
+	mhd_godunov_unsplit_cpu_v3.cpp \
 	shearBorderUtils.h \
 	HydroRunGodunovZslab.h \
 	HydroRunGodunovZslab.cpp \
