@@ -53,10 +53,12 @@ endif
 
 INIReaderTest_SOURCES = inih/INIReaderTest.cpp
 INIReaderTest_LDFLAGS = libIniConfig.la
+INIReaderTest_DEPENDENCIES = libIniConfig.la
 
 ConfigMapTest_SOURCES = ConfigMapTest.cpp
 ConfigMapTest_CPPFLAGS =
 ConfigMapTest_LDFLAGS = libIniConfig.la
+ConfigMapTest_DEPENDENCIES = libIniConfig.la
 
 if USE_CUDA
 nodist_ConfigMapTestGpu_SOURCES = ConfigMapTest.cu
@@ -64,4 +66,6 @@ nodist_ConfigMapTestGpu_SOURCES = ConfigMapTest.cu
 nodist_EXTRA_ConfigMapTestGpu_SOURCES = dummy.cxx
 ConfigMapTestGpu_CPPFLAGS = $(CUDA_CFLAGS) 
 ConfigMapTestGpu_LDFLAGS  = $(CUDA_LIBS) libIniConfigGpu.la
+ConfigMapTestGpu_DEPENDENCIES = libIniConfigGpu.la
+
 endif
