@@ -51,4 +51,5 @@ bin_PROGRAMS = PapiInfoTest
 PapiInfoTest_SOURCES = PapiInfoTest.cpp
 PapiInfoTest_CPPFLAGS = $(PAPI_CPPFLAGS)
 PapiInfoTest_LDFLAGS = libMonitoring.la $(PAPI_LDFLAGS)
+PapiInfoTest_DEPENDENCIES = libMonitoring.la
 endif

@@ -22,4 +22,5 @@ bin_PROGRAMS = cnpy_example
 cnpy_example_SOURCES = cnpy_example.cpp
 cnpy_example_CPPFLAGS =
 cnpy_example_LDFLAGS = libCNpy.la
+cnpy_example_DEPENDENCIES = libCNpy.la
 

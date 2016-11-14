@@ -57,7 +57,7 @@ FORCE:
 MAINTAINERCLEANFILES = $(srcdir)/Makefile.in 
 
 AUTOMAKE_OPTIONS = subdir-objects
-SUBDIRS = hydro utils .
+SUBDIRS = utils hydro .
 # if ENABLE_QTGUI
 # SUBDIRS += ./qtGui/qtHelloWorld	
 # endif
