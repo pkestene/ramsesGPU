@@ -1373,6 +1373,7 @@ namespace hydroSimu {
    *
    *
    * \sa http://www.astro.virginia.edu/VITA/ATHENA/ot.html
+   * \sa http://www.astro.princeton.edu/~jstone/Athena/tests/orszag-tang/pagesource.html
    */
   void MHDRunBase::init_Orszag_Tang()
   {
