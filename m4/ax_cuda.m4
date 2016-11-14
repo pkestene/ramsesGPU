@@ -92,6 +92,11 @@ then
               libdir=lib64
            fi
 	fi
+	if test "x$host_cpu" = xpowerpc64le ; then
+	   if test "x$NVCC_VERSION" \> "x2.2" ; then
+              libdir=lib64
+           fi
+	fi
 
 	# set CUDA flags
 	if test -n "$cuda_home_path"
