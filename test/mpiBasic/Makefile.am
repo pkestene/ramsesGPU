@@ -11,19 +11,22 @@ bin_PROGRAMS =
 # Some MPI test programs
 if USE_MPI
 bin_PROGRAMS += \
-	testMpiHello \
 	testMpiTopology_2D_C_API \
 	testMpiTopology_3D_C_API \
-	testMpiTopology_2D_Cpp_API \
-	testMpiTopology_3D_Cpp_API \
 	testMpiHelloGlobalSession \
 	testMpiTopology_2D
 
-testMpiHello_SOURCES = testMpiHello.cpp
+# Don't try to build example with MPI cpp API (deprecated)
+#	testMpiHello
+#	testMpiTopology_2D_Cpp_API
+#	testMpiTopology_3D_Cpp_API
+
+
+#testMpiHello_SOURCES = testMpiHello.cpp
 testMpiTopology_2D_C_API_SOURCES = testMpiTopology_2D_C_API.cpp
 testMpiTopology_3D_C_API_SOURCES = testMpiTopology_3D_C_API.cpp
-testMpiTopology_2D_Cpp_API_SOURCES = testMpiTopology_2D_Cpp_API.cpp
-testMpiTopology_3D_Cpp_API_SOURCES = testMpiTopology_3D_Cpp_API.cpp
+#testMpiTopology_2D_Cpp_API_SOURCES = testMpiTopology_2D_Cpp_API.cpp
+#testMpiTopology_3D_Cpp_API_SOURCES = testMpiTopology_3D_Cpp_API.cpp
 
 testMpiHelloGlobalSession_SOURCES  = testMpiHelloGlobalSession.cpp
 testMpiHelloGlobalSession_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/src/utils/mpiUtils
