@@ -14,8 +14,9 @@
 #ifndef POSITIVE_SCHEME_H_
 #define POSITIVE_SCHEME_H_
 
+#include <stdlib.h>
+#include <math.h>
 #include "constants.h"
-#include "stdlib.h"
 
 template <class T> const T max ( const T a, const T b ) {
   return (b<a)?a:b;
