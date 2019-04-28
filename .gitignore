@@ -21,3 +21,4 @@ build_*
 
 # other
 memory_footprint.pyc
+.ccls-cache
