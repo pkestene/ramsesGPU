@@ -65,7 +65,7 @@ AC_PATH_PROG(svnversioncommand, svnversion)
 # NOTICE : here we don't need to worry about language
 # configure script forces the use of variable LANGUAGE=C
 #
-if test "X$svnversioncommand" = "X" || test `$svnversioncommand -n $srcdir` = "exported"; then
+if test "X$svnversioncommand" = "X" || test "`$svnversioncommand -n $srcdir`" = "exported"; then
    MYSVNVERSION="if test ! -f svn_dist_version; then echo -n 'Unknow version (sources obtained for svn export)' ; else cat svn_dist_version; fi"
 else
    # we need an absolute path here since srcdir is relative to top build directory
@@ -77,7 +77,7 @@ AC_SUBST(SVN_REVISION)
 
 # the conditional "HAVE_SVN_WC" will be used in src/Makefile.am to make sure
 # the target appears in Makefile only if we are building a Subversion working copy. 
-AM_CONDITIONAL(HAVE_SVN_WC, test "X$svnversioncommand" != "X" && test `$svnversioncommand -n $srcdir` != "exported")
+AM_CONDITIONAL(HAVE_SVN_WC, test "X$svnversioncommand" != "X" && test "`$svnversioncommand -n $srcdir`" != "exported")
 
 AC_SUBST([MYSVNVERSION])
 
