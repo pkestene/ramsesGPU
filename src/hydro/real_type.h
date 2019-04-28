@@ -14,7 +14,7 @@
 #define REAL_TYPE_H_
 
 #ifdef __CUDACC__
-# include <math_functions.hpp>
+//#include <math_functions.hpp>
 #endif
 
 #include <cmath>
