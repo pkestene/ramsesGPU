@@ -124,11 +124,15 @@ then
 	CPPFLAGS="$CPPFLAGS $CUDA_CFLAGS"
 	LIBS="$LIBS $CUDA_LIBS"
 
-	AC_LANG_PUSH(C)
+	AC_LANG_PUSH([C])
 	AC_MSG_CHECKING([for Cuda headers])
-	AC_COMPILE_IFELSE(
+        ac_compile='$NVCC -c $CFLAGS conftest.$ac_ext >&5'
+        AC_COMPILE_IFELSE(
 	[
-		AC_LANG_PROGRAM([@%:@include <cuda.h>], [])
+		AC_LANG_PROGRAM([[
+                #include <cuda.h>
+                #include <cuda_runtime.h>
+                ]],[[void* ptr = 0;]])
 	],
 	[
 		have_cuda_headers="yes"
@@ -140,22 +144,13 @@ then
 	])
 
 	AC_MSG_CHECKING([for Cuda libraries])
+        ac_link='$NVCC -o conftest$ac_exeext $CFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 	AC_LINK_IFELSE(
 	[
-		AC_LANG_PROGRAM([@%:@include <cuda.h>],
-		[
-			CUmodule cuModule;
-			cuModuleLoad(&cuModule, "myModule.cubin");
-			CUdeviceptr devPtr;
-			CUfunction cuFunction;
-			unsigned pitch, width = 250, height = 500;
-			cuMemAllocPitch(&devPtr, &pitch,width * sizeof(float), height, 4);
-			cuModuleGetFunction(&cuFunction, cuModule, "myKernel");
-			cuFuncSetBlockShape(cuFunction, 512, 1, 1);
-			cuParamSeti(cuFunction, 0, devPtr);
-			cuParamSetSize(cuFunction, sizeof(devPtr));
-			cuLaunchGrid(cuFunction, 100, 1);
-		])
+		AC_LANG_PROGRAM([[
+                  #include <cuda.h>
+                  #include <cuda_runtime.h>
+                  ]],[[void* ptr = 0;cudaMalloc(&ptr, 1);]])
 	],
 	[
 		have_cuda_libs="yes"
