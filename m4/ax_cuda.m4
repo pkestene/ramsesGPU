@@ -90,17 +90,22 @@ then
 	if test "x$host_cpu" = xx86_64 ; then
            AX_COMPARE_VERSION([$NVCC_VERSION],[ge],[2.2],
            [
+              :
               libdir=lib64
            ],
            [
+              :
            ])
 	fi
-	if test "x$host_cpu" = xpowerpc64le ; then
+
+        if test "x$host_cpu" = xpowerpc64le ; then
            AX_COMPARE_VERSION([$NVCC_VERSION],[ge],[2.2],
            [
+              :
               libdir=lib64
            ],
            [
+              :
            ])
 	fi
 
