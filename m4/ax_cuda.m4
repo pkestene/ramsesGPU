@@ -83,19 +83,25 @@ then
 
 	# test if nvcc version is >= 2.3
 	NVCC_VERSION=`$NVCC --version | grep release | awk 'gsub(/,/, "") {print [$]5}'`
-	AC_MSG_RESULT([nvcc version : $NVCC_VERSION])
+	AC_MSG_RESULT([nvcc version : $NVCC_VERSION - $host_cpu])
 	
 	# test if architecture is 64 bits and NVCC version >= 2.3
         libdir=lib
 	if test "x$host_cpu" = xx86_64 ; then
-	   if test "x$NVCC_VERSION" \> "x2.2" ; then
+           AX_COMPARE_VERSION([$NVCC_VERSION],[ge],[2.2],
+           [
               libdir=lib64
-           fi
+           ],
+           [
+           ])
 	fi
 	if test "x$host_cpu" = xpowerpc64le ; then
-	   if test "x$NVCC_VERSION" \> "x2.2" ; then
+           AX_COMPARE_VERSION([$NVCC_VERSION],[ge],[2.2],
+           [
               libdir=lib64
-           fi
+           ],
+           [
+           ])
 	fi
 
 	# set CUDA flags
