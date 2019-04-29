@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/42436229.svg)](https://zenodo.org/badge/latestdoi/42436229)
+
 ![mhd_mri 200x200](https://github.com/pkestene/ramsesGPU/blob/master/doc/mhd_mri_3d_gpu_Pm4_Re25000_double.gif)
 
 [Magneto Rotational Instability](https://en.wikipedia.org/wiki/Magnetorotational_instability) simulation in a shearing box setup (800x1600x800) made in 2013 on [TGCC/CURIE](http://www-hpc.cea.fr/fr/complexe/tgcc-curie.htm) using 256 GPUs. Here [Reynolds number](https://en.wikipedia.org/wiki/Reynolds_number) is 25000 and [Prandtl number](https://en.wikipedia.org/wiki/Prandtl_number) is 4.
