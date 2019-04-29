@@ -1,0 +1,7 @@
+add_subdirectory(cnpy)
+add_subdirectory(config)
+add_subdirectory(monitoring)
+if (USE_MPI)
+  add_subdirectory(mpiUtils)
+  #add_subdirectory(IO)
+endif()

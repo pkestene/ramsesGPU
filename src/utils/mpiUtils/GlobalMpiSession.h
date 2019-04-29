@@ -52,9 +52,6 @@
 
 #include "common_config.h"
 
-#include <mpi.h>
-
-
 namespace hydroSimu {
 
 /** \brief This class provides methods for initializing, finalizing, and
@@ -94,10 +91,10 @@ public:
   //! @name Static functions 
   //@{
 
-  /** \breif Return if MPI is initialized or not. */
+  /** \brief Return wether MPI was initialized. */
   static bool mpiIsInitialized();
 
-  /** \breif Return if MPI has already been finalized. */
+  /** \brief Return wether MPI was already finalized. */
   static bool mpiIsFinalized();
   
   /** \brief Returns the process rank relative to <tt>MPI_COMM_WORLD</tt>
@@ -120,7 +117,7 @@ public:
    * (but it must have been called somewhere).
    */
   static int getNProc();
-  
+
   //@}
   
 private:
@@ -132,7 +129,9 @@ private:
 
   static void initialize( std::ostream *out );
 
-};
+  static void justInTimeInitialize();
+
+}; // class GlobalMpiSession
 
 } // namespace hydroSimu
 
