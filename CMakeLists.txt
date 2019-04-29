@@ -148,6 +148,10 @@ add_subdirectory(src)
 # build test
 add_subdirectory(test)
 
+# Testing
+enable_testing()
+
+
 #-------------------------------------------------------------------#
 # Configuration summary
 #-------------------------------------------------------------------#
