@@ -33,6 +33,7 @@ endif()
 option (USE_DOUBLE "build with double precision" ON)
 option (USE_HDF5 "build HDF5 input/output support" OFF)
 option (USE_PNETCDF "build PNETCDF input/output support (MPI required)" OFF)
+option (USE_VTK "Build VTK from system library (not hand written VTK)" OFF)
 option (USE_MPI "Activate MPI build" OFF)
 option (USE_MPI_CUDA_AWARE_ENFORCED "Some MPI cuda-aware implementation are not well detected; use this to enforce" OFF)
 option (USE_FPE_DEBUG "build with floating point Nan tracing (signal handler)" OFF)
@@ -111,6 +112,34 @@ else (USE_MPI)
     message("You can use PnetCDF only if MPI is acticated !")
   endif(USE_PNETCDF)
 endif (USE_MPI)
+
+#####################################################################
+# VTK from system
+#####################################################################
+if (USE_VTK)
+  # the minimal component list is evaluated thanks to command:
+  # ${VTK_SOURCES}/Utilities/Maintenance/WhatModulesVTK.py ${VTK_SOURCES} ${MY_APP}
+  find_package(VTK COMPONENTS
+    vtkCommonCore
+    vtkCommonDataModel
+    vtkCommonExecutionModel
+    vtkCommonMath
+    vtkCommonMisc
+    vtkCommonSystem
+    vtkCommonTransforms
+    vtkIOCore
+    vtkIOGeometry
+    vtkIOImage
+    vtkIOLegacy
+    vtkIOXML
+    vtkIOXMLParser
+    vtkParallelCore
+    vtkParallelMPI
+    vtkIOParallelXML
+    )
+  include(${VTK_USE_FILE})
+  message("VTK version: ${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}")
+endif(USE_VTK)
 
 #####################################################################
 # PAPI for performance counters

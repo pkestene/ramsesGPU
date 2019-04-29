@@ -31,3 +31,14 @@ target_include_directories(testMpiHelloGlobalSession
 target_link_libraries(testMpiHelloGlobalSession
   PRIVATE
   mpiUtils)
+
+if (USE_VTK)
+  add_executable(testVtkXMLPImageDataWriter
+    testVtkXMLPImageDataWriter.cpp)
+  
+  if ("${VTK_MAJOR_VERSION}" GREATER 5)
+    target_compile_options(testVtkXMLPImageDataWriter PUBLIC -DHAVE_VTK6)
+  endif()
+
+  target_link_libraries(testVtkXMLPImageDataWriter ${VTK_LIBRARIES})
+endif()
