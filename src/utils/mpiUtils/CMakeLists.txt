@@ -14,4 +14,6 @@ target_sources (mpiUtils
   ${CMAKE_CURRENT_SOURCE_DIR}/MpiComm.h
   ${CMAKE_CURRENT_SOURCE_DIR}/MpiCommCart.h
   )
-
+target_compile_options    (mpiUtils PUBLIC ${MPI_CXX_COMPILE_FLAGS})
+target_include_directories(mpiUtils PUBLIC ${MPI_CXX_INCLUDE_PATH})
+target_link_libraries     (mpiUtils PUBLIC ${MPI_CXX_LIBRARIES})
