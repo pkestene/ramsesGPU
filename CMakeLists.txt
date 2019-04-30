@@ -16,20 +16,11 @@ include(initBuildType)
 # always export compile commands database
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)  
 
-# CUDA support
-option (USE_CUDA "build with CUDA support" OFF)
-if (USE_CUDA)
-  enable_language(CUDA)
-  
-  if(NOT DEFINED CMAKE_CUDA_STANDARD)
-    set(CMAKE_CUDA_STANDARD 11)
-    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
-  endif()
-endif()
 
 ####################################################################
 # other options
 ####################################################################
+option (USE_CUDA "build with CUDA support" OFF)
 option (USE_DOUBLE "build with double precision" ON)
 option (USE_HDF5 "build HDF5 input/output support" OFF)
 option (USE_PNETCDF "build PNETCDF input/output support (MPI required)" OFF)
@@ -41,6 +32,18 @@ option (USE_FPE_DEBUG "build with floating point Nan tracing (signal handler)" O
 #####################################################################
 # External packages: MPI, ...
 #####################################################################
+
+#####################################################################
+if (USE_CUDA)
+  enable_language(CUDA)
+
+  find_package(CUDA REQUIRED)
+
+  if(NOT DEFINED CMAKE_CUDA_STANDARD)
+    set(CMAKE_CUDA_STANDARD 11)
+    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+  endif()
+endif()
 
 #####################################################################
 find_package(MPI)
@@ -149,6 +152,14 @@ if (NOT PAPI_FOUND)
   set(PAPI_INCLUDE_DIR "")
   set(PAPI_LIBRARY "")
 endif(NOT PAPI_FOUND)
+
+#####################################################################
+# FFTW / CUFFT
+#####################################################################
+find_package(FFTW)
+if (FFTW_FOUND)
+  message("FFTW found !")
+endif()
 
 #
 # common flags
