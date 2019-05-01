@@ -61,7 +61,22 @@ if (USE_MPI)
     message(STATUS "MPI LINK flags path: " ${MPI_CXX_LINK_FLAGS})
     message(STATUS "MPI libraries: " ${MPI_CXX_LIBRARIES})
     #include_directories(SYSTEM ${MPI_CXX_INCLUDE_PATH})
-    
+
+    #################################################################################################
+    # if CUDA is enabled we need to prevent flag "-pthread" to be passed
+    # to nvcc compiler
+    # this is probably done in a very recent version of cmake
+    # see https://gitlab.kitware.com/cmake/cmake/commit/e2d54e5c40c517698c856b6802b51e0c09d5dca6
+    #
+    # When this is consumed for compiling CUDA, use '-Xcompiler' to wrap '-pthread'.
+    ###string(REPLACE "-pthread" "$<$<COMPILE_LANGUAGE:CUDA>:SHELL:-Xcompiler >-pthread"
+    ###  _MPI_CXX_COMPILE_OPTIONS "${MPI_CXX_COMPILE_OPTIONS}")
+    string(REPLACE "-pthread" $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler >-pthread
+      _MPI_CXX_COMPILE_OPTIONS "${MPI_CXX_COMPILE_OPTIONS}")
+    set_property(TARGET MPI::MPI_CXX PROPERTY INTERFACE_COMPILE_OPTIONS "${_MPI_CXX_COMPILE_OPTIONS}")
+    unset(_MPI_CXX_COMPILE_OPTIONS)
+    #################################################################################################
+
     #set(CMAKE_EXE_LINKER_FLAGS ${MPI_CXX_LINK_FLAGS})
     find_program(OMPI_INFO
       NAMES ompi_info
