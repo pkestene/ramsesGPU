@@ -17,24 +17,17 @@ target_link_libraries     (testMpiTopology_3D_C_API PUBLIC MPI::MPI_CXX)
 add_executable(testMpiTopology_2D
   testMpiTopology_2D.cpp
   )
-target_compile_options    (testMpiTopology_2D PUBLIC ${MPI_CXX_COMPILE_FLAGS})
-target_include_directories(testMpiTopology_2D
-  PUBLIC
-  ${CMAKE_SOURCE_DIR}/src/utils/mpiUtils)
 target_link_libraries(testMpiTopology_2D
   PRIVATE
-  mpiUtils)
+  RamsesGPU::mpiUtils)
 
 #######################################################
 add_executable(testMpiHelloGlobalSession
   testMpiHelloGlobalSession.cpp
   )
-target_include_directories(testMpiHelloGlobalSession 
-  PUBLIC 
-  ${CMAKE_SOURCE_DIR}/src/utils/mpiUtils)
 target_link_libraries(testMpiHelloGlobalSession
   PRIVATE
-  mpiUtils)
+  RamsesGPU::mpiUtils)
 
 if (USE_VTK)
   add_executable(testVtkXMLPImageDataWriter
