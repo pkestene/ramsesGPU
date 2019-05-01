@@ -66,9 +66,10 @@ function(CMAKE_CUDA_CONVERT_FLAGS)
         ${ARGN})
     
     foreach(EXISTING_TARGET IN LISTS CCF_INTERFACE_TARGET)
-        get_property(old_flags TARGET ${EXISTING_TARGET} PROPERTY INTERFACE_COMPILE_OPTIONS)
+        get_property(old_flags TARGET ${EXISTING_TARGET} PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
         _cuda_convert_flags(old_flags "${CCF_PROTECT_ONLY}")
-        set_property(TARGET ${EXISTING_TARGET} PROPERTY INTERFACE_COMPILE_OPTIONS "${old_flags}") 
+        set_property(TARGET ${EXISTING_TARGET} PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${old_flags}")
+        message("MERDE : ${old_flags}")
     endforeach()
 
     foreach(EXISTING_LIST IN LISTS CCF_LIST)
@@ -78,3 +79,15 @@ function(CMAKE_CUDA_CONVERT_FLAGS)
     endforeach()
 endfunction()
 
+function(CUDA_CONVERT_FLAGS EXISTING_TARGET)
+    get_property(old_flags TARGET ${EXISTING_TARGET} PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
+    if(NOT "${old_flags}" STREQUAL "")
+        string(REPLACE ";" "," CUDA_flags "${old_flags}")
+        set_property(TARGET ${EXISTING_TARGET} PROPERTY INTERFACE_INCLUDE_DIRECTORIES
+            "$<$<BUILD_INTERFACE:$<NOT:$<COMPILE_LANGUAGE:CUDA>>>:${old_flags}>$<$<BUILD_INTERFACE:$<COMPILE_LANGUAGE:CUDA>>:-Xcompiler=${CUDA_flags}>"
+            )
+    endif()
+    # debug
+    #get_property(new_flags TARGET ${EXISTING_TARGET} PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
+    #message("MERDE : ${new_flags}")
+endfunction()
