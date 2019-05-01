@@ -22,20 +22,29 @@ class ConfigMap : public INIReader
 {
 public:
   ConfigMap(std::string filename);
+  ConfigMap(char* &buffer, int buffer_size);
   ~ConfigMap();
 
   //! Get a floating point value from the map.
-  float getFloat(std::string section, std::string name, float default_value);
+  float getFloat(std::string section, std::string name, float default_value) const;
   
   //! Set a floating point value to a section/name.
   void setFloat(std::string section, std::string name, float value);
   
   //! Get a boolean value from the map.
-  bool  getBool (std::string section, std::string name, bool default_value);
+  bool  getBool (std::string section, std::string name, bool default_value) const;
 
   //! Set a boolean value to a section/name.
   void  setBool (std::string section, std::string name, bool value);
 
 }; // class ConfigMap
+
+/**
+ * Builds a ConfigMap object from the input parameter file.
+ *
+ * ConfigMap is return by value here.
+ */
+ConfigMap broadcast_parameters(std::string filename);
+
 
 #endif // CONFIG_MAP_H_
