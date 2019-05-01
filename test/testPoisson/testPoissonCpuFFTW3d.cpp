@@ -23,7 +23,7 @@
 #include <stdlib.h>
 
 #include <GetPot.h> // for command line arguments
-#include <cnpy.h>   // for data IO in numpy file format
+#include "cnpy/cnpy.h"   // for data IO in numpy file format
 
 
 #define SQR(x) ((x)*(x))

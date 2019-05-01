@@ -39,6 +39,7 @@ if (USE_CUDA)
   enable_language(CUDA)
 
   find_package(CUDA REQUIRED)
+  find_package(CUDAlibs REQUIRED COMPONENTS CUFFTW CUFFT )
 
   if(NOT DEFINED CMAKE_CUDA_STANDARD)
     set(CMAKE_CUDA_STANDARD 11)
