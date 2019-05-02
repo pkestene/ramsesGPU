@@ -1,19 +1,29 @@
-set (monitoring_SRCS
+add_library(monitoringCpu "")
+
+target_sources (monitoringCpu
+  PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/Timer.cpp
   )
 
 if (PAPI_FOUND)
-  list (APPEND monitoring_SRCS
+  target_sources (monitoringCpu
+    PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/PapiInfo.h
     ${CMAKE_CURRENT_SOURCE_DIR}/PapiInfo.cpp
     )
-endif()
+  target_include_directories(monitoringCpu
+    PUBLIC
+    ${PAPI_INCLUDE_DIR})
+  target_link_libraries(monitoringCpu
+    PUBLIC
+    ${PAPI_LIBRARY})
+endif(PAPI_FOUND)
     
 
-add_library(monitoringCpu SHARED
-  ${monitoring_SRCS}
-  )
+# alias library
+add_library(RamsesGPU::monitoring ALIAS monitoringCpu)
 
+# test executable
 if (PAPI_FOUND)
   add_executable(
     PapiInfoTest
@@ -24,6 +34,3 @@ if (PAPI_FOUND)
     ${PAPI_INCLUDE_DIR})
   target_link_libraries(PapiInfoTest monitoringCpu ${PAPI_LIBRARY})
 endif()
-
-# alias library
-add_library(RamsesGPU::monitoring ALIAS monitoringCpu)
