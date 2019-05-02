@@ -12,6 +12,7 @@ target_sources(config
 
 target_include_directories(config
   PUBLIC
+  ${CMAKE_SOURCE_DIR}/src
   ${CMAKE_SOURCE_DIR}/src/utils
   ${CMAKE_CURRENT_SOURCE_DIR}/inih ) 
 
