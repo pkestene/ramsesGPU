@@ -24,3 +24,6 @@ if (PAPI_FOUND)
     ${PAPI_INCLUDE_DIR})
   target_link_libraries(PapiInfoTest monitoringCpu ${PAPI_LIBRARY})
 endif()
+
+# alias library
+add_library(RamsesGPU::monitoring ALIAS monitoringCpu)

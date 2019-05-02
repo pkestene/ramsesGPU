@@ -20,7 +20,7 @@
 #include "gpu_macros.h"
 #include "Arrays.h"
 #include <iostream>
-#include <ConfigMap.h>
+#include "utils/config/ConfigMap.h"
 #include <string>
 #include <cctype> // for std::tolower
 #include <algorithm> // for std::transform
