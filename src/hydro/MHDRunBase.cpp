@@ -39,7 +39,7 @@
 
 #include "../utils/monitoring/date.h"
 #include "ostream_fmt.h"
-#include <cnpy.h>
+#include "utils/cnpy/cnpy.h"
 #include "RandomGen.h"
 #include "structureFunctions.h"
 

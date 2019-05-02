@@ -10,6 +10,7 @@ set(HYDRO_NO_MPI_SRC
   HydroRunGodunov.cpp
   HydroRunKT.cpp
   HydroRunRelaxingTVD.cpp
+  MHDRunBase.cpp
   MHDRunGodunov.cpp
   HydroRunGodunovZslab.cpp
   MHDRunGodunovZslab.cpp)
