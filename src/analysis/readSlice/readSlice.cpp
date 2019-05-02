@@ -15,7 +15,7 @@
 #include <cstdlib>
 #include <iostream>
 
-#include <cnpy.h>
+#include "utils/cnpy/cnpy.h"
 
 #include <hydro/Arrays.h>
 #include <hydro/real_type.h>
