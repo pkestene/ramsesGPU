@@ -20,11 +20,11 @@
 #define _CUTIL_INLINE_H_
 
 #include <cuda.h>
-#include <cutil.h>
-#include <cuda_runtime_api.h>
+#include "cutil.h"
+#include "cuda_runtime_api.h"
 
 // #include <cutil_inline_bankchecker.h>
-#include <cutil_inline_runtime.h>
+#include "cutil_inline_runtime.h"
 // #include <cutil_inline_drvapi.h>
 
 // inline void print_NVCC_min_spec(const char *sSDKsample, const char *sNVCCReq, const char *sDriverReq)

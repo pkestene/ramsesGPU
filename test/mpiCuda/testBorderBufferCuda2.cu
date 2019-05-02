@@ -11,10 +11,10 @@
 #include <iostream>
 #include <typeinfo>
 
-#include <common_types.h>
-#include <constants.h>
-#include <Arrays.h>
-#include <mpiBorderUtils.h>
+#include "hydro/common_types.h"
+#include "hydro/constants.h"
+#include "hydro/Arrays.h"
+#include "hydro/mpiBorderUtils.h"
 
 #include "../../src/utils/monitoring/CudaTimer.h"
 #include "../../src/utils/monitoring/measure_time.h"
