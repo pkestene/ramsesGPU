@@ -1,5 +1,7 @@
 add_subdirectory(utils)
+add_subdirectory(analysis)
 
+# not really useful
 if (USE_QT)
   add_subdirectory(qtGui)
 endif(USE_QT)
