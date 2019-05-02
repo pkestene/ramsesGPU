@@ -55,7 +55,7 @@ if (DEFINED PNETCDF_ROOT)
   list (APPEND PNETCDF_INCLUDE_DIRS "${PNETCDF_ROOT}/include")
   list (APPEND PNETCDF_LIBRARY_DIRS "${PNETCDF_ROOT}/lib")
   find_library (PNETCDF_LIBRARIES
-    NAMES libpnetcdf.a
+    NAMES pnetcdf
     HINTS ${PNETCDF_LIBRARY_DIRS}
     )
   # Get version string.
