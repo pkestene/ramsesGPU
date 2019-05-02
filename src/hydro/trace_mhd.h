@@ -1850,7 +1850,7 @@ void trace_unsplit_mhd_3d_face(real_t q[NVAR_MHD],
  *
  *
  */
-__DEVICE__ inline
+__HOST__ __DEVICE__ inline
 void trace_unsplit_mhd_3d_simpler(real_t q[NVAR_MHD],
 				  real_t dq[THREE_D][NVAR_MHD],
 				  real_t bfNb[THREE_D*2], /* 2 faces per direction*/

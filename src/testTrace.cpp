@@ -15,10 +15,10 @@
 #include "./hydro/trace_mhd.h"
 
 /** Parse command line / configuration parameter file */
-#include "GetPot.h"
-#include <ConfigMap.h>
+#include "hydro/GetPot.h"
+#include "utils/config/ConfigMap.h"
 
-#include <HydroParameters.h> 
+#include "hydro/HydroParameters.h" 
 
 /* some input parameter */
 
@@ -53,7 +53,9 @@ real_t dtdx = 0.013867197924410549;
 real_t dtdy = 0.013867197924410549;
 real_t dtdz = 0.013867197924410549;
 
-void testTrace_cpu(real_t (&qm)[3][NVAR_MHD], 
+// =========================================================
+// =========================================================
+void testTrace_cpu(real_t (&qm)[3][NVAR_MHD],
 		   real_t (&qp)[3][NVAR_MHD],
 		   real_t (&qEdge)[4][3][NVAR_MHD])
 {
@@ -64,7 +66,9 @@ void testTrace_cpu(real_t (&qm)[3][NVAR_MHD],
 
 }
 
-
+// =========================================================
+// =========================================================
+// =========================================================
 int main(int argc, char *argv[])
 {
 
