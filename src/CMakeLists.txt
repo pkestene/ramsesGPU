@@ -1,5 +1,33 @@
 add_subdirectory(utils)
 add_subdirectory(analysis)
+add_subdirectory(hydro)
+
+#
+# MAIN application
+#
+
+if(USE_MPI)
+   if (USE_CUDA)
+     add_executable(ramsesGPU_mpi_cuda "")
+     target_sources(ramsesGPU_mpi_cuda 
+       PUBLIC
+       euler_mpi_main.cpp)
+     target_include_directories(ramsesGPU_mpi_cuda
+       PUBLIC
+       ${CMAKE_SOURCE_DIR}/src)
+     target_link_libraries(ramsesGPU_mpi_cuda
+       PUBLIC
+       RamsesGPU::config
+       RamsesGPU::cnpy
+       RamsesGPU::hydro
+       RamsesGPU::monitoring
+       RamsesGPU::mpiUtils)
+     set_source_files_properties(euler_mpi_main.cpp PROPERTIES LANGUAGE CUDA)
+   endif(USE_CUDA)
+else(USE_MPI)
+  message("Do nothing for now...")
+endif(USE_MPI)
+
 
 # not really useful
 if (USE_QT)
