@@ -29,7 +29,8 @@ option (USE_VTK "Build VTK from system library (not hand written VTK)" OFF)
 option (USE_MPI "Activate MPI build" OFF)
 option (USE_MPI_CUDA_AWARE_ENFORCED "Some MPI cuda-aware implementation are not well detected; use this to enforce" OFF)
 option (USE_FPE_DEBUG "build with floating point Nan tracing (signal handler)" OFF)
-option (USE_QT "built some test demo gui application with Qt" OFF)
+option (USE_QT "build some test demo gui application with Qt" OFF)
+option (USE_GLUT "build some test demo gui application with GLUT" OFF)
 
 #####################################################################
 # External packages: MPI, ...
@@ -209,6 +210,18 @@ if (USE_QT)
   set(CMAKE_AUTOUIC ON)
 
 endif(USE_QT)
+
+#####################################################################
+# GLUT
+#####################################################################
+if (USE_GLUT)
+  
+  find_package(GLUT)
+  find_package(OpenGL)
+
+  message("GLUT found")
+
+endif(USE_GLUT)
 
 #
 # common flags
