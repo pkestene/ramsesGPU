@@ -14,8 +14,8 @@
 
 #include <mpi.h>
 
-#include <ConfigMap.h>
-#include <Arrays.h>
+#include "utils/config/ConfigMap.h"
+#include "hydro/Arrays.h"
 using hydroSimu::HostArray;
 
 /**

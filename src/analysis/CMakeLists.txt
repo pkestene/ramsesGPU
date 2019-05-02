@@ -1,6 +1,9 @@
 add_subdirectory(powerSpectrum)
 
-if (FFTW_MPI_LIB AND USE_PNETCDF)
+if (USE_MPI AND USE_PNETCDF)
   add_subdirectory(readSlice)
 endif()
 
+if (USE_MPI AND USE_PNETCDF AND NOT CUDA)
+  add_subdirectory(structureFunctions)
+endif()
