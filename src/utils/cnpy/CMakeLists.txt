@@ -1,9 +1,15 @@
-add_library(cnpy SHARED
+add_library(cnpy "")
+
+target_sources(cnpy
+  PUBLIC
   cnpy.cpp zlib/crc32.c)
+
 target_include_directories(cnpy
   PUBLIC
   ${CMAKE_SOURCE_DIR}
   ${CMAKE_SOURCE_DIR}/src/utils )
+
+set_target_properties(cnpy PROPERTIES LINKER_LANGUAGE CXX)
 
 add_library(RamsesGPU::cnpy ALIAS cnpy)
 
