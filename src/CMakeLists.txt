@@ -38,8 +38,8 @@ target_link_libraries(testTrace
   PRIVATE
   RamsesGPU::config)
 
+# warning: since source file gpu_macros and constants.cpp
+# have already been declared as CUDA file, we need to stick with it
 if (USE_CUDA)
   set_source_files_properties(testTrace.cpp PROPERTIES LANGUAGE CUDA)
-  set_source_files_properties(hydro/gpu_macros.cpp PROPERTIES LANGUAGE CUDA)
-  set_source_files_properties(hydro/constants.cpp PROPERTIES LANGUAGE CUDA)
 endif(USE_CUDA)
