@@ -15,6 +15,7 @@
 #include <iostream>
 #include <fstream>
 
+#include <mpi.h>
 #ifdef USE_FFTW3_MPI
 #include <fftw3-mpi.h>
 #endif /* USE_FFTW3_MPI */
