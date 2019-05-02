@@ -2,7 +2,8 @@ add_library(cnpy "")
 
 target_sources(cnpy
   PUBLIC
-  cnpy.cpp zlib/crc32.c)
+  ${CMAKE_CURRENT_SOURCE_DIR}/cnpy.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/zlib/crc32.c)
 
 target_include_directories(cnpy
   PUBLIC
