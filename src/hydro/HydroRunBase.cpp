@@ -31,9 +31,8 @@
 #include "turbulenceInit.h"
 #include "structureFunctions.h"
 
-#include "../utils/monitoring/date.h" // for current_date
-#include <cnpy.h>
-
+#include "utils/monitoring/date.h" // for current_date
+#include "utils/cnpy/cnpy.h"
 
 #include <iomanip> // for std::setprecision
 #include <limits> // for std::numeric_limits

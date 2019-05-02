@@ -633,7 +633,7 @@ void slope_unsplit_mhd_3d(real_t bfNeighbors[15],
    * face-centered magnetic field slopes
    */
   // 1D transverse TVD slopes for face-centered magnetic fields
-  real_t xslope_type = FMIN(::gParams.slope_type, 2);
+  real_t xslope_type = FMIN(::gParams.slope_type, 2.0);
   real_t dlft, drgt, dcen, dsgn, slop, dlim;
   {
     // Bx along direction Y     

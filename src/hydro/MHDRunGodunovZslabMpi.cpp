@@ -4842,7 +4842,7 @@ namespace hydroSimu {
 
     printf("Euler MHD godunov total  time             [MPI rank %3d] : %5.3f sec\n", myRank, timerTotal.elapsed());
     printf("Euler MHD godunov output time             [MPI rank %3d] : %5.3f sec (%5.2f %% of total time)\n", myRank, timerWriteOnDisk.elapsed(), timerWriteOnDisk.elapsed()/timerTotal.elapsed()*100.);
-    printf("Euler dissipative terms  time             [MPI rank %3d] : %5.3f sec (%5.2f %% of total time)\n", myRank, timerDissipative.elapsed(), timerDissipative.elapsed()/timerTotal.elapsed()*100.);
+    //printf("Euler dissipative terms  time             [MPI rank %3d] : %5.3f sec (%5.2f %% of total time)\n", myRank, timerDissipative.elapsed(), timerDissipative.elapsed()/timerTotal.elapsed()*100.);
     printf("History                  time             [MPI rank %3d] : %5.3f sec (%5.2f %% of total time)\n", myRank, timerHistory.elapsed(), timerHistory.elapsed()/timerTotal.elapsed()*100.);
 
     /*

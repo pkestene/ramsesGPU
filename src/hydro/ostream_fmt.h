@@ -11,7 +11,7 @@
 #ifndef OSTREAM_FMT_H_
 #define OSTREAM_FMT_H_
 
-#include <real_type.h>
+#include "real_type.h"
 #include <vector>
 typedef std::vector<real_t> crd_t;
 

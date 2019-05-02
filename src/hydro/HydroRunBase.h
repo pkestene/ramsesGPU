@@ -28,7 +28,7 @@
 #include "constants.h"
 #include <cmath>
 
-#include <ConfigMap.h>
+#include "utils/config/ConfigMap.h"
 #include <map>
 #include "Arrays.h"
 

@@ -22,7 +22,7 @@
  * $Id: HydroRunBaseMpi.cpp 3597 2014-11-04 17:34:47Z pkestene $
  */
 #include "make_boundary_base.h"
-#include <mpiBorderUtils.h>
+#include "mpiBorderUtils.h"
 
 #include "HydroRunBaseMpi.h"
 

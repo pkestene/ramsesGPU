@@ -25,6 +25,8 @@
 
 #include <unistd.h> // for "gethostname"
 
+#include "utils/mpiUtils/mpiEnums.h" // for DIR_X, ....
+
 namespace hydroSimu {
 
   ////////////////////////////////////////////////////////////////////////////////
@@ -141,29 +143,29 @@ namespace hydroSimu {
      */
 
     // X_MIN boundary
-    if (myMpiPos[DIR_X] == 0)
+    if (myMpiPos[MPI_TOPO_DIR_X] == 0)
       neighborsBC[X_MIN] = boundary_xmin;
 
     // X_MAX boundary
-    if (myMpiPos[DIR_X] == mx-1)
+    if (myMpiPos[MPI_TOPO_DIR_X] == mx-1)
       neighborsBC[X_MAX] = boundary_xmax;
 
     // Y_MIN boundary
-    if (myMpiPos[DIR_Y] == 0)
+    if (myMpiPos[MPI_TOPO_DIR_Y] == 0)
       neighborsBC[Y_MIN] = boundary_ymin;
 
     // Y_MAX boundary
-    if (myMpiPos[DIR_Y] == my-1)
+    if (myMpiPos[MPI_TOPO_DIR_Y] == my-1)
       neighborsBC[Y_MAX] = boundary_ymax;
 
     if (dimType == THREE_D) {
 
       // Z_MIN boundary
-      if (myMpiPos[DIR_Z] == 0)
+      if (myMpiPos[MPI_TOPO_DIR_Z] == 0)
 	neighborsBC[Z_MIN] = boundary_zmin;
       
       // Y_MAX boundary
-      if (myMpiPos[DIR_Z] == mz-1)
+      if (myMpiPos[MPI_TOPO_DIR_Z] == mz-1)
 	neighborsBC[Z_MAX] = boundary_zmax;
       
     } // end THREE_D

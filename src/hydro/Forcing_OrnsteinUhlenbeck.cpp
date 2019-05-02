@@ -24,7 +24,7 @@
 #include "Forcing_OrnsteinUhlenbeck.h"
 
 // for I/O with numpy readable files
-#include <cnpy.h>
+#include "utils/cnpy/cnpy.h"
 #include <cmath> // for copysign
 
 #ifdef __CUDACC__

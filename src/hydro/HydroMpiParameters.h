@@ -13,10 +13,10 @@
 #ifndef HYDRO_MPI_PARAMETERS_H_
 #define HYDRO_MPI_PARAMETERS_H_
 
-#include <HydroParameters.h>
+#include "HydroParameters.h"
 
-#include <MpiCommCart.h>
-#include <TestForException.h>
+#include "utils/mpiUtils/MpiCommCart.h"
+#include "utils/mpiUtils/TestForException.h"
 
 #include <vector>
 
