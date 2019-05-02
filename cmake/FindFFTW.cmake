@@ -57,6 +57,14 @@ if( FFTW_ROOT )
     NO_DEFAULT_PATH
   )
 
+  find_library(
+    FFTW_MPI_LIB
+    NAMES "fftw3_mpi"
+    PATHS ${FFTW_ROOT}
+    PATH_SUFFIXES "lib" "lib64"
+    NO_DEFAULT_PATH
+  )
+
 #  #find libs (single precision)
 #  find_library(
 #    FFTWF_LIB
@@ -107,12 +115,22 @@ else()
     FFTW_LIB
     NAMES "fftw3"
     PATHS ${PKG_FFTW_LIBRARY_DIRS} ${LIB_INSTALL_DIR}
-  )
+    )
   find_library(
     FFTW_THREADS_LIB
     NAMES "fftw3_threads"
     PATHS ${PKG_FFTW_LIBRARY_DIRS} ${LIB_INSTALL_DIR}
-  )
+    )
+  find_library(
+    FFTW_MPI_LIB
+    NAMES "fftw3_mpi"
+    PATHS ${PKG_FFTW_LIBRARY_DIRS} ${LIB_INSTALL_DIR}
+    )
+  # if(FFTW_MPI_LIB)
+  #   message("fftw3_mpi found")
+  # else()
+  #   message("fftw3_mpi not found")
+  # endif()
 
 #  #find libs (single precision)
 #  find_library(
@@ -171,5 +189,5 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(FFTW DEFAULT_MSG
                                   FFTW_INCLUDES FFTW_LIBRARIES)
 
-mark_as_advanced(FFTW_INCLUDES FFTW_LIBRARIES FFTW_LIB FFTWF_LIB FFTWL_LIB)
+mark_as_advanced(FFTW_INCLUDES FFTW_LIBRARIES FFTW_LIB FFTWF_LIB FFTWL_LIB FFTW_MPI_LIB)
 
