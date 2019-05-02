@@ -29,6 +29,7 @@ option (USE_VTK "Build VTK from system library (not hand written VTK)" OFF)
 option (USE_MPI "Activate MPI build" OFF)
 option (USE_MPI_CUDA_AWARE_ENFORCED "Some MPI cuda-aware implementation are not well detected; use this to enforce" OFF)
 option (USE_FPE_DEBUG "build with floating point Nan tracing (signal handler)" OFF)
+option (USE_QT "built some test demo gui application with Qt" OFF)
 
 #####################################################################
 # External packages: MPI, ...
@@ -180,8 +181,32 @@ endif(NOT PAPI_FOUND)
 #####################################################################
 find_package(FFTW)
 if (FFTW_FOUND)
-  message("FFTW found !")
+  message("FFTW found")
+else()
+  message("FFTW not found")
 endif()
+
+#####################################################################
+# QT
+#####################################################################
+if (USE_QT)
+  find_package(Qt5Widgets)
+  find_package(Qt5OpenGL)
+  find_package(OpenGL)
+  
+  if (Qt5Widgets_FOUND)
+    message("Qt5Widgets found - ${Qt5Widgets_VERSION_STRING}")
+  else()
+    message("Qt5Widgets not found ! Please turn off USE_QT or install Qt5")
+  endif()
+
+  # Instruct CMake to run moc automatically when needed
+  set(CMAKE_AUTOMOC ON)
+  
+  # Create code from a list of Qt designer ui files
+  set(CMAKE_AUTOUIC ON)
+
+endif(USE_QT)
 
 #
 # common flags

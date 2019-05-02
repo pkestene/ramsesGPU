@@ -1,5 +1,9 @@
 add_subdirectory(utils)
 
+if (USE_QT)
+  add_subdirectory(qtGui)
+endif(USE_QT)
+
 #
 # testRiemannHLLD
 #
