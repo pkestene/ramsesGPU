@@ -127,6 +127,8 @@ endif(USE_HDF5)
 #####################################################################
 if (USE_MPI)
   if (USE_PNETCDF)
+
+    # make sure to use Pnetcdf version >= 1.9 built as a shared library
     find_package(PNETCDF REQUIRED)
     if (PNETCDF_FOUND)
       add_compile_options(-DUSE_PNETCDF)
@@ -181,9 +183,9 @@ endif(NOT PAPI_FOUND)
 #####################################################################
 find_package(FFTW)
 if (FFTW_FOUND)
-  message("FFTW found")
+  message("fftw3 found")
 else()
-  message("FFTW not found")
+  message("fftw3 not found")
 endif()
 
 #####################################################################
@@ -193,7 +195,7 @@ if (USE_QT)
   find_package(Qt5Widgets)
   find_package(Qt5OpenGL)
   find_package(OpenGL)
-  
+
   if (Qt5Widgets_FOUND)
     message("Qt5Widgets found - ${Qt5Widgets_VERSION_STRING}")
   else()
@@ -249,9 +251,22 @@ message("  C++ Compiler : ${CMAKE_CXX_COMPILER_ID} "
                          "${CMAKE_CXX_COMPILER_VERSION} " 
                          "${CMAKE_CXX_COMPILER_WRAPPER}")
 message("    ${CMAKE_CXX_COMPILER}")
+if (USE_MPI)
+  message("  MPI enabled")
+else(USE_MPI)
+  message("  MPI not enabled")
+endif(USE_MPI)
 if (USE_CUDA)
   message("  CUDA Compiler      : ${CMAKE_CUDA_COMPILER}")
   message("  CUDA Compiler exec : ${CUDA_NVCC_EXECUTABLE}")
   message("  CUDA Compile flags : ${CUDA_NVCC_FLAGS}")
+else(USE_CUDA)
+  message("  CUDA not enabled")
 endif(USE_CUDA)
+if (HDF5_FOUND)
+  message("  HDF5 found version    : ${HDF5_VERSION}")
+endif(HDF5_FOUND)
+if (PNETCDF_FOUND)
+  message("  PNETCDF found version : ${PNETCDF_VERSION_STRING}")
+endif(PNETCDF_FOUND)
 message("")
