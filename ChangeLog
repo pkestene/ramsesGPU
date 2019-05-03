@@ -1,3 +1,7 @@
+2019-5-3 Pierre Kestener
+	* Version 1.5 : implement cmake build system (simpler to use and maintain than autotools); autotools still usable.
+2019-4-29 Pierre Kestener
+	* Version 1.4 : refresh autotools build system; compiling and running again on up-to-date systems
 2015-1-31 Pierre Kestener
 	* Version 1.3 : some refactoring in hydrodynamics schemes
 
