@@ -34,7 +34,7 @@
  * \param[out] qp         qp state (one per dimension)
  * \param[out] qEdge      q state on cell edges (qRT, qRB, qLT, qLB)
  */
-__DEVICE__ inline
+__DEVICE__ 
 void trace_unsplit_mhd_2d(real_t qNb[3][3][NVAR_MHD],
 			  real_t bfNb[4][4][3],
 			  real_t c, 
@@ -359,7 +359,7 @@ void trace_unsplit_mhd_2d(real_t qNb[3][3][NVAR_MHD],
  * \param[in]  locationId identify which cell face or edge is to be reconstructed
  * \param[out] qRecons    the reconstructed state
  */
-__DEVICE__ inline
+__DEVICE__ 
 void trace_unsplit_mhd_2d_face(real_t q[NVAR_MHD],
 			       real_t dq[2][NVAR_MHD],
 			       real_t bfNb[TWO_D*2],
@@ -608,7 +608,7 @@ void trace_unsplit_mhd_2d_face(real_t q[NVAR_MHD],
  * \param[in]  locationId identify which cell face or edge is to be reconstructed
  * \param[out] qRecons    the reconstructed state
  */
-__DEVICE__ inline
+__DEVICE__ 
 void trace_unsplit_mhd_2d_face2(real_t q[NVAR_MHD],
 				real_t dq[2][NVAR_MHD],
 				real_t bfNb[TWO_D*2],
@@ -803,7 +803,7 @@ void trace_unsplit_mhd_2d_face2(real_t q[NVAR_MHD],
  * \todo Simplify interface, we only need bfNb (face-centered magnetic
  * field neighborhood in a cross shaped stencil)
  */
-__DEVICE__ inline
+__DEVICE__ 
 void trace_unsplit_mhd_3d(real_t qNb[3][3][3][NVAR_MHD],
 			  real_t bfNb[4][4][4][3],
 			  real_t c, 
@@ -1415,7 +1415,7 @@ void trace_unsplit_mhd_3d(real_t qNb[3][3][3][NVAR_MHD],
  * \param[out] qRecons    the reconstructed state
  *
  */
-__DEVICE__ inline
+__DEVICE__ 
 void trace_unsplit_mhd_3d_face(real_t q[NVAR_MHD],
 			       real_t dq[3][NVAR_MHD],
 			       real_t bfNb[THREE_D*2],
@@ -1850,7 +1850,7 @@ void trace_unsplit_mhd_3d_face(real_t q[NVAR_MHD],
  *
  *
  */
-__HOST__ __DEVICE__ inline
+__HOST__ __DEVICE__ 
 void trace_unsplit_mhd_3d_simpler(real_t q[NVAR_MHD],
 				  real_t dq[THREE_D][NVAR_MHD],
 				  real_t bfNb[THREE_D*2], /* 2 faces per direction*/

@@ -63,7 +63,7 @@ typedef real_t real_riemann_t;
 // #ifdef __CUDACC__
 // # define ISNAN(x) isnan(x)
 // #endif
-static inline __DEVICE__ __HOST__ bool  ISNAN(double x) { return  x != x;} 
+static __DEVICE__ __HOST__ bool  ISNAN(double x) { return  x != x;} 
 
 #define FMOD(x,y) fmod(x,y)
 #define ZERO_F (0.0)
@@ -88,7 +88,7 @@ static inline __DEVICE__ __HOST__ bool  ISNAN(double x) { return  x != x;}
 // # define ISNAN(x) isnanf(x)
 // #endif
 
-static inline __DEVICE__ __HOST__ bool  ISNAN(float x) { return  x != x;} 
+static __DEVICE__ __HOST__ bool  ISNAN(float x) { return  x != x;} 
 
 #define FMOD(x,y) fmodf(x,y)
 #define ZERO_F (0.0f)

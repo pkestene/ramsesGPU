@@ -22,7 +22,7 @@
 #define __CONSTANT__
 #define __GLOBAL__
 #define __HOST__ 
-#define __DEVICE__
+#define __DEVICE__ inline
 #define SATURATE saturate_cpu
 #endif // __CUDACC__
 

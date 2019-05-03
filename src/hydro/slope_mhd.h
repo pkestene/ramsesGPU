@@ -21,7 +21,7 @@
 // =======================================================
 
 /* some dummy utility routines */
-__DEVICE__ inline
+__DEVICE__ 
 real_t FMAX9_(real_t a0, real_t a1, real_t a2, 
 	      real_t a3, real_t a4, real_t a5,
 	      real_t a6, real_t a7, real_t a8) 
@@ -39,7 +39,7 @@ real_t FMAX9_(real_t a0, real_t a1, real_t a2,
   return returnVal;
 } // FMAX9_
 
-__DEVICE__ inline
+__DEVICE__ 
 real_t FMIN9_(real_t a0, real_t a1, real_t a2, 
 	      real_t a3, real_t a4, real_t a5,
 	      real_t a6, real_t a7, real_t a8)
@@ -73,7 +73,7 @@ real_t FMIN9_(real_t a0, real_t a1, real_t a2,
  *
  * 
  */
-__DEVICE__ inline
+__DEVICE__ 
 void slope_unsplit_hydro_2d(real_t qNb[3][3][NVAR_MHD],
 			    real_t (&dq)[2][NVAR_MHD])
 {			
@@ -192,7 +192,7 @@ void slope_unsplit_hydro_2d(real_t qNb[3][3][NVAR_MHD],
  *
  * 
  */
-__DEVICE__ inline
+__DEVICE__ 
 void slope_unsplit_hydro_2d_simple(real_t q[NVAR_MHD],
 				   real_t qPlusX[NVAR_MHD], 
 				   real_t qMinusX[NVAR_MHD],
@@ -262,7 +262,7 @@ void slope_unsplit_hydro_2d_simple(real_t q[NVAR_MHD],
  * \note actually a 3x3x3 neighborhood is only needed for slope_type=3
  * 
  */
-__DEVICE__ inline
+__DEVICE__ 
 void slope_unsplit_hydro_3d(real_t qNb[3][3][3][NVAR_MHD],
 			    real_t (&dq)[3][NVAR_MHD])
 {			
@@ -432,7 +432,7 @@ void slope_unsplit_hydro_3d(real_t qNb[3][3][3][NVAR_MHD],
  * implementation version 3
  *
  */
-__DEVICE__ inline
+__DEVICE__ 
 void slope_unsplit_hydro_3d(real_t q       [NVAR_MHD], 
 			    real_t qPlusX  [NVAR_MHD], 
 			    real_t qMinusX [NVAR_MHD],
@@ -520,7 +520,7 @@ void slope_unsplit_hydro_3d(real_t q       [NVAR_MHD],
  * 
  * \param[out] dbf : reference to an array returning magnetic field slopes 
  */
-__DEVICE__ inline
+__DEVICE__ 
 void slope_unsplit_mhd_2d(real_t bfNeighbors[6],
 			  real_t (&dbf)[2][3])
 {			
@@ -594,7 +594,7 @@ void slope_unsplit_mhd_2d(real_t bfNeighbors[6],
  *
  * \note This routine is called inside trace_unsplit_mhd_3d
  */
-__DEVICE__ inline
+__DEVICE__
 void slope_unsplit_mhd_3d(real_t bfNeighbors[15],
 			  real_t (&dbf)[3][3])
 {			

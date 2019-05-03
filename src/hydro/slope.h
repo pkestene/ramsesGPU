@@ -147,7 +147,7 @@ void slope_unsplit_hydro_2d(real_t q[NVAR_2D],
 } // slope_unsplit_hydro_2d
 
 /* some dummy utility routines */
-__DEVICE__ 
+__DEVICE__
 real_t FMAX9(real_t a0, real_t a1, real_t a2, 
 	     real_t a3, real_t a4, real_t a5,
 	     real_t a6, real_t a7, real_t a8) 
@@ -165,7 +165,7 @@ real_t FMAX9(real_t a0, real_t a1, real_t a2,
   return returnVal;
 } // FMAX9
 
-__DEVICE__ 
+__DEVICE__
 real_t FMIN9(real_t a0, real_t a1, real_t a2, 
 	     real_t a3, real_t a4, real_t a5,
 	     real_t a6, real_t a7, real_t a8)

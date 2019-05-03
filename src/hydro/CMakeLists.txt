@@ -51,7 +51,6 @@ endif(USE_MPI)
 
 if(USE_CUDA)
   foreach(file ${HYDRO_SRC})
-    #message("KK ${file}")
     set_source_files_properties(${file} PROPERTIES LANGUAGE CUDA)
   endforeach()
 endif(USE_CUDA)
@@ -76,21 +75,30 @@ endif(USE_HDF5)
 
 # TODO HDF5 parallel
 
+if (USE_PNETCDF)
+  target_compile_options(hydro
+    PUBLIC
+    -DUSE_PNETCDF)
+  target_include_directories(hydro
+    PUBLIC
+    ${PNETCDF_INCLUDE_DIRS})
+endif(USE_PNETCDF)
+
 if (USE_NETCDF4)  
   target_compile_options(hydro
     PUBLIC
     -DUSE_NETCDF4)
 endif(USE_NETCDF4)
 
-if (USE_PNETCDF)  
-  target_compile_options(hydro
-    PUBLIC
-    -DUSE_PNETCDF)
-endif(USE_PNETCDF)
-
 target_include_directories(hydro
   PUBLIC
   ${CMAKE_SOURCE_DIR}/src)
+
+if (USE_HDF5)
+  target_include_directories(hydro
+  PUBLIC
+  ${HDF5_INCLUDE_DIRS})
+endif(USE_HDF5)
 
 target_link_libraries(hydro
   PUBLIC
@@ -101,5 +109,17 @@ if(USE_MPI)
     PUBLIC
     RamsesGPU::mpiUtils)
 endif(USE_MPI)
+
+if (USE_HDF5)
+  target_link_libraries(hydro
+  PUBLIC
+  ${HDF5_LIBRARIES})
+endif(USE_HDF5)
+
+if (USE_PNETCDF)
+  target_link_libraries(hydro
+  PUBLIC
+  ${PNETCDF_LIBRARIES})
+endif(USE_PNETCDF)
 
 add_library(RamsesGPU::hydro ALIAS hydro)
