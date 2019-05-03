@@ -16,7 +16,7 @@
 #define __CONSTANT__ __constant__
 #define __GLOBAL__ __global__
 #define __HOST__ __host__
-#define __DEVICE__ __device__
+#define __DEVICE__ __device__ inline
 #define SATURATE __saturatef
 #else
 #define __CONSTANT__
