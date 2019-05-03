@@ -11,7 +11,7 @@
  */
 #include "structureFunctions.h"
 
-#include <cnpy.h>
+#include "utils/cnpy/cnpy.h"
 #include <limits> // for std::numeric_limits
 
 #include <cstdlib>

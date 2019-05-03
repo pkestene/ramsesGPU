@@ -17,7 +17,7 @@
 #include <fftw3-mpi.h>
 #endif /* USE_FFTW3_MPI */
 
-#include <ConfigMap.h>
+#include "utils/config/ConfigMap.h"
 
 #ifdef GEN_FBM
 #include <random> // c++11

@@ -29,12 +29,12 @@
 #include <ctime>
 
 // HYDRO solvers
-#include <HydroRunGodunov.h>
-#include <HydroRunRelaxingTVD.h>
-#include <HydroRunKT.h>
+#include "hydro/HydroRunGodunov.h"
+#include "hydro/HydroRunRelaxingTVD.h"
+#include "hydro/HydroRunKT.h"
 
 // MHD solver
-#include <MHDRunGodunov.h>
+#include "hydro/MHDRunGodunov.h"
 
 #include "utils/monitoring/date.h"
 
@@ -42,8 +42,8 @@
 //#include "build_date.h"
 
 /** Parse command line / configuration parameter file */
-#include "GetPot.h"
-#include <ConfigMap.h>
+#include "hydro/GetPot.h"
+#include "utils/config/ConfigMap.h"
 
 /* Graphics Magick C++ API to dump PNG image files */
 #ifdef USE_GM

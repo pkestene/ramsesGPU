@@ -14,7 +14,7 @@
 
 #include "pnetcdf_io.h"
 
-#include "constants.h"
+#include "hydro/constants.h"
 #include "common_sf.h" // for enum DataIndex
 
 // for Parallel-netCDF support

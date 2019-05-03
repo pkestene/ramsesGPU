@@ -3,7 +3,7 @@
 
 #include "pnetcdf_io.h"
 
-#include "constants.h"
+#include "hydro/constants.h"
 
 // for Parallel-netCDF support
 #ifdef USE_PNETCDF

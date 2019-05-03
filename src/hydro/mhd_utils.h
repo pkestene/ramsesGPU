@@ -60,7 +60,7 @@ real_riemann_t find_speed_fast(real_riemann_t qvar[NVAR_MHD])
  * bnormal, btransverse1, btransverse2
  *
  */
-inline __DEVICE__
+ __DEVICE__
 real_riemann_t find_speed_alfven(real_riemann_t qvar[NVAR_MHD])
 {
 
@@ -79,7 +79,7 @@ real_riemann_t find_speed_alfven(real_riemann_t qvar[NVAR_MHD])
  * \param[in] a normal magnetic field						\
  *
  */
-inline __DEVICE__
+ __DEVICE__
 real_riemann_t find_speed_alfven(real_riemann_t d, real_riemann_t a)
 {
 
@@ -103,7 +103,7 @@ real_riemann_t find_speed_alfven(real_riemann_t d, real_riemann_t a)
  * @param[out] ff flux vector
  *
  */
-inline __DEVICE__
+ __DEVICE__
 void find_mhd_flux(real_riemann_t qvar[NVAR_MHD], 
 		   real_riemann_t (&cvar)[NVAR_MHD], 
 		   real_riemann_t (&ff)[NVAR_MHD])
@@ -166,7 +166,7 @@ void find_mhd_flux(real_riemann_t qvar[NVAR_MHD],
  * and y.
  */
 template<DimensionType NDIM>
-inline __DEVICE__
+ __DEVICE__
 void fast_mhd_speed(real_riemann_t qState[NVAR_MHD], real_riemann_t (&fastMagSpeed)[3])
 {
 
@@ -239,7 +239,7 @@ void fast_mhd_speed(real_riemann_t qState[NVAR_MHD], real_riemann_t (&fastMagSpe
  * and y.
  */
 template<DimensionType NDIM>
-inline __DEVICE__
+ __DEVICE__
 void find_speed_info(real_riemann_t qState[NVAR_MHD], 
 		     real_riemann_t (&fastInfoSpeed)[3])
 {
@@ -292,7 +292,7 @@ void find_speed_info(real_riemann_t qState[NVAR_MHD],
  * \warning This routine uses gamma ! You need to set gamma to something very near to 1
  *
  */
-inline __DEVICE__
+ __DEVICE__
 real_riemann_t find_speed_info(real_riemann_t qState[NVAR_MHD])
 {
 

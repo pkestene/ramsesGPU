@@ -70,7 +70,7 @@ int main(int argc, char* argv[])
   myRank = worldComm.getRank();
   numTasks = worldComm.getNProc();
 
-  MPI::Get_processor_name(processor_name,namelength);
+  MPI_Get_processor_name(processor_name,&namelength);
   
   // print warning
   if ( myRank == 0 ) {

@@ -29,7 +29,7 @@
 #include "real_type.h"
 #include "constants.h" // for gParams
 #include "Arrays.h"
-#include <ConfigMap.h>
+#include "utils/config/ConfigMap.h"
 
 #ifdef __CUDACC__
 #include <curand_kernel.h> // for curandState type

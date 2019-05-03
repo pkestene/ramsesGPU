@@ -14,7 +14,7 @@
 
 #include "real_type.h"
 #include "Arrays.h"
-#include <ConfigMap.h>
+#include "utils/config/ConfigMap.h"
 #include "constants.h"
 
 namespace hydroSimu {

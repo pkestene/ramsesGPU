@@ -22,7 +22,7 @@
  * $Id: HydroRunBaseMpi.cpp 3597 2014-11-04 17:34:47Z pkestene $
  */
 #include "make_boundary_base.h"
-#include <mpiBorderUtils.h>
+#include "mpiBorderUtils.h"
 
 #include "HydroRunBaseMpi.h"
 
@@ -5625,7 +5625,7 @@ namespace hydroSimu {
      * write HDF5 file
      */
     // Create a new file using default properties.
-    hid_t file_id = H5Fcreate(hdf5FilenameFull.c_str(), H5F_ACC_TRUNC |  H5F_ACC_DEBUG, H5P_DEFAULT, H5P_DEFAULT);
+    hid_t file_id = H5Fcreate(hdf5FilenameFull.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
     // Create the data space for the dataset in memory and in file.
     hsize_t  dims_memory[3];

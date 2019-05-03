@@ -22,7 +22,7 @@ endif
 # libIniConfig parsed/compiled with g++
 libIniConfig_la_SOURCES = \
 	inih/ini.h \
-	inih/ini.c \
+	inih/ini.cpp \
 	inih/INIReader.h \
 	inih/INIReader.cpp \
 	ConfigMap.h \

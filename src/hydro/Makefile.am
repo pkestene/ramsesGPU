@@ -13,7 +13,7 @@ MAINTAINERCLEANFILES = $(srcdir)/Makefile.in
 AUTOMAKE_OPTIONS = subdir-objects
 
 # define some usefull preprocessor symbols
-CONFIG_CPPFLAGS = -I$(top_srcdir)/src/utils/config
+CONFIG_CPPFLAGS = -I$(top_srcdir)/src/utils/config -I$(top_srcdir)/src
 CNPY_CPPFLAGS   = -I$(top_srcdir)/src/utils/cnpy
 
 #VTK_CPPFLAGS=

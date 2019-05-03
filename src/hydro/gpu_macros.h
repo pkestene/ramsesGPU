@@ -16,13 +16,13 @@
 #define __CONSTANT__ __constant__
 #define __GLOBAL__ __global__
 #define __HOST__ __host__
-#define __DEVICE__ __device__
+#define __DEVICE__ __device__ inline
 #define SATURATE __saturatef
 #else
 #define __CONSTANT__
 #define __GLOBAL__
 #define __HOST__ 
-#define __DEVICE__
+#define __DEVICE__ inline
 #define SATURATE saturate_cpu
 #endif // __CUDACC__
 

@@ -12,8 +12,8 @@
 #ifndef PNETCDF_IO_H_
 #define PNETCDF_IO_H_
 
-#include <ConfigMap.h>
-#include <Arrays.h>
+#include "utils/config/ConfigMap.h"
+#include "hydro/Arrays.h"
 using hydroSimu::HostArray;
 
 /**

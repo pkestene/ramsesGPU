@@ -15,6 +15,7 @@ NVCCFLAGS  += --compiler-options -I$(srcdir)
 NVCCFLAGS  += $(addprefix --compiler-options , $(MPI_CXXFLAGS) )
 NVCCFLAGS  += --compiler-options -I$(top_srcdir)/src/utils/mpiUtils
 NVCCFLAGS  += --compiler-options -I$(top_srcdir)/src/hydro
+NVCCFLAGS  += --compiler-options -I$(top_srcdir)/src
 
 # ===================================================
 # PROGRAMS

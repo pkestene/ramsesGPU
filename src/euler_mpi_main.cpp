@@ -14,12 +14,12 @@
 #include <iostream>
 
 // HYDRO solver
-#include "HydroRunGodunovMpi.h"
+#include "hydro/HydroRunGodunovMpi.h"
 
 // MHD solver
-#include "MHDRunGodunovMpi.h"
+#include "hydro/MHDRunGodunovMpi.h"
 
-#include <GlobalMpiSession.h>
+#include "utils/mpiUtils/GlobalMpiSession.h"
 
 #include "utils/monitoring/date.h"
 
@@ -27,8 +27,8 @@
 //#include "build_date.h"
 
 /** Parse configuration parameter file */
-#include "GetPot.h"
-#include <ConfigMap.h>
+#include "hydro/GetPot.h"
+#include "utils/config/ConfigMap.h"
 
 // OpenMP
 #if _OPENMP

@@ -1,0 +1,4 @@
+macro CMAKE_CUDA_CONVERT_FLAGS is borrowed from project
+https://github.com/CLIUtils/modern_cmake
+
+We just rename the file to protect_nvcc_flags.cmake

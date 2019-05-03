@@ -21,6 +21,13 @@ INIReader::INIReader(std::string filename)
 
 // =======================================================
 // =======================================================
+INIReader::INIReader(char* &buffer, int buffer_size)
+{
+  _error = ini_parse_buffer(buffer, buffer_size, valueHandler, this);
+}
+
+// =======================================================
+// =======================================================
 INIReader::~INIReader()
 {
 }
@@ -34,10 +41,11 @@ int INIReader::ParseError()
 
 // =======================================================
 // =======================================================
-std::string INIReader::getString(std::string section, std::string name, std::string default_value)
+std::string INIReader::getString(std::string section, std::string name, std::string default_value) const
 {
-  std::string key = makeKey(section, name);
-  return _values.count(key) ? _values[key] : default_value;
+  const std::string key = makeKey(section, name);
+  // for const correctness use method at instead of operator[]
+  return _values.count(key) ? _values.at(key) : default_value;
 }
 
 // =======================================================
@@ -45,13 +53,12 @@ std::string INIReader::getString(std::string section, std::string name, std::str
 void INIReader::setString(std::string section, std::string name, std::string value)
 {
   std::string key = makeKey(section, name);
-  /*if ( _values.count(key) )*/
   _values[key] = value;
 }
 
 // =======================================================
 // =======================================================
-long INIReader::getInteger(std::string section, std::string name, long default_value)
+long INIReader::getInteger(std::string section, std::string name, long default_value) const
 {
   std::string valstr = getString(section, name, "");
   const char* value = valstr.c_str();

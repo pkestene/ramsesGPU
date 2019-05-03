@@ -21,14 +21,14 @@
 
 #include <mpi.h>
 
-#include <GetPot.h>
-#include <ConfigMap.h>
-#include <cnpy.h>
+#include "hydro/GetPot.h"
+#include "utils/config/ConfigMap.h"
+#include "utils/cnpy/cnpy.h"
 
-#include <Arrays.h>
+#include "hydro/Arrays.h"
 using hydroSimu::HostArray;
 
-#include "constants.h"
+#include "hydro/constants.h"
 
 #include "pnetcdf_io.h"
 

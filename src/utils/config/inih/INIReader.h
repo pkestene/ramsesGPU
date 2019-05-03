@@ -32,6 +32,7 @@ public:
    * about the parsing.
    */
   INIReader(std::string filename);
+  INIReader(char* &buffer, int buffer_size);
   virtual ~INIReader();
 
   /**
@@ -44,7 +45,7 @@ public:
    * Get a string value from INI file, returning default_value if not found.
    */
   virtual std::string getString(std::string section, std::string name,
-				std::string default_value);
+				std::string default_value) const;
 
   /**
    * Set a string value to section/name.
@@ -55,7 +56,7 @@ public:
   /** Get an integer (long) value from INI file, returning default_value if
    * not found.
    */
-  virtual long getInteger(std::string section, std::string name, long default_value);
+  virtual long getInteger(std::string section, std::string name, long default_value) const;
 
   /** 
    * Set an integer value to an section/name.

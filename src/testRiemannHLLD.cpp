@@ -16,10 +16,10 @@
 #include "./hydro/riemann_mhd.h"
 
 /** Parse command line / configuration parameter file */
-#include "GetPot.h"
-#include <ConfigMap.h>
+#include "hydro/GetPot.h"
+#include "utils/config/ConfigMap.h"
 
-#include <HydroParameters.h> 
+#include "hydro/HydroParameters.h" 
 
 #ifdef __CUDACC__
 __global__ void testRiemannHLL_gpu(real_t *qleft,

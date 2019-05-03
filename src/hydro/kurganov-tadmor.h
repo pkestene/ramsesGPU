@@ -28,7 +28,7 @@
  * @param ry
  */
 template <NvarSimulation NVAR>
-inline __DEVICE__
+ __DEVICE__
 void spectral_radii(real_t u[NVAR], real_t& rx, real_t& ry)
 {
   
@@ -47,13 +47,13 @@ void spectral_radii(real_t u[NVAR], real_t& rx, real_t& ry)
  * and b are of same sign).
  * This was originally implement as .5*(sign(x) + sign(y))*min(fabs(x),fabs(y));
  */
-template<typename T> inline __DEVICE__
+template<typename T>  __DEVICE__
 T minmod(const T& a, T b)
 {
   return a*b<=0?0:(a>0?(a<b?a:b):(a<b?b:a));
 } // minmod
 
-template<typename T> inline __DEVICE__
+template<typename T>  __DEVICE__
 T minmod3(const T& a, const T& b, const T& c)
 {
   return minmod(a, minmod(b,c));

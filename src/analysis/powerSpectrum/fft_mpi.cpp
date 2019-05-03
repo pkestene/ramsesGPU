@@ -9,6 +9,7 @@
  * $Id: fft_mpi.cpp 3394 2014-05-06 10:19:58Z pkestene $
  */
 
+#include <mpi.h>
 #include "fft_mpi.h"
 
 #include <iostream>
