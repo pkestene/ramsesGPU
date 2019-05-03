@@ -34,17 +34,17 @@ bin_PROGRAMS += \
 
 ##############################
 testHydroMpiParameters_SOURCES = testHydroMpiParameters.cpp
-testHydroMpiParameters_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CXXFLAGS) -I$(srcdir)/../../src/hydro -I$(srcdir)/../../src/utils/mpiUtils
+testHydroMpiParameters_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CXXFLAGS) -I$(srcdir)/../../src/hydro -I$(srcdir)/../../src/utils/mpiUtils -I$(srcdir)/../../src/
 testHydroMpiParameters_LDFLAGS = $(AM_LDFLAGS) $(MPI_LDFLAGS) ../../src/hydro/libhydroCpu.la ../../src/utils/config/libIniConfig.la ../../src/utils/mpiUtils/libMpiUtils.la 
 
 ##############################
 testMpiBuffer_SOURCES = testMpiBuffer.cpp
-testMpiBuffer_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CXXFLAGS) -I$(srcdir)/../../src/hydro -I$(srcdir)/../../src/utils/mpiUtils
+testMpiBuffer_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CXXFLAGS) -I$(srcdir)/../../src/hydro -I$(srcdir)/../../src/utils/mpiUtils -I$(srcdir)/../../src/
 testMpiBuffer_LDFLAGS = $(AM_LDFLAGS) $(MPI_LDFLAGS) ../../src/hydro/libhydroCpu.la ../../src/utils/mpiUtils/libMpiUtils.la 
 
 ##############################
 testMpiOutputVtk_SOURCES = testMpiOutputVtk.cpp
-testMpiOutputVtk_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CXXFLAGS) -I$(srcdir)/../../src/hydro -I$(srcdir)/../../src/utils/config -I$(srcdir)/../../src/utils/mpiUtils
+testMpiOutputVtk_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CXXFLAGS) -I$(srcdir)/../../src/hydro -I$(srcdir)/../../src/utils/config -I$(srcdir)/../../src/utils/mpiUtils -I$(srcdir)/../../src/
 testMpiOutputVtk_LDFLAGS = $(AM_LDFLAGS) $(MPI_LDFLAGS) ../../src/hydro/libhydroCpu.la ../../src/utils/config/libIniConfig.la ../../src/utils/mpiUtils/libMpiUtils.la ../../src/utils/cnpy/libCNpy.la 
 if DO_TIMING
 testMpiOutputVtk_LDFLAGS += ../../src/utils/monitoring/libMonitoring.la 
@@ -52,7 +52,7 @@ endif
 
 ##############################
 testHydroRunBaseMpi_border_SOURCES = testHydroRunBaseMpi_border.cpp
-testHydroRunBaseMpi_border_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CXXFLAGS) -I$(srcdir)/../../src/hydro -I$(srcdir)/../../src/utils/config -I$(srcdir)/../../src/utils/mpiUtils
+testHydroRunBaseMpi_border_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CXXFLAGS) -I$(srcdir)/../../src/hydro -I$(srcdir)/../../src/utils/config -I$(srcdir)/../../src/utils/mpiUtils -I$(srcdir)/../../src/
 testHydroRunBaseMpi_border_LDFLAGS = $(AM_LDFLAGS) $(MPI_LDFLAGS) ../../src/hydro/libhydroCpu.la ../../src/utils/config/libIniConfig.la ../../src/utils/mpiUtils/libMpiUtils.la ../../src/utils/cnpy/libCNpy.la 
 if DO_TIMING
 testHydroRunBaseMpi_border_LDFLAGS += ../../src/utils/monitoring/libMonitoring.la

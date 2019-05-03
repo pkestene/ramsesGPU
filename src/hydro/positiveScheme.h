@@ -35,7 +35,7 @@ template <class T> const T max ( const T a, const T b ) {
  * @param phi0 
  * @param phi1 
  */
-inline __DEVICE__
+__DEVICE__
 void limiter(float dw, float dwup, float &phi0, float &phi1, int k)
 {
   float theta, phi;
@@ -102,7 +102,7 @@ void limiter(float dw, float dwup, float &phi0, float &phi1, int k)
  * NOTE : only NVAR=NVAR_2D is currently supported
  */
 template <NvarSimulation NVAR>
-inline __DEVICE__
+__DEVICE__
 int eigs(float up[NVAR], float um[NVAR], float (&r)[NVAR][NVAR], float (&ri)[NVAR][NVAR], float (&eig)[NVAR])
 {
   float r1  = fmaxf(um[0], ::gParams.smallr);
@@ -218,7 +218,7 @@ int eigs(float up[NVAR], float um[NVAR], float (&r)[NVAR][NVAR], float (&ri)[NVA
  * NOTE : only NVAR=NVAR_2D is currently supported
  */
 template <NvarSimulation NVAR>
-inline __DEVICE__
+__DEVICE__
 void central_diff_flux(float up[NVAR], float um[NVAR], float (&fc)[NVAR])
 {
   float rleft  = fmaxf(um[ID], ::gParams.smallr);
@@ -252,7 +252,7 @@ void central_diff_flux(float up[NVAR], float um[NVAR], float (&fc)[NVAR])
  * NOTE : only NVAR=NVAR_2D is currently supported
  */
 template <NvarSimulation NVAR>
-inline __DEVICE__
+__DEVICE__
 int diffusive_flux(float up[NVAR], float um[NVAR], float du[NVAR], float dup[NVAR],
 		    float dum[NVAR], float (&df)[NVAR])
 {
