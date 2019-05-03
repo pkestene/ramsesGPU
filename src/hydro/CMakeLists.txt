@@ -1,45 +1,45 @@
 set(HYDRO_NO_MPI_SRC
-  gpu_macros.cpp 
-  constants.cpp
-  turbulenceInit.cpp
-  structureFunctions.cpp
-  initHydro.cpp
-  RandomGen.cpp
-  Forcing_OrnsteinUhlenbeck.cpp
-  HydroRunBase.cpp
-  HydroRunGodunov.cpp
-  HydroRunKT.cpp
-  HydroRunRelaxingTVD.cpp
-  MHDRunBase.cpp
-  MHDRunGodunov.cpp
-  HydroRunGodunovZslab.cpp
-  MHDRunGodunovZslab.cpp)
+  ${CMAKE_CURRENT_SOURCE_DIR}/gpu_macros.cpp 
+  ${CMAKE_CURRENT_SOURCE_DIR}/constants.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/turbulenceInit.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/structureFunctions.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/initHydro.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/RandomGen.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Forcing_OrnsteinUhlenbeck.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/HydroRunBase.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/HydroRunGodunov.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/HydroRunKT.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/HydroRunRelaxingTVD.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/MHDRunBase.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/MHDRunGodunov.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/HydroRunGodunovZslab.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/MHDRunGodunovZslab.cpp)
 
 if (NOT USE_CUDA)
   set(HYDRO_NO_MPI_SRC ${HYDRO_NO_MPI_SRC}
-    mhd_godunov_unsplit_cpu_v0.cpp
-    mhd_godunov_unsplit_cpu_v1.cpp
-    mhd_godunov_unsplit_cpu_v2.cpp
-    mhd_godunov_unsplit_cpu_v3.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mhd_godunov_unsplit_cpu_v0.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mhd_godunov_unsplit_cpu_v1.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mhd_godunov_unsplit_cpu_v2.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mhd_godunov_unsplit_cpu_v3.cpp
     )
 endif(NOT USE_CUDA)
 
 set(HYDRO_MPI_SRC
-  HydroMpiParameters.cpp
-  HydroRunBaseMpi.cpp
-  HydroRunGodunovMpi.cpp
-  MHDRunGodunovMpi.cpp
-  HydroRunGodunovZslabMpi.cpp
-  MHDRunGodunovZslabMpi.cpp
-  structureFunctionsMpi.cpp 
+  ${CMAKE_CURRENT_SOURCE_DIR}/HydroMpiParameters.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/HydroRunBaseMpi.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/HydroRunGodunovMpi.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/MHDRunGodunovMpi.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/HydroRunGodunovZslabMpi.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/MHDRunGodunovZslabMpi.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/structureFunctionsMpi.cpp 
   )
 
 if (NOT USE_CUDA)
   set(HYDRO_MPI_SRC ${HYDRO_MPI_SRC}
-    mhd_godunov_mpi_unsplit_cpu_v0.cpp
-    mhd_godunov_mpi_unsplit_cpu_v1.cpp
-    mhd_godunov_mpi_unsplit_cpu_v2.cpp
-    mhd_godunov_mpi_unsplit_cpu_v3.cpp)
+    ${CMAKE_CURRENT_SOURCE_DIR}/mhd_godunov_mpi_unsplit_cpu_v0.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mhd_godunov_mpi_unsplit_cpu_v1.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mhd_godunov_mpi_unsplit_cpu_v2.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mhd_godunov_mpi_unsplit_cpu_v3.cpp)
 endif(NOT USE_CUDA)
 
 
