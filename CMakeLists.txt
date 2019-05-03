@@ -14,6 +14,9 @@ include(preventBuildInSource)
 # Init build type: Release, Debug, ...
 include(initBuildType)
 
+# useful for debugging cmake
+include(print_target_properties)
+
 # always export compile commands database
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)  
 
@@ -51,7 +54,8 @@ if (USE_CUDA)
   # we also need extra stuff to make sure compile flags are correctly
   # passed to nvcc / host compiler
   include(protect_nvcc_flags)
-  
+  include(protect_pthread_flag)
+
 endif()
 
 #####################################################################
@@ -65,7 +69,7 @@ if (USE_MPI)
     message(STATUS "MPI libraries: " ${MPI_CXX_LIBRARIES})
     #include_directories(SYSTEM ${MPI_CXX_INCLUDE_PATH})
 
-    #################################################################################################
+    ##################################################################
     # if CUDA is enabled we need to prevent flag "-pthread" to be passed
     # to nvcc compiler
     # this is probably done in a very recent version of cmake
@@ -74,11 +78,18 @@ if (USE_MPI)
     # When this is consumed for compiling CUDA, use '-Xcompiler' to wrap '-pthread'.
     ###string(REPLACE "-pthread" "$<$<COMPILE_LANGUAGE:CUDA>:SHELL:-Xcompiler >-pthread"
     ###  _MPI_CXX_COMPILE_OPTIONS "${MPI_CXX_COMPILE_OPTIONS}")
-    string(REPLACE "-pthread" $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler >-pthread
-      _MPI_CXX_COMPILE_OPTIONS "${MPI_CXX_COMPILE_OPTIONS}")
+
+    # To be analyzed if the following (dirty) trick is still needed with
+    # more recent version of cmake
+    string(REPLACE "-pthread" $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler >-pthread  _MPI_CXX_COMPILE_OPTIONS "${MPI_CXX_COMPILE_OPTIONS}")
+    
+    #message("DEBUG : [before] ${MPI_CXX_COMPILE_OPTIONS} ---- [after] ${_MPI_CXX_COMPILE_OPTIONS}")
+
     set_property(TARGET MPI::MPI_CXX PROPERTY INTERFACE_COMPILE_OPTIONS "${_MPI_CXX_COMPILE_OPTIONS}")
     unset(_MPI_CXX_COMPILE_OPTIONS)
-    #################################################################################################
+
+
+    ##################################################################
 
     #set(CMAKE_EXE_LINKER_FLAGS ${MPI_CXX_LINK_FLAGS})
     find_program(OMPI_INFO
@@ -116,7 +127,7 @@ if (USE_HDF5)
   if(HDF5_FOUND)
     #include_directories(${HDF5_INCLUDE_DIRS})
     set(my_hdf5_libs hdf5 hdf5_cpp)
-    add_compile_options(-DUSE_HDF5)
+    add_compile_options(-DUSE_HDF5 -DH5_NO_DEPRECATED_SYMBOLS)
     if (HDF5_IS_PARALLEL)
       add_compile_options(-DUSE_HDF5_PARALLEL)
     endif()
@@ -278,8 +289,14 @@ else(USE_CUDA)
 endif(USE_CUDA)
 if (HDF5_FOUND)
   message("  HDF5 found version    : ${HDF5_VERSION}")
+  message("  HDF5 definitions      : ${HDF5_DEFINITIONS}")
+  message("  HDF5 parallel         : ${HDF5_IS_PARALLEL}")
+  message("  HDF5 includes dirs    : ${HDF5_INCLUDE_DIRS}")
+  message("  HDF5 libraries        : ${HDF5_LIBRARIES}")
 endif(HDF5_FOUND)
 if (PNETCDF_FOUND)
   message("  PNETCDF found version : ${PNETCDF_VERSION_STRING}")
+  message("  PNETCDF include dirs  : ${PNETCDF_INCLUDE_DIRS}")
+  message("  PNETCDF libraries     : ${PNETCDF_LIBRARIES}")
 endif(PNETCDF_FOUND)
 message("")
