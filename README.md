@@ -12,7 +12,16 @@ http://www.maisondelasimulation.fr/projects/RAMSES-GPU/html/index.html
 
 - See doxygen-generated documentation in doc sub-directory
 
-- Quickstart for building RAMSES-GPU using autotools
+- Quickstart for building RAMSES-GPU using CMake (recommended)
+
+0. git clone https://github.com/pkestene/ramsesGPU.git
+1. cd ramsesGPU; mkdir build
+2. cmake -DUSE_GPU=ON -DUSE_MPI=ON ..
+3. make
+
+You should get executable *ramsesGPU_mpi_cuda*. Explore other flag using the ccmake user interface.
+
+- Quickstart for building RAMSES-GPU using autotools (deprecated)
 
 0. make sure to have up-to-date autotools on you build system (autoconf, automake, libtool, m4); then run `sh autogen.sh`
 1. configure --with-cuda=<path to CUDA toolkit root directory> 
