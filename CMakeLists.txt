@@ -34,6 +34,7 @@ option (USE_MPI_CUDA_AWARE_ENFORCED "Some MPI cuda-aware implementation are not 
 option (USE_FPE_DEBUG "build with floating point Nan tracing (signal handler)" OFF)
 option (USE_QT "build some test demo gui application with Qt" OFF)
 option (USE_GLUT "build some test demo gui application with GLUT" OFF)
+option (USE_TIMING "Do fine level timing measurements" OFF)
 
 #####################################################################
 # External packages: MPI, ...

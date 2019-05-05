@@ -91,6 +91,12 @@ if (USE_NETCDF4)
     -DUSE_NETCDF4)
 endif(USE_NETCDF4)
 
+if (USE_TIMING)
+  target_compile_options(hydro
+    PUBLIC
+    -DDO_TIMING)
+endif(USE_TIMING)
+
 target_include_directories(hydro
   PUBLIC
   ${CMAKE_SOURCE_DIR}/src)
