@@ -9,7 +9,7 @@
 #include <cstdlib>
 #include <iostream>
 
-#include <mpiBorderUtils.h>
+#include "hydro/mpiBorderUtils.h"
 
 using namespace hydroSimu;
 

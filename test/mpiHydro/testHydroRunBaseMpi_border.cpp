@@ -9,11 +9,11 @@
 #include <cstdlib>
 #include <iostream>
 
-#include <GlobalMpiSession.h>
-#include <HydroRunBaseMpi.h>
+#include "utils/mpiUtils/GlobalMpiSession.h"
+#include "hydro/HydroRunBaseMpi.h"
 
-#include <GetPot.h>
-#include <ConfigMap.h>
+#include "hydro/GetPot.h"
+#include "utils/config/ConfigMap.h"
 
 /*
  * test class

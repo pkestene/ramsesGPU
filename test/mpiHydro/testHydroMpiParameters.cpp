@@ -9,11 +9,11 @@
 #include <cstdlib>
 #include <iostream>
 
-#include <GlobalMpiSession.h>
-#include <HydroMpiParameters.h>
+#include "utils/mpiUtils/GlobalMpiSession.h"
+#include "hydro/HydroMpiParameters.h"
 
-#include <GetPot.h>
-#include <ConfigMap.h>
+#include "hydro/GetPot.h"
+#include "utils/config/ConfigMap.h"
 
 void make_test_paramFile(std::string fileName) {
 

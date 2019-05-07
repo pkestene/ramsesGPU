@@ -16,12 +16,12 @@
 #include <iostream>
 #include <typeinfo>
 
-#include <common_types.h>
-#include <Arrays.h>
+#include "hydro/common_types.h"
+#include "hydro/Arrays.h"
 
-#include <GlobalMpiSession.h>
-#include <HydroMpiParameters.h>
-#include <mpiBorderUtils.h>
+#include "utils/mpiUtils/GlobalMpiSession.h"
+#include "hydro/HydroMpiParameters.h"
+#include "hydro/mpiBorderUtils.h"
 
 
 using namespace hydroSimu;

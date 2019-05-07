@@ -10,7 +10,7 @@
 #include <iostream>
 
 //#include <Arrays.h>
-#include <shearBorderUtils.h>
+#include "hydro/shearBorderUtils.h"
 
 using namespace hydroSimu;
 
