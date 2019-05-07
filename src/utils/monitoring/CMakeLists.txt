@@ -18,7 +18,7 @@ if (PAPI_FOUND)
     PUBLIC
     ${PAPI_LIBRARY})
 endif(PAPI_FOUND)
-    
+
 
 # alias library
 add_library(RamsesGPU::monitoring ALIAS monitoringCpu)

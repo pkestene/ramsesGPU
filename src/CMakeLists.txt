@@ -109,6 +109,6 @@ endif(USE_QT)
 # endif(USE_CUDA)
 
 #if (USE_CUDA)
-  #print_target_properties(testTrace)
-  #CUDA_PROTECT_PTHREAD_FLAG(testTrace)
+#print_target_properties(testTrace)
+#CUDA_PROTECT_PTHREAD_FLAG(testTrace)
 #endif(USE_CUDA)

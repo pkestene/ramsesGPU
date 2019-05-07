@@ -103,8 +103,8 @@ target_include_directories(hydro
 
 if (USE_HDF5)
   target_include_directories(hydro
-  PUBLIC
-  ${HDF5_INCLUDE_DIRS})
+    PUBLIC
+    ${HDF5_INCLUDE_DIRS})
 endif(USE_HDF5)
 
 target_link_libraries(hydro
@@ -119,14 +119,14 @@ endif(USE_MPI)
 
 if (USE_HDF5)
   target_link_libraries(hydro
-  PUBLIC
-  ${HDF5_LIBRARIES})
+    PUBLIC
+    ${HDF5_LIBRARIES})
 endif(USE_HDF5)
 
 if (USE_PNETCDF)
   target_link_libraries(hydro
-  PUBLIC
-  ${PNETCDF_LIBRARIES})
+    PUBLIC
+    ${PNETCDF_LIBRARIES})
 endif(USE_PNETCDF)
 
 add_library(RamsesGPU::hydro ALIAS hydro)

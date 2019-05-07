@@ -106,7 +106,7 @@ if (USE_MPI)
         message(STATUS "Found OpenMPI with CUDA support built.")
       else()
         message(WARNING "OpenMPI found, but it is not built with CUDA support.")
-	add_compile_options(-DMPI_CUDA_AWARE_OFF)
+        add_compile_options(-DMPI_CUDA_AWARE_OFF)
       endif()
     endif()
   else()
@@ -247,7 +247,7 @@ endif()
 if (USE_MPI)
   add_compile_options(-DUSE_MPI)
 endif()
-  
+
 if (USE_FPE_DEBUG)
   add_compile_options(-DUSE_FPE_DEBUG)
 endif()
@@ -273,8 +273,8 @@ message("//===================================================")
 message("  ${PROJECT_NAME} build configuration:")
 message("//===================================================")
 message("  C++ Compiler : ${CMAKE_CXX_COMPILER_ID} " 
-                         "${CMAKE_CXX_COMPILER_VERSION} " 
-                         "${CMAKE_CXX_COMPILER_WRAPPER}")
+  "${CMAKE_CXX_COMPILER_VERSION} " 
+  "${CMAKE_CXX_COMPILER_WRAPPER}")
 message("    ${CMAKE_CXX_COMPILER}")
 if (USE_MPI)
   message("  MPI enabled")
