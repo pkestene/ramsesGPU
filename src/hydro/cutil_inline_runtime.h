@@ -184,9 +184,9 @@ inline void __cudaSafeCallMpi( cudaError err, int rank, const char *file, const 
 
 inline void __cudaSafeThreadSync( const char *file, const int line )
 {
-    cudaError err = cudaThreadSynchronize();
+    cudaError err = cudaDeviceSynchronize();
     if ( cudaSuccess != err) {
-        FPRINTF((stderr, "%s(%i) : cudaThreadSynchronize() Driver API error : %s.\n",
+        FPRINTF((stderr, "%s(%i) : cudaDeviceSynchronize() Driver API error : %s.\n",
                 file, line, cudaGetErrorString( err) ));
         exit(-1);
     }
@@ -219,9 +219,9 @@ inline void __cutilCheckMsg( const char *errorMessage, const char *file, const i
         exit(-1);
     }
 #ifdef _DEBUG
-    err = cudaThreadSynchronize();
+    err = cudaDeviceSynchronize();
     if( cudaSuccess != err) {
-		FPRINTF((stderr, "%s(%i) : cutilCheckMsg cudaThreadSynchronize error: %s : %s.\n",
+		FPRINTF((stderr, "%s(%i) : cutilCheckMsg cudaDeviceSynchronize error: %s : %s.\n",
                 file, line, errorMessage, cudaGetErrorString( err) ));
         exit(-1);
     }
@@ -286,7 +286,7 @@ inline void cutilCudaCheckCtxLost(const char *errorMessage, const char *file, co
         file, line, errorMessage, cudaGetErrorString( err) ));
         exit(-1);
     }
-    err = cudaThreadSynchronize();
+    err = cudaDeviceSynchronize();
     if( cudaSuccess != err) {
         FPRINTF((stderr, "%s(%i) : CCUDA error: %s : %s.\n",
         file, line, errorMessage, cudaGetErrorString( err) ));

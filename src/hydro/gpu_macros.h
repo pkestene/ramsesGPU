@@ -1,3 +1,4 @@
+
 /**
  * \file gpu_macros.h
  * \brief Some useful GPU related macros.
@@ -40,7 +41,7 @@ uint blocksFor(uint elementCount, uint threadCount);
 
 inline void checkCudaError(const char *msg)
 {
-  cudaError_t e = cudaThreadSynchronize();
+  cudaError_t e = cudaDeviceSynchronize();
   if( e != cudaSuccess )
     {
       fprintf(stderr, "CUDA Error in %s : %s\n", msg, cudaGetErrorString(e));
@@ -54,7 +55,7 @@ inline void checkCudaError(const char *msg)
 
 inline void checkCudaErrorMpi(const char *msg, const int mpiRank)
 {
-  cudaError_t e = cudaThreadSynchronize();
+  cudaError_t e = cudaDeviceSynchronize();
   if( e != cudaSuccess )
     {
       fprintf(stderr, "[Mpi rank %4d] CUDA Error in %s : %s\n", mpiRank, msg, cudaGetErrorString(e));
