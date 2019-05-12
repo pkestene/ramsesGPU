@@ -24,6 +24,7 @@ target_link_libraries(testCopyBorderBufferShear
 
 ############################################################
 if (USE_MPI)
+  ############################################################
   add_executable(testHydroMpiParameters "")
   target_sources(testHydroMpiParameters PUBLIC
     testHydroMpiParameters.cpp)
@@ -32,6 +33,7 @@ if (USE_MPI)
     RamsesGPU::hydro
     RamsesGPU::mpiUtils)
 
+  ############################################################
   add_executable(testMpiBuffer "")
   target_sources(testMpiBuffer PUBLIC
     testMpiBuffer.cpp)
@@ -40,22 +42,30 @@ if (USE_MPI)
     RamsesGPU::hydro
     RamsesGPU::mpiUtils)
     
+  ############################################################
   add_executable(testMpiOutputVtk "")
   target_sources(testMpiOutputVtk PUBLIC
     testMpiOutputVtk.cpp)
+  if (USE_CUDA)
+    set_source_files_properties(testMpiOutputVtk.cpp PROPERTIES LANGUAGE CUDA)
+  endif(USE_CUDA)
   target_link_libraries(testMpiOutputVtk PUBLIC
+    RamsesGPU::hydro
     RamsesGPU::config
     RamsesGPU::cnpy
-    RamsesGPU::hydro
+    RamsesGPU::monitoring
     RamsesGPU::mpiUtils)
     
-  add_executable(testHydroRunBaseMpi_border "")
-  target_sources(testHydroRunBaseMpi_border PUBLIC
-    testHydroRunBaseMpi_border.cpp)
-  target_link_libraries(testHydroRunBaseMpi_border PUBLIC
-    RamsesGPU::config
-    RamsesGPU::cnpy
-    RamsesGPU::hydro
-    RamsesGPU::mpiUtils)
-    
+  ############################################################
+  if (NOT USE_CUDA)
+    add_executable(testHydroRunBaseMpi_border "")
+    target_sources(testHydroRunBaseMpi_border PUBLIC
+      testHydroRunBaseMpi_border.cpp)
+    target_link_libraries(testHydroRunBaseMpi_border PUBLIC
+      RamsesGPU::hydro
+      RamsesGPU::config
+      RamsesGPU::cnpy
+      RamsesGPU::monitoring
+      RamsesGPU::mpiUtils)
+  endif(NOT USE_CUDA)
 endif(USE_MPI)

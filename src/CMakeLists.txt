@@ -45,9 +45,9 @@ target_include_directories(${RamsesGPU_main_exe}
 
 target_link_libraries(${RamsesGPU_main_exe}
   PUBLIC
+  RamsesGPU::hydro
   RamsesGPU::config
   RamsesGPU::cnpy
-  RamsesGPU::hydro
   RamsesGPU::monitoring)
 if (USE_MPI)
   target_link_libraries(${RamsesGPU_main_exe}

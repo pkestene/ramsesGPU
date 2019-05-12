@@ -1,13 +1,13 @@
 add_library(monitoringCpu "")
 
 target_sources (monitoringCpu
-  PUBLIC
+  PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/Timer.cpp
   )
 
 if (PAPI_FOUND)
   target_sources (monitoringCpu
-    PUBLIC
+    PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/PapiInfo.h
     ${CMAKE_CURRENT_SOURCE_DIR}/PapiInfo.cpp
     )

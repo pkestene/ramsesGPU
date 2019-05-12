@@ -1,7 +1,7 @@
 add_library(hydro "")
 
 target_sources(hydro
-  PUBLIC
+  PRIVATE
   gpu_macros.cpp 
   constants.cpp
   turbulenceInit.cpp
@@ -20,7 +20,7 @@ target_sources(hydro
 
 if (NOT USE_CUDA)
   target_sources(hydro
-    PUBLIC
+    PRIVATE
     mhd_godunov_unsplit_cpu_v0.cpp
     mhd_godunov_unsplit_cpu_v1.cpp
     mhd_godunov_unsplit_cpu_v2.cpp
@@ -30,7 +30,7 @@ endif(NOT USE_CUDA)
 
 if (USE_MPI)
   target_sources(hydro
-    PUBLIC
+    PRIVATE
     HydroMpiParameters.cpp
     HydroRunBaseMpi.cpp
     HydroRunGodunovMpi.cpp
@@ -42,7 +42,7 @@ if (USE_MPI)
   
   if (NOT USE_CUDA)
     target_sources(hydro
-      PUBLIC
+      PRIVATE
       mhd_godunov_mpi_unsplit_cpu_v0.cpp
       mhd_godunov_mpi_unsplit_cpu_v1.cpp
       mhd_godunov_mpi_unsplit_cpu_v2.cpp
@@ -109,6 +109,7 @@ endif(USE_HDF5)
 
 target_link_libraries(hydro
   PUBLIC
+  RamsesGPU::cnpy
   RamsesGPU::config)
 
 if(USE_MPI)
