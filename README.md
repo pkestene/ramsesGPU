@@ -1,3 +1,5 @@
+**WARNING: This code is mostly deprecated. Have a look at [ppkMHD](https://github.com/pkestene/ppkMHD)**
+
 [![DOI](https://zenodo.org/badge/42436229.svg)](https://zenodo.org/badge/latestdoi/42436229)
 
 ![mhd_mri 200x200](https://github.com/pkestene/ramsesGPU/blob/master/doc/mhd_mri_3d_gpu_Pm4_Re25000_double.gif)
