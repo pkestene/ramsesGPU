@@ -20,7 +20,7 @@ Default CUDA compilation flags can be passed to cmake using env variable CUDAFLA
 
 0. git clone https://github.com/pkestene/ramsesGPU.git
 1. cd ramsesGPU; mkdir build
-2. cmake -DUSE_GPU=ON -DUSE_MPI=ON -DCMAKE_CUDA_FLAGs="-arch=sm_50" ..
+2. cmake -DUSE_CUDA=ON -DUSE_MPI=ON -DCMAKE_CUDA_FLAGS="-arch=sm_50" ..
 3. make
 
 You should get executable *ramsesGPU_mpi_cuda*. Explore other flag using the ccmake user interface.
