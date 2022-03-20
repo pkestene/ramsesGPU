@@ -18,6 +18,8 @@ missing
 
 # build
 build_*
+build
+_build
 
 # other
 memory_footprint.pyc
