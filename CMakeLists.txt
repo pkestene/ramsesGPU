@@ -179,25 +179,27 @@ if (USE_VTK)
   # the minimal component list is evaluated thanks to command:
   # ${VTK_SOURCES}/Utilities/Maintenance/WhatModulesVTK.py ${VTK_SOURCES} ${MY_APP}
   find_package(VTK COMPONENTS
-    vtkCommonCore
-    vtkCommonDataModel
-    vtkCommonExecutionModel
-    vtkCommonMath
-    vtkCommonMisc
-    vtkCommonSystem
-    vtkCommonTransforms
-    vtkIOCore
-    vtkIOGeometry
-    vtkIOImage
-    vtkIOLegacy
-    vtkIOXML
-    vtkIOXMLParser
-    vtkParallelCore
-    vtkParallelMPI
-    vtkIOParallelXML
+    CommonCore
+    CommonDataModel
+    CommonExecutionModel
+    CommonMath
+    CommonMisc
+    CommonSystem
+    CommonTransforms
+    IOCore
+    IOGeometry
+    IOImage
+    IOLegacy
+    IOXML
+    IOXMLParser
+    ParallelCore
+    ParallelMPI
+    IOParallelXML
     )
-  include(${VTK_USE_FILE})
-  message("VTK version: ${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}")
+  #include(${VTK_USE_FILE})
+  if(VTK_FOUND)
+    message("VTK version: ${VTK_VERSION}")
+  endif()
 endif(USE_VTK)
 
 #####################################################################

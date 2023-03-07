@@ -22,7 +22,7 @@
 #endif
 
 
-// memory alignment 
+// memory alignment
 #if defined(__CUDACC__) // NVCC
 #define MY_ALIGN(n) __align__(n)
 #elif defined(__GNUC__) // GCC
@@ -60,13 +60,13 @@ enum ComponentIndex {
   ID=0,  /*!< ID Density field index */
   IP=1,  /*!< IP Pressure/Energy field index */
   IU=2,  /*!< X velocity / momentum index */
-  IV=3,  /*!< Y velocity / momentum index */ 
-  IW=4,  /*!< Z velocity / momentum index */ 
-  IBX=5, /*!< X component of magnetic field */ 
-  IBY=6, /*!< Y component of magnetic field */ 
+  IV=3,  /*!< Y velocity / momentum index */
+  IW=4,  /*!< Z velocity / momentum index */
+  IBX=5, /*!< X component of magnetic field */
+  IBY=6, /*!< Y component of magnetic field */
   IBZ=7, /*!< Z component of magnetic field */
-  IA=5,  /*!< X component of magnetic field */ 
-  IB=6,  /*!< Y component of magnetic field */ 
+  IA=5,  /*!< X component of magnetic field */
+  IB=6,  /*!< Y component of magnetic field */
   IC=7  /*!< Z component of magnetic field */
 };
 
@@ -107,7 +107,7 @@ enum ShearRemapIndex {
   I_EMF_Y=1
 };
 
-//! enum number of component for remapping buffer 
+//! enum number of component for remapping buffer
 //! (number of item in enum ShearRemapIndex)
 enum ShearRemapComponent {
   NUM_COMPONENT_REMAP=2
@@ -122,7 +122,7 @@ enum ComponentIndex3D {
 
 //! dimension of the problem
 enum DimensionType {
-  TWO_D = 2, 
+  TWO_D = 2,
   THREE_D = 3
 };
 
@@ -138,9 +138,9 @@ enum Scheme {UnknownScheme, MusclScheme, PlmdeScheme, CollelaScheme};
 
 //! Riemann solver type for hydro fluxes
 enum RiemannSolverType {
-  APPROX, /*!< quasi-exact Riemann solver (hydro-only) */ 
+  APPROX, /*!< quasi-exact Riemann solver (hydro-only) */
   HLL,    /*!< HLL hydro and MHD Riemann solver */
-  HLLC,   /*!< HLLC hydro-only Riemann solver */ 
+  HLLC,   /*!< HLLC hydro-only Riemann solver */
   HLLD,   /*!< HLLD MHD-only Riemann solver */
   LLF     /*!< Local Lax-Friedrich Riemann solver (MHD only) */
 };
@@ -196,10 +196,10 @@ enum EmfIndex {
 
 //! location of the outside boundary
 enum BoundaryLocation {
-  XMIN = 0, 
-  XMAX = 1, 
-  YMIN = 2, 
-  YMAX = 3, 
+  XMIN = 0,
+  XMAX = 1,
+  YMIN = 2,
+  YMAX = 3,
   ZMIN = 4,
   ZMAX = 5
 };
@@ -207,7 +207,7 @@ enum BoundaryLocation {
 //! type of boundary condition (note that BC_COPY is only used in the
 //! MPI version for inside boundary)
 enum BoundaryConditionType {
-  BC_UNDEFINED, 
+  BC_UNDEFINED,
   BC_DIRICHLET,    /*!< reflecting border condition */
   BC_NEUMANN,      /*!< absorbing border condition */
   BC_PERIODIC,     /*!< periodic border condition */
@@ -219,7 +219,7 @@ enum BoundaryConditionType {
 //! direction used in directional splitting scheme
 enum Direction {XDIR=1, YDIR=2, ZDIR=3};
 
-//! File Format 
+//! File Format
 enum FileFormat {
   FF_HDF5    = 0, /*!< for both mono/multi GPU applications */
   FF_NETCDF  = 1, /*!< for mono GPU applications */
@@ -233,8 +233,8 @@ enum FileFormat {
 /** list of array pointers (mostly usefull only in GPU version
  *  so pointers to data can be read from the GlobalConstants structure
  *  instead of being passed to CUDA kernels as arguments) */
-enum ArrayList {
-  A_Q,  
+enum ArrayPointerList {
+  A_Q,
   A_QM_X,
   A_QM_Y,
   A_QM_Z,
@@ -330,7 +330,7 @@ struct MY_ALIGN(8) GlobalConstants
 
 
 /** make these variables live in device constant memory if using nvcc
- * compiler; they have to be globals, because 
+ * compiler; they have to be globals, because
  * "memory qualifier on data member is not allowed"
  */
 #ifdef __CUDACC__

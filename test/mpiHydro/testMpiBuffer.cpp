@@ -37,22 +37,22 @@ int main(int argc, char * argv[]) {
   hydroSimu::MpiComm worldComm = hydroSimu::MpiComm::world();
   myRank = worldComm.getRank();
   numTasks = worldComm.getNProc();
-  MPI::Get_processor_name(processor_name,namelength);
+  MPI_Get_processor_name(processor_name, &namelength);
 
   MPI_Request reqs[2]; // 1 send + 1 receive
   MPI_Status stats[2]; // 1 send + 1 receive
 
   try {
-    
+
     // check we only have 2 MPI processes
     if (numTasks == 2) {
-      
+
       // some test data
       int isize = 8, jsize = 16;
       HostArray<real_t> U;
       HostArray<real_t> bSend;
       HostArray<real_t> bRecv;
-      
+
       const int ghostWidth = 3;
 
       // memory allocation
@@ -76,7 +76,7 @@ int main(int argc, char * argv[]) {
  	if (ghostWidth == 3)
 	  bRecv(2,j,0) = 0.0;
       }
-    
+
       // runtime determination if we are using float ou double
       int data_type = typeid(1.0f).name() == typeid((real_t)1.0f).name() ? hydroSimu::MpiComm::FLOAT : hydroSimu::MpiComm::DOUBLE;
 
@@ -102,7 +102,7 @@ int main(int argc, char * argv[]) {
 	reqs[1] = worldComm.Irecv(bRecv.data(), bRecv.size(), data_type, 0, tag);
       }
       MPI_Waitall(2, reqs, stats);
-      
+
       // copy buffer
       if (myRank == 0) {
 	copyBorderBufRecvToHostArray<XMAX,TWO_D,ghostWidth>(U,bRecv);
@@ -110,7 +110,7 @@ int main(int argc, char * argv[]) {
 	copyBorderBufRecvToHostArray<XMIN,TWO_D,ghostWidth>(U,bRecv);
       }
       MPI_Barrier(MPI_COMM_WORLD);
-      
+
       // after buffer exchange
       std::cout << "Print array U after buffer exchange:\n\n";
       for (int iRank=0; iRank<numTasks; ++iRank) {
@@ -121,23 +121,23 @@ int main(int argc, char * argv[]) {
 	  std::cout << U;
 	}
       }
-      
+
       std::cout << "#######################" << std::endl;
       std::cout << "Done !!!               " << std::endl;
       std::cout << "#######################" << std::endl;
-      
-      
+
+
     } else {
       std::cout << "Must specify " << 2 << " MPI processes. Terminating.\n";
     }
-    
+
   } catch (...) {
-    
+
     std::cerr << "Exception caught, something really bad happened...\n\n\n";
     return EXIT_FAILURE;
-    
+
   }
-    
+
   return EXIT_SUCCESS;
-  
+
 }

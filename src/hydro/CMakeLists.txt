@@ -113,4 +113,10 @@ if (USE_PNETCDF)
     RamsesGPU::pnetcdf)
 endif(USE_PNETCDF)
 
+if (USE_VTK)
+  target_link_libraries(hydro
+    PUBLIC
+    ${VTK_LIBRARIES})
+endif(USE_VTK)
+
 add_library(RamsesGPU::hydro ALIAS hydro)

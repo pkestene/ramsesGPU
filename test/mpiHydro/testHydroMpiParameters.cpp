@@ -41,21 +41,21 @@ int main(int argc, char * argv[]) {
 
   int myRank, numTasks, namelength;
   char processor_name[MPI_MAX_PROCESSOR_NAME+1];
-  
+
   /* Initialize MPI session */
   hydroSimu::GlobalMpiSession mpiSession(&argc,&argv);
   hydroSimu::MpiComm worldComm = hydroSimu::MpiComm::world();
   myRank = worldComm.getRank();
   numTasks = worldComm.getNProc();
-  MPI::Get_processor_name(processor_name,namelength);
+  MPI_Get_processor_name(processor_name, &namelength);
 
   try {
-    
-    
-    /* 
+
+
+    /*
      * read parameters from parameter file or command line arguments
      */
-    
+
     /* parse command line arguments */
     GetPot cl(argc, argv);
 
@@ -68,14 +68,14 @@ int main(int argc, char * argv[]) {
       std::cout << "[Warning] Using the built-in one\n";
       std::cout << "[Warning] Make test parameter file : " << default_input_file << std::endl;
       make_test_paramFile(default_input_file);
-    } 
-    
+    }
+
     /* search for configuration parameter file */
     const std::string input_file = cl.follow(default_input_file.c_str(),    "--param");
-    
+
     /* parse parameters from input file */
     ConfigMap configMap(input_file);
-    
+
     /* create HydroMpiParameter object */
     hydroSimu::HydroMpiParameters param(configMap);
 
@@ -83,10 +83,10 @@ int main(int argc, char * argv[]) {
     std::cout << "param nx : " << param.nx << std::endl;
 
   } catch (...) {
-    
+
     std::cerr << "Exception caught, something really bad happened...\n\n\n";
     return EXIT_FAILURE;
-  
+
   }
 
   return EXIT_SUCCESS;

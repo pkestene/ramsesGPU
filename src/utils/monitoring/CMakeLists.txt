@@ -14,7 +14,7 @@ if (RAMSESGPU_PAPI_FOUND)
   target_link_libraries(monitoringCpu
     PUBLIC
     RamsesGPU::papi)
-endif(PAPI_FOUND)
+endif(RAMSESGPU_PAPI_FOUND)
 
 # alias library
 add_library(RamsesGPU::monitoring ALIAS monitoringCpu)

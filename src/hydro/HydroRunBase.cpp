@@ -3,10 +3,10 @@
  * Contributors: Pierre Kestener, Sebastien Fromang (May 22, 2012)
  *
  * This software is governed by the CeCILL license under French law and
- * abiding by the rules of distribution of free software.  You can  use, 
+ * abiding by the rules of distribution of free software.  You can  use,
  * modify and/ or redistribute the software under the terms of the CeCILL
  * license as circulated by CEA, CNRS and INRIA at the following URL
- * "http://www.cecill.info". 
+ * "http://www.cecill.info".
  *
  * The fact that you are presently reading this means that you have had
  * knowledge of the CeCILL license and that you accept its terms.
@@ -135,7 +135,7 @@ namespace hydroSimu {
     varNames[IBX] = "bx";
     varNames[IBY] = "by";
     varNames[IBZ] = "bz";
-    
+
     varPrefix[ID]  = "d";
     varPrefix[IP]  = "p";
     varPrefix[IU]  = "u";
@@ -145,7 +145,7 @@ namespace hydroSimu {
     varPrefix[IBY] = "b";
     varPrefix[IBZ] = "c";
 
-    
+
     /*
      * hydro / MHD arrays initialization (nbVar is set in
      * HydroParameters class constructor).
@@ -155,7 +155,7 @@ namespace hydroSimu {
       h_U2.allocate(make_uint3(isize, jsize, nbVar));
     } else {
       h_U.allocate (make_uint4(isize, jsize, ksize, nbVar));
-      h_U2.allocate(make_uint4(isize, jsize, ksize, nbVar));    
+      h_U2.allocate(make_uint4(isize, jsize, ksize, nbVar));
     }
 #ifdef __CUDACC__
     if (dimType == TWO_D) {
@@ -167,8 +167,8 @@ namespace hydroSimu {
     }
 #endif // __CUDACC__
 
-  
-#ifdef __CUDACC__	
+
+#ifdef __CUDACC__
     // we have to initialize the whole array, because padding zones won't be
     // initialized by the next copyFromHost. As the reduction algorithm consider
     // the array as a 1D array, padding zones must be initialized to zero.
@@ -194,16 +194,16 @@ namespace hydroSimu {
     d_invDt.allocate(make_uint3(cmpdtBlockCount, 1, 1));
 
     // for random forcing reduction
-    randomForcingBlockCount = std::min(randomForcingBlockCount, 
-				       blocksFor(h_U.section(), 
+    randomForcingBlockCount = std::min(randomForcingBlockCount,
+				       blocksFor(h_U.section(),
 						 RANDOM_FORCING_BLOCK_SIZE * 2));
 
     h_randomForcingNormalization.allocate(make_uint3(randomForcingBlockCount*
 						     nbRandomForcingReduction, 1, 1));
     d_randomForcingNormalization.allocate(make_uint3(randomForcingBlockCount*
 						     nbRandomForcingReduction, 1, 1));
-    
-    std::cout << "[Random forcing] randomForcingBlockCount = " << 
+
+    std::cout << "[Random forcing] randomForcingBlockCount = " <<
       randomForcingBlockCount << std::endl;
 
 #endif // __CUDACC__
@@ -214,15 +214,15 @@ namespace hydroSimu {
     if (!problem.compare("turbulence")) {
 
       randomForcingEnabled = true;
-    
+
       // in that case, we also allocate memory for randomForcing arrays
       if (dimType == THREE_D) {
 	h_randomForcing.allocate(make_uint4(isize, jsize, ksize, 3));
 #ifdef __CUDACC__
 	d_randomForcing.allocate(make_uint4(isize, jsize, ksize, 3), gpuMemAllocType);
-#endif // __CUDACC__	
+#endif // __CUDACC__
       } else {
-	std::cerr << "ERROR : \"turbulence\" problem is not available in 2D !!!\n"; 
+	std::cerr << "ERROR : \"turbulence\" problem is not available in 2D !!!\n";
       }
     } // end if problem turbulence
 
@@ -232,7 +232,7 @@ namespace hydroSimu {
     if (!problem.compare("turbulence-Ornstein-Uhlenbeck")) {
 
       randomForcingOrnsteinUhlenbeckEnabled = true;
-      
+
       if (dimType == THREE_D) {
 	std::cout << "Ornstein-Uhlenbeck forcing enabled ...\n";
 
@@ -241,7 +241,7 @@ namespace hydroSimu {
 	pForcingOrnsteinUhlenbeck = new ForcingOrnsteinUhlenbeck(3, 1, configMap, _gParams);
 
       } else {
-	std::cerr << "ERROR : \"turbulence-Ornstein-Uhlenbeck\" problem is not available in 2D !!!\n"; 
+	std::cerr << "ERROR : \"turbulence-Ornstein-Uhlenbeck\" problem is not available in 2D !!!\n";
       }
 
     } // end if problem turbulence-Ornstein-Uhlenbeck
@@ -255,10 +255,10 @@ namespace hydroSimu {
     gravityEnabled = staticGravityEnabled || selfGravityEnabled;
 
     // enforce gravityEnabled for some problems
-    if ( !problem.compare("Rayleigh-Taylor") or 
+    if ( !problem.compare("Rayleigh-Taylor") or
 	 !problem.compare("Keplerian-disk") )
       gravityEnabled = true;
-    
+
     if ( gravityEnabled ) {
 
       // in that case, we also allocate memory for gravity array
@@ -266,13 +266,13 @@ namespace hydroSimu {
 	h_gravity.allocate(make_uint4(isize, jsize, ksize, 3));
 #ifdef __CUDACC__
 	d_gravity.allocate(make_uint4(isize, jsize, ksize, 3), gpuMemAllocType);
-#endif // __CUDACC__	
+#endif // __CUDACC__
 
       } else { // TWO_D
 	h_gravity.allocate(make_uint3(isize, jsize, 2));
 #ifdef __CUDACC__
 	d_gravity.allocate(make_uint3(isize, jsize, 2), gpuMemAllocType);
-#endif // __CUDACC__	
+#endif // __CUDACC__
 
       } // end TWO_D
 
@@ -280,8 +280,8 @@ namespace hydroSimu {
       _gParams.arrayList[A_GRAV]    = h_gravity.data();
 #ifdef __CUDACC__
       _gParams.arrayList[A_GRAV]    = d_gravity.data();
-#endif // __CUDACC__	
-      
+#endif // __CUDACC__
+
     } // gravity
 
     /*
@@ -314,7 +314,7 @@ namespace hydroSimu {
   real_t HydroRunBase::compute_dt(int useU)
 #ifdef __CUDACC__
   {
-    
+
     // choose between d_U and d_U2
     real_t *uData;
     if (useU == 0)
@@ -324,13 +324,13 @@ namespace hydroSimu {
 
     // inverse time step
     real_t maxInvDt = 0;
- 
+
     if (dimType == TWO_D) {
-      
+
       cmpdt_2d<CMPDT_BLOCK_SIZE>
-	<<<cmpdtBlockCount, 
-	CMPDT_BLOCK_SIZE, 
-	CMPDT_BLOCK_SIZE*sizeof(real_t)>>>(uData, 
+	<<<cmpdtBlockCount,
+	CMPDT_BLOCK_SIZE,
+	CMPDT_BLOCK_SIZE*sizeof(real_t)>>>(uData,
 					   d_invDt.data(),
 					   d_U.pitch(),
 					   d_U.dimx(),
@@ -338,14 +338,14 @@ namespace hydroSimu {
       checkCudaError("HydroRunBase cmpdt_2d error");
       d_invDt.copyToHost(h_invDt);
       checkCudaError("HydroRunBase d_invDt copy to host error");
-      
+
     } else { // THREE_D
 
       cmpdt_3d<CMPDT_BLOCK_SIZE>
-	<<<cmpdtBlockCount, 
-	CMPDT_BLOCK_SIZE, 
-	CMPDT_BLOCK_SIZE*sizeof(real_t)>>>(uData, 
-					   d_invDt.data(), 
+	<<<cmpdtBlockCount,
+	CMPDT_BLOCK_SIZE,
+	CMPDT_BLOCK_SIZE*sizeof(real_t)>>>(uData,
+					   d_invDt.data(),
 					   d_U.pitch(),
 					   d_U.dimx(),
 					   d_U.dimy(),
@@ -353,11 +353,11 @@ namespace hydroSimu {
       checkCudaError("HydroRunBase cmpdt_3d error");
       d_invDt.copyToHost(h_invDt);
       checkCudaError("HydroRunBase d_invDt copy to host error");
-    
+
     } // end call cuda kernel for invDt reduction
 
     real_t* invDt = h_invDt.data();
-    
+
     for(uint i = 0; i < cmpdtBlockCount; ++i)	{
       maxInvDt = FMAX ( maxInvDt, invDt[i]);
     }
@@ -377,12 +377,12 @@ namespace hydroSimu {
       uData = h_U.data();
     else
       uData = h_U2.data();
-    
+
     // inverse time step
     real_t invDt = 0;
-    
+
     if (dimType == TWO_D) {
-      
+
       // for loop over inner region
       for (int j = ghostWidth; j < jsize-ghostWidth; j++)
 	for (int i = ghostWidth; i < isize-ghostWidth; i++) {
@@ -392,13 +392,13 @@ namespace hydroSimu {
 	  computePrimitives_0(uData, h_U.section(), index, c, q);
 	  real_t vx = c + FABS(q[IU]);
 	  real_t vy = c + FABS(q[IV]);
-	  
+
 	  invDt = FMAX ( invDt, vx/dx + vy/dy );
-	  
+
 	} // end for i,j
-      
+
     } else { // THREE_D
-      
+
       // for loop over inner region
       for (int k = ghostWidth; k < ksize-ghostWidth; k++)
 	for (int j = ghostWidth; j < jsize-ghostWidth; j++)
@@ -410,11 +410,11 @@ namespace hydroSimu {
 	    real_t vx = c + FABS(q[IU]);
 	    real_t vy = c + FABS(q[IV]);
 	    real_t vz = c + FABS(q[IW]);
-	    
+
 	    invDt = FMAX ( invDt, vx/dx + vy/dy + vz/dz );
-	    
+
 	  } // end for i,j,k
-      
+
     } // end THREE_D
 
     if (enableJet) {
@@ -422,16 +422,16 @@ namespace hydroSimu {
     }
 
     return cfl / invDt;
-    
+
   } // HydroRunBase::compute_dt -- CPU version
 #endif // __CUDACC__
 
   // =======================================================
   // =======================================================
-  void HydroRunBase::compute_viscosity_flux(HostArray<real_t>  &U, 
-					    HostArray<real_t>  &flux_x, 
-					    HostArray<real_t>  &flux_y, 
-					    real_t              dt) 
+  void HydroRunBase::compute_viscosity_flux(HostArray<real_t>  &U,
+					    HostArray<real_t>  &flux_x,
+					    HostArray<real_t>  &flux_y,
+					    real_t              dt)
   {
     real_t &cIso = _gParams.cIso;
     real_t &nu   = _gParams.nu;
@@ -458,7 +458,7 @@ namespace hydroSimu {
 	    u = HALF_F * ( U(i,j,IU)/U(i,j,ID) + U(i-1,j,IU)/U(i-1,j,ID) );
 	    v = HALF_F * ( U(i,j,IV)/U(i,j,ID) + U(i-1,j,IV)/U(i-1,j,ID) );
 	  }
-	  
+
 	  // dudx along X
 	  uR = U(i  ,j,IU) / U(i  ,j,ID);
 	  uL = U(i-1,j,IU) / U(i-1,j,ID);
@@ -468,13 +468,13 @@ namespace hydroSimu {
 	  uR = U(i  ,j,IV) / U(i  ,j,ID);
 	  uL = U(i-1,j,IV) / U(i-1,j,ID);
 	  dudx[IY] = (uR-uL)/dx;
-          
+
 	  // dudy along X
 	  uRR = U(i  ,j+1,IU) / U(i  ,j+1,ID);
 	  uRL = U(i-1,j+1,IU) / U(i-1,j+1,ID);
 	  uLR = U(i  ,j-1,IU) / U(i  ,j-1,ID);
 	  uLL = U(i-1,j-1,IU) / U(i-1,j-1,ID);
-	  uR  = uRR+uRL; 
+	  uR  = uRR+uRL;
 	  uL  = uLR+uLL;
 	  dudy[IX] = (uR-uL)/dy/4;
 
@@ -483,7 +483,7 @@ namespace hydroSimu {
 	  uRL = U(i-1,j+1,IV) / U(i-1,j+1,ID);
 	  uLR = U(i  ,j-1,IV) / U(i  ,j-1,ID);
 	  uLL = U(i-1,j-1,IV) / U(i-1,j-1,ID);
-	  uR  = uRR+uRL; 
+	  uR  = uRR+uRL;
 	  uL  = uLR+uLL;
 	  dudy[IY] = (uR-uL)/dy/4;
 
@@ -507,7 +507,7 @@ namespace hydroSimu {
 	    u = HALF_F * ( U(i,j,IU)/U(i,j,ID) + U(i,j-1,IU)/U(i,j-1,ID) );
 	    v = HALF_F * ( U(i,j,IV)/U(i,j,ID) + U(i,j-1,IV)/U(i,j-1,ID) );
 	  }
-	  
+
 	  // dudy along X
 	  uR = U(i,j  ,IU) / U(i,j  ,ID);
 	  uL = U(i,j-1,IU) / U(i,j-1,ID);
@@ -517,25 +517,25 @@ namespace hydroSimu {
 	  uR = U(i,j  ,IV) / U(i,j  ,ID);
 	  uL = U(i,j-1,IV) / U(i,j-1,ID);
 	  dudy[IY] = (uR-uL)/dy;
-           
+
 	  // dudx along X
 	  uRR = U(i+1,j  ,IU) / U(i+1,j  ,ID);
 	  uRL = U(i+1,j-1,IU) / U(i+1,j-1,ID);
 	  uLR = U(i-1,j  ,IU) / U(i-1,j  ,ID);
 	  uLL = U(i-1,j-1,IU) / U(i-1,j-1,ID);
-	  uR  = uRR+uRL; 
+	  uR  = uRR+uRL;
 	  uL  = uLR+uLL;
 	  dudx[IX] = (uR-uL)/dx/4;
-           
+
 	  // dudx along Y
 	  uRR = U(i+1,j  ,IV) / U(i+1,j  ,ID);
 	  uRL = U(i+1,j-1,IV) / U(i+1,j-1,ID);
 	  uLR = U(i-1,j  ,IV) / U(i-1,j  ,ID);
 	  uLL = U(i-1,j-1,IV) / U(i-1,j-1,ID);
-	  uR  = uRR+uRL; 
+	  uR  = uRR+uRL;
 	  uL  = uLR+uLL;
 	  dudx[IY] = (uR-uL)/dx/4;
-           
+
 	  tyy = -two3rd * nu * rho * ( TWO_F * dudy[IY] - dudx[IX] );
 	  txy = -         nu * rho * (         dudy[IX] + dudx[IY] );
 
@@ -547,7 +547,7 @@ namespace hydroSimu {
 	  } else {
 	    flux_y(i,j,IP) = ZERO_F;
 	  }
-	  
+
 	} // end for i
       } // end for j
 
@@ -558,10 +558,10 @@ namespace hydroSimu {
 #ifdef __CUDACC__
   // =======================================================
   // =======================================================
-  void HydroRunBase::compute_viscosity_flux(DeviceArray<real_t>  &U, 
-					    DeviceArray<real_t>  &flux_x, 
-					    DeviceArray<real_t>  &flux_y, 
-					    real_t                dt) 
+  void HydroRunBase::compute_viscosity_flux(DeviceArray<real_t>  &U,
+					    DeviceArray<real_t>  &flux_x,
+					    DeviceArray<real_t>  &flux_y,
+					    real_t                dt)
   {
 
     dim3 dimBlock(VISCOSITY_2D_DIMX,
@@ -569,7 +569,7 @@ namespace hydroSimu {
     dim3 dimGrid(blocksFor(isize, VISCOSITY_2D_DIMX_INNER),
 		 blocksFor(jsize, VISCOSITY_2D_DIMY_INNER));
 
-    kernel_viscosity_forces_2d<<< dimGrid, dimBlock >>> (U.data(), flux_x.data(), flux_y.data(), 
+    kernel_viscosity_forces_2d<<< dimGrid, dimBlock >>> (U.data(), flux_x.data(), flux_y.data(),
 							 ghostWidth, U.pitch(),
 							 U.dimx(), U.dimy(), dt, dx, dy);
     checkCudaError("in HydroRunBase :: kernel_viscosity_forces_2d");
@@ -579,11 +579,11 @@ namespace hydroSimu {
 
   // =======================================================
   // =======================================================
-  void HydroRunBase::compute_viscosity_flux(HostArray<real_t>  &U, 
-					    HostArray<real_t>  &flux_x, 
-					    HostArray<real_t>  &flux_y, 
+  void HydroRunBase::compute_viscosity_flux(HostArray<real_t>  &U,
+					    HostArray<real_t>  &flux_x,
+					    HostArray<real_t>  &flux_y,
 					    HostArray<real_t>  &flux_z,
-					    real_t              dt) 
+					    real_t              dt)
   {
     real_t &cIso = _gParams.cIso;
     real_t &nu   = _gParams.nu;
@@ -597,7 +597,7 @@ namespace hydroSimu {
     if (dimType == THREE_D) {
 
       real_t dudx[3], dudy[3], dudz[3];
-      
+
       for (int k=ghostWidth; k<ksize-ghostWidth+1; k++) {
 	for (int j=ghostWidth; j<jsize-ghostWidth+1; j++) {
 	  for (int i=ghostWidth; i<isize-ghostWidth+1; i++) {
@@ -606,7 +606,7 @@ namespace hydroSimu {
 	    real_t uR, uL;
 	    real_t uRR, uRL, uLR, uLL;
 	    real_t txx,tyy,tzz,txy,txz,tyz;
-	    
+
 	    real_t rho;
 
 	    /*
@@ -635,13 +635,13 @@ namespace hydroSimu {
 	    uL = U(i-1,j,k,IW) / U(i-1,j,k,ID);
 	    dudx[IZ]=(uR-uL)/dx;
 
-	    
+
 	    // dudy along X
 	    uRR = U(i  ,j+1,k,IU) / U(i  ,j+1,k,ID);
 	    uRL = U(i-1,j+1,k,IU) / U(i-1,j+1,k,ID);
 	    uLR = U(i  ,j-1,k,IU) / U(i  ,j-1,k,ID);
 	    uLL = U(i-1,j-1,k,IU) / U(i-1,j-1,k,ID);
-	    uR  = uRR+uRL; 
+	    uR  = uRR+uRL;
 	    uL  = uLR+uLL;
 	    dudy[IX] = (uR-uL)/dy/4;
 
@@ -650,7 +650,7 @@ namespace hydroSimu {
 	    uRL = U(i-1,j+1,k,IV) / U(i-1,j+1,k,ID);
 	    uLR = U(i  ,j-1,k,IV) / U(i  ,j-1,k,ID);
 	    uLL = U(i-1,j-1,k,IV) / U(i-1,j-1,k,ID);
-	    uR  = uRR+uRL; 
+	    uR  = uRR+uRL;
 	    uL  = uLR+uLL;
 	    dudy[IY] = (uR-uL)/dy/4;
 
@@ -659,7 +659,7 @@ namespace hydroSimu {
 	    uRL = U(i-1,j,k+1,IU) / U(i-1,j,k+1,ID);
 	    uLR = U(i  ,j,k-1,IU) / U(i  ,j,k-1,ID);
 	    uLL = U(i-1,j,k-1,IU) / U(i-1,j,k-1,ID);
-	    uR  = uRR+uRL; 
+	    uR  = uRR+uRL;
 	    uL  = uLR+uLL;
 	    dudz[IX] = (uR-uL)/dz/4;
 
@@ -668,7 +668,7 @@ namespace hydroSimu {
 	    uRL = U(i-1,j,k+1,IW) / U(i-1,j,k+1,ID);
 	    uLR = U(i  ,j,k-1,IW) / U(i  ,j,k-1,ID);
 	    uLL = U(i-1,j,k-1,IW) / U(i-1,j,k-1,ID);
-	    uR  = uRR+uRL; 
+	    uR  = uRR+uRL;
 	    uL  = uLR+uLL;
 	    dudz[IZ] = (uR-uL)/dz/4;
 
@@ -734,7 +734,7 @@ namespace hydroSimu {
 	    uRL = U(i,j-1,k+1,IV) / U(i,j-1,k+1,ID);
 	    uLR = U(i,j  ,k-1,IV) / U(i,j  ,k-1,ID);
 	    uLL = U(i,j-1,k-1,IV) / U(i,j-1,k-1,ID);
-	    uR  = uRR+uRL; 
+	    uR  = uRR+uRL;
 	    uL  = uLR+uLL;
 	    dudz[IY]=(uR-uL)/dz/4;
 
@@ -743,7 +743,7 @@ namespace hydroSimu {
 	    uRL = U(i,j-1,k+1,IW) / U(i,j-1,k+1,ID);
 	    uLR = U(i,j  ,k-1,IW) / U(i,j  ,k-1,ID);
 	    uLL = U(i,j-1,k-1,IW) / U(i,j-1,k-1,ID);
-	    uR  = uRR+uRL; 
+	    uR  = uRR+uRL;
 	    uL  = uLR+uLL;
 	    dudz[IZ]=(uR-uL)/dz/4;
 
@@ -764,7 +764,7 @@ namespace hydroSimu {
 	     * 3rd direction viscous flux
 	     */
 	    rho = HALF_F * ( U(i,j,k,ID) + U(i,j,k-1,ID) );
-	    
+
 	    if (cIso <= 0) {
 	      u = HALF_F * ( U(i,j,k,IU)/U(i,j,k,ID) + U(i,j,k-1,IU)/U(i,j,k-1,ID) );
 	      v = HALF_F * ( U(i,j,k,IV)/U(i,j,k,ID) + U(i,j,k-1,IV)/U(i,j,k-1,ID) );
@@ -803,7 +803,7 @@ namespace hydroSimu {
 	    uR  = uRR+uRL;
 	    uL  = uLR+uLL;
 	    dudx[IZ] = (uR-uL)/dx/4;
-	
+
 	    // dudy along Y
 	    uRR = U(i,j+1,k  ,IV) / U(i,j+1,k  ,ID);
 	    uRL = U(i,j+1,k-1,IV) / U(i,j+1,k-1,ID);
@@ -822,7 +822,7 @@ namespace hydroSimu {
 	    uL  = uLR+uLL;
 	    dudy[IZ] = (uR-uL)/dy/4;
 
-	
+
 	    tzz = -two3rd * nu * rho * (TWO_F * dudz[IZ] - dudx[IX] - dudy[IY] );
 	    txz = -         nu * rho * (        dudz[IX] + dudx[IZ]            );
 	    tyz = -         nu * rho * (        dudz[IY] + dudy[IZ]            );
@@ -846,11 +846,11 @@ namespace hydroSimu {
 #ifdef __CUDACC__
   // =======================================================
   // =======================================================
-  void HydroRunBase::compute_viscosity_flux(DeviceArray<real_t>  &U, 
-					    DeviceArray<real_t>  &flux_x, 
-					    DeviceArray<real_t>  &flux_y, 
-					    DeviceArray<real_t>  &flux_z, 
-					    real_t                dt) 
+  void HydroRunBase::compute_viscosity_flux(DeviceArray<real_t>  &U,
+					    DeviceArray<real_t>  &flux_x,
+					    DeviceArray<real_t>  &flux_y,
+					    DeviceArray<real_t>  &flux_z,
+					    real_t                dt)
   {
 
     // reset fluxes
@@ -873,9 +873,9 @@ namespace hydroSimu {
 
   // =======================================================
   // =======================================================
-  void HydroRunBase::compute_viscosity_flux(HostArray<real_t>  &U, 
-					    HostArray<real_t>  &flux_x, 
-					    HostArray<real_t>  &flux_y, 
+  void HydroRunBase::compute_viscosity_flux(HostArray<real_t>  &U,
+					    HostArray<real_t>  &flux_x,
+					    HostArray<real_t>  &flux_y,
 					    HostArray<real_t>  &flux_z,
 					    real_t              dt,
 					    ZslabInfo           zSlabInfo)
@@ -883,24 +883,24 @@ namespace hydroSimu {
     real_t &cIso = _gParams.cIso;
     real_t &nu   = _gParams.nu;
     const real_t two3rd = 2./3.;
-    
+
     // reset fluxes
     flux_x.reset();
     flux_y.reset();
     flux_z.reset();
-    
+
     if (dimType == THREE_D) {
-      
+
       real_t dudx[3], dudy[3], dudz[3];
-      
+
       // start and stop index of current slab (ghosts included)
       int& kStart = zSlabInfo.kStart;
       int& kStop  = zSlabInfo.kStop;
-    
-      for (int k = kStart+ghostWidth; 
-	   k     < kStop-ghostWidth+1; 
+
+      for (int k = kStart+ghostWidth;
+	   k     < kStop-ghostWidth+1;
 	   k++) {
-      
+
 	// local index inside slab
 	int kL = k - kStart;
 
@@ -908,14 +908,14 @@ namespace hydroSimu {
 
 	  for (int j=ghostWidth; j<jsize-ghostWidth+1; j++) {
 	    for (int i=ghostWidth; i<isize-ghostWidth+1; i++) {
-	    
+
 	      real_t u=0,v=0,w=0;
 	      real_t uR, uL;
 	      real_t uRR, uRL, uLR, uLL;
 	      real_t txx,tyy,tzz,txy,txz,tyz;
-	    
+
 	      real_t rho;
-	    
+
 	      /*
 	       * 1st direction viscous flux
 	       */
@@ -942,13 +942,13 @@ namespace hydroSimu {
 	      uL = U(i-1,j,k,IW) / U(i-1,j,k,ID);
 	      dudx[IZ]=(uR-uL)/dx;
 
-	    
+
 	      // dudy along X
 	      uRR = U(i  ,j+1,k,IU) / U(i  ,j+1,k,ID);
 	      uRL = U(i-1,j+1,k,IU) / U(i-1,j+1,k,ID);
 	      uLR = U(i  ,j-1,k,IU) / U(i  ,j-1,k,ID);
 	      uLL = U(i-1,j-1,k,IU) / U(i-1,j-1,k,ID);
-	      uR  = uRR+uRL; 
+	      uR  = uRR+uRL;
 	      uL  = uLR+uLL;
 	      dudy[IX] = (uR-uL)/dy/4;
 
@@ -957,7 +957,7 @@ namespace hydroSimu {
 	      uRL = U(i-1,j+1,k,IV) / U(i-1,j+1,k,ID);
 	      uLR = U(i  ,j-1,k,IV) / U(i  ,j-1,k,ID);
 	      uLL = U(i-1,j-1,k,IV) / U(i-1,j-1,k,ID);
-	      uR  = uRR+uRL; 
+	      uR  = uRR+uRL;
 	      uL  = uLR+uLL;
 	      dudy[IY] = (uR-uL)/dy/4;
 
@@ -966,7 +966,7 @@ namespace hydroSimu {
 	      uRL = U(i-1,j,k+1,IU) / U(i-1,j,k+1,ID);
 	      uLR = U(i  ,j,k-1,IU) / U(i  ,j,k-1,ID);
 	      uLL = U(i-1,j,k-1,IU) / U(i-1,j,k-1,ID);
-	      uR  = uRR+uRL; 
+	      uR  = uRR+uRL;
 	      uL  = uLR+uLL;
 	      dudz[IX] = (uR-uL)/dz/4;
 
@@ -975,7 +975,7 @@ namespace hydroSimu {
 	      uRL = U(i-1,j,k+1,IW) / U(i-1,j,k+1,ID);
 	      uLR = U(i  ,j,k-1,IW) / U(i  ,j,k-1,ID);
 	      uLL = U(i-1,j,k-1,IW) / U(i-1,j,k-1,ID);
-	      uR  = uRR+uRL; 
+	      uR  = uRR+uRL;
 	      uL  = uLR+uLL;
 	      dudz[IZ] = (uR-uL)/dz/4;
 
@@ -1041,7 +1041,7 @@ namespace hydroSimu {
 	      uRL = U(i,j-1,k+1,IV) / U(i,j-1,k+1,ID);
 	      uLR = U(i,j  ,k-1,IV) / U(i,j  ,k-1,ID);
 	      uLL = U(i,j-1,k-1,IV) / U(i,j-1,k-1,ID);
-	      uR  = uRR+uRL; 
+	      uR  = uRR+uRL;
 	      uL  = uLR+uLL;
 	      dudz[IY]=(uR-uL)/dz/4;
 
@@ -1050,7 +1050,7 @@ namespace hydroSimu {
 	      uRL = U(i,j-1,k+1,IW) / U(i,j-1,k+1,ID);
 	      uLR = U(i,j  ,k-1,IW) / U(i,j  ,k-1,ID);
 	      uLL = U(i,j-1,k-1,IW) / U(i,j-1,k-1,ID);
-	      uR  = uRR+uRL; 
+	      uR  = uRR+uRL;
 	      uL  = uLR+uLL;
 	      dudz[IZ]=(uR-uL)/dz/4;
 
@@ -1071,7 +1071,7 @@ namespace hydroSimu {
 	       * 3rd direction viscous flux
 	       */
 	      rho = HALF_F * ( U(i,j,k,ID) + U(i,j,k-1,ID) );
-	    
+
 	      if (cIso <= 0) {
 		u = HALF_F * ( U(i,j,k,IU)/U(i,j,k,ID) + U(i,j,k-1,IU)/U(i,j,k-1,ID) );
 		v = HALF_F * ( U(i,j,k,IV)/U(i,j,k,ID) + U(i,j,k-1,IV)/U(i,j,k-1,ID) );
@@ -1110,7 +1110,7 @@ namespace hydroSimu {
 	      uR  = uRR+uRL;
 	      uL  = uLR+uLL;
 	      dudx[IZ] = (uR-uL)/dx/4;
-	
+
 	      // dudy along Y
 	      uRR = U(i,j+1,k  ,IV) / U(i,j+1,k  ,ID);
 	      uRL = U(i,j+1,k-1,IV) / U(i,j+1,k-1,ID);
@@ -1129,7 +1129,7 @@ namespace hydroSimu {
 	      uL  = uLR+uLL;
 	      dudy[IZ] = (uR-uL)/dy/4;
 
-	
+
 	      tzz = -two3rd * nu * rho * (TWO_F * dudz[IZ] - dudx[IX] - dudy[IY] );
 	      txz = -         nu * rho * (        dudz[IX] + dudx[IZ]            );
 	      tyz = -         nu * rho * (        dudz[IY] + dudy[IZ]            );
@@ -1145,7 +1145,7 @@ namespace hydroSimu {
 
 	    } // end for i
 	  } // end for j
-      
+
 	} // end if (k<ksize-ghostWidth+1)
 
       } // end for k
@@ -1157,54 +1157,54 @@ namespace hydroSimu {
 #ifdef __CUDACC__
   // =======================================================
   // =======================================================
-  void HydroRunBase::compute_viscosity_flux(DeviceArray<real_t>  &U, 
-					    DeviceArray<real_t>  &flux_x, 
-					    DeviceArray<real_t>  &flux_y, 
-					    DeviceArray<real_t>  &flux_z, 
+  void HydroRunBase::compute_viscosity_flux(DeviceArray<real_t>  &U,
+					    DeviceArray<real_t>  &flux_x,
+					    DeviceArray<real_t>  &flux_y,
+					    DeviceArray<real_t>  &flux_z,
 					    real_t                dt,
-					    ZslabInfo             zSlabInfo) 
+					    ZslabInfo             zSlabInfo)
   {
-        
+
     // take care that the last slab might be truncated
     if (zSlabInfo.zSlabId == zSlabInfo.zSlabNb-1) {
       zSlabInfo.ksizeSlab = ksize - zSlabInfo.kStart;
     }
-    
+
     // reset fluxes
     flux_x.reset();
     flux_y.reset();
     flux_z.reset();
-    
+
     dim3 dimBlock(VISCOSITY_Z_3D_DIMX,
 		  VISCOSITY_Z_3D_DIMY);
     dim3 dimGrid(blocksFor(isize, VISCOSITY_Z_3D_DIMX_INNER),
 		 blocksFor(jsize, VISCOSITY_Z_3D_DIMY_INNER));
-    
-    kernel_viscosity_forces_3d_zslab<<< dimGrid, dimBlock >>> (U.data(), 
-							       flux_x.data(), 
-							       flux_y.data(), 
+
+    kernel_viscosity_forces_3d_zslab<<< dimGrid, dimBlock >>> (U.data(),
+							       flux_x.data(),
+							       flux_y.data(),
 							       flux_z.data(),
 							       ghostWidth, U.pitch(),
-							       U.dimx(), 
-							       U.dimy(), 
-							       U.dimz(), 
-							       dt, 
+							       U.dimx(),
+							       U.dimy(),
+							       U.dimz(),
+							       dt,
 							       dx, dy, dz,
 							       zSlabInfo);
     checkCudaError("HydroRunBase :: kernel_viscosity_forces_3d_zslab");
-    
+
   } // HydroRunBase::compute_viscosity_flux for 3D data (GPU version)
 #endif // __CUDACC__
 
   // =======================================================
   // =======================================================
-  real_t HydroRunBase::compute_random_forcing_normalization(HostArray<real_t>  &U, 
+  real_t HydroRunBase::compute_random_forcing_normalization(HostArray<real_t>  &U,
 							    real_t             dt)
   {
 
     // reduction - normalization prerequisites
     // 9 values :
-    // 0 -> rho*v*(delta v) 
+    // 0 -> rho*v*(delta v)
     // 1 -> rho*(delta v)^2
     // 2 -> rho*v^2/temperature
     // 3 -> v^2/temperature
@@ -1225,7 +1225,7 @@ namespace hydroSimu {
     for (int k=ghostWidth; k<ksize-ghostWidth; k++) {
       for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
 	for (int i=ghostWidth; i<isize-ghostWidth; i++) {
-	  
+
 	  real_t rho = U(i,j,k,ID);
 	  real_t u   = U(i,j,k,IU)/rho;
 	  real_t v   = U(i,j,k,IV)/rho;
@@ -1247,7 +1247,7 @@ namespace hydroSimu {
 	  if (_gParams.cIso >0) {
 	    temperature = SQR(_gParams.cIso);
 	  } else { // use ideal gas eq of state (P over rho)
-	    temperature =  (_gParams.gamma0 - ONE_F) * 
+	    temperature =  (_gParams.gamma0 - ONE_F) *
 	      (U(i,j,k,IP) - 0.5 * rho * ( u*u + v*v + w*w ) );
 	  }
 
@@ -1255,7 +1255,7 @@ namespace hydroSimu {
 	  reduceValue[2] += rho * u * u / temperature;
 	  reduceValue[2] += rho * v * v / temperature;
 	  reduceValue[2] += rho * w * w / temperature;
-	  
+
 	  // compute v^2/t
 	  reduceValue[3] += u * u / temperature;
 	  reduceValue[3] += v * v / temperature;
@@ -1288,8 +1288,8 @@ namespace hydroSimu {
     if (randomForcingEdot == 0) {
       norm = 0;
     } else {
-      norm = ( SQRT( SQR(reduceValue[0]) + 
-		     reduceValue[1] * dt * randomForcingEdot * 2 * nbCells) - 
+      norm = ( SQRT( SQR(reduceValue[0]) +
+		     reduceValue[1] * dt * randomForcingEdot * 2 * nbCells) -
 	       reduceValue[0] ) / reduceValue[1];
     }
 
@@ -1298,7 +1298,7 @@ namespace hydroSimu {
     // 	   reduceValue[2],reduceValue[3],reduceValue[4],reduceValue[5],
     // 	   reduceValue[6], reduceValue[7], reduceValue[8]);
     /**/
-    
+
     /* Debug:*/
     /*printf("Random forcing normalistation : %f\n",norm);
     printf("Random forcing E_k %f M_m %f M_v %f \n",
@@ -1314,18 +1314,18 @@ namespace hydroSimu {
 #ifdef __CUDACC__
   // =======================================================
   // =======================================================
-  real_t HydroRunBase::compute_random_forcing_normalization(DeviceArray<real_t>  &U, 
+  real_t HydroRunBase::compute_random_forcing_normalization(DeviceArray<real_t>  &U,
 							    real_t               dt)
   {
-    
+
     // there are nbRandomForcingReduction=9 values to reduce
     kernel_compute_random_forcing_normalization<RANDOM_FORCING_BLOCK_SIZE>
-      <<<randomForcingBlockCount, 
-      RANDOM_FORCING_BLOCK_SIZE, 
+      <<<randomForcingBlockCount,
+      RANDOM_FORCING_BLOCK_SIZE,
       RANDOM_FORCING_BLOCK_SIZE*sizeof(real_t)*
-      nbRandomForcingReduction>>>(U.data(), 
+      nbRandomForcingReduction>>>(U.data(),
 				  d_randomForcing.data(),
-				  d_randomForcingNormalization.data(), 
+				  d_randomForcingNormalization.data(),
 				  ghostWidth,
 				  U.pitch(),
 				  U.dimx(),
@@ -1355,7 +1355,7 @@ namespace hydroSimu {
       reduceValue[4] = reduceValue[4] + reduceArray[i + 4*randomForcingBlockCount];
       reduceValue[5] = reduceValue[5] + reduceArray[i + 5*randomForcingBlockCount];
       reduceValue[6] = reduceValue[6] + reduceArray[i + 6*randomForcingBlockCount];
-      reduceValue[7] = FMIN(reduceValue[7], 
+      reduceValue[7] = FMIN(reduceValue[7],
 			    reduceArray[i + 7*randomForcingBlockCount]);
       reduceValue[8] = FMAX(reduceValue[8],
 			    reduceArray[i + 8*randomForcingBlockCount]);
@@ -1367,11 +1367,11 @@ namespace hydroSimu {
     if (randomForcingEdot == 0) {
       norm = 0;
     } else {
-      norm = ( SQRT( SQR(reduceValue[0]) + 
-		     reduceValue[1] * dt * randomForcingEdot * 2 * nbCells ) - 
+      norm = ( SQRT( SQR(reduceValue[0]) +
+		     reduceValue[1] * dt * randomForcingEdot * 2 * nbCells ) -
 	       reduceValue[0] ) / reduceValue[1];
     }
-    
+
     /**/
     // printf("---- kk %f %f %f %f %f %f %f %f %f\n",reduceValue[0],reduceValue[1],
     // 	   reduceValue[2],reduceValue[3],reduceValue[4],reduceValue[5],
@@ -1385,16 +1385,16 @@ namespace hydroSimu {
 	   SQRT(reduceValue[2]/nbCells),
 	   SQRT(reduceValue[3]/nbCells) );*/
     /* */
-    
+
     return norm;
-    
+
   } // HydroRunBase::compute_random_forcing_normalization
 #endif // __CUDACC__
 
 
   // =======================================================
   // =======================================================
-  void HydroRunBase::add_random_forcing(HostArray<real_t>  &U, 
+  void HydroRunBase::add_random_forcing(HostArray<real_t>  &U,
 					real_t             dt,
 					real_t             norm)
   {
@@ -1424,13 +1424,13 @@ namespace hydroSimu {
     	}
       }
     }
-	  
+
   } // HydroRunBase::add_random_forcing
 
 #ifdef __CUDACC__
   // =======================================================
   // =======================================================
-  void HydroRunBase::add_random_forcing(DeviceArray<real_t>  &U, 
+  void HydroRunBase::add_random_forcing(DeviceArray<real_t>  &U,
 					real_t               dt,
 					real_t             norm)
   {
@@ -1443,14 +1443,14 @@ namespace hydroSimu {
     dim3 dimGrid(blocksFor(isize, ADD_RANDOM_FORCING_3D_DIMX),
 		 blocksFor(jsize, ADD_RANDOM_FORCING_3D_DIMY));
 
-    kernel_add_random_forcing_3d<<< dimGrid, dimBlock >>> 
-      (U.data(), 
+    kernel_add_random_forcing_3d<<< dimGrid, dimBlock >>>
+      (U.data(),
        d_randomForcing.data(),
        dt,
        norm,
        ghostWidth, U.pitch(),
        U.dimx(), U.dimy(), U.dimz());
-    
+
     checkCudaError("in HydroRunBase :: kernel_add_random_forcing_3d");
 
   } // HydroRunBase::add_random_forcing
@@ -1458,8 +1458,8 @@ namespace hydroSimu {
 
   // =======================================================
   // =======================================================
-  void HydroRunBase::compute_hydro_update(HostArray<real_t>  &U, 
-					  HostArray<real_t>  &flux_x, 
+  void HydroRunBase::compute_hydro_update(HostArray<real_t>  &U,
+					  HostArray<real_t>  &flux_x,
 					  HostArray<real_t>  &flux_y)
   {
 
@@ -1467,23 +1467,23 @@ namespace hydroSimu {
     for (int iVar=0; iVar < 4; iVar++) {
       for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
 	for (int i=ghostWidth; i<isize-ghostWidth; i++) {
-	  
+
 	  U(i,j,iVar) += ( flux_x(i  ,j  ,iVar) -
 			   flux_x(i+1,j  ,iVar)  );
 	  U(i,j,iVar) += ( flux_y(i  ,j  ,iVar) -
 			   flux_y(i  ,j+1,iVar)  );
-	  
+
 	} // end for i
       } // end for j
     } // end for iVar
-    
+
   } // HydroRunBase::compute_hydro_update (2D case, CPU)
 
 #ifdef __CUDACC__
   // =======================================================
   // =======================================================
-  void HydroRunBase::compute_hydro_update(DeviceArray<real_t>  &U, 
-					  DeviceArray<real_t>  &flux_x, 
+  void HydroRunBase::compute_hydro_update(DeviceArray<real_t>  &U,
+					  DeviceArray<real_t>  &flux_x,
 					  DeviceArray<real_t>  &flux_y)
   {
     dim3 dimBlock(HYDRO_UPDATE_2D_DIMX,
@@ -1491,7 +1491,7 @@ namespace hydroSimu {
     dim3 dimGrid(blocksFor(isize, HYDRO_UPDATE_2D_DIMX),
 		 blocksFor(jsize, HYDRO_UPDATE_2D_DIMY));
 
-    kernel_hydro_update_2d<<< dimGrid, dimBlock >>> (U.data(), flux_x.data(), flux_y.data(), 
+    kernel_hydro_update_2d<<< dimGrid, dimBlock >>> (U.data(), flux_x.data(), flux_y.data(),
 						     ghostWidth, U.pitch(),
 						     U.dimx(), U.dimy());
     checkCudaError("in HydroRunBase :: kernel_hydro_update_2d");
@@ -1501,8 +1501,8 @@ namespace hydroSimu {
 
   // =======================================================
   // =======================================================
-  void HydroRunBase::compute_hydro_update(HostArray<real_t>  &U, 
-					  HostArray<real_t>  &flux_x, 
+  void HydroRunBase::compute_hydro_update(HostArray<real_t>  &U,
+					  HostArray<real_t>  &flux_x,
 					  HostArray<real_t>  &flux_y,
 					  HostArray<real_t>  &flux_z)
   {
@@ -1512,14 +1512,14 @@ namespace hydroSimu {
       for (int k=ghostWidth; k<ksize-ghostWidth; k++) {
 	for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
 	  for (int i=ghostWidth; i<isize-ghostWidth; i++) {
-	    
+
 	    U(i,j,k,iVar) += ( flux_x(i  ,j  ,k  ,iVar) -
 			       flux_x(i+1,j  ,k  ,iVar)  );
 	    U(i,j,k,iVar) += ( flux_y(i  ,j  ,k  ,iVar) -
 			       flux_y(i  ,j+1,k  ,iVar)  );
 	    U(i,j,k,iVar) += ( flux_z(i  ,j  ,k  ,iVar) -
 			       flux_z(i  ,j  ,k+1,iVar)  );
-	    
+
 	  } // end for i
 	} // end for j
       } // end for k
@@ -1530,9 +1530,9 @@ namespace hydroSimu {
 #ifdef __CUDACC__
   // =======================================================
   // =======================================================
-  void HydroRunBase::compute_hydro_update(DeviceArray<real_t>  &U, 
-					  DeviceArray<real_t>  &flux_x, 
-					  DeviceArray<real_t>  &flux_y, 
+  void HydroRunBase::compute_hydro_update(DeviceArray<real_t>  &U,
+					  DeviceArray<real_t>  &flux_x,
+					  DeviceArray<real_t>  &flux_y,
 					  DeviceArray<real_t>  &flux_z)
   {
     dim3 dimBlock(HYDRO_UPDATE_3D_DIMX,
@@ -1550,17 +1550,17 @@ namespace hydroSimu {
 
   // =======================================================
   // =======================================================
-  void HydroRunBase::compute_hydro_update(HostArray<real_t>  &U, 
-					  HostArray<real_t>  &flux_x, 
+  void HydroRunBase::compute_hydro_update(HostArray<real_t>  &U,
+					  HostArray<real_t>  &flux_x,
 					  HostArray<real_t>  &flux_y,
 					  HostArray<real_t>  &flux_z,
 					  ZslabInfo           zSlabInfo)
   {
-    
+
     // start and stop index of current slab (ghosts included)
     int& kStart = zSlabInfo.kStart;
     int& kStop  = zSlabInfo.kStop;
-    
+
     // only update hydro variables (not magnetic field)
     for (int iVar=0; iVar < 5; iVar++) {
 
@@ -1570,17 +1570,17 @@ namespace hydroSimu {
 	int kL = k - kStart;
 
 	if (k<ksize-ghostWidth) {
-	  
+
 	  for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
 	    for (int i=ghostWidth; i<isize-ghostWidth; i++) {
-	      
+
 	      U(i,j,k,iVar) += ( flux_x(i  ,j  ,kL  ,iVar) -
 				 flux_x(i+1,j  ,kL  ,iVar)  );
 	      U(i,j,k,iVar) += ( flux_y(i  ,j  ,kL  ,iVar) -
 				 flux_y(i  ,j+1,kL  ,iVar)  );
 	      U(i,j,k,iVar) += ( flux_z(i  ,j  ,kL  ,iVar) -
 				 flux_z(i  ,j  ,kL+1,iVar)  );
-	      
+
 	    } // end for i
 	  } // end for j
 
@@ -1595,13 +1595,13 @@ namespace hydroSimu {
 #ifdef __CUDACC__
   // =======================================================
   // =======================================================
-  void HydroRunBase::compute_hydro_update(DeviceArray<real_t>  &U, 
-					  DeviceArray<real_t>  &flux_x, 
-					  DeviceArray<real_t>  &flux_y, 
+  void HydroRunBase::compute_hydro_update(DeviceArray<real_t>  &U,
+					  DeviceArray<real_t>  &flux_x,
+					  DeviceArray<real_t>  &flux_y,
 					  DeviceArray<real_t>  &flux_z,
 					  ZslabInfo             zSlabInfo)
   {
-    
+
     // take care that the last slab might be truncated
     if (zSlabInfo.zSlabId == zSlabInfo.zSlabNb-1) {
       zSlabInfo.ksizeSlab = ksize - zSlabInfo.kStart;
@@ -1613,14 +1613,14 @@ namespace hydroSimu {
     dim3 dimGrid(blocksFor(isize, HYDRO_UPDATE_Z_3D_DIMX),
 		 blocksFor(jsize, HYDRO_UPDATE_Z_3D_DIMY));
 
-    kernel_hydro_update_3d_zslab<<< dimGrid, dimBlock >>> (U.data(), 
-							   flux_x.data(), 
-							   flux_y.data(), 
+    kernel_hydro_update_3d_zslab<<< dimGrid, dimBlock >>> (U.data(),
+							   flux_x.data(),
+							   flux_y.data(),
 							   flux_z.data(),
-							   ghostWidth, 
+							   ghostWidth,
 							   U.pitch(),
-							   U.dimx(), 
-							   U.dimy(), 
+							   U.dimx(),
+							   U.dimy(),
 							   U.dimz(),
 							   zSlabInfo);
     checkCudaError("HydroRunBase :: kernel_hydro_update_3d_zslab");
@@ -1630,39 +1630,39 @@ namespace hydroSimu {
 
   // =======================================================
   // =======================================================
-  void HydroRunBase::compute_hydro_update_energy(HostArray<real_t>  &U, 
-						 HostArray<real_t>  &flux_x, 
+  void HydroRunBase::compute_hydro_update_energy(HostArray<real_t>  &U,
+						 HostArray<real_t>  &flux_x,
 						 HostArray<real_t>  &flux_y)
   {
-    
+
     // only update energy
     for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
       for (int i=ghostWidth; i<isize-ghostWidth; i++) {
-	
+
 	U(i,j,IP) += ( flux_x(i  ,j  ,IP) -
 		       flux_x(i+1,j  ,IP)  );
 	U(i,j,IP) += ( flux_y(i  ,j  ,IP) -
 		       flux_y(i  ,j+1,IP)  );
-	
+
       } // end for i
     } // end for j
-    
+
   } // HydroRunBase::compute_hydro_update_energy (2D case, CPU)
-  
+
 #ifdef __CUDACC__
   // =======================================================
   // =======================================================
-  void HydroRunBase::compute_hydro_update_energy(DeviceArray<real_t>  &U, 
-						 DeviceArray<real_t>  &flux_x, 
+  void HydroRunBase::compute_hydro_update_energy(DeviceArray<real_t>  &U,
+						 DeviceArray<real_t>  &flux_x,
 						 DeviceArray<real_t>  &flux_y)
   {
     dim3 dimBlock(HYDRO_UPDATE_2D_DIMX,
 		  HYDRO_UPDATE_2D_DIMY);
     dim3 dimGrid(blocksFor(isize, HYDRO_UPDATE_2D_DIMX),
 		 blocksFor(jsize, HYDRO_UPDATE_2D_DIMY));
-    
-    kernel_hydro_update_energy_2d<<< dimGrid, 
-      dimBlock >>> (U.data(), flux_x.data(), flux_y.data(), 
+
+    kernel_hydro_update_energy_2d<<< dimGrid,
+      dimBlock >>> (U.data(), flux_x.data(), flux_y.data(),
 		    ghostWidth, U.pitch(),
 		    U.dimx(), U.dimy());
     checkCudaError("in HydroRunBase :: kernel_hydro_update_energy_2d");
@@ -1672,8 +1672,8 @@ namespace hydroSimu {
 
   // =======================================================
   // =======================================================
-  void HydroRunBase::compute_hydro_update_energy(HostArray<real_t>  &U, 
-						 HostArray<real_t>  &flux_x, 
+  void HydroRunBase::compute_hydro_update_energy(HostArray<real_t>  &U,
+						 HostArray<real_t>  &flux_x,
 						 HostArray<real_t>  &flux_y,
 						 HostArray<real_t>  &flux_z)
   {
@@ -1682,26 +1682,26 @@ namespace hydroSimu {
     for (int k=ghostWidth; k<ksize-ghostWidth; k++) {
       for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
 	for (int i=ghostWidth; i<isize-ghostWidth; i++) {
-	  
+
 	  U(i,j,k,IP) += ( flux_x(i  ,j  ,k  ,IP) -
 			   flux_x(i+1,j  ,k  ,IP)  );
 	  U(i,j,k,IP) += ( flux_y(i  ,j  ,k  ,IP) -
 			   flux_y(i  ,j+1,k  ,IP)  );
 	  U(i,j,k,IP) += ( flux_z(i  ,j  ,k  ,IP) -
 			   flux_z(i  ,j  ,k+1,IP)  );
-	  
+
 	} // end for i
       } // end for j
     } // end for k
-    
+
   } // HydroRunBase::compute_hydro_update_energy (3D case)
 
 #ifdef __CUDACC__
   // =======================================================
   // =======================================================
-  void HydroRunBase::compute_hydro_update_energy(DeviceArray<real_t>  &U, 
-						 DeviceArray<real_t>  &flux_x, 
-						 DeviceArray<real_t>  &flux_y, 
+  void HydroRunBase::compute_hydro_update_energy(DeviceArray<real_t>  &U,
+						 DeviceArray<real_t>  &flux_x,
+						 DeviceArray<real_t>  &flux_y,
 						 DeviceArray<real_t>  &flux_z)
   {
     dim3 dimBlock(HYDRO_UPDATE_3D_DIMX,
@@ -1709,7 +1709,7 @@ namespace hydroSimu {
     dim3 dimGrid(blocksFor(isize, HYDRO_UPDATE_3D_DIMX),
 		 blocksFor(jsize, HYDRO_UPDATE_3D_DIMY));
 
-    kernel_hydro_update_energy_3d<<< dimGrid, 
+    kernel_hydro_update_energy_3d<<< dimGrid,
       dimBlock >>> (U.data(), flux_x.data(), flux_y.data(), flux_z.data(),
 		    ghostWidth, U.pitch(),
 		    U.dimx(), U.dimy(), U.dimz());
@@ -1720,8 +1720,8 @@ namespace hydroSimu {
 
   // =======================================================
   // =======================================================
-  void HydroRunBase::compute_hydro_update_energy(HostArray<real_t>  &U, 
-						 HostArray<real_t>  &flux_x, 
+  void HydroRunBase::compute_hydro_update_energy(HostArray<real_t>  &U,
+						 HostArray<real_t>  &flux_x,
 						 HostArray<real_t>  &flux_y,
 						 HostArray<real_t>  &flux_z,
 						 ZslabInfo           zSlabInfo)
@@ -1736,34 +1736,34 @@ namespace hydroSimu {
 
       // local k index
       int kL = k - kStart;
-      
+
       if (k<ksize-ghostWidth) {
 
 	for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
 	  for (int i=ghostWidth; i<isize-ghostWidth; i++) {
-	    
+
 	    U(i,j,k,IP) += ( flux_x(i  ,j  ,kL  ,IP) -
 			     flux_x(i+1,j  ,kL  ,IP)  );
 	    U(i,j,k,IP) += ( flux_y(i  ,j  ,kL  ,IP) -
 			     flux_y(i  ,j+1,kL  ,IP)  );
 	    U(i,j,k,IP) += ( flux_z(i  ,j  ,kL  ,IP) -
 			     flux_z(i  ,j  ,kL+1,IP)  );
-	    
+
 	  } // end for i
 	} // end for j
 
       } // end if (k<ksize-ghostWidth)
 
     } // end for k
-    
+
   } // HydroRunBase::compute_hydro_update_energy (3D case, z-slab method)
 
 #ifdef __CUDACC__
   // =======================================================
   // =======================================================
-  void HydroRunBase::compute_hydro_update_energy(DeviceArray<real_t>  &U, 
-						 DeviceArray<real_t>  &flux_x, 
-						 DeviceArray<real_t>  &flux_y, 
+  void HydroRunBase::compute_hydro_update_energy(DeviceArray<real_t>  &U,
+						 DeviceArray<real_t>  &flux_x,
+						 DeviceArray<real_t>  &flux_y,
 						 DeviceArray<real_t>  &flux_z,
 						 ZslabInfo             zSlabInfo)
   {
@@ -1778,14 +1778,14 @@ namespace hydroSimu {
     dim3 dimGrid(blocksFor(isize, HYDRO_UPDATE_Z_3D_DIMX),
 		 blocksFor(jsize, HYDRO_UPDATE_Z_3D_DIMY));
 
-    kernel_hydro_update_energy_3d_zslab<<< dimGrid, dimBlock >>> (U.data(), 
-								  flux_x.data(), 
-								  flux_y.data(), 
+    kernel_hydro_update_energy_3d_zslab<<< dimGrid, dimBlock >>> (U.data(),
+								  flux_x.data(),
+								  flux_y.data(),
 								  flux_z.data(),
-								  ghostWidth, 
+								  ghostWidth,
 								  U.pitch(),
-								  U.dimx(), 
-								  U.dimy(), 
+								  U.dimx(),
+								  U.dimy(),
 								  U.dimz(),
 								  zSlabInfo);
     checkCudaError("in HydroRunBase :: kernel_hydro_update_energy_3d_zslab");
@@ -1798,13 +1798,13 @@ namespace hydroSimu {
   void HydroRunBase::compute_gravity_predictor(HostArray<real_t> &qPrim,
 					       real_t  dt)
   {
-    
+
     if (dimType == TWO_D) {
 
       for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
 	for (int i=ghostWidth; i<isize-ghostWidth; i++) {
 
-	  qPrim(i,j,IU) += HALF_F * dt * h_gravity(i,j,IX); 
+	  qPrim(i,j,IU) += HALF_F * dt * h_gravity(i,j,IX);
 	  qPrim(i,j,IV) += HALF_F * dt * h_gravity(i,j,IY);
 
 	} // end for i
@@ -1815,15 +1815,15 @@ namespace hydroSimu {
       for (int k=ghostWidth; k<ksize-ghostWidth; k++) {
 	for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
 	  for (int i=ghostWidth; i<isize-ghostWidth; i++) {
-	    
-	    qPrim(i,j,k,IU) += HALF_F * dt * h_gravity(i,j,k,IX); 
+
+	    qPrim(i,j,k,IU) += HALF_F * dt * h_gravity(i,j,k,IX);
 	    qPrim(i,j,k,IV) += HALF_F * dt * h_gravity(i,j,k,IY);
 	    qPrim(i,j,k,IW) += HALF_F * dt * h_gravity(i,j,k,IZ);
-	    
+
 	  } // end for i
 	} // end for j
       } // end for k
-      
+
     } // end TWO_D / THREE_D
 
   } // HydroRunBase::compute_gravity_predictor / CPU version
@@ -1836,14 +1836,14 @@ namespace hydroSimu {
   {
 
     if (dimType == TWO_D) {
-      
+
       dim3 dimBlock(GRAVITY_PRED_2D_DIMX,
 		    GRAVITY_PRED_2D_DIMY);
       dim3 dimGrid(blocksFor(isize, GRAVITY_PRED_2D_DIMX),
 		   blocksFor(jsize, GRAVITY_PRED_2D_DIMY));
 
-      kernel_gravity_predictor_2d<<<dimGrid, dimBlock>>>(qPrim.data(), 
-							 ghostWidth, 
+      kernel_gravity_predictor_2d<<<dimGrid, dimBlock>>>(qPrim.data(),
+							 ghostWidth,
 							 qPrim.pitch(),
 							 qPrim.dimx(),
 							 qPrim.dimy(),
@@ -1856,8 +1856,8 @@ namespace hydroSimu {
       dim3 dimGrid(blocksFor(isize, GRAVITY_PRED_3D_DIMX),
 		   blocksFor(jsize, GRAVITY_PRED_3D_DIMY));
 
-      kernel_gravity_predictor_3d<<<dimGrid, dimBlock>>>(qPrim.data(), 
-							 ghostWidth, 
+      kernel_gravity_predictor_3d<<<dimGrid, dimBlock>>>(qPrim.data(),
+							 ghostWidth,
 							 qPrim.pitch(),
 							 qPrim.dimx(),
 							 qPrim.dimy(),
@@ -1865,7 +1865,7 @@ namespace hydroSimu {
 							 dt);
 
     } // end TWO_D / THREE_D
-    
+
   } // HydroRunBase::compute_gravity_predictor / GPU version
 #endif // __CUDACC__
 
@@ -1875,33 +1875,33 @@ namespace hydroSimu {
 					       real_t             dt,
 					       ZslabInfo          zSlabInfo)
   {
-    
+
     // start and stop index of current slab (ghosts included)
     int& kStart = zSlabInfo.kStart;
     int& kStop  = zSlabInfo.kStop;
-    
+
     // only update hydro variable energy
     for (int k=kStart+ghostWidth; k<kStop-ghostWidth; k++) {
-      
+
       // local k index
       int kL = k - kStart;
-      
+
       if (k<ksize-ghostWidth) {
-	
+
 	for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
 	  for (int i=ghostWidth; i<isize-ghostWidth; i++) {
-	    
-	    qPrim(i,j,kL,IU) += HALF_F * dt * h_gravity(i,j,k,IX); 
+
+	    qPrim(i,j,kL,IU) += HALF_F * dt * h_gravity(i,j,k,IX);
 	    qPrim(i,j,kL,IV) += HALF_F * dt * h_gravity(i,j,k,IY);
 	    qPrim(i,j,kL,IW) += HALF_F * dt * h_gravity(i,j,k,IZ);
-	    
+
 	  } // end for i
 	} // end for j
 
       } // if (k<ksize-ghostWidth)
 
     } // end for k
-    
+
   } // HydroRunBase::compute_gravity_predictor / CPU version / with zSlab
 
 #ifdef __CUDACC__
@@ -1921,9 +1921,9 @@ namespace hydroSimu {
 		  GRAVITY_PRED_Z_3D_DIMY);
     dim3 dimGrid(blocksFor(isize, GRAVITY_PRED_Z_3D_DIMX),
 		 blocksFor(jsize, GRAVITY_PRED_Z_3D_DIMY));
-    
-    kernel_gravity_predictor_3d_zslab<<<dimGrid, dimBlock>>>(qPrim.data(), 
-							     ghostWidth, 
+
+    kernel_gravity_predictor_3d_zslab<<<dimGrid, dimBlock>>>(qPrim.data(),
+							     ghostWidth,
 							     qPrim.pitch(),
 							     qPrim.dimx(),
 							     qPrim.dimy(),
@@ -1941,7 +1941,7 @@ namespace hydroSimu {
 						 HostArray<real_t> &UOld,
 						 real_t  dt)
   {
-    
+
     if (dimType == TWO_D) {
 
       for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
@@ -1951,7 +1951,7 @@ namespace hydroSimu {
 	  real_t rhoNew = UNew(i,j,ID);
 
 	  // update momentum
-	  UNew(i,j,IU) += HALF_F * dt * h_gravity(i,j,IX) * (rhoOld + rhoNew); 
+	  UNew(i,j,IU) += HALF_F * dt * h_gravity(i,j,IX) * (rhoOld + rhoNew);
 	  UNew(i,j,IV) += HALF_F * dt * h_gravity(i,j,IY) * (rhoOld + rhoNew);
 
 	} // end for i
@@ -1962,19 +1962,19 @@ namespace hydroSimu {
       for (int k=ghostWidth; k<ksize-ghostWidth; k++) {
 	for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
 	  for (int i=ghostWidth; i<isize-ghostWidth; i++) {
-	    
+
 	    real_t rhoOld = UOld(i,j,k,ID);
 	    real_t rhoNew = UNew(i,j,k,ID);
-	    
+
 	    // update momentum
-	    UNew(i,j,k,IU) += HALF_F * dt * h_gravity(i,j,k,IX) * (rhoOld + rhoNew); 
+	    UNew(i,j,k,IU) += HALF_F * dt * h_gravity(i,j,k,IX) * (rhoOld + rhoNew);
 	    UNew(i,j,k,IV) += HALF_F * dt * h_gravity(i,j,k,IY) * (rhoOld + rhoNew);
 	    UNew(i,j,k,IW) += HALF_F * dt * h_gravity(i,j,k,IZ) * (rhoOld + rhoNew);
-	    
+
 	  } // end for i
 	} // end for j
       } // end for k
-      
+
     } // end TWO_D / THREE_D
 
   } // HydroRunBase::compute_gravity_source_term / CPU version
@@ -1986,7 +1986,7 @@ namespace hydroSimu {
 						 DeviceArray<real_t> &UOld,
 						 real_t  dt)
   {
-    
+
     if (dimType == TWO_D) {
 
       dim3 dimBlock(GRAVITY_SRC_2D_DIMX,
@@ -1994,9 +1994,9 @@ namespace hydroSimu {
       dim3 dimGrid(blocksFor(isize, GRAVITY_SRC_2D_DIMX),
 		   blocksFor(jsize, GRAVITY_SRC_2D_DIMY));
 
-      kernel_gravity_source_term_2d<<<dimGrid, dimBlock>>>(UNew.data(), 
-							   UOld.data(), 
-							   ghostWidth, 
+      kernel_gravity_source_term_2d<<<dimGrid, dimBlock>>>(UNew.data(),
+							   UOld.data(),
+							   ghostWidth,
 							   UNew.pitch(),
 							   UNew.dimx(),
 							   UNew.dimy(),
@@ -2009,9 +2009,9 @@ namespace hydroSimu {
       dim3 dimGrid(blocksFor(isize, GRAVITY_SRC_3D_DIMX),
 		   blocksFor(jsize, GRAVITY_SRC_3D_DIMY));
 
-      kernel_gravity_source_term_3d<<<dimGrid, dimBlock>>>(UNew.data(), 
-							   UOld.data(), 
-							   ghostWidth, 
+      kernel_gravity_source_term_3d<<<dimGrid, dimBlock>>>(UNew.data(),
+							   UOld.data(),
+							   ghostWidth,
 							   UNew.pitch(),
 							   UNew.dimx(),
 							   UNew.dimy(),
@@ -2034,31 +2034,31 @@ namespace hydroSimu {
     // start and stop index of current slab (ghosts included)
     int& kStart = zSlabInfo.kStart;
     int& kStop  = zSlabInfo.kStop;
-    
+
     // only update hydro variable energy
     for (int k=kStart+ghostWidth; k<kStop-ghostWidth; k++) {
-      
+
       // local k index
       //int kL = k - kStart;
-      
+
       if (k<ksize-ghostWidth) {
-	
+
 	for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
 	  for (int i=ghostWidth; i<isize-ghostWidth; i++) {
-	    
+
 	    real_t rhoOld = UOld(i,j,k,ID);
 	    real_t rhoNew = UNew(i,j,k,ID);
-	    
+
 	    // update momentum
-	    UNew(i,j,k,IU) += HALF_F * dt * h_gravity(i,j,k,IX) * (rhoOld + rhoNew); 
+	    UNew(i,j,k,IU) += HALF_F * dt * h_gravity(i,j,k,IX) * (rhoOld + rhoNew);
 	    UNew(i,j,k,IV) += HALF_F * dt * h_gravity(i,j,k,IY) * (rhoOld + rhoNew);
 	    UNew(i,j,k,IW) += HALF_F * dt * h_gravity(i,j,k,IZ) * (rhoOld + rhoNew);
-	    
+
 	  } // end for i
 	} // end for j
 
       } // end if (k<ksize-ghostWidth)
-    
+
     } // end for k
 
   } // HydroRunBase::compute_gravity_source_term / CPU version / zslab
@@ -2076,15 +2076,15 @@ namespace hydroSimu {
     if (zSlabInfo.zSlabId == zSlabInfo.zSlabNb-1) {
       zSlabInfo.ksizeSlab = ksize - zSlabInfo.kStart;
     }
-    
+
     dim3 dimBlock(GRAVITY_SRC_Z_3D_DIMX,
 		  GRAVITY_SRC_Z_3D_DIMY);
     dim3 dimGrid(blocksFor(isize, GRAVITY_SRC_Z_3D_DIMX),
 		 blocksFor(jsize, GRAVITY_SRC_Z_3D_DIMY));
-    
-    kernel_gravity_source_term_3d_zslab<<<dimGrid, dimBlock>>>(UNew.data(), 
-							       UOld.data(), 
-							       ghostWidth, 
+
+    kernel_gravity_source_term_3d_zslab<<<dimGrid, dimBlock>>>(UNew.data(),
+							       UOld.data(),
+							       ghostWidth,
 							       UNew.pitch(),
 							       UNew.dimx(),
 							       UNew.dimy(),
@@ -2092,7 +2092,7 @@ namespace hydroSimu {
 							       dt,
 							       zSlabInfo);
     checkCudaError("in HydroRunBase :: kernel_gravity_source_term_3d_zslab");
-    
+
   } // HydroRunBase::compute_gravity_source_term / GPU version / zslab
 
 #endif // __CUDACC__
@@ -2114,8 +2114,8 @@ namespace hydroSimu {
       {
 	::make_boundary2<BC_DIRICHLET, boundaryLoc>
 	  <<<blockCount, threadsPerBlock>>>(U.data(),
-					    U.pitch(), 
-					    U.dimx(), 
+					    U.pitch(),
+					    U.dimx(),
 					    U.dimy(),
 					    U.dimz(),
 					    U.section(),
@@ -2126,9 +2126,9 @@ namespace hydroSimu {
       {
 	::make_boundary2<BC_NEUMANN, boundaryLoc>
 	  <<<blockCount, threadsPerBlock>>>(U.data(),
-					    U.pitch(), 
-					    U.dimx(), 
-					    U.dimy(), 
+					    U.pitch(),
+					    U.dimx(),
+					    U.dimy(),
 					    U.dimz(),
 					    U.section(),
 					    ghostWidth,
@@ -2138,29 +2138,29 @@ namespace hydroSimu {
       {
 	::make_boundary2<BC_PERIODIC, boundaryLoc>
 	  <<<blockCount, threadsPerBlock>>>(U.data(),
-					    U.pitch(), 
-					    U.dimx(), 
-					    U.dimy(), 
+					    U.pitch(),
+					    U.dimx(),
+					    U.dimy(),
 					    U.dimz(),
 					    U.section(),
 					    ghostWidth,
 					    mhdEnabled);
       }
-    else if(bct == BC_Z_STRATIFIED) 
+    else if(bct == BC_Z_STRATIFIED)
       {
 	bool floor = configMap.getBool("MRI", "floor", false);
 
 	// will / can only be call for ZMIN / ZMAX
 	// the actuall cuda kernels are called inside
 	::make_boundary2_z_stratified<boundaryLoc>(U.data(),
-						   U.pitch(), 
-						   U.dimx(), 
+						   U.pitch(),
+						   U.dimx(),
 						   U.dimy(),
 						   U.dimz(),
 						   U.section(),
 						   floor);
       }
-    
+
   }
 #else // CPU version
   template<BoundaryLocation boundaryLoc>
@@ -2171,8 +2171,8 @@ namespace hydroSimu {
     if(bct == BC_DIRICHLET)
       {
 	::make_boundary2<BC_DIRICHLET, boundaryLoc>(U.data(),
-						    U.pitch(), 
-						    U.dimx(), 
+						    U.pitch(),
+						    U.dimx(),
 						    U.dimy(),
 						    U.dimz(),
 						    U.section(),
@@ -2182,8 +2182,8 @@ namespace hydroSimu {
     else if(bct == BC_NEUMANN)
       {
 	::make_boundary2<BC_NEUMANN, boundaryLoc>(U.data(),
-						  U.pitch(), 
-						  U.dimx(), 
+						  U.pitch(),
+						  U.dimx(),
 						  U.dimy(),
 						  U.dimz(),
 						  U.section(),
@@ -2193,22 +2193,22 @@ namespace hydroSimu {
     else if(bct == BC_PERIODIC)
       {
 	::make_boundary2<BC_PERIODIC, boundaryLoc>(U.data(),
-						   U.pitch(), 
-						   U.dimx(), 
+						   U.pitch(),
+						   U.dimx(),
 						   U.dimy(),
 						   U.dimz(),
 						   U.section(),
 						   ghostWidth,
 						   mhdEnabled);
       }
-    else if(bct == BC_Z_STRATIFIED) 
+    else if(bct == BC_Z_STRATIFIED)
       {
 	bool floor = configMap.getBool("MRI", "floor", false);
 
 	// will / can only be call for ZMIN / ZMAX
 	::make_boundary2_z_stratified<boundaryLoc>(U.data(),
-						   U.pitch(), 
-						   U.dimx(), 
+						   U.pitch(),
+						   U.dimx(),
 						   U.dimy(),
 						   U.dimz(),
 						   U.section(),
@@ -2224,7 +2224,7 @@ namespace hydroSimu {
   {
 
     if (dimType == TWO_D) {
-    
+
       if(idim == XDIR) // horizontal boundaries
 	{
 	  dim3 blockCount(blocksFor(jsize, MK_BOUND_BLOCK_SIZE), 1, 1);
@@ -2245,7 +2245,7 @@ namespace hydroSimu {
       if(idim == XDIR) // X-boundaries (size jsize x ksize)
 	{
 	  dim3 blockCount( blocksFor(jsize, MK_BOUND_BLOCK_SIZE_3D),
-			   blocksFor(ksize, MK_BOUND_BLOCK_SIZE_3D), 
+			   blocksFor(ksize, MK_BOUND_BLOCK_SIZE_3D),
 			   1);
 	  make_boundary<XMIN>(U, boundary_xmin, blockCount);
 	  make_boundary<XMAX>(U, boundary_xmax, blockCount);
@@ -2253,7 +2253,7 @@ namespace hydroSimu {
       else if (idim == YDIR) // Y-boundaries (size isize x ksize)
 	{
 	  dim3 blockCount( blocksFor(isize, MK_BOUND_BLOCK_SIZE_3D),
-			   blocksFor(ksize, MK_BOUND_BLOCK_SIZE_3D), 
+			   blocksFor(ksize, MK_BOUND_BLOCK_SIZE_3D),
 			   1);
 	  make_boundary<YMIN>(U, boundary_ymin, blockCount);
 	  make_boundary<YMAX>(U, boundary_ymax, blockCount);
@@ -2261,12 +2261,12 @@ namespace hydroSimu {
       else // (idim == ZDIR) // Z-boundaries (size isize x jsize)
 	{
 	  dim3 blockCount( blocksFor(isize, MK_BOUND_BLOCK_SIZE_3D),
-			   blocksFor(jsize, MK_BOUND_BLOCK_SIZE_3D), 
+			   blocksFor(jsize, MK_BOUND_BLOCK_SIZE_3D),
 			   1);
 	  make_boundary<ZMIN>(U, boundary_zmin, blockCount);
 	  make_boundary<ZMAX>(U, boundary_zmax, blockCount);
 	  if (enableJet)
-	    make_jet(U);	
+	    make_jet(U);
 	}
 
     }
@@ -2277,7 +2277,7 @@ namespace hydroSimu {
   {
 
     if (dimType == TWO_D) {
-    
+
       if(idim == XDIR) // horizontal boundaries
 	{
 	  make_boundary<XMIN>(U, boundary_xmin, 0);
@@ -2320,7 +2320,7 @@ namespace hydroSimu {
   // =======================================================
 #ifdef __CUDACC__
   void HydroRunBase::make_all_boundaries(DeviceArray<real_t> &U)
-  {  
+  {
 
     make_boundaries(U,XDIR);
     make_boundaries(U,YDIR);
@@ -2352,8 +2352,8 @@ namespace hydroSimu {
       int blockCount = blocksFor(ijet+2+offsetJet, MAKE_JET_BLOCK_SIZE);
       float4 jetState = {djet, pjet/ (_gParams.gamma0 - 1.0f) + 0.5f * djet * ujet * ujet, 0.0f, djet * ujet};
       ::make_jet_2d<<<blockCount, MAKE_JET_BLOCK_SIZE>>>(U.data(),
-							 U.pitch(), 
-							 U.section(), 
+							 U.pitch(),
+							 U.section(),
 							 ijet, jetState, offsetJet,
 							 ghostWidth);
     } else { // THREE_D
@@ -2362,20 +2362,20 @@ namespace hydroSimu {
       dim3 jetBlockCount(blockCount, blockCount);
       dim3 jetBlockSize(MAKE_JET_BLOCK_SIZE_3D, MAKE_JET_BLOCK_SIZE_3D);
       ::make_jet_3d<<<jetBlockCount, jetBlockSize>>>(U.data(),
-						     U.pitch(), 
+						     U.pitch(),
 						     U.dimy(),
-						     U.section(), 
+						     U.section(),
 						     ijet, jetState, offsetJet,
 						     ghostWidth);
     }
-  
+
   } // make_jet (GPU version)
 #else // CPU version
   void HydroRunBase::make_jet(HostArray<real_t> &U)
   {
 
     if (dimType == TWO_D) {
-    
+
       // matter injection in the middle of the YMAX boundary
       for (int j=0; j<ghostWidth; j++)
 	for (int i=ghostWidth+offsetJet; i<ghostWidth+offsetJet+ijet; i++) {
@@ -2384,7 +2384,7 @@ namespace hydroSimu {
 	  U(i,j,IU) = 0.0f;
 	  U(i,j,IV) = djet*ujet;
 	}
-    
+
       /*for (int i=0; i<2; i++)
 	for (int j=jsize/2; j<jsize/2+10; j++) {
 	U(i,j,ID) = djet;
@@ -2396,7 +2396,7 @@ namespace hydroSimu {
 
       for (int k=0; k<ghostWidth; ++k)
 	for (int j=ghostWidth+offsetJet; j<ghostWidth+offsetJet+ijet; ++j)
-	  for (int i=ghostWidth+offsetJet; i<ghostWidth+offsetJet+ijet; ++i) 
+	  for (int i=ghostWidth+offsetJet; i<ghostWidth+offsetJet+ijet; ++i)
 	    {
 	      U(i,j,k,ID) = djet;
 	      U(i,j,k,IP) = pjet/(_gParams.gamma0-1.)+0.5*djet*ujet*ujet;
@@ -2416,7 +2416,7 @@ namespace hydroSimu {
   void HydroRunBase::start() {
 
     //std::cout << "Starting time integration" << std::endl;
-  
+
   } // HydroRunBase::start
 
   // =======================================================
@@ -2453,7 +2453,7 @@ namespace hydroSimu {
    * dump computation results into a file (binary format) for current time.
    *
    * \param[in] U HostArray<real_t> data array to save
-   * \param[in] nStep The current time step, used to label results filename. 
+   * \param[in] nStep The current time step, used to label results filename.
    * \param[in] t time
    */
   void HydroRunBase::outputBin(HostArray<real_t> &U, int nStep, real_t t)
@@ -2474,7 +2474,7 @@ namespace hydroSimu {
     if (dimType == TWO_D) {
       outFile << "Outputting array of size=" <<nx<<" "<<ny<<" "<<NVAR_2D<<std::endl;
     } else {
-      outFile << "Outputting array of size=" <<nx<<" "<<ny<<" "<<nz<<" "<<NVAR_3D<<std::endl;   
+      outFile << "Outputting array of size=" <<nx<<" "<<ny<<" "<<nz<<" "<<NVAR_3D<<std::endl;
     }
     outFile << t << " " << _gParams.gamma0 << " " << nStep << std::endl;
     real_t *U_data = U.data();
@@ -2500,9 +2500,9 @@ namespace hydroSimu {
 	    outFile.write(reinterpret_cast<char const *>(&U_data[index+2*h_U.section()]), sizeof(real_t));
 	    outFile.write(reinterpret_cast<char const *>(&U_data[index+3*h_U.section()]), sizeof(real_t));
 	    outFile.write(reinterpret_cast<char const *>(&U_data[index+4*h_U.section()]), sizeof(real_t));
-	  }  
+	  }
     } // end THREE_D
-  
+
     outFile.close();
 
   } // HydroRunBase::outputBin
@@ -2510,11 +2510,11 @@ namespace hydroSimu {
   // =======================================================
   // =======================================================
   /**
-   * \brief dump computation results into a file (Xsmurf format 2D or 3D, 
+   * \brief dump computation results into a file (Xsmurf format 2D or 3D,
    * one line ascii header + binary data) for current time.
    *
    * \param[in] U HostArray<real_t> data array to save
-   * \param[in] nStep The current time step, used to label results filename. 
+   * \param[in] nStep The current time step, used to label results filename.
    * \param[in] iVar Define which variable to save (ID, IP, IU, IV, IW).
    */
   void HydroRunBase::outputXsm(HostArray<real_t> &U, int nStep, ComponentIndex iVar)
@@ -2526,7 +2526,7 @@ namespace hydroSimu {
       return;
 
     std::string outputPrefix = configMap.getString("output", "outputPrefix", "output");
-    
+
     std::ostringstream outNum;
     outNum.width(7);
     outNum.fill('0');
@@ -2565,7 +2565,7 @@ namespace hydroSimu {
   // =======================================================
   /**
    * dump computation results into a file (png format) for current time.
-   * \param[in] nStep The current time step, used to label results filename. 
+   * \param[in] nStep The current time step, used to label results filename.
    *
    */
   void HydroRunBase::outputPng(HostArray<real_t> &U, int nStep, ComponentIndex iVar)
@@ -2575,11 +2575,11 @@ namespace hydroSimu {
     if (dimType == TWO_D) {
       if (iVar<0 || iVar>=nbVar)
 	return;
-      
+
       std::string outputPrefix = configMap.getString("output", "outputPrefix", "output");
 
       std::ostringstream outNum;
-      if ( configMap.getBool("output", "latexAnimation", false) ) { 
+      if ( configMap.getBool("output", "latexAnimation", false) ) {
 	// Latex animation requires not-formated
 	outNum << nStep;
       } else {
@@ -2588,13 +2588,13 @@ namespace hydroSimu {
 	outNum << nStep;
       }
       std::fstream outFile;
-      
+
       real_t *data = new real_t[nx*ny];
-      
-      //create Image object 
+
+      //create Image object
       Magick::Image outputImage( Magick::Geometry(nx,ny), Magick::Color("white") );
       std::string filename;
-      
+
       /**
        * output variable iVar
        */
@@ -2617,19 +2617,19 @@ namespace hydroSimu {
 	      outputImage.pixelColor(i,j,Magick::ColorRGB(1-2*data[i+nx*j],2*data[i+nx*j],0.0));
 	    } else {
 	      outputImage.pixelColor(i,j,Magick::ColorRGB(0.0, 2-2*data[i+nx*j],2*data[i+nx*j]-1));
-	    }   
+	    }
       } else {
 	for (int j=0; j<ny; ++j)
 	  for (int i=0; i<nx; ++i)
 	    outputImage.pixelColor(i,j,Magick::ColorGray(data[i+nx*j]));
-	
+
 	// negate image to have white=0 and black=1
 	outputImage.negate();
-      } 
+      }
       outputImage.write(filename.c_str());
-  
+
       delete [] data;
-    
+
     } else { // THREE_D
       std::cerr << "PNG output is not available for 3D data !!!" << std::endl;
     }
@@ -2651,7 +2651,7 @@ namespace hydroSimu {
    *
    * \see example use of vtkImageData :
    * http://www.vtk.org/Wiki/VTK/Examples/ImageData/IterateImageData .
-   * 
+   *
    * \see see also
    * http://permalink.gmane.org/gmane.comp.lib.vtk.user/9624
    * which helped me understand the use of PointData and
@@ -2661,7 +2661,7 @@ namespace hydroSimu {
    * \see HydroRunBaseMpi::outputVtk routine.
    *
    * \param[in] U A reference to a hydro simulation HostArray.
-   * \param[in] nStep The current time step, used to label results filename. 
+   * \param[in] nStep The current time step, used to label results filename.
    *
    * There are multiple way to use this routine :
    * - If VTK library is available (i.e. USE_VTK defined), we can
@@ -2673,7 +2673,7 @@ namespace hydroSimu {
    * The VTK API based version is fully configurable : there are 3
    * output mode (ascii, base64 or raw binary), the last two one can
    * optionnaly be zlib-compressed.
-   * 
+   *
    * Our own hand-written version (usefull when VTK is not
    * installed/available) : only ascii and raw binary are implemented.
    * (no compression, no base64 encoding).
@@ -2714,7 +2714,7 @@ namespace hydroSimu {
      */
     std::string outputDir    = configMap.getString("output", "outputDir", "./");
     std::string outputPrefix = configMap.getString("output", "outputPrefix", "output");
-    
+
     std::ostringstream outNum;
     outNum.width(7);
     outNum.fill('0');
@@ -2722,7 +2722,7 @@ namespace hydroSimu {
     std::string baseName     = outputPrefix+"_"+outNum.str();
     std::string filename     = baseName+".vti";
     std::string filenameFull = outputDir+"/"+filename;
-    
+
     if (!outputVtkHandWritten) {
       /* use the VTK library API ! */
 
@@ -2731,30 +2731,16 @@ namespace hydroSimu {
       /*
        * write data with XML binary image data using VTK API.
        */
-      
+
       // create a vtkImageData object
-      vtkSmartPointer<vtkImageData> imageData = 
+      vtkSmartPointer<vtkImageData> imageData =
 	vtkSmartPointer<vtkImageData>::New();
-#if HAVE_VTK6
       imageData->SetExtent(0,nx-1,0,ny-1,0,nz-1);
-#else
-      imageData->SetDimensions(nx, ny, nz);
-#endif
       imageData->SetOrigin(0.0, 0.0, 0.0);
       imageData->SetSpacing(1.0,1.0,1.0);
-      
-#if HAVE_VTK6
-#else
-      imageData->SetNumberOfScalarComponents(nbVar);
-      if (useDouble)
-	imageData->SetScalarTypeToDouble();
-      else
-	imageData->SetScalarTypeToFloat();
-      //imageData->AllocateScalars();
-#endif
-      
+
       vtkPointData *pointData = imageData->GetPointData();
-      
+
       /*
        * NOTICE :
        * we add array to the pointData object so that we can have named
@@ -2763,48 +2749,48 @@ namespace hydroSimu {
        * SetScalarComponentFromFloat or GetScalarPointer for example.
        *
        */
-      
+
       // add density array
-      vtkSmartPointer<vtkDataArray> densityArray = 
+      vtkSmartPointer<vtkDataArray> densityArray =
 	vtkDataArray::CreateDataArray(dataType);
       densityArray->SetNumberOfComponents( 1 );
       densityArray->SetNumberOfTuples( nx*ny*nz );
       densityArray->SetName( "density" );
-      
+
       // add energy array
-      vtkSmartPointer<vtkDataArray> energyArray = 
+      vtkSmartPointer<vtkDataArray> energyArray =
 	vtkDataArray::CreateDataArray(dataType);
       energyArray->SetNumberOfComponents( 1 );
       energyArray->SetNumberOfTuples( nx*ny*nz );
       energyArray->SetName( "energy" );
-      
+
       // add momentum arrays
-      vtkSmartPointer<vtkDataArray> mxArray = 
+      vtkSmartPointer<vtkDataArray> mxArray =
 	vtkDataArray::CreateDataArray(dataType);
       mxArray->SetNumberOfComponents( 1 );
       mxArray->SetNumberOfTuples( nx*ny*nz );
       mxArray->SetName( "mx" );
-      vtkSmartPointer<vtkDataArray> myArray = 
+      vtkSmartPointer<vtkDataArray> myArray =
 	vtkDataArray::CreateDataArray(dataType);
       myArray->SetNumberOfComponents( 1 );
       myArray->SetNumberOfTuples( nx*ny*nz );
       myArray->SetName( "my" );
-      vtkSmartPointer<vtkDataArray> mzArray = 
+      vtkSmartPointer<vtkDataArray> mzArray =
 	vtkDataArray::CreateDataArray(dataType);
       mzArray->SetNumberOfComponents( 1 );
       mzArray->SetNumberOfTuples( nx*ny*nz );
       mzArray->SetName( "mz" );
-      
+
       // magnetic component (MHD only)
-      vtkSmartPointer<vtkDataArray> bxArray = 
+      vtkSmartPointer<vtkDataArray> bxArray =
 	vtkDataArray::CreateDataArray(dataType);
       bxArray->SetNumberOfComponents( 1 );
       bxArray->SetName( "bx" );
-      vtkSmartPointer<vtkDataArray> byArray = 
+      vtkSmartPointer<vtkDataArray> byArray =
 	vtkDataArray::CreateDataArray(dataType);
       byArray->SetNumberOfComponents( 1 );
       byArray->SetName( "by" );
-      vtkSmartPointer<vtkDataArray> bzArray = 
+      vtkSmartPointer<vtkDataArray> bzArray =
 	vtkDataArray::CreateDataArray(dataType);
       bzArray->SetNumberOfComponents( 1 );
       bzArray->SetName( "bz" );
@@ -2814,13 +2800,13 @@ namespace hydroSimu {
 	byArray->SetNumberOfTuples( nx*ny*nz );
 	bzArray->SetNumberOfTuples( nx*ny*nz );
       }
-      
+
       // fill the vtkImageData with scalars from U
       if (dimType == TWO_D) {
 	for(int j= ghostWidth; j < jsize-ghostWidth; j++)
 	  for(int i = ghostWidth; i < isize-ghostWidth; i++) {
 	    int index = i-ghostWidth + nx*(j-ghostWidth);
-	    densityArray->SetTuple1(index, U(i,j,ID)); 
+	    densityArray->SetTuple1(index, U(i,j,ID));
 	    energyArray->SetTuple1(index, U(i,j,IP));
 	    mxArray->SetTuple1(index, U(i,j,IU));
 	    myArray->SetTuple1(index, U(i,j,IV));
@@ -2836,7 +2822,7 @@ namespace hydroSimu {
 	  for(int j= ghostWidth; j < jsize-ghostWidth; j++)
 	    for(int i = ghostWidth; i < isize-ghostWidth; i++) {
 	      int index = i-ghostWidth + nx*(j-ghostWidth) + nx*ny*(k-ghostWidth);
-	      densityArray->SetTuple1(index, U(i,j,k,ID)); 
+	      densityArray->SetTuple1(index, U(i,j,k,ID));
 	      energyArray->SetTuple1(index, U(i,j,k,IP));
 	      mxArray->SetTuple1(index, U(i,j,k,IU));
 	      myArray->SetTuple1(index, U(i,j,k,IV));
@@ -2848,7 +2834,7 @@ namespace hydroSimu {
 	      }
 	    }
       }
-      
+
       // add filled data arrays to point data object
       pointData->AddArray( densityArray );
       pointData->AddArray( energyArray );
@@ -2862,19 +2848,15 @@ namespace hydroSimu {
 	pointData->AddArray( byArray );
 	pointData->AddArray( bzArray );
       }
-      
+
       // create image writer
-      vtkSmartPointer<vtkXMLImageDataWriter> writer = 
+      vtkSmartPointer<vtkXMLImageDataWriter> writer =
 	vtkSmartPointer<vtkXMLImageDataWriter>::New();
-#if HAVE_VTK6
       writer->SetInputData(imageData);
-#else
-      writer->SetInput(imageData);
-#endif
       writer->SetFileName(filenameFull.c_str());
       if (outputVtkAscii)
 	writer->SetDataModeToAscii();
-      
+
       // do we want base 64 encoding ?? probably not
       // since is it better for data reload (simulation restart). By the
       // way reading/writing raw binary is faster since we don't need to
@@ -2882,23 +2864,23 @@ namespace hydroSimu {
       bool outputVtkBase64Encoding = configMap.getBool("output", "outputVtkBase64", false);
       if (!outputVtkBase64Encoding)
 	writer->EncodeAppendedDataOff();
-      
+
       // if using raw binary or base64, data can be zlib-compressed
       bool outputVtkCompression = configMap.getBool("output", "outputVtkCompression", true);
       if (!outputVtkCompression) {
 	writer->SetCompressor(NULL);
       }
       writer->Write();
-      
+
 #endif // USE_VTK
-      
+
     } else { // use the hand written routine (no need to have VTK
 	     // installed)
-      
+
       /*
        * Hand written procedure (no VTK library linking required).
        * Write XML imageData using either :
-       * - ascii 
+       * - ascii
        * - raw binary
        *
        * Each hydrodynamics field component is written in a separate <DataArray>.
@@ -2906,10 +2888,10 @@ namespace hydroSimu {
        */
       std::fstream outFile;
       outFile.open(filenameFull.c_str(), std::ios_base::out);
-      
+
       // domain extent
       int xmin=0, xmax=nx-1, ymin=0, ymax=ny-1, zmin=0, zmax=nz-1;
-     
+
       if (dimType == TWO_D) {
 	zmax = 0;
       }
@@ -2917,27 +2899,27 @@ namespace hydroSimu {
       // if writing raw binary data (file does not respect XML standard)
       if (outputVtkAscii)
 	outFile << "<?xml version=\"1.0\"?>" << std::endl;
-      
+
       // write xml data header
       if (isBigEndian())
 	outFile << "<VTKFile type=\"ImageData\" version=\"0.1\" byte_order=\"BigEndian\">" << std::endl;
       else
 	outFile << "<VTKFile type=\"ImageData\" version=\"0.1\" byte_order=\"LittleEndian\">" << std::endl;
-      
+
       outFile << "  <ImageData WholeExtent=\""
-	      << xmin << " " << xmax << " " 
-	      << ymin << " " << ymax << " " 
+	      << xmin << " " << xmax << " "
+	      << ymin << " " << ymax << " "
 	      << zmin << " " << zmax << ""
 	      << "\" Origin=\"0 0 0\" Spacing=\"1 1 1\">" << std::endl;
-      outFile << "  <Piece Extent=\"" 
-	      << xmin << " " << xmax << " " 
-	      << ymin << " " << ymax << " " 
+      outFile << "  <Piece Extent=\""
+	      << xmin << " " << xmax << " "
+	      << ymin << " " << ymax << " "
 	      << zmin << " " << zmax << ""
 	      << "\">" << std::endl;
       outFile << "    <PointData>" << std::endl;
-      
+
       if (outputVtkAscii) {
-	
+
 	// write ascii data
 	if (dimType == TWO_D) {
 	  int imin = ghostWidth;
@@ -2981,16 +2963,16 @@ namespace hydroSimu {
 	    outFile << "      </DataArray>" << std::endl;
 	  }
 	} // end write ascii data
-	
+
 	outFile << "    </PointData>" << std::endl;
 	outFile << "    <CellData>" << std::endl;
 	outFile << "    </CellData>" << std::endl;
 	outFile << "  </Piece>" << std::endl;
 	outFile << "  </ImageData>" << std::endl;
 	outFile << "</VTKFile>" << std::endl;
-	
+
       } else { // do it using appended format raw binary (no base 64 encoding)
-	
+
 	if (dimType == TWO_D) {
 	  for (int iVar=0; iVar<nbVar; iVar++) {
 	    if (useDouble) {
@@ -3018,9 +3000,9 @@ namespace hydroSimu {
 	outFile << "    </CellData>" << std::endl;
 	outFile << "  </Piece>" << std::endl;
 	outFile << "  </ImageData>" << std::endl;
-	
+
 	outFile << "  <AppendedData encoding=\"raw\">" << std::endl;
-	
+
 	// write the leading undescore
 	outFile << "_";
 	// then write heavy data (column major format)
@@ -3038,45 +3020,45 @@ namespace hydroSimu {
 	  unsigned int nbOfWords = nx*ny*nz*sizeof(real_t);
 	  for (int iVar=0; iVar<nbVar; iVar++) {
 	    outFile.write((char *)&nbOfWords,sizeof(unsigned int));
-	    for (int k=ghostWidth; k<ksize-ghostWidth; k++) 
-	      for (int j=ghostWidth; j<jsize-ghostWidth; j++) 
+	    for (int k=ghostWidth; k<ksize-ghostWidth; k++)
+	      for (int j=ghostWidth; j<jsize-ghostWidth; j++)
 		for (int i=ghostWidth; i<isize-ghostWidth; i++) {
 		  real_t tmp = U(i,j,k,iVar);
 		  outFile.write((char *)&tmp,sizeof(real_t));
 		}
 	  }
 	}
-	
+
 	outFile << "  </AppendedData>" << std::endl;
 	outFile << "</VTKFile>" << std::endl;
-	
+
       } // end raw binary write
-      
+
       outFile.close();
-      
+
     } // end hand written version
-    
+
   } // HydroRunBase::outputVtk
-  
+
   // =======================================================
   // =======================================================
   /**
    * dump debug array into a file (Vtk file format, using class
    * vtkImageData); file extension is vti
    *
-   * use hand written VTK format, in ascii (to ease file comparison) 
+   * use hand written VTK format, in ascii (to ease file comparison)
    *
    * \see HydroRunBase::outputVtk routine.
    *
    * \param[in] data A reference to a HostArray for debug.
    * \param[in] suffix a string appended to filename.
-   * \param[in] nStep The current time step, used to label results filename. 
+   * \param[in] nStep The current time step, used to label results filename.
    * \param[in] ghostIncluded Do we want ghost cell to be saved as well.
    *
    */
-  void HydroRunBase::outputVtkDebug(HostArray<real_t> &data, 
-				    const std::string suffix, 
-				    int nStep, 
+  void HydroRunBase::outputVtkDebug(HostArray<real_t> &data,
+				    const std::string suffix,
+				    int nStep,
 				    bool ghostIncluded)
   {
 
@@ -3104,7 +3086,7 @@ namespace hydroSimu {
      */
     std::string outputDir    = configMap.getString("output", "outputDir", "./");
     std::string outputPrefix = configMap.getString("output", "outputPrefix", "output");
-    
+
     std::ostringstream outNum;
     outNum.width(7);
     outNum.fill('0');
@@ -3112,18 +3094,18 @@ namespace hydroSimu {
     std::string baseName     = outputPrefix+"_debug_"+suffix+outNum.str();
     std::string filename     = baseName+".vti";
     std::string filenameFull = outputDir+"/"+filename;
-    
+
     /*
      * Hand written procedure (no VTK library linking required).
      * Write XML imageData using either :
-     * - ascii 
+     * - ascii
      * - raw binary
      * Each hydrodynamics field component is written in a separate <DataArray>.
      * Magnetic field component are dumped if mhdEnabled is true !
      */
     std::fstream outFile;
     outFile.open(filenameFull.c_str(), std::ios_base::out);
-    
+
     // domain extent
     int xmin=0, xmax=data.dimx()-1;
     int ymin=0, ymax=data.dimy()-1;
@@ -3133,7 +3115,7 @@ namespace hydroSimu {
       ymax -= 2*ghostWidth;
       zmax -= 2*ghostWidth;
     }
-    
+
     if (dimType == TWO_D) {
       zmax = 0;
     }
@@ -3141,27 +3123,27 @@ namespace hydroSimu {
     // if writing raw binary data (file does not respect XML standard)
     if (outputVtkAscii)
       outFile << "<?xml version=\"1.0\"?>" << std::endl;
-      
+
     // write xml data header
     if (isBigEndian())
       outFile << "<VTKFile type=\"ImageData\" version=\"0.1\" byte_order=\"BigEndian\">" << std::endl;
     else
       outFile << "<VTKFile type=\"ImageData\" version=\"0.1\" byte_order=\"LittleEndian\">" << std::endl;
-    
+
     outFile << "  <ImageData WholeExtent=\""
-	    << xmin << " " << xmax << " " 
-	    << ymin << " " << ymax << " " 
+	    << xmin << " " << xmax << " "
+	    << ymin << " " << ymax << " "
 	    << zmin << " " << zmax << ""
 	    << "\" Origin=\"0 0 0\" Spacing=\"1 1 1\">" << std::endl;
-    outFile << "  <Piece Extent=\"" 
-	    << xmin << " " << xmax << " " 
-	    << ymin << " " << ymax << " " 
+    outFile << "  <Piece Extent=\""
+	    << xmin << " " << xmax << " "
+	    << ymin << " " << ymax << " "
 	    << zmin << " " << zmax << ""
 	    << "\">" << std::endl;
     outFile << "    <PointData>" << std::endl;
-    
+
     if (outputVtkAscii) {
-      
+
       // write ascii data
       if (dimType == TWO_D) {
 	int imin = ghostWidth;
@@ -3181,7 +3163,7 @@ namespace hydroSimu {
 	  } else {
 	    outFile << "      <DataArray type=\"Float32\" Name=\"";
 	  }
-	  outFile << "debug" 
+	  outFile << "debug"
 		  << iVar  << "\" format=\"ascii\" >" << std::endl;
 	  for(int j= jmin; j < jmax; j++) {
 	    for(int i = imin; i < imax; i++) {
@@ -3213,7 +3195,7 @@ namespace hydroSimu {
 	    outFile << "      <DataArray type=\"Float32\" Name=\"";
 	  }
 	  outFile << "debug"
-		  << iVar  << "\" format=\"ascii\" >" << std::endl;	
+		  << iVar  << "\" format=\"ascii\" >" << std::endl;
 	  for(int k= kmin; k < kmax; k++) {
 	    for(int j= jmin; j < jmax; j++) {
 	      for(int i = imin; i < imax; i++) {
@@ -3225,34 +3207,34 @@ namespace hydroSimu {
 	  outFile << "      </DataArray>" << std::endl;
 	}
       } // end write ascii data
-      
+
       outFile << "    </PointData>" << std::endl;
       outFile << "    <CellData>" << std::endl;
       outFile << "    </CellData>" << std::endl;
       outFile << "  </Piece>" << std::endl;
       outFile << "  </ImageData>" << std::endl;
       outFile << "</VTKFile>" << std::endl;
-      
-    } 
-    
+
+    }
+
     outFile.close();
-    
+
   } // HydroRunBase::outputVtkDebug
 
   // =======================================================
   // =======================================================
   /**
-   * dump debug array into a file (wrapper to methods 
+   * dump debug array into a file (wrapper to methods
    * HydroRunBase::outputVtkDebug and outputHdf5Debug).
    *
    * \param[in] data A reference to a HostArray for debug.
    * \param[in] suffix a string appended to filename.
-   * \param[in] nStep The current time step, used to label results filename. 
+   * \param[in] nStep The current time step, used to label results filename.
    * \param[in] ghostIncluded Do we want ghost cell to be saved as well.
    *
    */
-  void HydroRunBase::outputDebug(HostArray<real_t> &data, 
-				 const std::string suffix, 
+  void HydroRunBase::outputDebug(HostArray<real_t> &data,
+				 const std::string suffix,
 				 int nStep)
   {
 
@@ -3272,17 +3254,17 @@ namespace hydroSimu {
   // =======================================================
   // =======================================================
   /**
-   * dump debug array into a file (wrapper to methods 
+   * dump debug array into a file (wrapper to methods
    * HydroRunBase::outputVtkDebug and outputHdf5Debug).
    *
    * \param[in] data A reference to a HostArray for debug.
    * \param[in] suffix a string appended to filename.
-   * \param[in] nStep The current time step, used to label results filename. 
+   * \param[in] nStep The current time step, used to label results filename.
    * \param[in] ghostIncluded Do we want ghost cell to be saved as well.
    *
    */
-  void HydroRunBase::outputDebug(DeviceArray<real_t> &data, 
-				 const std::string suffix, 
+  void HydroRunBase::outputDebug(DeviceArray<real_t> &data,
+				 const std::string suffix,
 				 int nStep)
   {
 
@@ -3293,13 +3275,13 @@ namespace hydroSimu {
 
     if (vtk || hdf5)
       data.copyToHost(h_debug);
-    
+
     if (vtk)
       outputVtkDebug(h_debug, suffix, nStep, ghostIncluded);
-    
+
     if (hdf5)
       outputHdf5Debug(h_debug, suffix, nStep);
-    
+
   } // HydroRunBase::outputDebug
 #endif // __CUDACC__
 
@@ -3319,7 +3301,7 @@ namespace hydroSimu {
    * single file.
    *
    * \param[in] U A reference to a hydro simulation HostArray
-   * \param[in] nStep The current time step, used to label results filename. 
+   * \param[in] nStep The current time step, used to label results filename.
    *
    * If library HDF5 is not available, do nothing.
    */
@@ -3327,7 +3309,7 @@ namespace hydroSimu {
   {
 #ifdef USE_HDF5
     herr_t status;
-    
+
     // make filename string
     std::string outputDir    = configMap.getString("output", "outputDir", "./");
     std::string outputPrefix = configMap.getString("output", "outputPrefix", "output");
@@ -3339,7 +3321,7 @@ namespace hydroSimu {
     std::string baseName         = outputPrefix+"_"+outNum.str();
     std::string hdf5Filename     = baseName+".h5";
     std::string hdf5FilenameFull = outputDir+"/"+hdf5Filename;
-   
+
     // data size actually written on disk
     int nxg = nx;
     int nyg = ny;
@@ -3361,14 +3343,14 @@ namespace hydroSimu {
     hsize_t  dims_file[3];
     hid_t dataspace_memory, dataspace_file;
     if (dimType == TWO_D) {
-      dims_memory[0] = U.dimy(); 
+      dims_memory[0] = U.dimy();
       dims_memory[1] = U.dimx();
       dims_file[0] = nyg;
       dims_file[1] = nxg;
       dataspace_memory = H5Screate_simple(2, dims_memory, NULL);
       dataspace_file   = H5Screate_simple(2, dims_file  , NULL);
     } else {
-      dims_memory[0] = U.dimz(); 
+      dims_memory[0] = U.dimz();
       dims_memory[1] = U.dimy();
       dims_memory[2] = U.dimx();
       dims_file[0] = nzg;
@@ -3384,7 +3366,7 @@ namespace hydroSimu {
       dataType = H5T_NATIVE_FLOAT;
     else
       dataType = H5T_NATIVE_DOUBLE;
-    
+
 
     // select data with or without ghost zones
     if (ghostIncluded) {
@@ -3400,7 +3382,7 @@ namespace hydroSimu {
 	hsize_t  count[3] = {(hsize_t) nzg, (hsize_t) nyg, (hsize_t) nxg};
 	hsize_t  block[3] = {1, 1, 1}; // row-major instead of column-major here
 	status = H5Sselect_hyperslab(dataspace_memory, H5S_SELECT_SET, start, stride, count, block);
-      }      
+      }
     } else {
       if (dimType == TWO_D) {
 	hsize_t  start[2] = {(hsize_t) ghostWidth, (hsize_t) ghostWidth}; // ghost zone width
@@ -3413,7 +3395,7 @@ namespace hydroSimu {
 	hsize_t stride[3] = {1, 1, 1};
 	hsize_t  count[3] = {(hsize_t) nz, (hsize_t) ny, (hsize_t) nx};
 	hsize_t  block[3] = {1, 1, 1}; // row-major instead of column-major here
-	status = H5Sselect_hyperslab(dataspace_memory, H5S_SELECT_SET, start, stride, count, block);      
+	status = H5Sselect_hyperslab(dataspace_memory, H5S_SELECT_SET, start, stride, count, block);
       }
     }
 
@@ -3439,14 +3421,14 @@ namespace hydroSimu {
     }
     H5Pset_shuffle (propList_create_id);
     H5Pset_deflate (propList_create_id, compressionLevel);
-    
+
     /*
      * write heavy data to HDF5 file
      */
     real_t* data;
 
     // write density
-    hid_t dataset_id = H5Dcreate2(file_id, "/density", dataType, dataspace_file, 
+    hid_t dataset_id = H5Dcreate2(file_id, "/density", dataType, dataspace_file,
 				  H5P_DEFAULT, propList_create_id, H5P_DEFAULT);
     if (dimType == TWO_D)
       data = &(U(0,0,ID));
@@ -3455,75 +3437,75 @@ namespace hydroSimu {
     status = H5Dwrite(dataset_id, dataType, dataspace_memory, dataspace_file, H5P_DEFAULT, data);
 
     // write total energy
-    dataset_id = H5Dcreate2(file_id, "/energy", dataType, dataspace_file, 
+    dataset_id = H5Dcreate2(file_id, "/energy", dataType, dataspace_file,
 				  H5P_DEFAULT, propList_create_id, H5P_DEFAULT);
     if (dimType == TWO_D)
       data = &(U(0,0,IP));
     else
       data = &(U(0,0,0,IP));
     status = H5Dwrite(dataset_id, dataType, dataspace_memory, dataspace_file, H5P_DEFAULT, data);
-    
+
     // write momentum X
-    dataset_id = H5Dcreate2(file_id, "/momentum_x", dataType, dataspace_file, 
+    dataset_id = H5Dcreate2(file_id, "/momentum_x", dataType, dataspace_file,
 				  H5P_DEFAULT, propList_create_id, H5P_DEFAULT);
     if (dimType == TWO_D)
       data = &(U(0,0,IU));
     else
       data = &(U(0,0,0,IU));
     status = H5Dwrite(dataset_id, dataType, dataspace_memory, dataspace_file, H5P_DEFAULT, data);
-    
+
     // write momentum Y
-    dataset_id = H5Dcreate2(file_id, "/momentum_y", dataType, dataspace_file, 
+    dataset_id = H5Dcreate2(file_id, "/momentum_y", dataType, dataspace_file,
 				  H5P_DEFAULT, propList_create_id, H5P_DEFAULT);
     if (dimType == TWO_D)
       data = &(U(0,0,IV));
     else
       data = &(U(0,0,0,IV));
     status = H5Dwrite(dataset_id, dataType, dataspace_memory, dataspace_file, H5P_DEFAULT, data);
-    
+
     // write momentum Z (only if 3D hydro)
     if (dimType == THREE_D and !mhdEnabled) {
-      dataset_id = H5Dcreate2(file_id, "/momentum_z", dataType, dataspace_file, 
+      dataset_id = H5Dcreate2(file_id, "/momentum_z", dataType, dataspace_file,
 			      H5P_DEFAULT, propList_create_id, H5P_DEFAULT);
       data = &(U(0,0,0,IW));
       status = H5Dwrite(dataset_id, dataType, dataspace_memory, dataspace_file, H5P_DEFAULT, data);
     }
-    
+
     if (mhdEnabled) {
       // write momentum mz
-      dataset_id = H5Dcreate2(file_id, "/momentum_z", dataType, dataspace_file, 
+      dataset_id = H5Dcreate2(file_id, "/momentum_z", dataType, dataspace_file,
 			      H5P_DEFAULT, propList_create_id, H5P_DEFAULT);
       if (dimType == TWO_D)
 	data = &(U(0,0,IW));
       else
 	data = &(U(0,0,0,IW));
       status = H5Dwrite(dataset_id, dataType, dataspace_memory, dataspace_file, H5P_DEFAULT, data);
-     
+
       // write magnetic field components
-      dataset_id = H5Dcreate2(file_id, "/magnetic_field_x", dataType, dataspace_file, 
+      dataset_id = H5Dcreate2(file_id, "/magnetic_field_x", dataType, dataspace_file,
 			      H5P_DEFAULT, propList_create_id, H5P_DEFAULT);
       if (dimType == TWO_D)
 	data = &(U(0,0,IA));
       else
 	data = &(U(0,0,0,IA));
       status = H5Dwrite(dataset_id, dataType, dataspace_memory, dataspace_file, H5P_DEFAULT, data);
-     
-      dataset_id = H5Dcreate2(file_id, "/magnetic_field_y", dataType, dataspace_file, 
+
+      dataset_id = H5Dcreate2(file_id, "/magnetic_field_y", dataType, dataspace_file,
 			      H5P_DEFAULT, propList_create_id, H5P_DEFAULT);
       if (dimType == TWO_D)
 	data = &(U(0,0,IB));
        else
 	 data = &(U(0,0,0,IB));
       status = H5Dwrite(dataset_id, dataType, dataspace_memory, dataspace_file, H5P_DEFAULT, data);
-     
-      dataset_id = H5Dcreate2(file_id, "/magnetic_field_z", dataType, dataspace_file, 
+
+      dataset_id = H5Dcreate2(file_id, "/magnetic_field_z", dataType, dataspace_file,
 			      H5P_DEFAULT, propList_create_id, H5P_DEFAULT);
       if (dimType == TWO_D)
 	data = &(U(0,0,IC));
       else
 	data = &(U(0,0,0,IC));
       status = H5Dwrite(dataset_id, dataType, dataspace_memory, dataspace_file, H5P_DEFAULT, data);
-     
+
     }
 
     // write time step as an attribute to root group
@@ -3531,20 +3513,20 @@ namespace hydroSimu {
     hid_t attr_id;
     {
        ds_id   = H5Screate(H5S_SCALAR);
-       attr_id = H5Acreate2(file_id, "time step", H5T_NATIVE_INT, 
+       attr_id = H5Acreate2(file_id, "time step", H5T_NATIVE_INT,
 			   ds_id,
 			   H5P_DEFAULT, H5P_DEFAULT);
       status = H5Awrite(attr_id, H5T_NATIVE_INT, &nStep);
       status = H5Sclose(ds_id);
       status = H5Aclose(attr_id);
     }
-    
-    // write total time 
+
+    // write total time
     {
       double timeValue = (double) totalTime;
 
       ds_id   = H5Screate(H5S_SCALAR);
-      attr_id = H5Acreate2(file_id, "total time", H5T_NATIVE_DOUBLE, 
+      attr_id = H5Acreate2(file_id, "total time", H5T_NATIVE_DOUBLE,
 			   ds_id,
 			   H5P_DEFAULT, H5P_DEFAULT);
       status = H5Awrite(attr_id, H5T_NATIVE_DOUBLE, &timeValue);
@@ -3555,27 +3537,27 @@ namespace hydroSimu {
     // write geometry information (just to be consistent)
     {
       ds_id   = H5Screate(H5S_SCALAR);
-      attr_id = H5Acreate2(file_id, "nx", H5T_NATIVE_INT, 
+      attr_id = H5Acreate2(file_id, "nx", H5T_NATIVE_INT,
 			   ds_id,
 			   H5P_DEFAULT, H5P_DEFAULT);
       status = H5Awrite(attr_id, H5T_NATIVE_INT, &nx);
       status = H5Sclose(ds_id);
       status = H5Aclose(attr_id);
     }
-    
+
     {
       ds_id   = H5Screate(H5S_SCALAR);
-      attr_id = H5Acreate2(file_id, "ny", H5T_NATIVE_INT, 
+      attr_id = H5Acreate2(file_id, "ny", H5T_NATIVE_INT,
 			   ds_id,
 			   H5P_DEFAULT, H5P_DEFAULT);
       status = H5Awrite(attr_id, H5T_NATIVE_INT, &ny);
       status = H5Sclose(ds_id);
       status = H5Aclose(attr_id);
     }
-    
+
     {
       ds_id   = H5Screate(H5S_SCALAR);
-      attr_id = H5Acreate2(file_id, "nz", H5T_NATIVE_INT, 
+      attr_id = H5Acreate2(file_id, "nz", H5T_NATIVE_INT,
 			   ds_id,
 			   H5P_DEFAULT, H5P_DEFAULT);
       status = H5Awrite(attr_id, H5T_NATIVE_INT, &nz);
@@ -3587,7 +3569,7 @@ namespace hydroSimu {
     {
       int tmpVal = ghostIncluded ? 1 : 0;
       ds_id   = H5Screate(H5S_SCALAR);
-      attr_id = H5Acreate2(file_id, "ghost zone included", H5T_NATIVE_INT, 
+      attr_id = H5Acreate2(file_id, "ghost zone included", H5T_NATIVE_INT,
 			   ds_id,
 			   H5P_DEFAULT, H5P_DEFAULT);
       status = H5Awrite(attr_id, H5T_NATIVE_INT, &tmpVal);
@@ -3649,7 +3631,7 @@ namespace hydroSimu {
    *
    * \param[in] data A reference to a HostArray
    * \param[in] suffix a string appended to filename.
-   * \param[in] nStep The current time step, used to label results filename. 
+   * \param[in] nStep The current time step, used to label results filename.
    *
    * If library HDF5 is not available, do nothing.
    */
@@ -3657,9 +3639,9 @@ namespace hydroSimu {
   {
 #ifdef USE_HDF5
     herr_t status;
-    
+
     int nbVarDebug = data.nvar();
-    
+
     // make filename string
     std::string outputDir    = configMap.getString("output", "outputDir", "./");
     std::string outputPrefix = configMap.getString("output", "outputPrefix", "output");
@@ -3671,7 +3653,7 @@ namespace hydroSimu {
     std::string baseName         = outputPrefix+"_debug_"+suffix+outNum.str();
     std::string hdf5Filename     = baseName+".h5";
     std::string hdf5FilenameFull = outputDir+"/"+hdf5Filename;
-   
+
     // data size actually written on disk
     int nxg = data.dimx();
     int nyg = data.dimy();
@@ -3688,14 +3670,14 @@ namespace hydroSimu {
     hsize_t  dims_file[3];
     hid_t dataspace_memory, dataspace_file;
     if (nzg == 1) {
-      dims_memory[0] = data.dimy(); 
+      dims_memory[0] = data.dimy();
       dims_memory[1] = data.dimx();
       dims_file[0] = nyg;
       dims_file[1] = nxg;
       dataspace_memory = H5Screate_simple(2, dims_memory, NULL);
       dataspace_file   = H5Screate_simple(2, dims_file  , NULL);
     } else {
-      dims_memory[0] = data.dimz(); 
+      dims_memory[0] = data.dimz();
       dims_memory[1] = data.dimy();
       dims_memory[2] = data.dimx();
       dims_file[0] = nzg;
@@ -3711,7 +3693,7 @@ namespace hydroSimu {
       dataType = H5T_NATIVE_FLOAT;
     else
       dataType = H5T_NATIVE_DOUBLE;
-    
+
 
     // select data with or without ghost zones
     if (nzg == 1) {
@@ -3726,7 +3708,7 @@ namespace hydroSimu {
       hsize_t  count[3] = {(hsize_t) nzg, (hsize_t) nyg, (hsize_t) nxg};
       hsize_t  block[3] = {1, 1, 1}; // row-major instead of column-major here
       status = H5Sselect_hyperslab(dataspace_memory, H5S_SELECT_SET, start, stride, count, block);
-      }      
+      }
 
     /*
      * property list for compression
@@ -3750,14 +3732,14 @@ namespace hydroSimu {
     }
     H5Pset_shuffle (propList_create_id);
     H5Pset_deflate (propList_create_id, compressionLevel);
-    
+
     /*
      * write heavy data to HDF5 file
      */
     real_t* dataPtr;
 
     for (int iVar=0; iVar<nbVarDebug; iVar++) {
-      
+
       std::string dataSetName("/debug");
 
       std::ostringstream outNum;
@@ -3767,15 +3749,15 @@ namespace hydroSimu {
       dataSetName +=outNum.str();
 
       // write heavy data
-      hid_t dataset_id = H5Dcreate2(file_id, dataSetName.c_str(), dataType, 
-				    dataspace_file, 
+      hid_t dataset_id = H5Dcreate2(file_id, dataSetName.c_str(), dataType,
+				    dataspace_file,
 				    H5P_DEFAULT, propList_create_id, H5P_DEFAULT);
       if (nzg == 1)
 	dataPtr = &(data(0,0,iVar));
       else
 	dataPtr = &(data(0,0,0,iVar));
       status = H5Dwrite(dataset_id, dataType, dataspace_memory, dataspace_file, H5P_DEFAULT, dataPtr);
-      
+
       H5Dclose(dataset_id);
 
 
@@ -3783,13 +3765,13 @@ namespace hydroSimu {
 
     // write time step as an attribute to root group
     hid_t ds_id   = H5Screate(H5S_SCALAR);
-    hid_t attr_id = H5Acreate2(file_id, "time step", H5T_NATIVE_INT, 
+    hid_t attr_id = H5Acreate2(file_id, "time step", H5T_NATIVE_INT,
 				      ds_id,
 				      H5P_DEFAULT, H5P_DEFAULT);
     status = H5Awrite(attr_id, H5T_NATIVE_INT, &nStep);
     status = H5Sclose(ds_id);
     status = H5Aclose(attr_id);
-    
+
     // write date as an attribute to root group
     std::string dataString = current_date();
     const char *dataChar = dataString.c_str();
@@ -3892,7 +3874,7 @@ namespace hydroSimu {
     }
 
     for (int nStep=startStep; nStep<=stopStep; nStep+=deltaStep) {
- 
+
       std::ostringstream outNum;
       outNum.width(7);
       outNum.fill('0');
@@ -3905,13 +3887,13 @@ namespace hydroSimu {
 
       xdmfFile << "    <Grid Name=\"" << baseName << "\" GridType=\"Uniform\">" << std::endl;
       xdmfFile << "    <Time Value=\"" << nStep << "\" />"                      << std::endl;
-      
+
       // topology CoRectMesh
-      if (dimType == TWO_D) 
+      if (dimType == TWO_D)
 	xdmfFile << "      <Topology TopologyType=\"2DCoRectMesh\" NumberOfElements=\"" << nyg << " " << nxg << "\"/>" << std::endl;
       else
 	xdmfFile << "      <Topology TopologyType=\"3DCoRectMesh\" NumberOfElements=\"" << nzg << " " << nyg << " " << nxg << "\"/>" << std::endl;
-      
+
       // geometry
       if (dimType == TWO_D) {
 	xdmfFile << "    <Geometry Type=\"ORIGIN_DXDY\">"        << std::endl;
@@ -3948,7 +3930,7 @@ namespace hydroSimu {
 	xdmfFile << "    </DataStructure>"                       << std::endl;
 	xdmfFile << "    </Geometry>"                            << std::endl;
       }
-      
+
       // density
       xdmfFile << "      <Attribute Center=\"Node\" Name=\"density\">" << std::endl;
       xdmfFile << "        <DataStructure"                             << std::endl;
@@ -3961,7 +3943,7 @@ namespace hydroSimu {
       xdmfFile << "           "<<hdf5Filename<<":/density"             << std::endl;
       xdmfFile << "        </DataStructure>"                           << std::endl;
       xdmfFile << "      </Attribute>"                                 << std::endl;
-      
+
       // energy
       xdmfFile << "      <Attribute Center=\"Node\" Name=\"energy\">" << std::endl;
       xdmfFile << "        <DataStructure"                              << std::endl;
@@ -3974,7 +3956,7 @@ namespace hydroSimu {
       xdmfFile << "           "<<hdf5Filename<<":/energy"             << std::endl;
       xdmfFile << "        </DataStructure>"                            << std::endl;
       xdmfFile << "      </Attribute>"                                  << std::endl;
-      
+
       // momentum X
       xdmfFile << "      <Attribute Center=\"Node\" Name=\"momentum_x\">" << std::endl;
       xdmfFile << "        <DataStructure"                                << std::endl;
@@ -3987,7 +3969,7 @@ namespace hydroSimu {
       xdmfFile << "           "<<hdf5Filename<<":/momentum_x"             << std::endl;
       xdmfFile << "        </DataStructure>"                              << std::endl;
       xdmfFile << "      </Attribute>"                                    << std::endl;
-      
+
       // momentum Y
       xdmfFile << "      <Attribute Center=\"Node\" Name=\"momentum_y\">" << std::endl;
       xdmfFile << "        <DataStructure" << std::endl;
@@ -4000,7 +3982,7 @@ namespace hydroSimu {
       xdmfFile << "           "<<hdf5Filename<<":/momentum_y"             << std::endl;
       xdmfFile << "        </DataStructure>"                              << std::endl;
       xdmfFile << "      </Attribute>"                                    << std::endl;
-      
+
       // momentum Z
       if (dimType == THREE_D and !mhdEnabled) {
 	xdmfFile << "      <Attribute Center=\"Node\" Name=\"momentum_z\">" << std::endl;
@@ -4012,7 +3994,7 @@ namespace hydroSimu {
 	xdmfFile << "        </DataStructure>"                              << std::endl;
 	xdmfFile << "      </Attribute>"                                    << std::endl;
       }
-      
+
       if (mhdEnabled) {
 	// momentum Z
 	xdmfFile << "      <Attribute Center=\"Node\" Name=\"momentum_z\">" << std::endl;
@@ -4039,7 +4021,7 @@ namespace hydroSimu {
 	xdmfFile << "           "<<hdf5Filename<<":/magnetic_field_x"             << std::endl;
 	xdmfFile << "        </DataStructure>"                              << std::endl;
 	xdmfFile << "      </Attribute>"                                    << std::endl;
-	
+
 	// magnetic field Y
 	xdmfFile << "      <Attribute Center=\"Node\" Name=\"magnetic_field_y\">" << std::endl;
 	xdmfFile << "        <DataStructure" << std::endl;
@@ -4052,7 +4034,7 @@ namespace hydroSimu {
 	xdmfFile << "           "<<hdf5Filename<<":/magnetic_field_y"             << std::endl;
 	xdmfFile << "        </DataStructure>"                              << std::endl;
 	xdmfFile << "      </Attribute>"                                    << std::endl;
-	
+
 	// magnetic field Z
 	xdmfFile << "      <Attribute Center=\"Node\" Name=\"magnetic_field_z\">" << std::endl;
 	xdmfFile << "        <DataStructure" << std::endl;
@@ -4065,14 +4047,14 @@ namespace hydroSimu {
 	xdmfFile << "           "<<hdf5Filename<<":/magnetic_field_z"             << std::endl;
 	xdmfFile << "        </DataStructure>"                              << std::endl;
 	xdmfFile << "      </Attribute>"                                    << std::endl;
-	
+
       } // end mhdEnabled
 
       // finalize grid file for the current time step
       xdmfFile << "   </Grid>" << std::endl;
-      
+
     } // end for loop over time step
-    
+
     // finalize Xdmf wrapper file
     xdmfFile << "   </Grid>" << std::endl;
     xdmfFile << " </Domain>" << std::endl;
@@ -4090,7 +4072,7 @@ namespace hydroSimu {
 
   } // HydroRunBase::writeXdmfForHdf5Wrapper
 
-  
+
   // =======================================================
   // =======================================================
   /**
@@ -4099,13 +4081,13 @@ namespace hydroSimu {
    * paraview (at least version >= 3.6.1); see also ncdump.
    *
    * \param[in] U A reference to a hydro simulation HostArray
-   * \param[in] nStep The current time step, used to label results filename. 
+   * \param[in] nStep The current time step, used to label results filename.
    *
    * \note we are using C API (instead of C++ API) because to our
    * knowledge the C++ API is not complete (does not allows chunking for
    * example), and it only compatible with Netcdf3 data model.
    * See web documention of the C API at
-   * http://www.unidata.ucar.edu/software/netcdf/netcdf-4/newdocs/netcdf-c 
+   * http://www.unidata.ucar.edu/software/netcdf/netcdf-4/newdocs/netcdf-c
    * Probably that the new C++ API
    * (http://www.unidata.ucar.edu/software/netcdf/docs/cxx4/) could fit
    * our need, but it seems prematurate to use it right now
@@ -4128,7 +4110,7 @@ namespace hydroSimu {
     // make filename string
     std::string outputDir    = configMap.getString("output", "outputDir", "./");
     std::string outputPrefix = configMap.getString("output", "outputPrefix", "output");
-    
+
     std::ostringstream outNum;
     outNum.width(7);
     outNum.fill('0');
@@ -4143,7 +4125,7 @@ namespace hydroSimu {
 
     // create file handler
     int ncId, returnVal;
-    if ( (returnVal = nc_create(netcdfFilenameFull.c_str(), 
+    if ( (returnVal = nc_create(netcdfFilenameFull.c_str(),
 				NC_NETCDF4, &ncId)) ) {
       NETCDF_ERROR(returnVal);
     }
@@ -4181,7 +4163,7 @@ namespace hydroSimu {
     int var_bx, var_by, var_bz;
 
     if (dimType == TWO_D) {
-      
+
       nc_def_var(ncId, "rho",    NC_REAL_T, 2, dimIds, &var_density);
       nc_def_var_chunking(ncId, var_density, NC_CHUNKED, &chunkSize[0]);
 
@@ -4234,7 +4216,7 @@ namespace hydroSimu {
 
 	nc_def_var(ncId, "Bz", NC_REAL_T, 3, dimIds, &var_bz);
 	nc_def_var_chunking(ncId, var_bz, NC_CHUNKED, &chunkSize[0]);
-      }    
+      }
     }
 
     // write data to file (using putVar method)
@@ -4271,14 +4253,14 @@ namespace hydroSimu {
   // =======================================================
   /**
    * dump computation results (conservative variables) into a file
-   * (NRRD file format) file extension is nrrd. 
+   * (NRRD file format) file extension is nrrd.
    * NRRD is an acronym for Nearly Raw Raster Data.
    *
    * This output routine is only intended for fun, i.e. use with the webGL
    * toolkit xtk : https://github.com/xtk/X#readme
    *
    * \param[in] U A reference to a hydro simulation HostArray
-   * \param[in] nStep The current time step, used to label results filename. 
+   * \param[in] nStep The current time step, used to label results filename.
    *
    */
   void HydroRunBase::outputNrrd(HostArray<real_t> &U, int nStep)
@@ -4300,7 +4282,7 @@ namespace hydroSimu {
 
       // build complete filename
       std::string filename = outputDir+"/"+outputPrefix+"_"+varPrefix[iVar]+"_"+outNum.str()+".nrrd";
-      
+
       // begin output to file
       // NOTE : always use float 32 bit, because xtk do not support
       // double precision
@@ -4318,7 +4300,7 @@ namespace hydroSimu {
 	outFile << "space directions: (1,0) (0,1)\n";
 	outFile << "endian: little\n";
 	outFile << "encoding: raw\n\n";
-	
+
 	for (int j=ghostWidth; j<jsize-ghostWidth; j++)
 	  for (int i=ghostWidth; i<isize-ghostWidth; i++) {
 	    float tmpValue = (float) U(i,j,iVar);
@@ -4361,7 +4343,7 @@ namespace hydroSimu {
    * according to the file formats enabled in the configuration file.
    *
    * \param[in] U A reference to a hydro simulation HostArray
-   * \param[in] nStep The current time step, used to label results filename. 
+   * \param[in] nStep The current time step, used to label results filename.
    */
   void HydroRunBase::output(HostArray<real_t> &U, int nStep, bool ghostIncluded)
   {
@@ -4389,15 +4371,15 @@ namespace hydroSimu {
    * This method is just a wrapper that calls the actual dump methods
    * according to the file formats enabled in the configuration file.
    *
-   * \param[in] nStep The current time step, used to label results filename. 
+   * \param[in] nStep The current time step, used to label results filename.
    * \param[in] outputFormat File format.
    */
   void HydroRunBase::outputFaces(int nStep, FileFormat outputFormat)
   {
-    
+
     HostArray<real_t> &U = getDataHost(nStep);
-    
-    if (outputFormat == FF_VTK) {  
+
+    if (outputFormat == FF_VTK) {
       outputFacesVtk (U, nStep, IX);
       outputFacesVtk (U, nStep, IY);
       outputFacesVtk (U, nStep, IZ);
@@ -4418,7 +4400,7 @@ namespace hydroSimu {
    * This method is just a wrapper that calls the actual dump methods
    * according to the file formats enabled in the configuration file.
    *
-   * \param[in] nStep The current time step, used to label results filename. 
+   * \param[in] nStep The current time step, used to label results filename.
    * \param[in] outputFormat File format.
    */
   void HydroRunBase::outputFaces(int nStep, FileFormat outputFormat,
@@ -4442,7 +4424,7 @@ namespace hydroSimu {
       						  d_xface.dimx(), d_xface.dimy(), d_xface.dimz(), d_xface.pitch(), U.nvar());
       d_xface.copyToHost(xface);
     }
-    
+
     // copy Y-face from GPU
     {
       dim3 dimBlock(16, 16);
@@ -4466,11 +4448,11 @@ namespace hydroSimu {
     }
 
     // dump to file
-    if (outputFormat == FF_VTK) {  
+    if (outputFormat == FF_VTK) {
       outputFacesVtk (xface, nStep, IX);
       outputFacesVtk (yface, nStep, IY);
       outputFacesVtk (zface, nStep, IZ);
-    }  
+    }
 
   } // HydroRunBase::outputFaces
 #endif
@@ -4500,15 +4482,15 @@ namespace hydroSimu {
    * This routine is only available for 3D problems.
    *
    * \param[in] U A reference to a hydro simulation HostArray.
-   * \param[in] nStep The current time step, used to label results filename. 
+   * \param[in] nStep The current time step, used to label results filename.
    * \param[in] sideDir Identify which faces to dump
    *
    * \see outputVtk
    *
    * \note Since here we use celldata, coordinate arrays must have size+1 length
    */
-  void HydroRunBase::outputFacesVtk(HostArray<real_t> &U, 
-				    int nStep, 
+  void HydroRunBase::outputFacesVtk(HostArray<real_t> &U,
+				    int nStep,
 				    ComponentIndex3D sideDir)
   {
 
@@ -4531,7 +4513,7 @@ namespace hydroSimu {
      */
     std::string outputDir    = configMap.getString("output", "outputDir", "./");
     std::string outputPrefix = configMap.getString("output", "outputPrefix", "output");
-    
+
     std::ostringstream outNum;
     outNum.width(7);
     outNum.fill('0');
@@ -4550,7 +4532,7 @@ namespace hydroSimu {
     /*
      * Hand written procedure (no VTK library linking required).
      * Write XML imageData using either :
-     * - ascii 
+     * - ascii
      * - raw binary
      *
      * Each hydrodynamics field component is written in a separate <DataArray>.
@@ -4558,11 +4540,11 @@ namespace hydroSimu {
      */
     std::fstream outFile;
     outFile.open(filenameFull.c_str(), std::ios_base::out);
-    
+
     // domain extent (ghost included)
     //int xmin=0, xmax=isize-1, ymin=0, ymax=jsize-1, zmin=0, zmax=ksize-1;
     int xmin=0, xmax=isize, ymin=0, ymax=jsize, zmin=0, zmax=ksize;
-    
+
     if (sideDir == IX)
       xmax=1;
     if (sideDir == IY)
@@ -4573,20 +4555,20 @@ namespace hydroSimu {
     // if writing raw binary data (file does not respect XML standard)
     if (outputVtkAscii)
       outFile << "<?xml version=\"1.0\"?>" << std::endl;
-    
+
     // write xml data header
     if (isBigEndian())
       outFile << "<VTKFile type=\"RectilinearGrid\" version=\"0.1\" byte_order=\"BigEndian\">" << std::endl;
     else
       outFile << "<VTKFile type=\"RectilinearGrid\" version=\"0.1\" byte_order=\"LittleEndian\">" << std::endl;
-    
+
     outFile << "  <RectilinearGrid WholeExtent=\""
-	    << xmin << " " << xmax << " " 
-	    << ymin << " " << ymax << " " 
+	    << xmin << " " << xmax << " "
+	    << ymin << " " << ymax << " "
 	    << zmin << " " << zmax << "\">" << std::endl;
-    outFile << "    <Piece Extent=\"" 
-	    << xmin << " " << xmax << " " 
-	    << ymin << " " << ymax << " " 
+    outFile << "    <Piece Extent=\""
+	    << xmin << " " << xmax << " "
+	    << ymin << " " << ymax << " "
 	    << zmin << " " << zmax << ""
 	    << "\">" << std::endl;
 
@@ -4612,7 +4594,7 @@ namespace hydroSimu {
     outFile << "      <CellData Scalars=\"Conservative variables\">" << std::endl;
 
     if (outputVtkAscii) {
-      
+
       // write ascii data
       int i0 = 0; int iend = isize; if (sideDir==IX) iend=1;
       int j0 = 0; int jend = jsize; if (sideDir==IY) jend=1;
@@ -4635,20 +4617,20 @@ namespace hydroSimu {
 	}
 	outFile << "      </DataArray>" << std::endl;
       }
-      
+
       outFile << "    </CellData>" << std::endl;
       outFile << "  </Piece>" << std::endl;
       outFile << "  </RectilinearGrid>" << std::endl;
       outFile << "</VTKFile>" << std::endl;
-      
+
     } else { // do it using appended format raw binary (no base 64 encoding)
 
       std::cerr << "[outputFacesVtk] Raw Binary Rectilinear file format not implemented. TODO !!" << std::endl;
-      
+
     } // end raw binary write
-    
+
     outFile.close();
-    
+
   } // HydroRunBase::outputFacesVtk
 
   // =======================================================
@@ -4660,15 +4642,15 @@ namespace hydroSimu {
    * This routine is only available for 3D problems.
    *
    * \param[in] faceData HostArray with face data.
-   * \param[in] nStep The current time step, used to label results filename. 
+   * \param[in] nStep The current time step, used to label results filename.
    * \param[in] sideDir Identify which faces to dump.
    *
    * \see outputVtk
    * \note faceData should have dimensions matching sideDir
    *       example: isize,jsize,1,nbVar for sideDir=IZ
    */
-  // void HydroRunBase::outputFacesVtk(HostArray<real_t> &faceData, 
-  // 				    int nStep, 
+  // void HydroRunBase::outputFacesVtk(HostArray<real_t> &faceData,
+  // 				    int nStep,
   // 				    ComponentIndex3D sideDir)
   // {
 
@@ -4691,7 +4673,7 @@ namespace hydroSimu {
   //    */
   //   std::string outputDir    = configMap.getString("output", "outputDir", "./");
   //   std::string outputPrefix = configMap.getString("output", "outputPrefix", "output");
-    
+
   //   std::ostringstream outNum;
   //   outNum.width(7);
   //   outNum.fill('0');
@@ -4710,7 +4692,7 @@ namespace hydroSimu {
   //   /*
   //    * Hand written procedure (no VTK library linking required).
   //    * Write XML imageData using either :
-  //    * - ascii 
+  //    * - ascii
   //    * - raw binary
   //    *
   //    * Each hydrodynamics field component is written in a separate <DataArray>.
@@ -4718,10 +4700,10 @@ namespace hydroSimu {
   //    */
   //   std::fstream outFile;
   //   outFile.open(filenameFull.c_str(), std::ios_base::out);
-    
+
   //   // domain extent (ghost included)
   //   int xmin=0, xmax=isize-1, ymin=0, ymax=jsize-1, zmin=0, zmax=ksize-1;
-    
+
   //   if (sideDir == IX)
   //     xmax=0;
   //   if (sideDir == IY)
@@ -4732,20 +4714,20 @@ namespace hydroSimu {
   //   // if writing raw binary data (file does not respect XML standard)
   //   if (outputVtkAscii)
   //     outFile << "<?xml version=\"1.0\"?>" << std::endl;
-    
+
   //   // write xml data header
   //   if (isBigEndian())
   //     outFile << "<VTKFile type=\"RectilinearGrid\" version=\"0.1\" byte_order=\"BigEndian\">" << std::endl;
   //   else
   //     outFile << "<VTKFile type=\"RectilinearGrid\" version=\"0.1\" byte_order=\"LittleEndian\">" << std::endl;
-    
+
   //   outFile << "  <RectilinearGrid WholeExtent=\""
-  // 	    << xmin << " " << xmax << " " 
-  // 	    << ymin << " " << ymax << " " 
+  // 	    << xmin << " " << xmax << " "
+  // 	    << ymin << " " << ymax << " "
   // 	    << zmin << " " << zmax << "\">" << std::endl;
-  //   outFile << "    <Piece Extent=\"" 
-  // 	    << xmin << " " << xmax << " " 
-  // 	    << ymin << " " << ymax << " " 
+  //   outFile << "    <Piece Extent=\""
+  // 	    << xmin << " " << xmax << " "
+  // 	    << ymin << " " << ymax << " "
   // 	    << zmin << " " << zmax << ""
   // 	    << "\">" << std::endl;
 
@@ -4771,7 +4753,7 @@ namespace hydroSimu {
   //   outFile << "      <CellData Scalars=\"Conservative variables\">" << std::endl;
 
   //   if (outputVtkAscii) {
-      
+
   //     // write ascii data
   //     int i0 = 0; int iend = isize; if (sideDir==IX) iend=1;
   //     int j0 = 0; int jend = jsize; if (sideDir==IY) jend=1;
@@ -4794,20 +4776,20 @@ namespace hydroSimu {
   // 	}
   // 	outFile << "      </DataArray>" << std::endl;
   //     }
-      
+
   //     outFile << "    </CellData>" << std::endl;
   //     outFile << "  </Piece>" << std::endl;
   //     outFile << "  </RectilinearGrid>" << std::endl;
   //     outFile << "</VTKFile>" << std::endl;
-      
+
   //   } else { // do it using appended format raw binary (no base 64 encoding)
 
   //     std::cerr << "[outputFacesVtk] Raw Binary Rectilinear file format not implemented. TODO !!" << std::endl;
-      
+
   //   } // end raw binary write
-    
+
   //   outFile.close();
-    
+
   // } // HydroRunBase::outputFacesVtk
 
   // =======================================================
@@ -4833,7 +4815,7 @@ namespace hydroSimu {
    *
    * If library HDF5 is not available, do nothing, just print an error message.
    */
-  int HydroRunBase::inputHdf5(HostArray<real_t> &U, 
+  int HydroRunBase::inputHdf5(HostArray<real_t> &U,
 			      const std::string filename,
 			      bool halfResolution)
   {
@@ -4853,7 +4835,7 @@ namespace hydroSimu {
       nx_r  = nx/2;
       ny_r  = ny/2;
       nz_r  = nz/2;
-      
+
       nx_rg = nx/2+2*ghostWidth;
       ny_rg = ny/2+2*ghostWidth;
       nz_rg = nz/2+2*ghostWidth;
@@ -4862,16 +4844,16 @@ namespace hydroSimu {
       nx_r  = nx;
       ny_r  = ny;
       nz_r  = nz;
-      
+
       nx_rg = nx+2*ghostWidth;
       ny_rg = ny+2*ghostWidth;
       nz_rg = nz+2*ghostWidth;
     }
-   
+
     /*
      * Try to read HDF5 file.
      */
-    
+
     /* Open the file */
     hid_t file_id = H5Fopen(filename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
     HDF5_CHECK((file_id >= 0), "H5Fopen "+filename);
@@ -4884,7 +4866,7 @@ namespace hydroSimu {
     hid_t dataspace_memory, dataspace_file;
 
     if (ghostIncluded) {
-      
+
       if (dimType == TWO_D) {
 	dims_memory[0] = ny_rg;
 	dims_memory[1] = nx_rg;
@@ -4908,9 +4890,9 @@ namespace hydroSimu {
       }
 
     } else { // no ghost zones
-      
+
       if (dimType == TWO_D) {
-	dims_memory[0] = ny_rg; 
+	dims_memory[0] = ny_rg;
 	dims_memory[1] = nx_rg;
 
 	dims_file[0]   = ny_r;
@@ -4936,7 +4918,7 @@ namespace hydroSimu {
 
     /* hyperslab parameters */
     if (ghostIncluded) {
-      
+
       if (dimType == TWO_D) {
 	hsize_t  start[2] = {0, 0}; // ghost zone included
 	hsize_t stride[2] = {1, 1};
@@ -4950,7 +4932,7 @@ namespace hydroSimu {
 	hsize_t  block[3] = {1, 1, 1}; // row-major instead of column-major here
 	status = H5Sselect_hyperslab(dataspace_memory, H5S_SELECT_SET, start, stride, count, block);
       }
-      
+
     } else {
 
       if (dimType == TWO_D) {
@@ -4964,9 +4946,9 @@ namespace hydroSimu {
 	hsize_t stride[3] = {1, 1, 1};
 	hsize_t  count[3] = {(hsize_t) nz_r, (hsize_t) ny_r, (hsize_t) nx_r};
 	hsize_t  block[3] = {1, 1, 1}; // row-major instead of column-major here
-	status = H5Sselect_hyperslab(dataspace_memory, H5S_SELECT_SET, start, stride, count, block);      
+	status = H5Sselect_hyperslab(dataspace_memory, H5S_SELECT_SET, start, stride, count, block);
       }
-    
+
     }
 
     /* defines data type */
@@ -5044,7 +5026,7 @@ namespace hydroSimu {
       dataset_id = H5Dopen2(file_id, "/momentum_z", H5P_DEFAULT);
 
       data = &(U(0,0,0,IW));
-      
+
       status = H5Dread(dataset_id, dataType, dataspace_memory, dataspace_file,
 		       H5P_DEFAULT, data);
       H5Dclose(dataset_id);
@@ -5053,48 +5035,48 @@ namespace hydroSimu {
     if (mhdEnabled) {
       // read momentum Z
       dataset_id = H5Dopen2(file_id, "/momentum_z", H5P_DEFAULT);
-      
+
       if (dimType == TWO_D)
 	data = &(U(0,0,IW));
       else
 	data = &(U(0,0,0,IW));
-      
+
       status = H5Dread(dataset_id, dataType, dataspace_memory, dataspace_file,
 		       H5P_DEFAULT, data);
       H5Dclose(dataset_id);
 
       // read magnetic field components X
       dataset_id = H5Dopen2(file_id, "/magnetic_field_x", H5P_DEFAULT);
-      
+
       if (dimType == TWO_D)
 	data = &(U(0,0,IA));
       else
 	data = &(U(0,0,0,IA));
-      
+
       status = H5Dread(dataset_id, dataType, dataspace_memory, dataspace_file,
 		       H5P_DEFAULT, data);
       H5Dclose(dataset_id);
 
       // read magnetic field components Y
       dataset_id = H5Dopen2(file_id, "/magnetic_field_y", H5P_DEFAULT);
-      
+
       if (dimType == TWO_D)
 	data = &(U(0,0,IB));
       else
 	data = &(U(0,0,0,IB));
-      
+
       status = H5Dread(dataset_id, dataType, dataspace_memory, dataspace_file,
 		       H5P_DEFAULT, data);
       H5Dclose(dataset_id);
 
       // read magnetic field components Z
       dataset_id = H5Dopen2(file_id, "/magnetic_field_z", H5P_DEFAULT);
-      
+
       if (dimType == TWO_D)
 	data = &(U(0,0,IC));
       else
 	data = &(U(0,0,0,IC));
-      
+
       status = H5Dread(dataset_id, dataType, dataspace_memory, dataspace_file,
 		       H5P_DEFAULT, data);
       H5Dclose(dataset_id);
@@ -5126,7 +5108,7 @@ namespace hydroSimu {
 
       totalTime = (real_t) readVal;
     }
-    
+
     // check ghost zones consistency
     // {
     //   int readVal;
@@ -5135,10 +5117,10 @@ namespace hydroSimu {
     //   status    = H5Aread(attr_id, H5T_NATIVE_INT, &readVal);
     //   status    = H5Aclose(attr_id);
     //   status    = H5Gclose(group_id);
-      
+
     //   if ( readVal != 0 and readVal != 1)
     // 	std::cerr << "HydroRunBase::inputHdf5 : error reading \"ghost zone included\", invalid value\n";
-      
+
     //   if ( (readVal == 0 and ghostIncluded) or (readVal == 1 and !ghostIncluded) )
     // 	std::cerr << "HydroRunBase::inputHdf5 : error reading \"ghost zone included\"; inconsistent value\n";
 
@@ -5185,32 +5167,32 @@ namespace hydroSimu {
    * \param[in]  LowRes A reference to a HostArray (half resolution)
    *
    */
-  void HydroRunBase::upscale(HostArray<real_t> &HiRes, 
+  void HydroRunBase::upscale(HostArray<real_t> &HiRes,
 			     const HostArray<real_t> &LowRes)
   {
-    
+
     if (dimType == TWO_D) {
 
       // loop at high resolution
       for (int j=0; j<jsize; j++) {
 	int jLow = (j+ghostWidth)/2;
-	
+
 	for (int i=0; i<isize; i++) {
 	  int iLow = (i+ghostWidth)/2;
-	  
+
 	  // hydro variables : just copy low res value
 	  for (int iVar=0; iVar<4; ++iVar) {
-	    
+
 	    HiRes(i,j,iVar) = LowRes(iLow, jLow, iVar);
-	    
+
 	  } // end for iVar
-	  
+
 	  if (mhdEnabled) {
 	    HiRes(i,j,IW) = LowRes(iLow, jLow, IW);
 
 	    // magnetic field component : interpolate values so that
 	    // div B = 0 is still true !
-	    
+
 	    // X-component of magnetic field
 	    if (i+ghostWidth-2*iLow == 0) {
 	      HiRes(i,j,IBX) = LowRes(iLow, jLow, IBX);
@@ -5218,7 +5200,7 @@ namespace hydroSimu {
 	      HiRes(i,j,IBX) = (LowRes(iLow,   jLow, IBX) +
 				LowRes(iLow+1, jLow, IBX) )/2;
 	    }
-		    
+
 	    // Y-component of magnetic field
 	    if (j+ghostWidth-2*jLow == 0) {
 	      HiRes(i,j,IBY) = LowRes(iLow, jLow, IBY);
@@ -5226,33 +5208,33 @@ namespace hydroSimu {
 	      HiRes(i,j,IBY) = (LowRes(iLow, jLow,   IBY) +
 				LowRes(iLow, jLow+1, IBY) )/2;
 	    }
-	    
+
 	    // Z-component of magnetic field
 	    HiRes(i,j,IBZ) = LowRes(iLow, jLow, IBZ);
-	    	    
-	  } // end mhdEnabled 
- 
+
+	  } // end mhdEnabled
+
 	} // end for i
-	
+
       } // end for j
 
     } else { // THREE_D
-      
+
       // loop at high resolution
       for (int k=0; k<ksize; k++) {
 	int kLow = (k+ghostWidth)/2;
-	
+
 	for (int j=0; j<jsize; j++) {
 	  int jLow = (j+ghostWidth)/2;
-	  
+
 	  for (int i=0; i<isize; i++) {
 	    int iLow = (i+ghostWidth)/2;
-	    
+
 	    // hydro variables : just copy low res value
 	    for (int iVar=0; iVar<5; ++iVar) {
-	      
+
 	      HiRes(i,j,k,iVar) = LowRes(iLow, jLow, kLow, iVar);
-	      
+
 	    } // end for iVar
 
 	    if (mhdEnabled) {
@@ -5266,7 +5248,7 @@ namespace hydroSimu {
 		HiRes(i,j,k,IBX) = (LowRes(iLow,   jLow, kLow, IBX) +
 				    LowRes(iLow+1, jLow, kLow, IBX) )/2;
 	      }
-		    
+
 	      // Y-component of magnetic field
 	      if (j+ghostWidth-2*jLow == 0) {
 		HiRes(i,j,k,IBY) = LowRes(iLow, jLow, kLow, IBY);
@@ -5284,7 +5266,7 @@ namespace hydroSimu {
 	      }
 
 	    } // end mhdEnabled
-	    
+
 	  } // end for i
 
 	} // end for j
@@ -5304,7 +5286,7 @@ namespace hydroSimu {
     memset(h_U.data(),0,h_U.sizeBytes());
 
     if (dimType == TWO_D) {
-    
+
       /* jet */
       for (int j=ghostWidth; j<jsize-ghostWidth; j++)
 	for (int i=ghostWidth; i<isize-ghostWidth; i++) {
@@ -5315,11 +5297,11 @@ namespace hydroSimu {
 	  h_U(i,j,IU)=0.0f;
 	  h_U(i,j,IV)=0.0f;
 	}
-    
+
       /* corner grid (not really needed except for Kurganov-Tadmor) */
       if (ghostWidth == 2) {
 	for (int nVar=0; nVar<nbVar; ++nVar) {
-	  
+
 	  for (int i=0; i<2; ++i)
 	    for (int j=0; j<2; ++j) {
 	      h_U(     i,     j,nVar) = h_U(   2,   2,nVar);
@@ -5327,12 +5309,12 @@ namespace hydroSimu {
 	      h_U(     i,ny+2+j,nVar) = h_U(   2,ny+1,nVar);
 	      h_U(nx+2+i,ny+2+j,nVar) = h_U(nx+1,ny+1,nVar);
 	    } // end for loop over i,j
-	  
+
 	} // end loop over nVar
       }
 
     } else { // THREE_D
-      
+
       /* jet */
       for (int k=ghostWidth; k<ksize-ghostWidth; k++)
 	for (int j=ghostWidth; j<jsize-ghostWidth; j++)
@@ -5343,11 +5325,11 @@ namespace hydroSimu {
 	    h_U(i,j,k,IU)=0.0f;
 	    h_U(i,j,k,IV)=0.0f;
 	    h_U(i,j,k,IW)=0.0f;
-	  }   
-      
+	  }
+
       if (ghostWidth == 2) {
 	/* fill the 8 grid corner (not really needed except for Kurganov-Tadmor) */
-	for (int nVar=0; nVar<nbVar; ++nVar) {     
+	for (int nVar=0; nVar<nbVar; ++nVar) {
 	  for (int i=0; i<2; ++i)
 	    for (int j=0; j<2; ++j)
 	      for (int k=0; k<2; ++k) {
@@ -5355,14 +5337,14 @@ namespace hydroSimu {
 		h_U(nx+2+i,     j,     k,nVar) = h_U(nx+1,   2,   2,nVar);
 		h_U(     i,ny+2+j,     k,nVar) = h_U(   2,ny+1,   2,nVar);
 		h_U(nx+2+i,ny+2+j,     k,nVar) = h_U(nx+1,ny+1,   2,nVar);
-		
+
 		h_U(     i,     j,nz+2+k,nVar) = h_U(   2,   2,nz+1,nVar);
 		h_U(nx+2+i,     j,nz+2+k,nVar) = h_U(nx+1,   2,nz+1,nVar);
 		h_U(     i,ny+2+j,nz+2+k,nVar) = h_U(   2,ny+1,nz+1,nVar);
 		h_U(nx+2+i,ny+2+j,nz+2+k,nVar) = h_U(nx+1,ny+1,nz+1,nVar);
 	      } // end for loop over i,j,k
 	} // end for loop over nVar
-      }	
+      }
     }
 
   } // HydroRunBase::init_hydro_jet
@@ -5380,7 +5362,7 @@ namespace hydroSimu {
     memset(h_U.data(),0,h_U.sizeBytes());
 
     if (dimType == TWO_D) {
-  
+
       /* discontinuity line along diagonal */
       for (int j=ghostWidth; j<jsize-ghostWidth; j++)
 	for (int i=ghostWidth; i<isize-ghostWidth; i++) {
@@ -5391,16 +5373,16 @@ namespace hydroSimu {
 	    h_U(i,j,IV)=0.0f;
 	  } else {
 	    h_U(i,j,ID)=0.125f;
-	    h_U(i,j,IP)=0.1f/(_gParams.gamma0-1.0f);      
+	    h_U(i,j,IP)=0.1f/(_gParams.gamma0-1.0f);
 	    h_U(i,j,IU)=0.0f;
 	    h_U(i,j,IV)=0.0f;
 	  }
 	}
-    
+
       if (ghostWidth == 2) {
 	/* corner grid (not really needed (except for Kurganov-Tadmor) */
 	for (int nVar=0; nVar<nbVar; ++nVar) {
-	  
+
 	  for (int i=0; i<2; ++i)
 	    for (int j=0; j<2; ++j) {
 	      h_U(     i,     j,nVar) = h_U(   2,   2,nVar);
@@ -5408,12 +5390,12 @@ namespace hydroSimu {
 	      h_U(     i,ny+2+j,nVar) = h_U(   2,ny+1,nVar);
 	      h_U(nx+2+i,ny+2+j,nVar) = h_U(nx+1,ny+1,nVar);
 	    } // end for loop over i,j
-	  
+
 	} // end loop over nVar
       }
-    
+
     } else { // THREE_D
-	
+
       /* discontinuity line along diagonal */
       for (int k=ghostWidth; k<ksize-ghostWidth; k++)
 	for (int j=ghostWidth; j<jsize-ghostWidth; j++)
@@ -5426,7 +5408,7 @@ namespace hydroSimu {
 	      h_U(i,j,k,IW)=0.0f;
 	    } else {
 	      h_U(i,j,k,ID)=0.125f;
-	      h_U(i,j,k,IP)=0.1f/(_gParams.gamma0-1.0f);      
+	      h_U(i,j,k,IP)=0.1f/(_gParams.gamma0-1.0f);
 	      h_U(i,j,k,IU)=0.0f;
 	      h_U(i,j,k,IV)=0.0f;
 	      h_U(i,j,k,IW)=0.0f;
@@ -5443,7 +5425,7 @@ namespace hydroSimu {
 		h_U(nx+2+i,     j,     k,nVar) = h_U(nx+1,   2,   2,nVar);
 		h_U(     i,ny+2+j,     k,nVar) = h_U(   2,ny+1,   2,nVar);
 		h_U(nx+2+i,ny+2+j,     k,nVar) = h_U(nx+1,ny+1,   2,nVar);
-		
+
 		h_U(     i,     j,nz+2+k,nVar) = h_U(   2,   2,nz+1,nVar);
 		h_U(nx+2+i,     j,nz+2+k,nVar) = h_U(nx+1,   2,nz+1,nVar);
 		h_U(     i,ny+2+j,nz+2+k,nVar) = h_U(   2,ny+1,nz+1,nVar);
@@ -5478,7 +5460,7 @@ namespace hydroSimu {
     real_t amplitude = configMap.getFloat("implode", "amplitude", 0.0);
 
     if (dimType == TWO_D) {
-  
+
       /* discontinuity line along diagonal */
       for (int j=ghostWidth; j<jsize-ghostWidth; j++)
 	for (int i=ghostWidth; i<isize-ghostWidth; i++) {
@@ -5489,16 +5471,16 @@ namespace hydroSimu {
 	    h_U(i,j,IV)=0.0f;
 	  } else {
 	    h_U(i,j,ID)=0.125f + amplitude*(1.0*rand()/RAND_MAX-0.5);
-	    h_U(i,j,IP)=0.14f/(_gParams.gamma0-1.0f);      
+	    h_U(i,j,IP)=0.14f/(_gParams.gamma0-1.0f);
 	    h_U(i,j,IU)=0.0f;
 	    h_U(i,j,IV)=0.0f;
 	  }
 	}
-    
+
       if (ghostWidth == 2) {
 	/* corner grid (not really needed (except for Kurganov-Tadmor) */
 	for (int nVar=0; nVar<nbVar; ++nVar) {
-	  
+
 	  for (int i=0; i<2; ++i)
 	    for (int j=0; j<2; ++j) {
 	      h_U(     i,     j,nVar) = h_U(   2,   2,nVar);
@@ -5506,12 +5488,12 @@ namespace hydroSimu {
 	      h_U(     i,ny+2+j,nVar) = h_U(   2,ny+1,nVar);
 	      h_U(nx+2+i,ny+2+j,nVar) = h_U(nx+1,ny+1,nVar);
 	    } // end for loop over i,j
-	  
+
 	} // end loop over nVar
       }
-    
+
     } else { // THREE_D
-	
+
       /* discontinuity line along diagonal */
       for (int k=ghostWidth; k<ksize-ghostWidth; k++)
 	for (int j=ghostWidth; j<jsize-ghostWidth; j++)
@@ -5524,7 +5506,7 @@ namespace hydroSimu {
 	      h_U(i,j,k,IW)=0.0f;
 	    } else {
 	      h_U(i,j,k,ID)=0.125f + amplitude*(1.0*rand()/RAND_MAX-0.5);
-	      h_U(i,j,k,IP)=0.14f/(_gParams.gamma0-1.0f);      
+	      h_U(i,j,k,IP)=0.14f/(_gParams.gamma0-1.0f);
 	      h_U(i,j,k,IU)=0.0f;
 	      h_U(i,j,k,IV)=0.0f;
 	      h_U(i,j,k,IW)=0.0f;
@@ -5541,7 +5523,7 @@ namespace hydroSimu {
 		h_U(nx+2+i,     j,     k,nVar) = h_U(nx+1,   2,   2,nVar);
 		h_U(     i,ny+2+j,     k,nVar) = h_U(   2,ny+1,   2,nVar);
 		h_U(nx+2+i,ny+2+j,     k,nVar) = h_U(nx+1,ny+1,   2,nVar);
-		
+
 		h_U(     i,     j,nz+2+k,nVar) = h_U(   2,   2,nz+1,nVar);
 		h_U(nx+2+i,     j,nz+2+k,nVar) = h_U(nx+1,   2,nz+1,nVar);
 		h_U(     i,ny+2+j,nz+2+k,nVar) = h_U(   2,ny+1,nz+1,nVar);
@@ -5563,7 +5545,7 @@ namespace hydroSimu {
    *
    * parameters:
    * - radius: radius of the initial spherical domain, in real units
-   * - center_x, center_y, center_z : cartesian coordinate of the center of the domain. 
+   * - center_x, center_y, center_z : cartesian coordinate of the center of the domain.
    *
    */
   void HydroRunBase::init_hydro_blast()
@@ -5599,18 +5581,18 @@ namespace hydroSimu {
 
     /* spherical blast wave test */
     if (dimType == TWO_D) {
-    
+
       for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
 	real_t yPos = yMin + dy/2 + (j-ghostWidth)*dy;
 
 	for (int i=ghostWidth; i<isize-ghostWidth; i++) {
 	  real_t xPos = xMin + dx/2 + (i-ghostWidth)*dx;
-	
+
 	  // distance to center
-	  real_t d2 = 
+	  real_t d2 =
 	    (xPos-center_x)*(xPos-center_x) +
 	    (yPos-center_y)*(yPos-center_y);
-	
+
 	  if ( d2 < radius) {
 	    h_U(i,j,ID)=density_in;
 	    h_U(i,j,IP)=pressure_in/(_gParams.gamma0-1.0f);
@@ -5618,16 +5600,16 @@ namespace hydroSimu {
 	    h_U(i,j,IV)=0.0f;
 	  } else {
 	    h_U(i,j,ID)=density_out;
-	    h_U(i,j,IP)=pressure_out/(_gParams.gamma0-1.0f);      
+	    h_U(i,j,IP)=pressure_out/(_gParams.gamma0-1.0f);
 	    h_U(i,j,IU)=0.0f;
 	    h_U(i,j,IV)=0.0f;
 	  }
 	} // end for i
       } // end for j
-    
+
       if (ghostWidth == 2) {
 	/* corner grid (not really needed (except for Kurganov-Tadmor) */
-	for (int nVar=0; nVar<nbVar; ++nVar) {    
+	for (int nVar=0; nVar<nbVar; ++nVar) {
 	  for (int i=0; i<2; ++i)
 	    for (int j=0; j<2; ++j) {
 	      h_U(     i,     j,nVar) = h_U(   2,   2,nVar);
@@ -5639,7 +5621,7 @@ namespace hydroSimu {
       }
 
     } else { // THREE_D
-	
+
       for (int k=ghostWidth; k<ksize-ghostWidth; k++) {
 	real_t zPos = zMin + dz/2 + (k-ghostWidth)*dz;
 
@@ -5648,12 +5630,12 @@ namespace hydroSimu {
 
 	  for (int i=ghostWidth; i<isize-ghostWidth; i++) {
 	    real_t xPos = xMin + dx/2 + (i-ghostWidth)*dx;
-	
-	    real_t d2 = 
+
+	    real_t d2 =
 	      (xPos-center_x)*(xPos-center_x) +
 	      (yPos-center_y)*(yPos-center_y) +
 	      (zPos-center_z)*(zPos-center_z);
-	  
+
 	    if ( d2 < radius ) {
 	      h_U(i,j,k,ID)=density_in;
 	      h_U(i,j,k,IP)=pressure_in/(_gParams.gamma0-1.0f);
@@ -5662,7 +5644,7 @@ namespace hydroSimu {
 	      h_U(i,j,k,IW)=0.0f;
 	    } else {
 	      h_U(i,j,k,ID)=density_out;
-	      h_U(i,j,k,IP)=pressure_out/(_gParams.gamma0-1.0f);      
+	      h_U(i,j,k,IP)=pressure_out/(_gParams.gamma0-1.0f);
 	      h_U(i,j,k,IU)=0.0f;
 	      h_U(i,j,k,IV)=0.0f;
 	      h_U(i,j,k,IW)=0.0f;
@@ -5681,7 +5663,7 @@ namespace hydroSimu {
 		h_U(nx+2+i,     j,     k,nVar) = h_U(nx+1,   2,   2,nVar);
 		h_U(     i,ny+2+j,     k,nVar) = h_U(   2,ny+1,   2,nVar);
 		h_U(nx+2+i,ny+2+j,     k,nVar) = h_U(nx+1,ny+1,   2,nVar);
-		
+
 		h_U(     i,     j,nz+2+k,nVar) = h_U(   2,   2,nz+1,nVar);
 		h_U(nx+2+i,     j,nz+2+k,nVar) = h_U(nx+1,   2,nz+1,nVar);
 		h_U(     i,ny+2+j,nz+2+k,nVar) = h_U(   2,ny+1,nz+1,nVar);
@@ -5729,18 +5711,18 @@ namespace hydroSimu {
 
     /* 2d Gresho vortex test */
     if (dimType == TWO_D) {
-    
+
       for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
 	real_t yPos = yMin + dy/2 + (j-ghostWidth)*dy;
 
 	for (int i=ghostWidth; i<isize-ghostWidth; i++) {
 	  real_t xPos = xMin + dx/2 + (i-ghostWidth)*dx;
-	
+
 	  // distance to center
 	  real_t r = sqrt(
 			  (xPos-center_x)*(xPos-center_x) +
 			  (yPos-center_y)*(yPos-center_y) );
-	  
+
 	  real_t phi = atan2(yPos-center_y,xPos-center_x);
 	  real_t P, v_phi;
 
@@ -5750,7 +5732,7 @@ namespace hydroSimu {
 	    v_phi = 5*r;
 
 	  } else if ( r < 0.4 ) {
-	  
+
 	    P     = 9 + 12.5*r*r - 20*r + 4*log(5*r);
 	    v_phi = 2-5*r;
 
@@ -5760,20 +5742,20 @@ namespace hydroSimu {
 	    v_phi = ZERO_F;
 
 	  }
-	   
+
 	  h_U(i,j,ID) = ONE_F;
 	  h_U(i,j,IU) = -sin(phi) * v_phi + v_bulk_x;
 	  h_U(i,j,IV) =  cos(phi) * v_phi + v_bulk_y;
 	  h_U(i,j,IP) = P/(_gParams.gamma0-1.0f) +
-	    0.5 * ( SQR(h_U(i,j,IU)) + 
+	    0.5 * ( SQR(h_U(i,j,IU)) +
 		    SQR(h_U(i,j,IV)) ) / h_U(i,j,ID);
-	  
+
 	} // end for i
       } // end for j
-    
+
       if (ghostWidth == 2) {
 	/* corner grid (not really needed (except for Kurganov-Tadmor) */
-	for (int nVar=0; nVar<nbVar; ++nVar) {    
+	for (int nVar=0; nVar<nbVar; ++nVar) {
 	  for (int i=0; i<2; ++i)
 	    for (int j=0; j<2; ++j) {
 	      h_U(     i,     j,nVar) = h_U(   2,   2,nVar);
@@ -5785,7 +5767,7 @@ namespace hydroSimu {
       }
 
     } else { // THREE_D
-	
+
       for (int k=ghostWidth; k<ksize-ghostWidth; k++) {
 	real_t zPos = zMin + dz/2 + (k-ghostWidth)*dz;
 
@@ -5794,30 +5776,30 @@ namespace hydroSimu {
 
 	  for (int i=ghostWidth; i<isize-ghostWidth; i++) {
 	    real_t xPos = xMin + dx/2 + (i-ghostWidth)*dx;
-	
+
 	    // distance to center (vortex tube)
 	    real_t r = sqrt(
 	      (xPos-center_x)*(xPos-center_x) +
 	      (yPos-center_y)*(yPos-center_y) );
-	  
+
 	    real_t phi = atan2(yPos-center_y,xPos-center_x);
 	    real_t P, v_phi;
-	    
+
 	    if ( r < 0.2 ) {
-	      
+
 	      P     = 5 + 12.5*r*r;
 	      v_phi = 5*r;
-	      
+
 	    } else if ( r < 0.4 ) {
-	      
+
 	      P     = 9 + 12.5*r*r - 20*r + 4*log(5*r);
 	      v_phi = 2-5*r;
-	      
+
 	    } else {
-	      
+
 	      P     = 3 + 4*log(2);
 	      v_phi = ZERO_F;
-	      
+
 	    }
 
 	    h_U(i,j,k,ID) = ONE_F;
@@ -5825,14 +5807,14 @@ namespace hydroSimu {
 	    h_U(i,j,k,IV) =  cos(phi)*v_phi + v_bulk_y;
 	    h_U(i,j,k,IW) = v_bulk_z;
 	    h_U(i,j,k,IP) = P/(_gParams.gamma0-1.0f) +
-	      0.5 * ( SQR(h_U(i,j,k,IU)) + 
-		      SQR(h_U(i,j,k,IV)) + 
+	      0.5 * ( SQR(h_U(i,j,k,IU)) +
+		      SQR(h_U(i,j,k,IV)) +
 		      SQR(h_U(i,j,k,IW)) ) / h_U(i,j,k,ID);
-	    
+
 	  } // end for i
 	} // end for j
       } // end for k
-      
+
       if (ghostWidth == 2) {
 	/* fill the 8 grid corner (not really needed except for Kurganov-Tadmor) */
 	for (int nVar=0; nVar<nbVar; ++nVar) {
@@ -5843,7 +5825,7 @@ namespace hydroSimu {
 		h_U(nx+2+i,     j,     k,nVar) = h_U(nx+1,   2,   2,nVar);
 		h_U(     i,ny+2+j,     k,nVar) = h_U(   2,ny+1,   2,nVar);
 		h_U(nx+2+i,ny+2+j,     k,nVar) = h_U(nx+1,ny+1,   2,nVar);
-		
+
 		h_U(     i,     j,nz+2+k,nVar) = h_U(   2,   2,nz+1,nVar);
 		h_U(nx+2+i,     j,nz+2+k,nVar) = h_U(nx+1,   2,nz+1,nVar);
 		h_U(     i,ny+2+j,nz+2+k,nVar) = h_U(   2,ny+1,nz+1,nVar);
@@ -5869,7 +5851,7 @@ namespace hydroSimu {
    * - sine_athena : single mode with init condition from Athena
    * - sine_robertson : single mode with init condition from article by Robertson et al.
    *
-   * "Computational Eulerian hydrodynamics and Galilean invariance", 
+   * "Computational Eulerian hydrodynamics and Galilean invariance",
    * B.E. Robertson et al, Mon. Not. R. Astron. Soc., 401, 2463-2476, (2010).
    */
   void HydroRunBase::init_hydro_Kelvin_Helmholtz()
@@ -5884,7 +5866,7 @@ namespace hydroSimu {
 
     /* initialize perturbation amplitude */
     real_t amplitude = configMap.getFloat("kelvin-helmholtz", "amplitude", 0.01);
-    
+
     /* perturbation type random / sine / sine_athena */
     bool p_rand_bool  = configMap.getBool("kelvin-helmholtz", "perturbation_rand", true);
     bool p_sine_bool  = configMap.getBool("kelvin-helmholtz", "perturbation_sine", false);
@@ -5908,7 +5890,7 @@ namespace hydroSimu {
 
     real_t vflow_in  = configMap.getFloat("kelvin-helmholtz", "vflow_in", -0.5);
     real_t vflow_out = configMap.getFloat("kelvin-helmholtz", "vflow_out", 0.5);
-    
+
     real_t &xMin = _gParams.xMin;
     real_t &yMin = _gParams.yMin;
     real_t &zMin = _gParams.zMin;
@@ -5932,15 +5914,15 @@ namespace hydroSimu {
     if (dimType == TWO_D) {
 
       if (p_rand_bool) {
-	
+
 	for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
 	  real_t yPos = yMin + dy/2 + (j-ghostWidth)*dy;
-	  
+
 	  for (int i=ghostWidth; i<isize-ghostWidth; i++) {
 	    real_t xPos = xMin + dx/2 + (i-ghostWidth)*dx;
-	    
+
 	    if ( fabs(yPos-yCenter) > outer_size*ySize ) {
-	      
+
 	      h_U(i,j,ID) = rho_outer;
 
 	      h_U(i,j,IU) = rho_outer *
@@ -5950,11 +5932,11 @@ namespace hydroSimu {
 		(0.0f      + amplitude * (1.0*rand()/RAND_MAX - 0.5) );
 
 	      h_U(i,j,IP) = pressure/(_gParams.gamma0-1.0f) +
-		0.5 * ( SQR(h_U(i,j,IU)) + 
+		0.5 * ( SQR(h_U(i,j,IU)) +
 			SQR(h_U(i,j,IV)) ) / h_U(i,j,ID);
-	      
+
 	    } else {
-	      
+
 	      h_U(i,j,ID) = rho_inner;
 
 	      h_U(i,j,IU) = rho_inner *
@@ -5964,13 +5946,13 @@ namespace hydroSimu {
 		( 0.0f    + amplitude * (1.0*rand()/RAND_MAX - 0.5) );
 
 	      h_U(i,j,IP) = pressure/(_gParams.gamma0-1.0f) +
-		0.5 * ( SQR(h_U(i,j,IU)) + 
+		0.5 * ( SQR(h_U(i,j,IU)) +
 			SQR(h_U(i,j,IV)) ) / h_U(i,j,ID);
 
 	    }
 	  } // end for i
 	} // end for j
-	
+
       } else if (p_sine_athena_bool) {
 
 	real_t a = 0.05;
@@ -5979,15 +5961,15 @@ namespace hydroSimu {
 
 	for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
 	  real_t yPos = yMin + dy/2 + (j-ghostWidth)*dy;
-	  
+
 	  for (int i=ghostWidth; i<isize-ghostWidth; i++) {
-	    real_t xPos = xMin + dx/2 + (i-ghostWidth)*dx;	    
-	    
+	    real_t xPos = xMin + dx/2 + (i-ghostWidth)*dx;
+
 	    h_U(i,j,ID) = rho_inner;
 	    h_U(i,j,IU) = rho_inner * vflow * tanh(yPos/a);
 	    h_U(i,j,IV) = rho_inner * amplitude * sin(2.0*M_PI*xPos) * exp(-(yPos*yPos)/(sigma*sigma));
 	    h_U(i,j,IP) = pressure/(_gParams.gamma0-1.0f) +
-	      0.5 * ( SQR(h_U(i,j,IU)) + 
+	      0.5 * ( SQR(h_U(i,j,IU)) +
 		      SQR(h_U(i,j,IV)) ) / h_U(i,j,ID);
 
 	  } // end for i
@@ -6012,18 +5994,18 @@ namespace hydroSimu {
 	for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
 	  real_t yPos = yMin + dy/2 + (j-ghostWidth)*dy;
 
-	  real_t ramp = 
+	  real_t ramp =
 	    1.0 / ( 1.0 + exp( 2*(yPos-y1)/deltaY ) ) +
 	    1.0 / ( 1.0 + exp( 2*(y2-yPos)/deltaY ) );
-	  
+
 	  for (int i=ghostWidth; i<isize-ghostWidth; i++) {
-	    real_t xPos = xMin + dx/2 + (i-ghostWidth)*dx;	    
-	    
+	    real_t xPos = xMin + dx/2 + (i-ghostWidth)*dx;
+
 	    h_U(i,j,ID) = rho1 + ramp*(rho2-rho1);
 	    h_U(i,j,IU) = h_U(i,j,ID) * (v1 + ramp*(v2-v1));
 	    h_U(i,j,IV) = h_U(i,j,ID) * w0 * sin(n*M_PI*xPos);
 	    h_U(i,j,IP) = pressure/(_gParams.gamma0-1.0f) +
-	      0.5 * ( SQR(h_U(i,j,IU)) + 
+	      0.5 * ( SQR(h_U(i,j,IU)) +
 		      SQR(h_U(i,j,IV)) ) / h_U(i,j,ID);
 
 	  } // end for i
@@ -6033,20 +6015,20 @@ namespace hydroSimu {
 
 	for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
 	  real_t yPos = yMin + dy/2 + (j-ghostWidth)*dy;
-	  
+
 	  for (int i=ghostWidth; i<isize-ghostWidth; i++) {
-	    real_t xPos = xMin + dx/2 + (i-ghostWidth)*dx;	    
+	    real_t xPos = xMin + dx/2 + (i-ghostWidth)*dx;
 
 	    real_t perturb_vx = 0;
 	    real_t perturb_vy = amplitude * sin(2.0*M_PI*xPos/xSize);
-	    
+
 	    if ( fabs(yPos-yCenter) > outer_size*ySize ) {
 
 	      h_U(i,j,ID) = rho_outer;
 	      h_U(i,j,IU) = rho_outer * vflow_out * (1.0+perturb_vx);
 	      h_U(i,j,IV) = rho_outer * perturb_vy;
 	      h_U(i,j,IP) = pressure/(_gParams.gamma0-1.0f) +
-	      0.5 * ( SQR(h_U(i,j,IU)) + 
+	      0.5 * ( SQR(h_U(i,j,IU)) +
 		      SQR(h_U(i,j,IV)) ) / h_U(i,j,ID);
 
 	    } else if ( fabs(yPos-yCenter) <= inner_size*ySize ) {
@@ -6055,11 +6037,11 @@ namespace hydroSimu {
 	      h_U(i,j,IU) = rho_inner * vflow_in * (1.0+perturb_vx);
 	      h_U(i,j,IV) = rho_inner * perturb_vy;
 	      h_U(i,j,IP) = pressure/(_gParams.gamma0-1.0f) +
-		0.5 * ( SQR(h_U(i,j,IU)) + 
+		0.5 * ( SQR(h_U(i,j,IU)) +
 			SQR(h_U(i,j,IV)) ) / h_U(i,j,ID);
 
 	    } else { // interpolate
-	      
+
 	      real_t interpSize = outer_size-inner_size;
 	      real_t rho_slope = (rho_outer - rho_inner) / (interpSize * ySize);
 	      real_t u_slope   = (vflow_out - vflow_in)  / (interpSize * ySize);
@@ -6081,7 +6063,7 @@ namespace hydroSimu {
 	      h_U(i,j,IU) = h_U(i,j,ID) * (vflow_in + deltaU)*(1.0+perturb_vx);
 	      h_U(i,j,IV) = h_U(i,j,ID) * perturb_vy;
 	      h_U(i,j,IP) = pressure/(_gParams.gamma0-1.0f) +
-	      0.5 * ( SQR(h_U(i,j,IU)) + 
+	      0.5 * ( SQR(h_U(i,j,IU)) +
 		      SQR(h_U(i,j,IV)) ) / h_U(i,j,ID);
 
 	    }
@@ -6093,7 +6075,7 @@ namespace hydroSimu {
       if (ghostWidth == 2) {
 	/* corner grid (not really needed (except for Kurganov-Tadmor) */
 	for (int nVar=0; nVar<nbVar; ++nVar) {
-	  
+
 	  for (int i=0; i<2; ++i)
 	    for (int j=0; j<2; ++j) {
 	      h_U(     i,     j,nVar) = h_U(   2,   2,nVar);
@@ -6101,7 +6083,7 @@ namespace hydroSimu {
 	      h_U(     i,ny+2+j,nVar) = h_U(   2,ny+1,nVar);
 	      h_U(nx+2+i,ny+2+j,nVar) = h_U(nx+1,ny+1,nVar);
 	    } // end for loop over i,j
-	  
+
 	} // end loop over nVar
       }
 
@@ -6111,10 +6093,10 @@ namespace hydroSimu {
 
 	for (int k=ghostWidth; k<ksize-ghostWidth; k++) {
 	  real_t zPos = zMin + dz/2 + (k-ghostWidth)*dz;
-	  
+
 	  for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
 	    real_t yPos = yMin + dy/2 + (j-ghostWidth)*dy;
-	    
+
 	    for (int i=ghostWidth; i<isize-ghostWidth; i++) {
 	      real_t xPos = xMin + dx/2 + (i-ghostWidth)*dx;
 
@@ -6132,8 +6114,8 @@ namespace hydroSimu {
 		  (0.0       + amplitude  * (1.0*rand()/RAND_MAX-0.5) );
 
 		h_U(i,j,k,IP) = pressure/(_gParams.gamma0-1.0f) +
-		  0.5 * ( SQR(h_U(i,j,k,IU)) + 
-			  SQR(h_U(i,j,k,IV)) + 
+		  0.5 * ( SQR(h_U(i,j,k,IU)) +
+			  SQR(h_U(i,j,k,IV)) +
 			  SQR(h_U(i,j,k,IW)) ) / h_U(i,j,k,ID);
 
 	      } else {
@@ -6150,8 +6132,8 @@ namespace hydroSimu {
 		  (0.0      + amplitude   * (1.0*rand()/RAND_MAX-0.5) );
 
 		h_U(i,j,k,IP) = pressure/(_gParams.gamma0-1.0f) +
-		  0.5 * ( SQR(h_U(i,j,k,IU)) + 
-			  SQR(h_U(i,j,k,IV)) + 
+		  0.5 * ( SQR(h_U(i,j,k,IU)) +
+			  SQR(h_U(i,j,k,IV)) +
 			  SQR(h_U(i,j,k,IW)) ) / h_U(i,j,k,ID);
 
 	      }
@@ -6163,10 +6145,10 @@ namespace hydroSimu {
 
 	for (int k=ghostWidth; k<ksize-ghostWidth; k++) {
 	  real_t zPos = zMin + dz/2 + (k-ghostWidth)*dz;
-	  
+
 	  for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
 	    real_t yPos = yMin + dy/2 + (j-ghostWidth)*dy;
-	    
+
 	    for (int i=ghostWidth; i<isize-ghostWidth; i++) {
 	      real_t xPos = xMin + dx/2 + (i-ghostWidth)*dx;
 
@@ -6177,14 +6159,14 @@ namespace hydroSimu {
 	      if ( fabs(zPos-zCenter) > outer_size*zSize ) {
 
 		h_U(i,j,k,ID) = rho_outer;
-		h_U(i,j,k,IU) = rho_outer * vflow_out; 
+		h_U(i,j,k,IU) = rho_outer * vflow_out;
 		h_U(i,j,k,IV) = rho_outer * perturb_vy;
 		h_U(i,j,k,IW) = rho_outer * perturb_vz;
 		h_U(i,j,k,IP) = pressure/(_gParams.gamma0-1.0f) +
-		  0.5 * ( SQR(h_U(i,j,k,IU)) + 
-			  SQR(h_U(i,j,k,IV)) + 
+		  0.5 * ( SQR(h_U(i,j,k,IU)) +
+			  SQR(h_U(i,j,k,IV)) +
 			  SQR(h_U(i,j,k,IW)) ) / h_U(i,j,k,ID);
-		
+
 
 	      } else { // if ( fabs(zPos-zCenter) <= inner_size*zSize )
 
@@ -6193,8 +6175,8 @@ namespace hydroSimu {
 		h_U(i,j,k,IV) = rho_inner * perturb_vy;
 		h_U(i,j,k,IW) = rho_inner * perturb_vz;
 		h_U(i,j,k,IP) = pressure/(_gParams.gamma0-1.0f) +
-		  0.5 * ( SQR(h_U(i,j,k,IU)) + 
-			  SQR(h_U(i,j,k,IV)) + 
+		  0.5 * ( SQR(h_U(i,j,k,IU)) +
+			  SQR(h_U(i,j,k,IV)) +
 			  SQR(h_U(i,j,k,IW)) ) / h_U(i,j,k,ID);
 
 	      }
@@ -6222,30 +6204,30 @@ namespace hydroSimu {
 	for (int k=ghostWidth; k<ksize-ghostWidth; k++) {
 	  real_t zPos = zMin + dz/2 + (k-ghostWidth)*dz;
 
-	  real_t ramp = 
+	  real_t ramp =
 	    1.0 / ( 1.0 + exp( 2*(zPos-z1)/deltaZ ) ) +
 	    1.0 / ( 1.0 + exp( 2*(z2-zPos)/deltaZ ) );
-	  
+
 	  for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
 	    real_t yPos = yMin + dy/2 + (j-ghostWidth)*dy;
-	    	    
+
 	    for (int i=ghostWidth; i<isize-ghostWidth; i++) {
-	      real_t xPos = xMin + dx/2 + (i-ghostWidth)*dx;	    
-	      
+	      real_t xPos = xMin + dx/2 + (i-ghostWidth)*dx;
+
 	      h_U(i,j,k,ID) = rho1 + ramp*(rho2-rho1);
 	      h_U(i,j,k,IU) = h_U(i,j,k,ID) * (v1 + ramp*(v2-v1)) ;
 	      h_U(i,j,k,IV) = h_U(i,j,k,ID) * w0 * cos(n*M_PI*xPos);
 	      h_U(i,j,k,IW) = h_U(i,j,k,ID) * w0 * sin(n*M_PI*xPos);
 	      h_U(i,j,k,IP) = pressure/(_gParams.gamma0-1.0f) +
-		0.5 * ( SQR(h_U(i,j,k,IU)) + 
-			SQR(h_U(i,j,k,IV)) + 
+		0.5 * ( SQR(h_U(i,j,k,IU)) +
+			SQR(h_U(i,j,k,IV)) +
 			SQR(h_U(i,j,k,IW)) ) / h_U(i,j,k,ID);
-	      
+
 	    } // end for i
 	  } // end for j
 	} // end for k
 
-      } 
+      }
 
       if (ghostWidth == 2) {
 	/* fill the 8 grid corner (not really needed except for Kurganov-Tadmor) */
@@ -6257,7 +6239,7 @@ namespace hydroSimu {
 		h_U(nx+2+i,     j,     k,nVar) = h_U(nx+1,   2,   2,nVar);
 		h_U(     i,ny+2+j,     k,nVar) = h_U(   2,ny+1,   2,nVar);
 		h_U(nx+2+i,ny+2+j,     k,nVar) = h_U(nx+1,ny+1,   2,nVar);
-		
+
 		h_U(     i,     j,nz+2+k,nVar) = h_U(   2,   2,nz+1,nVar);
 		h_U(nx+2+i,     j,nz+2+k,nVar) = h_U(nx+1,   2,nz+1,nVar);
 		h_U(     i,ny+2+j,nz+2+k,nVar) = h_U(   2,ny+1,nz+1,nVar);
@@ -6288,7 +6270,7 @@ namespace hydroSimu {
     real_t        d0 = configMap.getFloat("rayleigh-taylor", "d0", 1.0);
     real_t        d1 = configMap.getFloat("rayleigh-taylor", "d1", 2.0);
 
-    
+
     bool  randomEnabled = configMap.getBool("rayleigh-taylor", "randomEnabled", false);
     int            seed = configMap.getInteger("rayleigh-taylor", "random_seed", 33);
     if (randomEnabled)
@@ -6300,7 +6282,7 @@ namespace hydroSimu {
     real_t& gravity_y = _gParams.gravity_y;
     real_t& gravity_z = _gParams.gravity_z;
     real_t         P0 = 1.0f/(_gParams.gamma0-1.0f);
-      
+
     real_t &xMin = _gParams.xMin;
     real_t &yMin = _gParams.yMin;
     real_t &zMin = _gParams.zMin;
@@ -6314,7 +6296,7 @@ namespace hydroSimu {
     real_t Lz = zMax-zMin;
 
     if (dimType == TWO_D) {
-  
+
       // the initial condition must ensure the condition of
       // hydrostatic equilibrium for pressure P = P0 - 0.1*\rho*y
       for (int j=0; j<jsize; j++) {
@@ -6343,12 +6325,12 @@ namespace hydroSimu {
 	  if (randomEnabled)
 	    h_U(i,j,IV) = amplitude * ( rand() * 1.0 / RAND_MAX - 0.5);
 	  else
-	    h_U(i,j,IV) = amplitude * 
+	    h_U(i,j,IV) = amplitude *
 	      (1+cos(2*M_PI*x/Lx))*
 	      (1+cos(2*M_PI*y/Ly))/4;
 	}
       }
-    
+
       for (int j=0; j<jsize; j++) {
 	for (int i=0; i<isize; i++) {
 	  h_gravity(i,j,IX) = gravity_x;
@@ -6359,7 +6341,7 @@ namespace hydroSimu {
       if (ghostWidth == 2) {
 	/* corner grid (not really needed (except for Kurganov-Tadmor) */
 	for (int nVar=0; nVar<nbVar; ++nVar) {
-	  
+
 	  for (int i=0; i<2; ++i)
 	    for (int j=0; j<2; ++j) {
 	      h_U(     i,     j,nVar) = h_U(   2,   2,nVar);
@@ -6367,7 +6349,7 @@ namespace hydroSimu {
 	      h_U(     i,ny+2+j,nVar) = h_U(   2,ny+1,nVar);
 	      h_U(nx+2+i,ny+2+j,nVar) = h_U(nx+1,ny+1,nVar);
 	    } // end for loop over i,j
-	  
+
 	} // end loop over nVar
       }
 
@@ -6377,13 +6359,13 @@ namespace hydroSimu {
       // hydrostatic equilibrium for pressure P = P0 - 0.1*\rho*y
       for (int k=0; k<ksize; k++) {
 	real_t z = zMin + dz/2 + (k-ghostWidth)*dz;
-	
+
 	for (int j=0; j<jsize; j++) {
 	  real_t y = yMin + dy/2 + (j-ghostWidth)*dy;
-	  
+
 	  for (int i=0; i<isize; i++) {
 	    real_t x = xMin + dx/2 + (i-ghostWidth)*dx;
-	    
+
 	    // Athena initial conditions
 	    // if ( z > 0.0 ) {
 	    //   h_U(i,j,k,ID) = 2.0f;
@@ -6406,7 +6388,7 @@ namespace hydroSimu {
 	    if (randomEnabled)
 	      h_U(i,j,k,IW) = amplitude * ( rand() * 1.0 / RAND_MAX - 0.5);
 	    else
-	      h_U(i,j,k,IW) = amplitude * 
+	      h_U(i,j,k,IW) = amplitude *
 		(1+cos(2*M_PI*x/Lx))*
 		(1+cos(2*M_PI*y/Ly))*
 		(1+cos(2*M_PI*z/Lz))/8;
@@ -6435,14 +6417,14 @@ namespace hydroSimu {
 		h_U(nx+2+i,     j,     k,nVar) = h_U(nx+1,   2,   2,nVar);
 		h_U(     i,ny+2+j,     k,nVar) = h_U(   2,ny+1,   2,nVar);
 		h_U(nx+2+i,ny+2+j,     k,nVar) = h_U(nx+1,ny+1,   2,nVar);
-		
+
 		h_U(     i,     j,nz+2+k,nVar) = h_U(   2,   2,nz+1,nVar);
 		h_U(nx+2+i,     j,nz+2+k,nVar) = h_U(nx+1,   2,nz+1,nVar);
 		h_U(     i,ny+2+j,nz+2+k,nVar) = h_U(   2,ny+1,nz+1,nVar);
 		h_U(nx+2+i,ny+2+j,nz+2+k,nVar) = h_U(nx+1,ny+1,nz+1,nVar);
 	      } // end for loop over i,j,k
 	} // end for loop over nVar
-      }	
+      }
     }
 
 #ifdef __CUDACC__
@@ -6487,15 +6469,15 @@ namespace hydroSimu {
     real_t grav    = configMap.getFloat("gravity"       , "g"       ,1.0);
 
     if (dimType == TWO_D) {
-  
+
       for (int j=0; j<jsize; j++) {
 	real_t yPos = yMin + dy/2 + (j-ghostWidth)*dy;
-	
+
 	for (int i=0; i<isize; i++) {
 	  real_t xPos = xMin + dx/2 + (i-ghostWidth)*dx;
-	  
+
 	  real_t theta = atan2(yPos-yCenter, xPos-xCenter);
-	  
+
 	  // distance to center
 	  real_t r = sqrt(
 			  (xPos-xCenter)*(xPos-xCenter) +
@@ -6503,14 +6485,14 @@ namespace hydroSimu {
 
 	  // orbital velocity
 	  real_t velocity = r * pow(r*r+epsilon*epsilon, -3.0/4.0);
-	  
+
 	  // static Keplerian potential (g = -grad ( Phi ))
 	  // Phi = - (r^2+epsilon^2)^(-1/2)
 	  {
 
 	    real_t dphi_dx = xPos * pow(r*r+epsilon*epsilon, -3.0/2);
 	    real_t dphi_dy = yPos * pow(r*r+epsilon*epsilon, -3.0/2);
-	    
+
 	    h_gravity(i,j,IX) = - grav * dphi_dx;
 	    h_gravity(i,j,IY) = - grav * dphi_dy;
 
@@ -6531,15 +6513,15 @@ namespace hydroSimu {
 	  h_U(i,j,IP) = P0 / (_gParams.gamma0 - ONE_F) +
 	    0.5 * ( h_U(i,j,IU) * h_U(i,j,IU) +
 		    h_U(i,j,IV) * h_U(i,j,IV) ) / h_U(i,j,ID);
-  
+
 	} // end for i
       } // end for j
-    
+
 
       if (ghostWidth == 2) {
 	/* corner grid (not really needed (except for Kurganov-Tadmor) */
 	for (int nVar=0; nVar<nbVar; ++nVar) {
-	  
+
 	  for (int i=0; i<2; ++i)
 	    for (int j=0; j<2; ++j) {
 	      h_U(     i,     j,nVar) = h_U(   2,   2,nVar);
@@ -6547,7 +6529,7 @@ namespace hydroSimu {
 	      h_U(     i,ny+2+j,nVar) = h_U(   2,ny+1,nVar);
 	      h_U(nx+2+i,ny+2+j,nVar) = h_U(nx+1,ny+1,nVar);
 	    } // end for loop over i,j
-	  
+
 	} // end loop over nVar
       }
 
@@ -6556,23 +6538,23 @@ namespace hydroSimu {
       // cylindrical symetry
       for (int k=0; k<ksize; k++) {
 	real_t zPos = zMin + dz/2 + (k-ghostWidth)*dz;
-	
+
 	for (int j=0; j<jsize; j++) {
 	  real_t yPos = yMin + dy/2 + (j-ghostWidth)*dy;
-	  
+
 	  for (int i=0; i<isize; i++) {
 	    real_t xPos = xMin + dx/2 + (i-ghostWidth)*dx;
-	    
+
 	    real_t theta = atan2(yPos-yCenter, xPos-xCenter);
-	    
+
 	    // distance to center
 	    real_t r = sqrt(
 			    (xPos-xCenter)*(xPos-xCenter) +
 			    (yPos-yCenter)*(yPos-yCenter) );
-	    
+
 	    // orbital velocity
 	    real_t velocity = r * pow(r*r+epsilon*epsilon, -3.0/4.0);
-	    
+
 	    if ( r < 0.5 ) {
 	      h_U(i,j,k,ID) = 0.01 + pow( r/0.5, 3.0);
 	    } else if ( r <= 2 ) {
@@ -6580,7 +6562,7 @@ namespace hydroSimu {
 	    } else {
 	      h_U(i,j,k,ID) = 0.01 + pow(1 + (r-2)/0.1, -3.0);
 	    }
-	    	    
+
 	    h_U(i,j,k,IU) = -sin(theta) * velocity * h_U(i,j,ID);
 	    h_U(i,j,k,IV) =  cos(theta) * velocity * h_U(i,j,ID);
 	    h_U(i,j,k,IW) =  ZERO_F;
@@ -6589,29 +6571,29 @@ namespace hydroSimu {
 	      0.5 * ( h_U(i,j,k,IU) * h_U(i,j,k,IU) +
 		      h_U(i,j,k,IV) * h_U(i,j,k,IV) +
 		      h_U(i,j,k,IW) * h_U(i,j,k,IW) ) / h_U(i,j,k,ID);
-	    
+
 	    // static Keplerian potential (g = -grad ( Phi ))
 	    // Phi = - (r^2+epsilon^2)^(-1/2)
 	    {
 	      real_t phi = -1.0/sqrt(r*r+epsilon*epsilon);
-	      
+
 	      // x -> x+dx
 	      real_t r_x = sqrt(
 				(xPos+dx-xCenter)*(xPos+dx-xCenter) +
 				(yPos-yCenter)*(yPos-yCenter) );
 	      real_t phi_x = -1.0/sqrt(r_x*r_x+epsilon*epsilon);
-	      
+
 	      // y -> y+dy
 	      real_t r_y = sqrt(
 				(xPos-xCenter)*(xPos-xCenter) +
 				(yPos+dy-yCenter)*(yPos+dy-yCenter) );
 	      real_t phi_y = -1.0/sqrt(r_y*r_y+epsilon*epsilon);
-	      
+
 	      h_gravity(i,j,k,IX) = - (phi - phi_x)/dx;
 	      h_gravity(i,j,k,IY) = - (phi - phi_y)/dy;
 	      h_gravity(i,j,k,IZ) = ZERO_F;
 	    }
-	    
+
 	  } // end for i
 	} // end for j
       } // end for k
@@ -6626,14 +6608,14 @@ namespace hydroSimu {
 		h_U(nx+2+i,     j,     k,nVar) = h_U(nx+1,   2,   2,nVar);
 		h_U(     i,ny+2+j,     k,nVar) = h_U(   2,ny+1,   2,nVar);
 		h_U(nx+2+i,ny+2+j,     k,nVar) = h_U(nx+1,ny+1,   2,nVar);
-		
+
 		h_U(     i,     j,nz+2+k,nVar) = h_U(   2,   2,nz+1,nVar);
 		h_U(nx+2+i,     j,nz+2+k,nVar) = h_U(nx+1,   2,nz+1,nVar);
 		h_U(     i,ny+2+j,nz+2+k,nVar) = h_U(   2,ny+1,nz+1,nVar);
 		h_U(nx+2+i,ny+2+j,nz+2+k,nVar) = h_U(nx+1,ny+1,nz+1,nVar);
 	      } // end for loop over i,j,k
 	} // end for loop over nVar
-      }	
+      }
     }
 
 #ifdef __CUDACC__
@@ -6653,13 +6635,13 @@ namespace hydroSimu {
 
     /* initial condition in grid interior */
     memset(h_U.data(),0,h_U.sizeBytes());
-    
+
     /* static gravity field */
     real_t& gravity_x = _gParams.gravity_x;
     real_t& gravity_y = _gParams.gravity_y;
     real_t& gravity_z = _gParams.gravity_z;
     real_t         P0 = 1.0f/(_gParams.gamma0-1.0f);
-      
+
     real_t &xMin = _gParams.xMin;
     real_t &yMin = _gParams.yMin;
     real_t &zMin = _gParams.zMin;
@@ -6686,7 +6668,7 @@ namespace hydroSimu {
     real_t     d1 = configMap.getFloat("falling-bubble", "d1", 1.0);
 
     if (dimType == TWO_D) {
-  
+
       // the initial condition must ensure the condition of
       // hydrostatic equilibrium for pressure P = P0 - 0.1*\rho*y
       for (int j=0; j<jsize; j++) {
@@ -6716,7 +6698,7 @@ namespace hydroSimu {
 
 	}
       }
-    
+
       for (int j=0; j<jsize; j++) {
 	for (int i=0; i<isize; i++) {
 	  h_gravity(i,j,IX) = gravity_x;
@@ -6727,7 +6709,7 @@ namespace hydroSimu {
       if (ghostWidth == 2) {
 	/* corner grid (not really needed (except for Kurganov-Tadmor) */
 	for (int nVar=0; nVar<nbVar; ++nVar) {
-	  
+
 	  for (int i=0; i<2; ++i)
 	    for (int j=0; j<2; ++j) {
 	      h_U(     i,     j,nVar) = h_U(   2,   2,nVar);
@@ -6735,7 +6717,7 @@ namespace hydroSimu {
 	      h_U(     i,ny+2+j,nVar) = h_U(   2,ny+1,nVar);
 	      h_U(nx+2+i,ny+2+j,nVar) = h_U(nx+1,ny+1,nVar);
 	    } // end for loop over i,j
-	  
+
 	} // end loop over nVar
       }
 
@@ -6745,13 +6727,13 @@ namespace hydroSimu {
       // hydrostatic equilibrium for pressure P = P0 - 0.1*\rho*y
       for (int k=0; k<ksize; k++) {
 	real_t z = zMin + dz/2 + (k-ghostWidth)*dz;
-	
+
 	for (int j=0; j<jsize; j++) {
 	  real_t y = yMin + dy/2 + (j-ghostWidth)*dy;
-	  
+
 	  for (int i=0; i<isize; i++) {
 	    real_t x = xMin + dx/2 + (i-ghostWidth)*dx;
-	    
+
 	    if ( z < zMin + 0.3*Lz ) {
 	      h_U(i,j,ID) = d0;
 	    } else {
@@ -6762,7 +6744,7 @@ namespace hydroSimu {
 	    real_t r2 = (x-x_c)*(x-x_c)+(y-y_c)*(y-y_c)+(z-z_c)*(z-z_c);
 	    if (r2<radius*radius)
 	      h_U(i,j,ID) = d0;
-	    
+
 	    h_U(i,j,k,IP) = P0 + h_U(i,j,k,ID)*(gravity_x*x + gravity_y*y + gravity_z*z);
 	    h_U(i,j,k,IU) = ZERO_F;
 	    h_U(i,j,k,IV) = ZERO_F;
@@ -6770,7 +6752,7 @@ namespace hydroSimu {
 	      h_U(i,j,k,IW) = v0;
 	    else
 	      h_U(i,j,k,IW) = ZERO_F;
-	    
+
 	  }
 	}
       }
@@ -6795,14 +6777,14 @@ namespace hydroSimu {
 		h_U(nx+2+i,     j,     k,nVar) = h_U(nx+1,   2,   2,nVar);
 		h_U(     i,ny+2+j,     k,nVar) = h_U(   2,ny+1,   2,nVar);
 		h_U(nx+2+i,ny+2+j,     k,nVar) = h_U(nx+1,ny+1,   2,nVar);
-		
+
 		h_U(     i,     j,nz+2+k,nVar) = h_U(   2,   2,nz+1,nVar);
 		h_U(nx+2+i,     j,nz+2+k,nVar) = h_U(nx+1,   2,nz+1,nVar);
 		h_U(     i,ny+2+j,nz+2+k,nVar) = h_U(   2,ny+1,nz+1,nVar);
 		h_U(nx+2+i,ny+2+j,nz+2+k,nVar) = h_U(nx+1,ny+1,nz+1,nVar);
 	      } // end for loop over i,j,k
 	} // end for loop over nVar
-      }	
+      }
     }
 
 #ifdef __CUDACC__
@@ -6834,29 +6816,29 @@ namespace hydroSimu {
     real_t q1[NVAR_2D],q2[NVAR_2D],q3[NVAR_2D],q4[NVAR_2D];
 
     q1[ID] = riemannConf[nb].pvar[0].rho;
-    q1[IP] = riemannConf[nb].pvar[0].p; 
+    q1[IP] = riemannConf[nb].pvar[0].p;
     q1[IU] = riemannConf[nb].pvar[0].u;
     q1[IV] = riemannConf[nb].pvar[0].v;
 
     q2[ID] = riemannConf[nb].pvar[1].rho;
-    q2[IP] = riemannConf[nb].pvar[1].p; 
+    q2[IP] = riemannConf[nb].pvar[1].p;
     q2[IU] = riemannConf[nb].pvar[1].u;
     q2[IV] = riemannConf[nb].pvar[1].v;
 
     q3[ID] = riemannConf[nb].pvar[2].rho;
-    q3[IP] = riemannConf[nb].pvar[2].p; 
+    q3[IP] = riemannConf[nb].pvar[2].p;
     q3[IU] = riemannConf[nb].pvar[2].u;
     q3[IV] = riemannConf[nb].pvar[2].v;
 
     q4[ID] = riemannConf[nb].pvar[3].rho;
-    q4[IP] = riemannConf[nb].pvar[3].p; 
+    q4[IP] = riemannConf[nb].pvar[3].p;
     q4[IU] = riemannConf[nb].pvar[3].u;
     q4[IV] = riemannConf[nb].pvar[3].v;
 
     primToCons_2D(q1,_gParams.gamma0);
     primToCons_2D(q2,_gParams.gamma0);
     primToCons_2D(q3,_gParams.gamma0);
-    primToCons_2D(q4,_gParams.gamma0);  
+    primToCons_2D(q4,_gParams.gamma0);
 
     real_t &xMin = _gParams.xMin;
     real_t &yMin = _gParams.yMin;
@@ -6875,8 +6857,8 @@ namespace hydroSimu {
 
       for( int i = ghostWidth; i < isize-ghostWidth; ++i) {
 	real_t x = xMin + dx/2 + (i-ghostWidth)*dx;
-	
-	
+
+
 	  if (x<xt) {
 	    if (y<yt) {
 	      // quarter 3
@@ -6904,14 +6886,14 @@ namespace hydroSimu {
 	      h_U(i,j,IP) = q1[IP];
 	      h_U(i,j,IU) = q1[IU];
 	      h_U(i,j,IV) = q1[IV];
-	    }     
+	    }
 	  }
       } // end for i
     } // end for j
 
     if (ghostWidth == 2) {
       /* fill corner values */
-      for (int nVar=0; nVar<nbVar; ++nVar) {    
+      for (int nVar=0; nVar<nbVar; ++nVar) {
 	for (int i=0; i<2; ++i)
 	  for (int j=0; j<2; ++j) {
 	    h_U(     i,     j,nVar) = h_U(   2,   2,nVar);
@@ -6928,7 +6910,7 @@ namespace hydroSimu {
   // =======================================================
   /**
    *
-   * This initialization routine is inspired by Enzo. 
+   * This initialization routine is inspired by Enzo.
    * See routine named turboinit by A. Kritsuk in Enzo.
    */
   void HydroRunBase::init_hydro_turbulence()
@@ -6939,7 +6921,7 @@ namespace hydroSimu {
 
     /* get initial conditions */
     real_t d0 = configMap.getFloat("turbulence", "density",  1.0);
-    real_t initialDensityPerturbationAmplitude = 
+    real_t initialDensityPerturbationAmplitude =
       configMap.getFloat("turbulence", "initialDensityPerturbationAmplitude", 0.0);
 
     real_t P0 = configMap.getFloat("turbulence", "pressure", 1.0);
@@ -6948,7 +6930,7 @@ namespace hydroSimu {
     srand(seed);
 
     if (dimType == TWO_D) {
-    
+
       std::cerr << "Turbulence problem is not available in 2D...." << std::endl;
 
     } else { // THREE_D
@@ -6963,14 +6945,14 @@ namespace hydroSimu {
 
 	    // fill density
 	    h_U(i,j,k,ID) = d0 * (1.0 + initialDensityPerturbationAmplitude *  ( (float)rand()/(float)(RAND_MAX)   - 0.5 ) );
-	    
+
 	    // convert h_randomForce into momentum
 	    h_U(i,j,k,IU) = h_U(i,j,k,ID) * h_randomForcing(i,j,k,IX);
 	    h_U(i,j,k,IV) = h_U(i,j,k,ID) * h_randomForcing(i,j,k,IY);
 	    h_U(i,j,k,IW) = h_U(i,j,k,ID) * h_randomForcing(i,j,k,IZ);
 
 	    // compute total energy
-	    h_U(i,j,k,IP) = P0/(_gParams.gamma0-ONE_F) + 
+	    h_U(i,j,k,IP) = P0/(_gParams.gamma0-ONE_F) +
 	      0.5 * ( h_U(i,j,k,IU) * h_U(i,j,k,IU) +
 		      h_U(i,j,k,IV) * h_U(i,j,k,IV) +
 		      h_U(i,j,k,IW) * h_U(i,j,k,IW) ) / h_U(i,j,k,ID);
@@ -6996,7 +6978,7 @@ namespace hydroSimu {
 
     /* get initial conditions */
     real_t d0 = configMap.getFloat("turbulence-Ornstein-Uhlenbeck", "density",  1.0);
-    real_t initialDensityPerturbationAmplitude = 
+    real_t initialDensityPerturbationAmplitude =
       configMap.getFloat("turbulence-Ornstein-Uhlenbeck", "initialDensityPerturbationAmplitude", 0.0);
 
     real_t P0 = configMap.getFloat("turbulence-Ornstein-Uhlenbeck", "pressure", 1.0);
@@ -7010,15 +6992,15 @@ namespace hydroSimu {
     // initialize h_U
 
     if (dimType == TWO_D) {
-    
+
       std::cerr << "Turbulence-Ornstein-Uhlenbeck problem is not available in 2D...." << std::endl;
-      
+
     } else { // THREE_D
-      
+
       for (int k=ghostWidth; k<ksize-ghostWidth; k++)
 	for (int j=ghostWidth; j<jsize-ghostWidth; j++)
 	  for (int i=ghostWidth; i<isize-ghostWidth; i++) {
-	    
+
 	    // fill density
 	    h_U(i,j,k,ID) = d0 * (1.0 + initialDensityPerturbationAmplitude *  ( (1.0*rand())/RAND_MAX - 0.5 ) );
 
@@ -7052,21 +7034,21 @@ namespace hydroSimu {
 
       /* initial condition in grid interior */
       memset(h_U.data(),0,h_U.sizeBytes());
-     
+
       // get input filename from configMap
       std::string inputFilename = configMap.getString("run", "restart_filename", "");
-      
+
       // get output directory
       std::string outputDir    = configMap.getString("output", "outputDir", "./");
 
       // upscale init data from a file twice smaller
       bool restartUpscaleEnabled = configMap.getBool("run","restart_upscale",false);
-      
+
       if (restartUpscaleEnabled) { // load low resolution data from file
-      
+
 	// allocate h_input (half resolution, ghost included)
 	HostArray<real_t> h_input;
-	h_input.allocate(make_uint4(nx/2+2*ghostWidth, 
+	h_input.allocate(make_uint4(nx/2+2*ghostWidth,
 				    ny/2+2*ghostWidth,
 				    nz/2+2*ghostWidth,
 				    nbVar));
@@ -7089,12 +7071,12 @@ namespace hydroSimu {
       // random forcing field
       if (!problemName.compare("turbulence")) {
 	this->init_randomForcing();
-      } 
+      }
 
-      // in case of Ornstein-Uhlenbeck turbulence problem, 
+      // in case of Ornstein-Uhlenbeck turbulence problem,
       // we also need to re-initialize the random forcing field
       if (!problemName.compare("turbulence-Ornstein-Uhlenbeck")) {
-	
+
 	bool restartEnabled = true;
 
 	std::string forcing_filename = configMap.getString("turbulence-Ornstein-Uhlenbeck", "forcing_input_file",  "");
@@ -7123,7 +7105,7 @@ namespace hydroSimu {
       restart_run_extra_work();
 
     } else { // perform regular initialization
-      
+
       if (!problemName.compare("jet")) {
 	this->init_hydro_jet();
       } else if (!problemName.compare("sod")) {
@@ -7185,20 +7167,20 @@ namespace hydroSimu {
   {
 
     if (dimType == TWO_D) {
-    
+
       std::cerr << "Turbulence problem is not available in 2D...." << std::endl;
 
     } else { // THREE_D
 
       real_t d0   = configMap.getFloat("turbulence", "density",  1.0);
       real_t eDot = configMap.getFloat("turbulence", "edot", -1.0);
-      
+
       real_t randomForcingMachNumber = configMap.getFloat("turbulence", "machNumber", 0.0);
       std::cout << "Random forcing Mach number is " << randomForcingMachNumber << std::endl;
-      
+
       /* check parameters as in Enzo */
-      /* if eDot is not set in parameter file or negative, it is 
-	 set from MacLow1999 formula, see comments in Enzo's file 
+      /* if eDot is not set in parameter file or negative, it is
+	 set from MacLow1999 formula, see comments in Enzo's file
 	 TurbulenceSimulationInitialize.C */
       if (eDot < 0) {
 	real_t boxSize = _gParams.xMax - _gParams.xMin;
@@ -7211,16 +7193,16 @@ namespace hydroSimu {
       }
       randomForcingEdot = eDot;
       std::cout << "Using random forcing with eDot : " << eDot << std::endl;
-            
+
       /* turbulence */
       // compute random field
-      turbulenceInit(isize, jsize, ksize, 
+      turbulenceInit(isize, jsize, ksize,
 		     -ghostWidth,-ghostWidth,-ghostWidth,
 		     nx, randomForcingMachNumber,
-		     &(h_randomForcing(0,0,0,IX)), 
+		     &(h_randomForcing(0,0,0,IX)),
 		     &(h_randomForcing(0,0,0,IY)),
 		     &(h_randomForcing(0,0,0,IZ)) );
-      
+
 #ifdef __CUDACC__
       // we also need to copy
       d_randomForcing.copyFromHost(h_randomForcing);
@@ -7266,8 +7248,8 @@ namespace hydroSimu {
     } else { // history disabled
 
       history_hydro_method = &HydroRunBase::history_hydro_empty;
-      
-    } 
+
+    }
 
   } // HydroRunBase::setupHistory_hydro
 
@@ -7285,17 +7267,17 @@ namespace hydroSimu {
   // =======================================================
   void HydroRunBase::history_hydro_empty(int nStep, real_t dt)
   {
-  
+
     (void) nStep;
     (void) dt;
-  
+
   } // HydroRunBase::history_hydro_empty
 
   // =======================================================
   // =======================================================
   void HydroRunBase::history_hydro_turbulence(int nStep, real_t dt)
   {
-    
+
     std::cout << "History for turbulence problem at time " << totalTime << "\n";
 
     if (dimType == TWO_D) {
@@ -7303,33 +7285,33 @@ namespace hydroSimu {
       // don't do anything, this problem is not available in 2D
 
     } else {
-      
+
       // history file name
       std::string fileName = configMap.getString("history",
-						 "filename", 
+						 "filename",
 						 "history.txt");
       // get output prefix / outputDir
       std::string outputDir    = configMap.getString("output", "outputDir", "./");
       std::string outputPrefix = configMap.getString("output", "outputPrefix", "output");
-      
+
       // build full path filename
       fileName = outputDir + "/" + outputPrefix + "_" + fileName;
-      
+
       // open history file
       std::ofstream histo;
-      histo.open (fileName.c_str(), std::ios::out | std::ios::app | std::ios::ate); 
-      
+      histo.open (fileName.c_str(), std::ios::out | std::ios::app | std::ios::ate);
+
       // if this is the first time we call history, print header
       if (totalTime <= 0) {
 	histo << "# history " << current_date() << std::endl;
-	
+
 	bool restartEnabled = configMap.getBool("run","restart",false);
 	if (restartEnabled)
 	  histo << "# history : this is a restart run\n";
-	
+
 	// write header (which variables are dumped)
 	// Ma_s is the sonic Mach number Ma_s = v_rms/c_s
-	// v_rms = sqrt(<v^2)  
+	// v_rms = sqrt(<v^2)
 	histo << "# totalTime dt mass eKin mean_rho mean_rhovx mean_rhovy mean_rhovz Ma_s\n";
 
       } // end print header
@@ -7337,15 +7319,15 @@ namespace hydroSimu {
       // make sure Device data are copied back onto Host memory
       // which data to save ?
       copyGpuToCpu(nStep);
-      
+
       HostArray<real_t> &U = getDataHost(nStep);
 
       //const double pi = 2*asin(1.0);
-      
+
       double mass       = 0.0, eKin       = 0.0;
       double mean_rhovx = 0.0, mean_rhovy = 0.0, mean_rhovz = 0.0;
       double mean_v2    = 0.0, mean_rho   = 0.0;
-      
+
       // do a local reduction
       for (int k=ghostWidth; k<ksize-ghostWidth; k++) {
 	for (int j=ghostWidth; j<jsize-ghostWidth; j++) {
@@ -7357,7 +7339,7 @@ namespace hydroSimu {
 	    eKin += SQR( U(i,j,k,IU) ) / rho;
 	    eKin += SQR( U(i,j,k,IV) ) / rho;
 	    eKin += SQR( U(i,j,k,IW) ) / rho;
-	    
+
 	    mean_v2 += SQR( U(i,j,k,IU)/rho );
 	    mean_v2 += SQR( U(i,j,k,IV)/rho );
 	    mean_v2 += SQR( U(i,j,k,IW)/rho );
@@ -7367,16 +7349,16 @@ namespace hydroSimu {
 	    mean_rhovz += U(i,j,k,IW);
 
 	    mean_rho += rho;
-	    
+
 	  } // end for i
 	} // end for j
       } // end for k
-      
+
       double dTau = dx*dy*dz/
 	(_gParams.xMax- _gParams.xMin)/
 	(_gParams.yMax- _gParams.yMin)/
 	(_gParams.zMax- _gParams.zMin);
-      
+
       mass    = mass*dTau;
 
       eKin = eKin*dTau;
@@ -7386,21 +7368,21 @@ namespace hydroSimu {
       mean_rhovz = mean_rhovz*dTau;
 
       mean_v2  = mean_v2*dTau;
-      
+
       mean_rho = mean_rho*dTau;
 
       real_t &cIso = _gParams.cIso;
       double Ma_s = -1.0;
       if (cIso >0)
-	Ma_s = sqrt(mean_v2)/cIso; 
+	Ma_s = sqrt(mean_v2)/cIso;
 
-      histo << totalTime  << "\t" << dt         << "\t" 
-	    << mass       << "\t" 
+      histo << totalTime  << "\t" << dt         << "\t"
+	    << mass       << "\t"
 	    << eKin       << "\t"
 	    << mean_rho   << "\t"
 	    << mean_rhovx << "\t" << mean_rhovy << "\t" << mean_rhovz << "\t"
 	    << Ma_s       << "\t" << "\n";
-		   
+
       histo.close();
 
     } // end THREE_D
@@ -7413,7 +7395,7 @@ namespace hydroSimu {
 
   } // HydroRunBase::history_hydro_turbulence
 
-  
+
   // =======================================================
   // =======================================================
   void rescaleToZeroOne(real_t *data, int size, real_t &min, real_t &max) {
