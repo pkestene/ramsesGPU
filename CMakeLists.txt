@@ -203,11 +203,36 @@ endif(USE_VTK)
 #####################################################################
 # PAPI for performance counters
 #####################################################################
-find_package(PAPI)
-if (NOT PAPI_FOUND)
-  set(PAPI_INCLUDE_DIR "")
-  set(PAPI_LIBRARY "")
-endif(NOT PAPI_FOUND)
+pkg_check_modules(RAMSESGPU_PAPI QUIET IMPORTED_TARGET papi)
+if(RAMSESGPU_PAPI_FOUND)
+
+  # check if f90papi.h is available
+  # note : can't use check_include_file macro here, because f90papi.h contains
+  # actually fortran code
+  find_path(PAPI_INCLUDE_F90PAPI NAMES f90papi.h
+    HINTS ${RAMSESGPU_PAPI_INCLUDE_DIRS})
+  if (PAPI_INCLUDE_F90PAPI-NOTFOUND)
+    message("f90papi.h not found")
+  else()
+    set(HAVE_F90PAPI_H 1)
+  endif()
+
+  # check if papi.h is available
+  include(CheckIncludeFile)
+  set(CMAKE_REQUIRED_INCLUDES ${RAMSESGPU_PAPI_INCLUDEDIR})
+  check_include_file(papi.h HAVE_PAPI_H_BOOL)
+  set(CMAKE_REQUIRED_INCLUDES)
+  if(HAVE_PAPI_H_BOOL)
+    set(HAVE_PAPI_H 1)
+  endif()
+
+  add_library(RamsesGPU::papi ALIAS PkgConfig::RAMSESGPU_PAPI)
+
+  message("papi found via pkg-config")
+else()
+  message("papi NOT FOUND")
+endif()
+
 
 #####################################################################
 # FFTW

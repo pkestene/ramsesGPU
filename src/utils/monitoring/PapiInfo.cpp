@@ -12,102 +12,93 @@
  */
 #include "PapiInfo.h"
 
-#include <time.h>
 #include <sys/time.h> // for gettimeofday and struct timeval
+#include <time.h>
 
-#include <stdio.h>
 #include <papi.h>
+#include <stdio.h>
 
 namespace hydroSimu {
 
-  ////////////////////////////////////////////////////////////////////////////////
-  // PapiInfo class methods body
-  ////////////////////////////////////////////////////////////////////////////////
-  
-  // =======================================================
-  // =======================================================
-  PapiInfo::PapiInfo()
+////////////////////////////////////////////////////////////////////////////////
+// PapiInfo class methods body
+////////////////////////////////////////////////////////////////////////////////
+
+// =======================================================
+// =======================================================
+PapiInfo::PapiInfo() {
+
+  crtime = 0.0f;
+  cptime = 0.0f;
+  cflpops = 0;
+  irtime = 0.0f;
+  iptime = 0.0f;
+  iflpops = 0;
+  mflops = 0.0;
+  float tmp;
+
+  // initialize PAPI counters
+  int status = 0;
+  if ( (status = PAPI_flops_rate(PAPI_FP_OPS, &irtime, &iptime, &iflpops, &tmp)) < PAPI_OK )
   {
+    fprintf(stderr, "PAPI_flops_rate failed with error %d\n",status);
+  }
 
-    crtime  = 0.0f;
-    cptime  = 0.0f;
-    cflpops = 0;
-    irtime  = 0.0f;
-    iptime  = 0.0f;
-    iflpops = 0;
-    mflops  = 0.0;
-    float tmp;
+} // PapiInfo::PapiInfo
 
-    // initialize PAPI counters
-    PAPI_flops (&irtime, &iptime, &iflpops, &tmp);
+// =======================================================
+// =======================================================
+PapiInfo::~PapiInfo() {} // PapiInfo::~PapiInfo
 
-  } // PapiInfo::PapiInfo
-  
-  // =======================================================
-  // =======================================================
-  PapiInfo::~PapiInfo()
+// =======================================================
+// =======================================================
+void PapiInfo::start() {
+
+  float tmp;
+  int status = 0;
+
+  papiTimer.start();
+  if ( (status = PAPI_flops_rate(PAPI_FP_OPS, &irtime, &iptime, &iflpops, &tmp)) < PAPI_OK )
   {
+    fprintf(stderr, "PAPI_flops_rate failed with error %d\n",status);
+  }
 
-  } // PapiInfo::~PapiInfo
+} // PapiInfo::start
 
-  // =======================================================
-  // =======================================================
-  void PapiInfo::start()
+// =======================================================
+// =======================================================
+void PapiInfo::stop() {
+
+  float rtime, ptime;
+  long long int flpops;
+  float tmp;
+
+  int status = 0;
+  if ( (status = PAPI_flops_rate(PAPI_FP_OPS, &rtime, &ptime, &flpops, &tmp)) < PAPI_OK )
   {
-    
-    float tmp;
+    fprintf(stderr, "PAPI_flops_rate failed with error %d\n",status);
+  }
+  papiTimer.stop();
 
-    papiTimer.start();
-    PAPI_flops (&irtime, &iptime, &iflpops, &tmp);
+  // add increment from previous call to start values to accumulator counters
+  crtime = rtime - irtime;
+  cptime = ptime - iptime;
+  cflpops += flpops - iflpops;
 
-  } // PapiInfo::start
+  mflops = 1.0 * cflpops / papiTimer.elapsed() * 1e-6;
 
-  // =======================================================
-  // =======================================================
-  void PapiInfo::stop()
-  {
-    
-    float rtime, ptime;
-    long long int flpops;
-    float tmp;
-    
-    PAPI_flops (&rtime, &ptime, &flpops, &tmp);
-    papiTimer.stop();
-    
-    // add increment from previous call to start values to accumulator counters
-    crtime  = rtime  - irtime;
-    cptime  = ptime  - iptime;
-    cflpops += flpops - iflpops;
-    
-    mflops = 1.0 * cflpops / papiTimer.elapsed() * 1e-6;
+} // PapiInfo::stop
 
-  } // PapiInfo::stop
+// =======================================================
+// =======================================================
+double PapiInfo::getFlops() { return mflops; } // PapiInfo::getFlops
 
-  // =======================================================
-  // =======================================================
-  double PapiInfo::getFlops()
-  {
-    
-    return mflops;
+// =======================================================
+// =======================================================
+long long int PapiInfo::getFlop() { return cflpops; } // PapiInfo::getFlop
 
-  } // PapiInfo::getFlops
-
-  // =======================================================
-  // =======================================================
-  long long int PapiInfo::getFlop()
-  {
-    
-    return cflpops;
-
-  } // PapiInfo::getFlop
-
-  // =======================================================
-  // =======================================================
-  double PapiInfo::elapsed()
-  {
-    
-    return papiTimer.elapsed();
-
-  } // PapiInfo::elapsed
+// =======================================================
+// =======================================================
+double PapiInfo::elapsed() { return papiTimer.elapsed(); } // PapiInfo::elapsed
 
 } // namespace hydroSimu
