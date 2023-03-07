@@ -2,7 +2,7 @@ add_library(hydro "")
 
 target_sources(hydro
   PRIVATE
-  gpu_macros.cpp 
+  gpu_macros.cpp
   constants.cpp
   turbulenceInit.cpp
   structureFunctions.cpp
@@ -37,9 +37,9 @@ if (USE_MPI)
     MHDRunGodunovMpi.cpp
     HydroRunGodunovZslabMpi.cpp
     MHDRunGodunovZslabMpi.cpp
-    structureFunctionsMpi.cpp 
+    structureFunctionsMpi.cpp
     )
-  
+
   if (NOT USE_CUDA)
     target_sources(hydro
       PRIVATE
@@ -62,30 +62,19 @@ if(USE_CUDA)
 endif(USE_CUDA)
 
 ########################################################################
-if (USE_VTK)  
+if (USE_VTK)
   target_compile_options(hydro
     PUBLIC
     -DUSE_VTK)
 endif(USE_VTK)
 
-if (USE_HDF5)  
-  target_compile_options(hydro
-    PUBLIC
-    -DUSE_HDF5 -DH5_NO_DEPRECATED_SYMBOLS)
-endif(USE_HDF5)
-
-# TODO HDF5 parallel
-
 if (USE_PNETCDF)
   target_compile_options(hydro
     PUBLIC
     -DUSE_PNETCDF)
-  target_include_directories(hydro
-    PUBLIC
-    ${PNETCDF_INCLUDE_DIRS})
 endif(USE_PNETCDF)
 
-if (USE_NETCDF4)  
+if (USE_NETCDF4)
   target_compile_options(hydro
     PUBLIC
     -DUSE_NETCDF4)
@@ -101,12 +90,6 @@ target_include_directories(hydro
   PUBLIC
   ${CMAKE_SOURCE_DIR}/src)
 
-if (USE_HDF5)
-  target_include_directories(hydro
-    PUBLIC
-    ${HDF5_INCLUDE_DIRS})
-endif(USE_HDF5)
-
 target_link_libraries(hydro
   PUBLIC
   RamsesGPU::cnpy
@@ -121,13 +104,13 @@ endif(USE_MPI)
 if (USE_HDF5)
   target_link_libraries(hydro
     PUBLIC
-    ${HDF5_LIBRARIES})
+    hdf5::hdf5)
 endif(USE_HDF5)
 
 if (USE_PNETCDF)
   target_link_libraries(hydro
     PUBLIC
-    ${PNETCDF_LIBRARIES})
+    RamsesGPU::pnetcdf)
 endif(USE_PNETCDF)
 
 add_library(RamsesGPU::hydro ALIAS hydro)

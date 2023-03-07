@@ -33,7 +33,7 @@ else(USE_MPI)
     euler_main.cpp)
 endif(USE_MPI)
 
-if (USE_CUDA)  
+if (USE_CUDA)
   set_source_files_properties(euler_main.cpp     PROPERTIES LANGUAGE CUDA)
   set_source_files_properties(euler_mpi_main.cpp PROPERTIES LANGUAGE CUDA)
 endif()
@@ -70,9 +70,9 @@ endif(USE_QT)
 # add_executable(testRiemannHLLD "")
 # target_sources(testRiemannHLLD PUBLIC
 #   testRiemannHLLD.cpp
-#   hydro/gpu_macros.cpp 
+#   hydro/gpu_macros.cpp
 #   hydro/constants.cpp)
-# target_include_directories(testRiemannHLLD 
+# target_include_directories(testRiemannHLLD
 #   PUBLIC
 #   ${CMAKE_SOURCE_DIR}/src
 #   ${CMAKE_SOURCE_DIR}/src/hydro)
@@ -92,9 +92,9 @@ endif(USE_QT)
 # add_executable(testTrace "")
 # target_sources(testTrace PUBLIC
 #   testTrace.cpp
-#   hydro/gpu_macros.cpp 
+#   hydro/gpu_macros.cpp
 #   hydro/constants.cpp)
-# target_include_directories(testTrace 
+# target_include_directories(testTrace
 #   PUBLIC
 #   ${CMAKE_SOURCE_DIR}/src
 #   ${CMAKE_SOURCE_DIR}/src/hydro)

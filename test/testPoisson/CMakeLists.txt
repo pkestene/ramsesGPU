@@ -7,10 +7,10 @@ target_sources(testPoissonCpuFFTW2d
 target_include_directories(testPoissonCpuFFTW2d
   PUBLIC
   ${CMAKE_SOURCE_DIR}/src/hydro)
-target_link_libraries(testPoissonCpuFFTW2d 
+target_link_libraries(testPoissonCpuFFTW2d
   PUBLIC
   RamsesGPU::cnpy
-  fftw3)
+  RamsesGPU::fftw)
 
 #######################################
 add_executable(testPoissonCpuFFTW3d "")
@@ -21,10 +21,10 @@ target_sources(testPoissonCpuFFTW3d
 target_include_directories(testPoissonCpuFFTW3d
   PUBLIC
   ${CMAKE_SOURCE_DIR}/src/hydro)
-target_link_libraries(testPoissonCpuFFTW3d 
+target_link_libraries(testPoissonCpuFFTW3d
   PUBLIC
   RamsesGPU::cnpy
-  fftw3)
+  RamsesGPU::fftw)
 
 if(USE_CUDA)
 
@@ -39,34 +39,30 @@ if(USE_CUDA)
   target_sources(testPoissonGpuCuFFT2d
     PUBLIC
     testPoissonGpuCuFFT2d.cu)
-  
+
   target_include_directories(testPoissonGpuCuFFT2d
     PUBLIC
     ${CMAKE_SOURCE_DIR}/src/hydro)
-  target_link_libraries(testPoissonGpuCuFFT2d 
+  target_link_libraries(testPoissonGpuCuFFT2d
     PUBLIC
     RamsesGPU::cnpy
-    ${CUDAlibs_CUFFTW_LIB}
-    ${CUDAlibs_CUFFT_LIB}
-    #CUDAlibs::CUFFTW
-    #CUDAlibs::CUFFT
+    RamsesGPU::fftw
+    CUDA::cufft
     )
 
   add_executable(testPoissonGpuCuFFT3d "")
   target_sources(testPoissonGpuCuFFT3d
     PUBLIC
     testPoissonGpuCuFFT3d.cu)
-  
+
   target_include_directories(testPoissonGpuCuFFT3d
     PUBLIC
     ${CMAKE_SOURCE_DIR}/src/hydro)
-  target_link_libraries(testPoissonGpuCuFFT3d 
+  target_link_libraries(testPoissonGpuCuFFT3d
     PUBLIC
     RamsesGPU::cnpy
-    ${CUDAlibs_CUFFTW_LIB}
-    ${CUDAlibs_CUFFT_LIB}
-    #CUDAlibs::CUFFTW
-    #CUDAlibs::CUFFT
+    RamsesGPU::fftw
+    CUDA::cufft
     )
 
 endif(USE_CUDA)
