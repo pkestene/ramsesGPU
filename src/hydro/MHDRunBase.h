@@ -21,7 +21,7 @@
 #include "HydroRunBase.h"
 
 namespace hydroSimu {
-  
+
   /**
    * \class MHDRunBase MHDRunBase.h
    * \brief This is the base class containing all usefull methods to MHD
@@ -55,15 +55,15 @@ namespace hydroSimu {
      * \param[in] emf emf array.
      *
      */
-    void compute_ct_update_2d(HostArray<real_t>  &U, 
+    void compute_ct_update_2d(HostArray<real_t>  &U,
 			      HostArray<real_t>  &emf,
 			      real_t dt);
 #ifdef __CUDACC__
-    void compute_ct_update_2d(DeviceArray<real_t>  &U, 
+    void compute_ct_update_2d(DeviceArray<real_t>  &U,
 			      DeviceArray<real_t>  &emf,
 			      real_t dt);
 #endif // __CUDACC__
-    
+
     /**
      * compute magnetic field update from emf in the 3D case.
      *
@@ -71,15 +71,15 @@ namespace hydroSimu {
      * \param[in] emf emf array.
      *
      */
-    void compute_ct_update_3d(HostArray<real_t>  &U, 
+    void compute_ct_update_3d(HostArray<real_t>  &U,
 			      HostArray<real_t>  &emf,
 			      real_t dt);
 #ifdef __CUDACC__
-    void compute_ct_update_3d(DeviceArray<real_t>  &U, 
+    void compute_ct_update_3d(DeviceArray<real_t>  &U,
 			      DeviceArray<real_t>  &emf,
 			      real_t dt);
 #endif // __CUDACC__
-    
+
     /**
      * compute magnetic field update from emf in the 3D case, z-slab method.
      *
@@ -88,17 +88,17 @@ namespace hydroSimu {
      * \param[in] zSlabInfo
      *
      */
-    void compute_ct_update_3d(HostArray<real_t>  &U, 
+    void compute_ct_update_3d(HostArray<real_t>  &U,
 			      HostArray<real_t>  &emf,
 			      real_t dt,
 			      ZslabInfo zSlabInfo);
 #ifdef __CUDACC__
-    void compute_ct_update_3d(DeviceArray<real_t>  &U, 
+    void compute_ct_update_3d(DeviceArray<real_t>  &U,
 			      DeviceArray<real_t>  &emf,
 			      real_t dt,
 			      ZslabInfo zSlabInfo);
 #endif // __CUDACC__
-    
+
     /**
      * compute resistivity emf's in the 2D case.
      *
@@ -126,7 +126,7 @@ namespace hydroSimu {
     void compute_resistivity_emf_3d(DeviceArray<real_t> &U,
 				    DeviceArray<real_t> &emf);
 #endif // __CUDACC__
-    
+
     /**
      * compute resistivity emf's in the 3D case, z-slab method.
      *
@@ -142,7 +142,7 @@ namespace hydroSimu {
 				    DeviceArray<real_t> &emf,
 				    ZslabInfo            zSlabInfo);
 #endif // __CUDACC__
-    
+
     /**
      * compute resistivity energy flux in the 2D case, only usefull when performing non-isothermal simulations.
      *
@@ -161,7 +161,7 @@ namespace hydroSimu {
 					    DeviceArray<real_t> &flux_y,
 					    real_t               dt);
 #endif // __CUDACC__
-    
+
     /**
      * compute resistivity energy flux in the 3D case, only usefull when performing non-isothermal simulations.
      *
@@ -183,7 +183,7 @@ namespace hydroSimu {
 					    DeviceArray<real_t> &flux_z,
 					    real_t               dt);
 #endif // __CUDACC__
-    
+
     /**
      * compute resistivity energy flux in the 3D case, only usefull when performing non-isothermal simulations (z-slab method).
      *
@@ -208,7 +208,7 @@ namespace hydroSimu {
 					    real_t               dt,
 					    ZslabInfo            zSlabInfo);
 #endif // __CUDACC__
-    
+
     //! compute magnetic field divergence at cell centers
     //! using face-centered values
     void compute_divB(HostArray<real_t>& h_conserv,
@@ -243,30 +243,30 @@ namespace hydroSimu {
   protected:
     /** pointer to a history method */
     void (MHDRunBase::*history_method)(int nStep, real_t dt);
-    
+
     /** choose history method according to problem */
     void setupHistory();
-    
+
     /** call the actual history method */
     void history(int nStep, real_t dt);
-    
+
     /** don't do anything */
     void history_empty(int nStep, real_t dt);
-    
+
     /** history default: compute total mass and divB. */
     void history_default(int nStep, real_t dt);
-    
+
     /** inertial wave history */
     void history_inertial_wave(int nStep, real_t dt);
-    
+
     /** MRI history */
     void history_mri(int nStep, real_t dt);
-    
+
     /** Turbulence history */
     void history_turbulence(int nStep, real_t dt);
 
   }; // class MHDRunBase
-  
+
 } // namespace hydroSimu
 
 #endif // MHDRUN_BASE_H_

@@ -18,17 +18,28 @@ http://www.maisondelasimulation.fr/projects/RAMSES-GPU/html/index.html
 
 Default CUDA compilation flags can be passed to cmake using env variable CUDAFLAGS, or directly set CMAKE_CUDA_FLAGS on the configuration command line (see below).
 
-0. git clone https://github.com/pkestene/ramsesGPU.git
-1. cd ramsesGPU; mkdir build
-2. cmake -DUSE_CUDA=ON -DUSE_MPI=ON -DCMAKE_CUDA_FLAGS="-arch=sm_50" ..
-3. make
+```shell
+# step 0:
+git clone https://github.com/pkestene/ramsesGPU.git
+
+# step 1:
+cd ramsesGPU; mkdir build
+
+# step 2:
+cmake -DUSE_CUDA=ON -DUSE_MPI=ON -DCMAKE_CUDA_ARCHITECTURES=75 ..
+
+# step 3:
+make -j 8
+```
+
+Please, note that if you use a more recent version of cmake (>= 3.24), at step 2, you can use `-DCMAKE_CUDA_ARCHITECTURES=native` and cmake will auto-detect the GPU architecture on the build host.
 
 You should get executable *ramsesGPU_mpi_cuda*. Explore other flag using the ccmake user interface.
 
 - Quickstart for building RAMSES-GPU using autotools (deprecated)
 
 0. make sure to have up-to-date autotools on you build system (autoconf, automake, libtool, m4); then run `sh autogen.sh`
-1. configure --with-cuda=<path to CUDA toolkit root directory> 
+1. configure --with-cuda=<path to CUDA toolkit root directory>
 2. make (or make -j N to speed-up compilation time; you might need to execute make several times when using option -j)
 
 Note: make sure to have CUDA toolkit installed, and environment variables PATH and LD_LIBRARY_PATH correctly set.
@@ -36,7 +47,7 @@ Note: make sure to have CUDA toolkit installed, and environment variables PATH a
 This will build the monoCPU / monoGPU version of the programme to solve hydro/MHD problems. Executable are located in src subdirectory and named euler_cpu / euler_gpu
 
 Execute a test run:
-	
+
 ```bash
 	cd src
 	./euler_gpu --param ../data/jet2d_gpu.ini

@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 3.18)
+message("Using cmake policy CMP0104 NEW (CMAKE_CUDA_ARCHITECTURES must be set)")
+cmake_policy(SET CMP0104 NEW)
 project(RamsesGPU LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 11)
