@@ -1,0 +1,46 @@
+---
+exclude: '^License,^src/utils/cnpy/,^doc/'
+repos:
+  # common checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+        args: ["--maxkb=600"]
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+  # clang format c++ sources
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: 'v18.1.3'  # The default in Ubuntu 24.04
+    hooks:
+      - id: clang-format
+        types_or: [c++]
+  # cmake format
+  - repo: https://github.com/cheshirekow/cmake-format-precommit
+    rev: v0.6.13
+    hooks:
+      - id: cmake-format
+        args: ['--config=.cmake-format.py', '--in-place']
+      - id: cmake-lint
+  # Fix typos
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.23.1
+    hooks:
+      - id: typos
+  # REUSE : check licenses
+  #- repo: https://github.com/fsfe/reuse-tool
+  #  rev: v6.2.0
+  #  hooks:
+  #    - id: reuse
+  # Security
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.2
+    hooks:
+      - id: gitleaks

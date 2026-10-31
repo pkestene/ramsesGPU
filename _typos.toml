@@ -1,0 +1,10 @@
+[files]
+extend-exclude = ["data/*.ini", "cmake"]
+
+[default.extend-words]
+IY = "IY"
+SUFFIXES_SAV = "SUFFIXES_SAV"
+CMAKE_FIND_LIBRARY_SUFFIXES_SAV = "CMAKE_FIND_LIBRARY_SUFFIXES_SAV"
+
+[default.extend-identifiers]
+SUFFIXES_SAV = "SUFFIXES_SAV"
