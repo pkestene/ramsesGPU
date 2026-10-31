@@ -30,25 +30,29 @@ enum
 };
 
 // allow processor reordering by the MPI cartesian communicator
-enum {
+enum
+{
   MPI_REORDER_FALSE = 0,
-  MPI_REORDER_TRUE  = 1
+  MPI_REORDER_TRUE = 1
 };
 
-enum {
+enum
+{
   MPI_CART_PERIODIC_FALSE = 0,
-  MPI_CART_PERIODIC_TRUE  = 1
+  MPI_CART_PERIODIC_TRUE = 1
 };
 
 // MPI topology directions
-enum {
+enum
+{
   MPI_TOPO_DIR_X = 0,
   MPI_TOPO_DIR_Y = 1,
   MPI_TOPO_DIR_Z = 2
 };
 
 // MPI topology shift direction
-enum {
+enum
+{
   MPI_SHIFT_NONE = 0,
   MPI_SHIFT_FORWARD = 1
 };

@@ -31,9 +31,9 @@ public:
   init_test_data();
 };
 
-Test::Test(ConfigMap &_configMap) : hydroSimu::HydroRunBaseMpi(_configMap)
-{
-}
+Test::Test(ConfigMap & _configMap)
+  : hydroSimu::HydroRunBaseMpi(_configMap)
+{}
 
 void
 Test::init_test_data()

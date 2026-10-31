@@ -21,7 +21,7 @@
  * go ?
  * 1. stick with the standard c++ API
  * 2. go on improving our own Teuchos-inspired C++ wrapping which is
- * MPI-implementation agnostic (i.e. independant from anything).
+ * MPI-implementation agnostic (i.e. independent from anything).
  *
  * \date 27 sept 2010
  * \author Pierre Kestener

@@ -12,12 +12,12 @@ from scipy.fftpack import fftn
 def initData(data,testCase):
 
     x0, y0 = 0.5, 0.5
-    
+
     # get data dimensions
     Nx,Ny=data.shape
 
     Lx,Ly=1.0,1.0
-    
+
     # sin wave
     if testCase==0:
 
@@ -25,8 +25,8 @@ def initData(data,testCase):
         x = 1.0*np.arange(Nx)/Nx
         y = 1.0*np.arange(Ny)/Ny
 
-        x = np.sin(2.0*np.pi*x) 
-        y = np.sin(2.0*np.pi*y) 
+        x = np.sin(2.0*np.pi*x)
+        y = np.sin(2.0*np.pi*y)
 
         x = x.reshape(Nx,1)
         y = y.reshape(1,Ny)
@@ -45,7 +45,7 @@ def initData(data,testCase):
 
         x = x.reshape(Nx,1)
         y = y.reshape(1,Ny)
-        
+
         alpha = 30.0
         data += 4.0*alpha*(alpha*(x*x+y*y)-1)*np.exp(-alpha*(x*x+y*y))
 
@@ -53,7 +53,7 @@ def initData(data,testCase):
 
     # uniform density inside a ball
     elif testCase==2:
-        
+
         x = 1.0*np.arange(Nx)/Nx - x0
         y = 1.0*np.arange(Ny)/Ny - y0
 
@@ -75,24 +75,24 @@ def initData(data,testCase):
         # see http://arxiv.org/pdf/1106.0557.pdf
         #exactSolution = -1.0 / (4*np.pi) / np.sqrt( x**2 + y**2)
         #exactSolution = np.log(x**2+y**2)
-            
+
     # random
     elif testCase==3:
 
         data += np.random.rand(Nx,Ny)
 
         exactSolution = np.zeros((Nx,Ny))
-        
+
     return exactSolution
-        
+
 # solve Laplacian(phi)=rho
 def PoissonSolve(rho,method):
 
     # get data dimensions
-    Nx,Ny=rho.shape    
+    Nx,Ny=rho.shape
 
     dx,dy = 1./Nx, 1./Ny
-    
+
     # Fourier wave number arrays
     kx=Nx*np.fft.fftfreq(Nx).reshape(Nx,1)
     ky=Ny*np.fft.fftfreq(Ny).reshape(1,Ny)
@@ -105,7 +105,7 @@ def PoissonSolve(rho,method):
 
     # compute FFT(rho)
     rhoFFT = np.fft.fftn(rho)
-    
+
     #
     # apply inverse Laplacian filter in Fourier space
     #
@@ -117,15 +117,15 @@ def PoissonSolve(rho,method):
     if method == 1:
         scaleFactor = -4.0*np.pi**2*( kx**2 + ky**2 )
 
-    scaleFactor[0,0] = 1.0 
-        
+    scaleFactor[0,0] = 1.0
+
     rhoFFT = rhoFFT / scaleFactor
     rhoFFT[0,0] = 0.0
-    
-    return np.fft.ifftn(rhoFFT).real 
-                
+
+    return np.fft.ifftn(rhoFFT).real
+
 if __name__ == '__main__':
-    
+
     Nx=100
     Ny=100
 
@@ -133,7 +133,7 @@ if __name__ == '__main__':
     method = 0
 
     np.random.seed(12)
-    
+
     import sys
     argc=len(sys.argv)
     if argc>1:
@@ -163,11 +163,11 @@ if __name__ == '__main__':
     if testCase==2:
         phi = phi - phi.min()
         phiExact = phiExact - phiExact.min()
-        
+
     tmp1 =  np.abs(phi-phiExact).sum()
     tmp2 =  np.abs(phi).sum()
     print 'L1 relative error : {}'.format(tmp1/tmp2)
-    
+
     tmp1 =  ((phi-phiExact)**2).sum()
     tmp2 =  (phi**2).sum()
     tmp3 =  (phiExact**2).sum()
@@ -175,13 +175,13 @@ if __name__ == '__main__':
     print 'L2 relative error : {}'.format(tmp1/tmp2)
     print 'L2 absolute error : {}'.format(tmp1/Nx/Ny)
     print 'L2 solution - L2 exact : {}'.format(np.sqrt(tmp2)-np.sqrt(tmp3))
-    
+
     if testCase==2:
         #plt.imshow( phi )
         plt.plot(np.sqrt(phi[Nx/2,:]-phi.min()))
         plt.plot(np.sqrt(phiExact[Nx/2,:]-phiExact.min()))
         #plt.colorbar()
-        
+
     else:
         plt.imshow( phi-phiExact )
         plt.colorbar()

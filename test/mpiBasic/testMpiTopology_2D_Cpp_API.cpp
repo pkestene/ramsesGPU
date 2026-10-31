@@ -38,20 +38,22 @@ enum
 
 // allow processor reordering by the MPI cartesian communicator
 static const bool MPI_REORDER_FALSE = false;
-static const bool MPI_REORDER_TRUE  = true;
+static const bool MPI_REORDER_TRUE = true;
 
 static const bool MPI_CART_PERIODIC_FALSE = false;
-static const bool MPI_CART_PERIODIC_TRUE  = true;
+static const bool MPI_CART_PERIODIC_TRUE = true;
 
 // MPI topology directions
-enum {
+enum
+{
   MPI_TOPO_DIR_X = 0,
   MPI_TOPO_DIR_Y = 1,
   MPI_TOPO_DIR_Z = 2
 };
 
 // MPI topology shift direction
-enum {
+enum
+{
   MPI_SHIFT_NONE = 0,
   MPI_SHIFT_FORWARD = 1
 };

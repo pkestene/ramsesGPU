@@ -31,9 +31,9 @@ public:
   init_test_data();
 };
 
-Test::Test(ConfigMap &_configMap) : hydroSimu::HydroRunBaseMpi(_configMap)
-{
-}
+Test::Test(ConfigMap & _configMap)
+  : hydroSimu::HydroRunBaseMpi(_configMap)
+{}
 
 void
 Test::init_test_data()
@@ -90,10 +90,12 @@ Test::runTest()
 /*
  * Make a dummy parameter file test.pot
  */
-void make_test_paramFile(std::string fileName) {
+void
+make_test_paramFile(std::string fileName)
+{
 
   std::fstream outFile;
-  outFile.open (fileName.c_str(), std::ios_base::out);
+  outFile.open(fileName.c_str(), std::ios_base::out);
 
   outFile << "# define a 2D MPI cartesian mesh with mx x my MPI processes\n";
   outFile << "[mpi]\n";

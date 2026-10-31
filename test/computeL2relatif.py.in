@@ -2,7 +2,7 @@
 
 ##
 # \file computeL2relatif.py
-# \brief Compute L2 norm of the difference between two data array read from 
+# \brief Compute L2 norm of the difference between two data array read from
 # XSM files given on the command line
 #\author P. Kestener
 
@@ -57,5 +57,5 @@ if 0==1:
     ax = axes([0,0,1,1], frameon=False)
     ax.set_axis_off()
     im = imshow(diffData, origin='lower')
-    
+
     show()
