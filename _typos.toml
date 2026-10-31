@@ -1,5 +1,5 @@
 [files]
-extend-exclude = ["data/*.ini", "cmake"]
+extend-exclude = ["data/*.ini", "cmake", "Licence_*"]
 
 [default.extend-words]
 IY = "IY"

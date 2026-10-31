@@ -22,28 +22,28 @@ include(print_target_properties)
 # always export compile commands database
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-
-####################################################################
+# ##################################################################################################
 # other options
-####################################################################
-option (USE_CUDA "build with CUDA support" OFF)
-option (USE_DOUBLE "build with double precision" ON)
-option (USE_HDF5 "build HDF5 input/output support" OFF)
-option (USE_PNETCDF "build PNETCDF input/output support (MPI required)" OFF)
-option (USE_VTK "Build VTK from system library (not hand written VTK)" OFF)
-option (USE_MPI "Activate MPI build" OFF)
-option (USE_MPI_CUDA_AWARE_ENFORCED "Some MPI cuda-aware implementation are not well detected; use this to enforce" OFF)
-option (USE_FPE_DEBUG "build with floating point Nan tracing (signal handler)" OFF)
-option (USE_QT "build some test demo gui application with Qt" OFF)
-option (USE_GLUT "build some test demo gui application with GLUT" OFF)
-option (USE_TIMING "Do fine level timing measurements" OFF)
+# ##################################################################################################
+option(USE_CUDA "build with CUDA support" OFF)
+option(USE_DOUBLE "build with double precision" ON)
+option(USE_HDF5 "build HDF5 input/output support" OFF)
+option(USE_PNETCDF "build PNETCDF input/output support (MPI required)" OFF)
+option(USE_VTK "Build VTK from system library (not hand written VTK)" OFF)
+option(USE_MPI "Activate MPI build" OFF)
+option(USE_MPI_CUDA_AWARE_ENFORCED
+       "Some MPI cuda-aware implementation are not well detected; use this to enforce" OFF)
+option(USE_FPE_DEBUG "build with floating point Nan tracing (signal handler)" OFF)
+option(USE_QT "build some test demo gui application with Qt" OFF)
+option(USE_GLUT "build some test demo gui application with GLUT" OFF)
+option(USE_TIMING "Do fine level timing measurements" OFF)
 
-#####################################################################
+# ##################################################################################################
 # External packages: MPI, ...
-#####################################################################
+# ##################################################################################################
 
-#####################################################################
-if (USE_CUDA)
+# ##################################################################################################
+if(USE_CUDA)
   enable_language(CUDA)
 
   message("Using CUDAToolkit macros")
@@ -54,61 +54,61 @@ if (USE_CUDA)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
   endif()
 
-  # we also need extra stuff to make sure compile flags are correctly
-  # passed to nvcc / host compiler
+  # we also need extra stuff to make sure compile flags are correctly passed to nvcc / host compiler
   include(protect_nvcc_flags)
   include(protect_pthread_flag)
 
 endif()
 
-# Enable MODULE mode (via pkg-config) to find packages
-# see https://cmake.org/cmake/help/latest/command/find_package.html
+# Enable MODULE mode (via pkg-config) to find packages see
+# https://cmake.org/cmake/help/latest/command/find_package.html
 find_package(PkgConfig REQUIRED)
 
-#####################################################################
+# ##################################################################################################
 find_package(MPI)
-if (USE_MPI)
+if(USE_MPI)
   if(MPI_CXX_FOUND)
     message(STATUS "MPI support found")
     message(STATUS "MPI compile flags: " ${MPI_CXX_COMPILE_FLAGS})
     message(STATUS "MPI include path: " ${MPI_CXX_INCLUDE_PATH})
     message(STATUS "MPI LINK flags path: " ${MPI_CXX_LINK_FLAGS})
     message(STATUS "MPI libraries: " ${MPI_CXX_LIBRARIES})
-    #include_directories(SYSTEM ${MPI_CXX_INCLUDE_PATH})
+    # include_directories(SYSTEM ${MPI_CXX_INCLUDE_PATH})
 
-    ##################################################################
-    # if CUDA is enabled we need to prevent flag "-pthread" to be passed
-    # to nvcc compiler
-    # this is probably done in a very recent version of cmake
-    # see https://gitlab.kitware.com/cmake/cmake/commit/e2d54e5c40c517698c856b6802b51e0c09d5dca6
+    # ##############################################################################################
+    # if CUDA is enabled we need to prevent flag "-pthread" to be passed to nvcc compiler this is
+    # probably done in a very recent version of cmake see
+    # https://gitlab.kitware.com/cmake/cmake/commit/e2d54e5c40c517698c856b6802b51e0c09d5dca6
     #
-    # When this is consumed for compiling CUDA, use '-Xcompiler' to wrap '-pthread'.
-    ###string(REPLACE "-pthread" "$<$<COMPILE_LANGUAGE:CUDA>:SHELL:-Xcompiler >-pthread"
-    ###  _MPI_CXX_COMPILE_OPTIONS "${MPI_CXX_COMPILE_OPTIONS}")
+    # When this is consumed for compiling CUDA, use '-Xcompiler' to wrap '-pthread'. string(REPLACE
+    # "-pthread" "$<$<COMPILE_LANGUAGE:CUDA>:SHELL:-Xcompiler >-pthread" _MPI_CXX_COMPILE_OPTIONS
+    # "${MPI_CXX_COMPILE_OPTIONS}")
 
-    # To be analyzed if the following (dirty) trick is still needed with
-    # more recent version of cmake
-    string(REPLACE "-pthread" $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler >-pthread  _MPI_CXX_COMPILE_OPTIONS "${MPI_CXX_COMPILE_OPTIONS}")
+    # To be analyzed if the following (dirty) trick is still needed with more recent version of
+    # cmake
+    string(REPLACE "-pthread" $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler >-pthread
+                   _MPI_CXX_COMPILE_OPTIONS "${MPI_CXX_COMPILE_OPTIONS}")
 
-    #message("DEBUG : [before] ${MPI_CXX_COMPILE_OPTIONS} ---- [after] ${_MPI_CXX_COMPILE_OPTIONS}")
+    # message("DEBUG : [before] ${MPI_CXX_COMPILE_OPTIONS} ---- [after]
+    # ${_MPI_CXX_COMPILE_OPTIONS}")
 
-    set_property(TARGET MPI::MPI_CXX PROPERTY INTERFACE_COMPILE_OPTIONS "${_MPI_CXX_COMPILE_OPTIONS}")
+    set_property(TARGET MPI::MPI_CXX PROPERTY INTERFACE_COMPILE_OPTIONS
+                                              "${_MPI_CXX_COMPILE_OPTIONS}")
     unset(_MPI_CXX_COMPILE_OPTIONS)
 
+    # ##############################################################################################
 
-    ##################################################################
-
-    #set(CMAKE_EXE_LINKER_FLAGS ${MPI_CXX_LINK_FLAGS})
-    find_program(OMPI_INFO
+    # set(CMAKE_EXE_LINKER_FLAGS ${MPI_CXX_LINK_FLAGS})
+    find_program(
+      OMPI_INFO
       NAMES ompi_info
       HINTS ${MPI_CXX_LIBRARIES}/../bin)
 
-    # Full command line to probe if cuda support in MPI implementation is enabled
-    # ompi_info --parsable --all | grep mpi_built_with_cuda_support:value
-    if (OMPI_INFO)
-      execute_process(COMMAND ${OMPI_INFO}
-        OUTPUT_VARIABLE _output)
-      if ( (_output MATCHES "smcuda") OR (USE_MPI_CUDA_AWARE_ENFORCED) )
+    # Full command line to probe if cuda support in MPI implementation is enabled ompi_info
+    # --parsable --all | grep mpi_built_with_cuda_support:value
+    if(OMPI_INFO)
+      execute_process(COMMAND ${OMPI_INFO} OUTPUT_VARIABLE _output)
+      if((_output MATCHES "smcuda") OR (USE_MPI_CUDA_AWARE_ENFORCED))
         message(STATUS "Found OpenMPI with CUDA support built.")
       else()
         message(WARNING "OpenMPI found, but it is not built with CUDA support.")
@@ -121,33 +121,33 @@ if (USE_MPI)
   endif(MPI_CXX_FOUND)
 endif(USE_MPI)
 
-#####################################################################
+# ##################################################################################################
 # HDF5
-#####################################################################
+# ##################################################################################################
 # prefer using parallel HDF5 when build with mpi
-if (USE_MPI)
+if(USE_MPI)
   set(HDF5_PREFER_PARALLEL TRUE)
 endif(USE_MPI)
 
-if (USE_HDF5)
+if(USE_HDF5)
   find_package(HDF5 REQUIRED)
   if(HDF5_FOUND)
     set(my_hdf5_libs hdf5 hdf5_cpp)
     add_compile_options(-DUSE_HDF5)
-    if (HDF5_IS_PARALLEL)
+    if(HDF5_IS_PARALLEL)
       add_compile_options(-DUSE_HDF5_PARALLEL)
     endif()
   endif(HDF5_FOUND)
 endif(USE_HDF5)
 
-#####################################################################
+# ##################################################################################################
 # PNETCDF
-#####################################################################
-if (USE_MPI)
-  if (USE_PNETCDF)
+# ##################################################################################################
+if(USE_MPI)
+  if(USE_PNETCDF)
 
-    # make sure to use Pnetcdf version >= 1.9 built as a shared library
-    #find_package(PNETCDF REQUIRED)
+    # make sure to use Pnetcdf version >= 1.9 built as a shared library find_package(PNETCDF
+    # REQUIRED)
 
     pkg_check_modules(RAMSESGPU_PNETCDF QUIET IMPORTED_TARGET pnetcdf)
 
@@ -160,62 +160,61 @@ if (USE_MPI)
       message(WARNING "PnetCDF not found !")
     endif()
 
-    # if (PNETCDF_FOUND)
-    #   add_compile_options(-DUSE_PNETCDF)
-    # endif(PNETCDF_FOUND)
+    # if (PNETCDF_FOUND) add_compile_options(-DUSE_PNETCDF) endif(PNETCDF_FOUND)
 
   endif(USE_PNETCDF)
 
-else (USE_MPI)
+else(USE_MPI)
 
-  if (USE_PNETCDF)
+  if(USE_PNETCDF)
     message("You can use PnetCDF only if MPI is acticated !")
   endif(USE_PNETCDF)
 
-endif (USE_MPI)
+endif(USE_MPI)
 
-#####################################################################
+# ##################################################################################################
 # VTK from system
-#####################################################################
-if (USE_VTK)
+# ##################################################################################################
+if(USE_VTK)
   # the minimal component list is evaluated thanks to command:
   # ${VTK_SOURCES}/Utilities/Maintenance/WhatModulesVTK.py ${VTK_SOURCES} ${MY_APP}
-  find_package(VTK COMPONENTS
-    CommonCore
-    CommonDataModel
-    CommonExecutionModel
-    CommonMath
-    CommonMisc
-    CommonSystem
-    CommonTransforms
-    IOCore
-    IOGeometry
-    IOImage
-    IOLegacy
-    IOXML
-    IOXMLParser
-    ParallelCore
-    ParallelMPI
-    IOParallelXML
-    )
-  #include(${VTK_USE_FILE})
+  find_package(
+    VTK
+    COMPONENTS CommonCore
+               CommonDataModel
+               CommonExecutionModel
+               CommonMath
+               CommonMisc
+               CommonSystem
+               CommonTransforms
+               IOCore
+               IOGeometry
+               IOImage
+               IOLegacy
+               IOXML
+               IOXMLParser
+               ParallelCore
+               ParallelMPI
+               IOParallelXML)
+  # include(${VTK_USE_FILE})
   if(VTK_FOUND)
     message("VTK version: ${VTK_VERSION}")
   endif()
 endif(USE_VTK)
 
-#####################################################################
+# ##################################################################################################
 # PAPI for performance counters
-#####################################################################
+# ##################################################################################################
 pkg_check_modules(RAMSESGPU_PAPI QUIET IMPORTED_TARGET papi)
 if(RAMSESGPU_PAPI_FOUND)
 
-  # check if f90papi.h is available
-  # note : can't use check_include_file macro here, because f90papi.h contains
-  # actually fortran code
-  find_path(PAPI_INCLUDE_F90PAPI NAMES f90papi.h
+  # check if f90papi.h is available note : can't use check_include_file macro here, because
+  # f90papi.h contains actually fortran code
+  find_path(
+    PAPI_INCLUDE_F90PAPI
+    NAMES f90papi.h
     HINTS ${RAMSESGPU_PAPI_INCLUDE_DIRS})
-  if (PAPI_INCLUDE_F90PAPI-NOTFOUND)
+  if(PAPI_INCLUDE_F90PAPI-NOTFOUND)
     message("f90papi.h not found")
   else()
     set(HAVE_F90PAPI_H 1)
@@ -237,10 +236,9 @@ else()
   message("papi NOT FOUND")
 endif()
 
-
-#####################################################################
+# ##################################################################################################
 # FFTW
-#####################################################################
+# ##################################################################################################
 pkg_check_modules(RAMSESGPU_FFTW3 QUIET IMPORTED_TARGET fftw3 fftw3f)
 if(RAMSESGPU_FFTW3_FOUND)
   message("fftw found via pkg-config")
@@ -249,16 +247,15 @@ else()
   message(WARNING "Please adjust environment variable PKG_CONFIG_PATH to setup path to fftw3.pc.")
 endif()
 
-
-#####################################################################
+# ##################################################################################################
 # QT
-#####################################################################
-if (USE_QT)
+# ##################################################################################################
+if(USE_QT)
   find_package(Qt5Widgets)
   find_package(Qt5OpenGL)
   find_package(OpenGL)
 
-  if (Qt5Widgets_FOUND)
+  if(Qt5Widgets_FOUND)
     message("Qt5Widgets found - ${Qt5Widgets_VERSION_STRING}")
   else()
     message("Qt5Widgets not found ! Please turn off USE_QT or install Qt5")
@@ -272,10 +269,10 @@ if (USE_QT)
 
 endif(USE_QT)
 
-#####################################################################
+# ##################################################################################################
 # GLUT
-#####################################################################
-if (USE_GLUT)
+# ##################################################################################################
+if(USE_GLUT)
 
   find_package(GLUT)
   find_package(OpenGL)
@@ -289,21 +286,21 @@ endif(USE_GLUT)
 #
 
 # double precision support
-if (USE_DOUBLE)
+if(USE_DOUBLE)
   add_compile_options(-DUSE_DOUBLE)
 endif()
 
-if (USE_MPI)
+if(USE_MPI)
   add_compile_options(-DUSE_MPI)
 endif()
 
-if (USE_FPE_DEBUG)
+if(USE_FPE_DEBUG)
   add_compile_options(-DUSE_FPE_DEBUG)
 endif()
 
-##########################################################
-##########################################################
-##########################################################
+# ##################################################################################################
+# ##################################################################################################
+# ##################################################################################################
 
 # build src
 add_subdirectory(src)
@@ -314,15 +311,14 @@ add_subdirectory(test)
 # Testing
 enable_testing()
 
-
-#-------------------------------------------------------------------#
+# -------------------------------------------------------------------#
 # Configuration summary
-#-------------------------------------------------------------------#
+# -------------------------------------------------------------------#
 message("//===================================================")
 message("  ${PROJECT_NAME} build configuration:")
 message("//===================================================")
 message("  CMake version          : ${CMAKE_VERSION}")
-if (NOT CMAKE_BUILD_TYPE)
+if(NOT CMAKE_BUILD_TYPE)
   message("  CMake build type       : NOT SET !")
 else()
   message("  CMake build type       : ${CMAKE_BUILD_TYPE}")
@@ -339,12 +335,11 @@ message("  Cxx flags            : ${CMAKE_CXX_FLAGS}")
 message("  Cxx compiler wrapper : ${CMAKE_CXX_COMPILER_WRAPPER}")
 message("")
 
-if (USE_MPI)
+if(USE_MPI)
   message("  MPI enabled")
   message("    MPI found            : ${MPI_FOUND}")
   message("    MPI standard version : ${MPI_CXX_VERSION}")
-  # note : make sure you correctly your C, C++ and Fortran compiler
-  # through variable CC, CXX and FC
+  # note : make sure you correctly your C, C++ and Fortran compiler through variable CC, CXX and FC
   message("    MPI_VENDOR           : ${MPI_VENDOR}")
   message("    MPI library version  : ${MPI_CXX_LIBRARY_VERSION_STRING}")
   message("    MPI fortran compiler : ${MPI_CXX_COMPILER}")
@@ -355,7 +350,7 @@ else(USE_MPI)
 endif(USE_MPI)
 message("")
 
-if (USE_CUDA)
+if(USE_CUDA)
   message("  CUDA compiler ID      : ${CMAKE_CUDA_COMPILER_ID}")
   message("  CUDA compiler Version : ${CMAKE_CUDA_COMPILER_VERSION}")
   message("  CUDA Compiler         : ${CMAKE_CUDA_COMPILER}")
@@ -369,7 +364,7 @@ else(USE_CUDA)
 endif(USE_CUDA)
 message("")
 
-if (HDF5_FOUND)
+if(HDF5_FOUND)
   message("  HDF5 found version    : ${HDF5_VERSION}")
   message("  HDF5 definitions      : ${HDF5_DEFINITIONS}")
   message("  HDF5 parallel         : ${HDF5_IS_PARALLEL}")
@@ -378,7 +373,7 @@ if (HDF5_FOUND)
 endif(HDF5_FOUND)
 message("")
 
-if (RAMSESGPU_PNETCDF_FOUND)
+if(RAMSESGPU_PNETCDF_FOUND)
   message("  PNETCDF found version : ${RAMSESGPU_PNETCDF_VERSION}")
   message("  PNETCDF include dirs  : ${RAMSESGPU_PNETCDF_CFLAGS}")
   message("  PNETCDF libraries     : ${RAMSESGPU_PNETCDF_LDFLAGS}")

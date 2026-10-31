@@ -33,32 +33,36 @@ rstrip(char * s)
 }
 
 /* Return pointer to first non-whitespace char in given string. */
-static char* lskip(const char* s)
+static char *
+lskip(const char * s)
 {
-    while (*s && isspace(*s))
-        s++;
-    return (char*)s;
+  while (*s && isspace(*s))
+    s++;
+  return (char *)s;
 }
 
 /* Return pointer to first char c or ';' ( or '#') comment in given
  string, or pointer to null at end of string if neither found. ';' (or
  '#') must be prefixed by a whitespace character to register as a comment. */
-static char* find_char_or_comment(const char* s, char c)
+static char *
+find_char_or_comment(const char * s, char c)
 {
-    int was_whitespace = 0;
-    while (*s && *s != c && !(was_whitespace && *s == ';')) {
-        was_whitespace = isspace(*s);
-        s++;
-    }
-    return (char*)s;
+  int was_whitespace = 0;
+  while (*s && *s != c && !(was_whitespace && *s == ';'))
+  {
+    was_whitespace = isspace(*s);
+    s++;
+  }
+  return (char *)s;
 }
 
 /* Version of strncpy that ensures dest (size bytes) is null-terminated. */
-static char* strncpy0(char* dest, const char* src, size_t size)
+static char *
+strncpy0(char * dest, const char * src, size_t size)
 {
-    strncpy(dest, src, size);
-    dest[size - 1] = '\0';
-    return dest;
+  strncpy(dest, src, size);
+  dest[size - 1] = '\0';
+  return dest;
 }
 
 // ================================================================

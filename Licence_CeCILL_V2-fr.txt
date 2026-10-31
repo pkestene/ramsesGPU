@@ -360,7 +360,7 @@ Concédant et le Licencié.
 
     Article 8 - RESPONSABILITE
 
-8.1 Sous réserve des dispositions de l'article 8.2, le Licencié a la 
+8.1 Sous réserve des dispositions de l'article 8.2, le Licencié a la
 faculté, sous réserve de prouver la faute du Concédant concerné, de
 solliciter la réparation du préjudice direct qu'il subirait du fait du
 Logiciel et dont il apportera la preuve.
@@ -399,7 +399,7 @@ droits visés à l'article 5).
 
 9.3 Le Licencié reconnaît que le Logiciel est fourni "en l'état" par le
 Concédant sans autre garantie, expresse ou tacite, que celle prévue à
-l'article 9.2 et notamment sans aucune garantie sur sa valeur commerciale, 
+l'article 9.2 et notamment sans aucune garantie sur sa valeur commerciale,
 son caractère sécurisé, innovant ou pertinent.
 
 En particulier, le Concédant ne garantit pas que le Logiciel est exempt

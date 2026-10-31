@@ -82,4 +82,4 @@ private:
   valueHandler(void * user, const char * section, const char * name, const char * value);
 };
 
-#endif  // __INIREADER_H__
+#endif // __INIREADER_H__

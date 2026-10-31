@@ -38,7 +38,8 @@ randnum(void)
  ** returns a random number in [0, N [
  ** assumes N < RAND_MAX (= 2147483647 = 2^31-1)
  ** ------------------------------------------------------------------ */
-inline int randnum_int(int N)
+inline int
+randnum_int(int N)
 {
   return rand() % N;
 }

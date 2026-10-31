@@ -57,4 +57,3 @@ generate_fBm_SOURCES = \
 generate_fBm_CXXFLAGS = -std=c++11 -DGEN_FBM
 generate_fBm_CPPFLAGS = $(AM_CPPFLAGS) $(POWER_SPECTRUM_C_FLAGS) -I$(top_srcdir)/src/utils/config -I$(top_srcdir)/src/utils/cnpy -I$(top_srcdir)/src/hydro -std=c++11 -DGEN_FBM
 generate_fBm_LDFLAGS  = $(AM_LDFLAGS) ../../utils/config/libIniConfig.la $(POWER_SPECTRUM_LD_FLAGS) ../../utils/cnpy/libCNpy.la
-

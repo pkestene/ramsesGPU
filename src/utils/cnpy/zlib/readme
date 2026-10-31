@@ -1,3 +1,2 @@
 crc32 is borrowed from zlib so that cnpy has dependency upon zlib on platform
 where zlib is installed.
-

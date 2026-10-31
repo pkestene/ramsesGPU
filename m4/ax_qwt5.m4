@@ -196,4 +196,3 @@ AC_DEFUN([AX_QWT5],
 		have_qwt="no"
 	fi
 ])
-

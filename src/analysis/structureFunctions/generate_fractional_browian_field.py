@@ -15,16 +15,16 @@ from scipy.fftpack import fft, ifft, fftn, ifftn
 # Create 2D Brownian field (assume nx and ny are even)
 #
 # h : Holder exponent in [0, 1]
-# if h == 0.5 : reguler Brownian motion
+# if h == 0.5 : regular Brownian motion
 # if h != 0.5 : fractional Brownian motion
 def createBrownianField2d(nx,ny,h=0.5):
 
     # initialize Fourier coef
-    dataFFT = np.zeros((nx,ny)).astype(complex) 
+    dataFFT = np.zeros((nx,ny)).astype(complex)
 
     print dataFFT.flags
     print dataFFT.shape
-    
+
     # 1st loop to fill quadrant 1 and 4
     for i in range(nx/2+1):
 
@@ -38,7 +38,7 @@ def createBrownianField2d(nx,ny,h=0.5):
             i2=nx/2
         else:
             i2=nx-i
-            
+
         for j in range(ny/2+1):
 
             # compute ky
@@ -63,7 +63,7 @@ def createBrownianField2d(nx,ny,h=0.5):
             # fill fourier coefficient so that ifft is real (imag = 0)
             dataFFT[i ,j ] = radius*np.cos(phase) + 1j*radius*np.sin(phase)
             dataFFT[i2,j2] = radius*np.cos(phase) - 1j*radius*np.sin(phase)
-            
+
     # make sure that Fourier coef at i=0, j=ny/2 is real
     dataFFT[0,ny/2] = np.real(dataFFT[0,ny/2]) + 1j*0
 
@@ -73,7 +73,7 @@ def createBrownianField2d(nx,ny,h=0.5):
     # make sure that Fourier coef at i=nx/2, j=ny/2 is real
     dataFFT[nx/2,ny/2] = np.real(dataFFT[nx/2,ny/2]) + 1j*0
 
-    # 2nd loop to fill quadrant 2 and 3 
+    # 2nd loop to fill quadrant 2 and 3
     for i in range(1,nx/2):
 
         # compute kx
@@ -82,7 +82,7 @@ def createBrownianField2d(nx,ny,h=0.5):
         # compute i1,i2
         i1=nx-i
         i2=i
-            
+
         for j in range(1,ny/2):
 
             # compute ky
@@ -101,17 +101,17 @@ def createBrownianField2d(nx,ny,h=0.5):
             dataFFT[i2,j2] = radius*np.cos(phase) - 1j*radius*np.sin(phase)
 
     return ifftn(dataFFT)
-                    
+
 #
 # Create 3D Brownian field (assume nx, ny, nz are even)
 #
 # h : Holder exponent in [0, 1]
-# if h == 0.5 : reguler Brownian motion
+# if h == 0.5 : regular Brownian motion
 # if h != 0.5 : fractional Brownian motion
 def createBrownianField3d(nx,ny,nz,h=0.5):
 
     # initialize Fourier coef
-    dataFFT = np.zeros((nx,ny,nz)).astype(complex) 
+    dataFFT = np.zeros((nx,ny,nz)).astype(complex)
 
     #print dataFFT.flags
     #print dataFFT.shape
@@ -162,7 +162,7 @@ def createBrownianField3d(nx,ny,nz,h=0.5):
                     phase = 2 * np.pi * np.random.uniform()
                 else:
                     radius = 1.0
-                    phase  = 0.0 
+                    phase  = 0.0
 
                 # fill Fourier coef so that ifft is real
                 dataFFT[i ,j ,k ] = radius*np.cos(phase) + 1j*radius*np.sin(phase)
@@ -219,18 +219,18 @@ def createBrownianField3d(nx,ny,nz,h=0.5):
 
                 dataFFT[i2,j1,k2] = radius*np.cos(phase) + 1j*radius*np.sin(phase)
                 dataFFT[i1,j2,k1] = radius*np.cos(phase) - 1j*radius*np.sin(phase)
-                
+
                 radius = np.power(kSquare, -(2*h+3)/4) * np.random.normal()
                 phase = 2 * np.pi * np.random.uniform()
 
                 dataFFT[i2,j2,k1] = radius*np.cos(phase) + 1j*radius*np.sin(phase)
                 dataFFT[i1,j1,k2] = radius*np.cos(phase) - 1j*radius*np.sin(phase)
-                
+
     return ifftn(dataFFT)
-                    
-    
+
+
 #
-# Save 3d data array in a netcdf file 
+# Save 3d data array in a netcdf file
 # only rho_vx is filled, dummy values in other fields
 #
 def saveNetcdf(fileName,data):
@@ -245,7 +245,7 @@ def saveNetcdf(fileName,data):
     nx,ny,nz = data.shape
 
     print 'data type '+str(data.dtype)
-    
+
     # open file
     f = NetCDFFile(fileName,'w')
 
@@ -259,7 +259,7 @@ def saveNetcdf(fileName,data):
 
     E = f.createVariable('E','d',('x','y','z'))
     E[:] = np.zeros((nx,ny,nz))
-    
+
     rho_vx = f.createVariable('rho_vx','d',('x','y','z'))
     rho_vx[:] = data
     rho_vy = f.createVariable('rho_vy','d',('x','y','z'))
@@ -317,6 +317,6 @@ if __name__ == '__main__':
 
     # create synthetic data
     data = createBrownianField3d(64,64,64)
-    
+
     # netcdf file save
     saveNetcdf(options.filename, np.real(data))

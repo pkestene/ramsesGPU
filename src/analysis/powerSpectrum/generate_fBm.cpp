@@ -169,7 +169,7 @@ main(int argc, char ** argv)
       data_toDump.allocate(make_uint4(nx, ny, nz, 8));
     data_toDump.reset();
 
-    // copy fBm into rho_vx (index IU) adn density = 1.0
+    // copy fBm into rho_vx (index IU) and density = 1.0
     if (ghostIncluded)
     {
 

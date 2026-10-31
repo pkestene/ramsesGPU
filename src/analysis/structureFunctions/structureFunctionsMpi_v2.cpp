@@ -67,7 +67,8 @@ randnum(void)
  ** returns a random number in [0, N [
  ** assumes N < RAND_MAX (= 2147483647 = 2^31-1)
  ** ------------------------------------------------------------------ */
-inline int randnum_int(int N)
+inline int
+randnum_int(int N)
 {
   return rand() % N;
 }
@@ -96,7 +97,7 @@ main(int argc, char ** argv)
   }
 
   /* set default configuration parameter fileName */
-  const std::string default_param_file = "strucFunc.ini";
+  const std::string default_param_file = "structFunc.ini";
   const std::string param_file = cl.follow(default_param_file.c_str(), "--param");
 
   /* parse parameters from input file */
