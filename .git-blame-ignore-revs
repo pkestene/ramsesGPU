@@ -1,0 +1,7 @@
+#
+# 1. To ignore the following commits when using git blame:
+#    git config blame.ignoreRevsFile .git-blame-ignore-revs
+# 2. To reset
+#    git config --unset blame.ignoreRevsFile
+#
+54e297e45a7cbf9a33cd3e64318e91bed5eab85e
