@@ -82,7 +82,7 @@ AC_DEFUN([AX_LIB_MYSQL],
             fi
         dnl MYSQL_CONFIG is provided by user but it does not point to executable file
         elif test ! -x "$MYSQL_CONFIG"; then
-            AC_MSG_ERROR([$MYSQL_CONFIG does not exist or it is not an exectuable file])
+            AC_MSG_ERROR([$MYSQL_CONFIG does not exist or it is not an executable file])
             MYSQL_CONFIG="no"
             found_mysql="no"
         fi

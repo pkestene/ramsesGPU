@@ -26,7 +26,7 @@
 #   NOTE: These options described above do not take yes|no values. If 'yes'
 #   value is passed, then WARNING message will be displayed, 'no' value, as
 #   well as the --without-oci-* variations will cause the macro to not check
-#   enything.
+#   anything.
 #
 #   This macro calls:
 #
@@ -205,7 +205,7 @@ Please, locate Oracle directories using --with-oracle or \
         if test "$oci_header_found" = "yes"; then
 
             AC_MSG_CHECKING([for Oracle OCI libraries in $oracle_lib_dir])
-			
+
 			dnl Add -lnnz11 (respectively -lnnz10) flag to Oracle >= 11.x (respectively >= 10.x)
 			oracle_version_major=`cat $oracle_include_dir/oci.h \
                              | grep '#define.*OCI_MAJOR_VERSION.*' \

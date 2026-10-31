@@ -3,7 +3,7 @@
 
 - Pierre Kestener <pierre.kestener@cea.fr>
   code refactoring to remove Fortran: autumn 2009
-  implementation of other numerical schemes (Lax-Liu, Kurganov-Tadmor): January 2010 
+  implementation of other numerical schemes (Lax-Liu, Kurganov-Tadmor): January 2010
   implementation of a GLUT-based GUI and a QT-based GUI: March 2010
   update the Godunov scheme to 3D (both CPU and GPU): September 2010
   implementation of a CUDA+MPI version: October 2010

@@ -6,7 +6,7 @@
 #
 # DESCRIPTION
 #
-#   Check for the OpenGL Extension Wrangler Library (GLEW). 
+#   Check for the OpenGL Extension Wrangler Library (GLEW).
 #   If GLEW is found, the required compiler and linker flags
 #   are included in the output variables "GLEW_CFLAGS" and "GLEW_LIBS",
 #   respectively. If GLEW is not found, "no_glew" is set to "yes".

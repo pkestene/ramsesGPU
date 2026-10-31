@@ -4,8 +4,8 @@ dnl @synopsis AX_LIB_POSTGRESQL([MINIMUM-VERSION])
 dnl
 dnl This macro provides tests of availability of PostgreSQL 'libpq' library
 dnl of particular version or newer.
-dnl 
-dnl AX_LIB_POSTGRESQL macro takes only one argument which is optional. If there is no 
+dnl
+dnl AX_LIB_POSTGRESQL macro takes only one argument which is optional. If there is no
 dnl required version passed, then macro does not run version test.
 dnl
 dnl The --with-postgresql option takes one of three possible values:
@@ -59,7 +59,7 @@ AC_DEFUN([AX_LIB_POSTGRESQL],
     dnl
     dnl Check PostgreSQL libraries (libpq)
     dnl
-    
+
     if test "$want_postgresql" = "yes"; then
 
         if test -z "$PG_CONFIG" -o test; then
@@ -67,7 +67,7 @@ AC_DEFUN([AX_LIB_POSTGRESQL],
         fi
 
         if test ! -x "$PG_CONFIG"; then
-            AC_MSG_ERROR([$PG_CONFIG does not exist or it is not an exectuable file])
+            AC_MSG_ERROR([$PG_CONFIG does not exist or it is not an executable file])
             PG_CONFIG="no"
             found_postgresql="no"
         fi
@@ -82,7 +82,7 @@ AC_DEFUN([AX_LIB_POSTGRESQL],
 
             AC_DEFINE([HAVE_POSTGRESQL], [1],
                 [Define to 1 if PostgreSQL libraries are available])
-            
+
             found_postgresql="yes"
             AC_MSG_RESULT([yes])
         else
@@ -94,7 +94,7 @@ AC_DEFUN([AX_LIB_POSTGRESQL],
     dnl
     dnl Check if required version of PostgreSQL is available
     dnl
-    
+
 
     postgresql_version_req=ifelse([$1], [], [], [$1])
 

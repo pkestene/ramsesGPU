@@ -45,11 +45,11 @@ dnl Save variables
 	saved_CPPFLAGS="$CPPFLAGS"
 	saved_LDFLAGS="$LDFLAGS"
 	saved_LIBS="$LIBS"
-	
+
 	CPPFLAGS=""
 	LDFLAGS=""
 	LIBS=""
-	
+
 	AC_REQUIRE([AC_PROG_CXX])
 	AC_LANG_PUSH([C++])
 
@@ -78,7 +78,7 @@ dnl Save variables
 			fi
 		fi
 	fi
-	
+
 	dnl Check for library
 	mord_lib_log4cxx_lib_found="no"
 	if test "x$mord_lib_log4cxx_header_found" = "xyes"; then
@@ -130,7 +130,7 @@ dnl Save variables
 		fi
 		AS_IF([test "$mord_lib_log4cxx_lib_found" != "no"], AC_MSG_RESULT([yes]), AC_MSG_RESULT([no]))
 	fi
-	
+
 	AC_LANG_POP([C++])
 
 dnl Restore variables

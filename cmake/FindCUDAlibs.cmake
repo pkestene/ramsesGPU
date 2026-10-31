@@ -146,7 +146,7 @@ macro(cuda_find_library component)
     set(CUDAlibs_${component}_LIB_FOUND 1)
   endif()
   list(APPEND CUDAlibs_REQUIRED_VARS "CUDAlibs_${component}_LIB")
-  
+
   if(CUDAlibs_${component}_LIB_FOUND)
     set(CUDAlibs_${component}_FOUND 1)
   else()
@@ -229,12 +229,12 @@ if(CUDAlibs_FOUND)
         INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
 
       # ------------------------------------------------------------------------
-      
+
       set(_dependent_libraries)
       foreach(_dep "${CUDAlibs_DEP_${UPPERCOMPONENT}}")
 	list(APPEND _dependent_libraries ${_dep})
       endforeach()
-      
+
       if(NOT "${_dependent_libraries}" STREQUAL "")
 	message(STATUS "Adding dependencies: ${_dependent_libraries}")
 	set_target_properties(CUDAlibs::${UPPERCOMPONENT} PROPERTIES
@@ -258,4 +258,3 @@ endif()
 mark_as_advanced(
   CUDAlibs_FOUND
   )
-

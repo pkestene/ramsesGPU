@@ -28,7 +28,7 @@ AC_DEFUN([AX_LIB_ICESTORM],
 	saved_CXXFLAGS="$CXXFLAGS"
 	saved_LDFLAGS="$LDFLAGS"
 	saved_LIBS="$LIBS"
-	
+
 	CPPFLAGS="$CPPFLAGS $ICE_CPPFLAGS"
 	CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
 	LDFLAGS="$ICE_LDFLAGS"
@@ -82,12 +82,12 @@ dnl Check for MacPorts name of IceStorm library (after revision 110485 of port z
 		[])
 	fi
 	AC_LANG_POP([C++])
-	
+
 	CPPFLAGS="$saved_CPPFLAGS"
 	CXXFLAGS="$saved_CXXFLAGS"
 	LDFLAGS="$saved_LDFLAGS"
 	LIBS="$saved_LIBS"
-	
+
 	if test "$have_icestorm_lib" != "yes" ; then
 		AC_MSG_RESULT([no])
 		ICESTORM_CPPFLAGS=""

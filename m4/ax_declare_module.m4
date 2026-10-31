@@ -40,7 +40,7 @@
 #   The macro do not provide any help in managing dependencies between modules,
 #   a good solution is to test that the dependencies of each enabled module
 #   have not been disabled, by testing the shell variables created by each
-#   module. 
+#   module.
 #
 #	Options:
 #	--enable-moduleName=(yes|no)

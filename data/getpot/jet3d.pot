@@ -18,7 +18,7 @@ nz=200
 # BoundaryConditionType :
 # BC_UNDEFINED=0
 # BC_DIRICHLET=1
-# BC_NEUMANN=2 
+# BC_NEUMANN=2
 # BC_PERIODIC=3
 boundary_xmin=1
 boundary_xmax=1

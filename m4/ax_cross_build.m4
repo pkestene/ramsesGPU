@@ -25,7 +25,7 @@ AC_DEFUN([AX_CROSS_BUILD],
 			AC_MSG_ERROR(Cannot find the C cross-compiler)
 			;;
 		esac
-		
+
 		DISTCHECK_CONFIGURE_FLAGS="$DISTCHECK_CONFIGURE_FLAGS --host=$host_alias"
 		AC_SUBST([DISTCHECK_CONFIGURE_FLAGS])
 	fi

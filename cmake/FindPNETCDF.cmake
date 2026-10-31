@@ -13,7 +13,7 @@
 # are appended to PNETCDF ones. By doing this, users who do not need MPI can use
 # the normal compilers without linking errors.
 #
-# Ouput CMake variables:
+# Output CMake variables:
 #
 #   PNETCDF_FOUND - True if PNETCDF was found on the system.
 #   PNETCDF_INCLUDE_DIRS - List of the PNETCDF include and the dependency includes.

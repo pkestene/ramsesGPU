@@ -20,7 +20,7 @@ function(CUDA_PROTECT_PTHREAD_FLAG EXISTING_TARGET)
       "$<$<BUILD_INTERFACE:$<NOT:$<COMPILE_LANGUAGE:CUDA>>>:${old_flags}>$<$<BUILD_INTERFACE:$<COMPILE_LANGUAGE:CUDA>>:-Xcompiler=${new_flags}>"
       )
   endif()
-  
+
   # debug
   get_property(current_flags TARGET ${EXISTING_TARGET} PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
   message("DEBUG : TARGET=${EXISTING_TARGET} compile flags=${current_flags}")
@@ -28,4 +28,3 @@ function(CUDA_PROTECT_PTHREAD_FLAG EXISTING_TARGET)
   message("DEBUG : TARGET=${EXISTING_TARGET} compile flags=${current_flags}")
 
 endfunction()
-

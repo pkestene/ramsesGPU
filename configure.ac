@@ -24,7 +24,7 @@ then
 fi
 
 # ------------------------------------------------------------------------------
-# Dummy headline formater
+# Dummy headline formatter
 # ------------------------------------------------------------------------------
 AC_DEFUN([CONFIGURE_HEADLINE],
 [
@@ -76,7 +76,7 @@ SVN_REVISION=`$MYSVNVERSION`
 AC_SUBST(SVN_REVISION)
 
 # the conditional "HAVE_SVN_WC" will be used in src/Makefile.am to make sure
-# the target appears in Makefile only if we are building a Subversion working copy. 
+# the target appears in Makefile only if we are building a Subversion working copy.
 AM_CONDITIONAL(HAVE_SVN_WC, test "X$svnversioncommand" != "X" && test "`$svnversioncommand -n $srcdir`" != "exported")
 
 AC_SUBST([MYSVNVERSION])
@@ -108,14 +108,14 @@ AC_ARG_ENABLE([openmp],
        yes) enable_openmp=yes ;;
        no)  enable_openmp=no ;;
        *)   AC_MSG_ERROR([bad value ${enableval} for --enable-openmp]) ;;
-     esac], 
+     esac],
      enable_openmp=no
 )
 if test x$enable_openmp = xyes
 then
     AC_DEFINE(HAVE_OPENMP,1,[Define to 1 to enable OpenMP.])
     AX_OPENMP([THREADLIBS=" "
-     AC_DEFINE(USING_OPENMP_THREADS, 1, 
+     AC_DEFINE(USING_OPENMP_THREADS, 1,
        [Define to 1 if there is a valid OpenMP flag and the compiler supports it.])
      CXXFLAGS="$CXXFLAGS $OPENMP_CXXFLAGS"],
      [AC_MSG_ERROR([Unable to determine the appropriate OpenMP flag for your compiler.
@@ -152,8 +152,8 @@ fi
 AC_ARG_ENABLE([gprof],
 	[  --enable-gprof    Turn on profiling with gprof (pass gnu or intel as argument)],
 	[case "${enableval}" in
-	      gnu | yes) 
-	      	   gprof_enabled=true 
+	      gnu | yes)
+	      	   gprof_enabled=true
 		   gprof_compiler="gnu compiler"
 		   gprof_flags="-pg"
 		   ;;
@@ -162,7 +162,7 @@ AC_ARG_ENABLE([gprof],
 		   gprof_compiler="intel compiler"
 		   gprof_flags="-p"
 		   ;;
-	      no)  gprof_enabled=false 
+	      no)  gprof_enabled=false
 	      	   gprof_compiler="none"
 		   gprof_flags=""
 		   ;;
@@ -171,7 +171,7 @@ AC_ARG_ENABLE([gprof],
 	 [gprof_enabled=false
 	  gprof_compiler="none"
 	  gprof_flags=""
-	 ]	      
+	 ]
 )
 if test x$gprof_enabled = xtrue
 then
@@ -186,15 +186,15 @@ fi
 AC_ARG_ENABLE([timing],
 	[  --enable-timing    Turn on timing measurement and report],
 	[case "${enableval}" in
-	      yes) 
-	      	   timing_enabled=true 
+	      yes)
+	      	   timing_enabled=true
 		   ;;
-	      no)  timing_enabled=false 
+	      no)  timing_enabled=false
 		   ;;
 	      *) AC_MSG_ERROR([bad value ${enableval} for --enable-timing]) ;;
 	 esac],
 	 [timing_enabled=false
-	 ]	      
+	 ]
 )
 AM_CONDITIONAL(DO_TIMING, test "$timing_enabled" = "true")
 
@@ -251,7 +251,7 @@ fi
 #    Check for lib GraphicsMagick++
 # ------------------------------------------------------------------------------
 CONFIGURE_HEADLINE([ Graphics Magick support ])
-PKG_CHECK_MODULES(GM, [GraphicsMagick++ >= 1.1], 
+PKG_CHECK_MODULES(GM, [GraphicsMagick++ >= 1.1],
 		      [AC_DEFINE([HAVE_GRAPHICS_MAGICK_PP],[1],[GraphicsMagick++ available])
 		      enable_gm="yes"],
 		      [AC_MSG_WARN("GraphicsMagick++ disabled")
@@ -315,8 +315,8 @@ AM_CONDITIONAL(USE_MPI, test "$enable_mpi" = "yes")
 # try to find if we are using OpenMPI / MPICH by looking inside mpi.h
 AS_IF([test "$enable_mpi" = "yes"],
 	[
-		sav_CXX=$CXX
-		sav_CXXFLAGS=$CXXFLAGS
+		save_CXX=$CXX
+		save_CXXFLAGS=$CXXFLAGS
 		CXX=$MPICXX
 		CXXFLAGS="$CXXFLAGS"
 		AC_CHECK_DECL([OPEN_MPI], [mpi_vendor="OpenMPI"],
@@ -325,8 +325,8 @@ AS_IF([test "$enable_mpi" = "yes"],
 		[], [#include "mpi.h"])
 		AC_CHECK_DECL([MPICH], [mpi_vendor="MVAPICH2"],
 		[], [#include "mpi.h"])
-		CXX=$sav_CXX
-		CXXFLAGS=$sav_CXXFLAGS
+		CXX=$save_CXX
+		CXXFLAGS=$save_CXXFLAGS
 	])
 
 #
@@ -334,7 +334,7 @@ AS_IF([test "$enable_mpi" = "yes"],
 #
 MPI_CXXFLAGS=
 MPI_LDFLAGS=
-if test "$enable_mpi" = "yes" 
+if test "$enable_mpi" = "yes"
 then
     if test "$mpi_vendor" = "OpenMPI"
     then
@@ -349,8 +349,8 @@ then
      	tmp=`$MPICXX -compile-info | awk '{$1=""; print $0 }'`
      	MPI_CXXFLAGS=
      	for i in $tmp
-     	do 
-     	   case $i in 
+     	do
+     	   case $i in
 	   	-[[DIUbi]]*)
 		  MPI_CXXFLAGS="$MPI_CXXFLAGS $i"
              	  ;;
@@ -359,8 +359,8 @@ then
      	# second grab LDFLAGS (awk script is used to remove CXX at front)
      	tmp=`$MPICXX -link-info | awk '{$1=""; print $0 }'`
      	for i in $tmp
-     	do 
-     	   case $i in 
+     	do
+     	   case $i in
      	      	[[\\/]]*.a | ?:[[\\/]]*.a | -[[lLRu]]* | -Wl* )
      	      	  MPI_LDFLAGS="$MPI_LDFLAGS $i"
      	       	  ;;
@@ -387,13 +387,13 @@ dnl if test x$want_boost = xyes; then
 dnl    AX_BOOST_SERIALIZATION
 
 dnl    # look for boost_mpi
-dnl    sav_CXX=$CXX
-dnl    sav_CXXFLAGS=$CXXFLAGS
+dnl    save_CXX=$CXX
+dnl    save_CXXFLAGS=$CXXFLAGS
 dnl    CXX=$MPICXX
 dnl    CXXFLAGS="$CXXFLAGS"
 dnl    AX_BOOST_MPI
-dnl    CXX=$sav_CXX
-dnl    CXXFLAGS=$sav_CXXFLAGS
+dnl    CXX=$save_CXX
+dnl    CXXFLAGS=$save_CXXFLAGS
 dnl fi
 
 dnl if test "x$BOOST_MPI_LIB" != "x";
@@ -474,8 +474,8 @@ DX_INIT_DOXYGEN([$PACKAGE_NAME], [doc/Doxyfile.cfg])
 # Declares output files
 # ------------------------------------------------------------------------------
 AC_CONFIG_FILES([
-	Makefile 
-	src/Makefile 
+	Makefile
+	src/Makefile
 	src/hydro/Makefile
 	src/utils/Makefile
 	src/utils/monitoring/Makefile

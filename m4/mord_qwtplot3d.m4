@@ -41,7 +41,7 @@ AC_DEFUN([MORD_QWT_PLOT_3D],
 			fi
 		],
 		[want_qwt_plot_3d="yes"])
-	
+
 	succeeded=no
 	if test "x$want_qwt_plot_3d" = "xyes"; then
 		dnl Define library subdirectories
@@ -50,10 +50,10 @@ AC_DEFUN([MORD_QWT_PLOT_3D],
 			libsubdirs="lib64 lib lib64"
 		fi
 		libsubdir="lib"
-		
+
 		dnl Define include subdirectories
 		incdirnames="qwtplot3d qwtplot3d-qt4"
-		
+
 		dnl first we check the system location for QwtPlot3d library
 		AC_MSG_CHECKING([for QwtPlot3d])
 		qwt_plot_3d_path_found="no"
@@ -93,19 +93,19 @@ AC_DEFUN([MORD_QWT_PLOT_3D],
 			else
 				AC_MSG_RESULT([no])
 			fi
-		fi 
-		
+		fi
+
 		qwt_plot_3d_lib_found="no"
 		if test "$qwt_plot_3d_header_found" != "no"; then
 			AC_MSG_CHECKING([for QwtPlot3d library])
 
 			QWT_PLOT_3D_LDFLAGS="-L$qwt_plot_3d_libdir"
 			QWT_PLOT_3D_CPPFLAGS="-DHAVE_QWT_PLOT_3D -I$qwt_plot_3d_incdir"
-		
+
 			CPPFLAGS_SAVED="$CPPFLAGS"
 			CPPFLAGS="$QT_CPPFLAGS $QWT_PLOT_3D_CPPFLAGS $CPPFLAGS"
 			export CPPFLAGS
-			
+
 			CXXFLAGS_SAVED="$CXXFLAGS"
 			CXXFLAGS=""
 			export CXXFLAGS
@@ -113,16 +113,16 @@ AC_DEFUN([MORD_QWT_PLOT_3D],
 			LDFLAGS_SAVED="$LDFLAGS"
 			LDFLAGS="$QT_LDFLAGS $QWT_PLOT_3D_LDFLAGS $LDFLAGS"
 			export LDFLAGS
-			
+
 			LIBS_SAVED="$LIBS"
-			
+
 			dnl Define library names
 			libnames="qwtplot3d qwtplot3d-qt4"
 
 			for libname in $libnames ; do
 				QWT_PLOT_3D_LIBS="-l$libname -lQtOpenGL -lGL -lGLU"
 				LIBS="$QT_LIBS $QWT_PLOT_3D_LIBS"
-				
+
 				AC_REQUIRE([AC_PROG_CXX])
 				AC_LANG_PUSH([C++])
 				AC_LINK_IFELSE([
@@ -145,12 +145,12 @@ AC_DEFUN([MORD_QWT_PLOT_3D],
 			AS_IF([test "$qwt_plot_3d_lib_found" != "no"], AC_MSG_RESULT([-L$qwt_plot_3d_libdir -l$qwt_plot_3d_lib]), AC_MSG_RESULT([no]))
 		fi
 	fi
-	
+
 	CPPFLAGS="$CPPFLAGS_SAVED"
 	CXXFLAGS="$CXXFLAGS_SAVED"
 	LDFLAGS="$LDFLAGS_SAVED"
 	LIBS="$LIBS_SAVED"
-	
+
 	if test "$qwt_plot_3d_lib_found" != "yes" ; then
 		QWT_PLOT_3D_CPPFLAGS=""
 		QWT_PLOT_3D_LDFLAGS=""

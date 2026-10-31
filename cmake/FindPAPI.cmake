@@ -45,7 +45,7 @@ find_path(PAPI_INCLUDE_DIR
 )
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(PAPI 
+find_package_handle_standard_args(PAPI
   REQUIRED_VARS PAPI_LIBRARY PAPI_INCLUDE_DIR
 )
 
