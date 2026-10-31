@@ -30,11 +30,11 @@ def read_ramses_gpu_data(fileName,fieldName='density'):
 
     f.close()
 
-    print '%s read; returning field %s (%d,%d,%d)' % (fileName, fieldName, 
+    print '%s read; returning field %s (%d,%d,%d)' % (fileName, fieldName,
                                                       data.shape[0],
                                                       data.shape[1],
                                                       data.shape[2])
-                                                          
+
     return data
 
 #
@@ -47,7 +47,7 @@ def squareModulusFourier(data):
     # fft package
     from scipy.fftpack import fftn as fft_sc
     #from anfft import fftn as fft_an
-   
+
     # compute fft
     data_fft = fft_sc(data)
 
@@ -63,7 +63,7 @@ def squareModulusFourier(data):
 def powSpectrum(data_fftabs,nBins=32):
     """
     Compute power spectrum of Nd array data using nBins bins.
-    
+
     arguments:
     data_fftabs -- a real value data array containing square modulus Fourier coefficients
     nBins       -- number of bins (power spectrum)
@@ -73,7 +73,7 @@ def powSpectrum(data_fftabs,nBins=32):
 
     # frequency
     data_psd   = np.zeros(nBins,dtype='float64')
-    data_histo = np.zeros(nBins,dtype='int') 
+    data_histo = np.zeros(nBins,dtype='int')
 
 
     if len(data_fftabs.shape) == 2:
@@ -91,38 +91,38 @@ def powSpectrum(data_fftabs,nBins=32):
 
     if len(data_fftabs.shape) == 2:
         for i in range(lx):
-            
+
             # compute kx
             if (i<lx/2):
                 kx = i
             else:
                 kx = i-lx
-                
+
             for j in range(ly):
-                
+
                 # compute ky
                 if (j<ly/2):
                     ky = j
                 else:
                     ky = j-ly
-                    
+
                 kmod = sqrt(kx*kx+ky*ky)
                 index = int(kmod/dk+0.5)
-                
+
                 data_histo[index] += 1
                 data_psd[index] += data_fftabs[i,j]
-            
+
     else:
         for i in range(lx):
-            
+
             # compute kx
             if (i<lx/2):
                 kx = i
             else:
                 kx = i-lx
-                
+
             for j in range(ly):
-                    
+
                 # compute ky
                 if (j<ly/2):
                     ky = j
@@ -136,7 +136,7 @@ def powSpectrum(data_fftabs,nBins=32):
                         kz = k
                     else:
                         kz = k-lz
-                    
+
                     kmod = sqrt(kx*kx+ky*ky+kz*kz)
                     index = int(kmod/dk+0.5)
 
@@ -171,7 +171,7 @@ if __name__ == "__main__":
     print freq.shape, pow_data.shape
 
     import matplotlib.pyplot as plt
-    
+
 
     plt.loglog(freq, pow_data)
     plt.show()

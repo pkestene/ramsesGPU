@@ -106,9 +106,9 @@ HydroWidget::HydroWidget(ConfigMap & _param, HydroRunBase * _hydroRun, QWidget *
 // =======================================================
 HydroWidget::~HydroWidget()
 {
-  //makeCurrent();
+  // makeCurrent();
 
-  delete [] plot_rgba;
+  delete[] plot_rgba;
 
   deletePBO();
   deleteTexture();
@@ -117,7 +117,8 @@ HydroWidget::~HydroWidget()
 
 // =======================================================
 // =======================================================
-QSize HydroWidget::minimumSizeHint() const
+QSize
+HydroWidget::minimumSizeHint() const
 {
   return QSize(50, 50);
 } // HydroWidget::minimumSizeHint
@@ -125,7 +126,8 @@ QSize HydroWidget::minimumSizeHint() const
 
 // =======================================================
 // =======================================================
-QSize HydroWidget::sizeHint() const
+QSize
+HydroWidget::sizeHint() const
 {
   return QSize(nx, ny);
 } // HydroWidget::sizeHint
@@ -142,16 +144,22 @@ HydroWidget::startSimulation()
 
 // =======================================================
 // =======================================================
-void HydroWidget::updateData() {
+void
+HydroWidget::updateData()
+{
 
   // do one step of numerical scheme:
-  if (animate) {
-    hydroRun->oneStepIntegration(nStep,t,dt);
+  if (animate)
+  {
+    hydroRun->oneStepIntegration(nStep, t, dt);
     emit dataChanged();
-  } else {
+  }
+  else
+  {
     // only compute a finite number of steps
-    if (nbStepToDo) {
-      hydroRun->oneStepIntegration(nStep,t,dt);
+    if (nbStepToDo)
+    {
+      hydroRun->oneStepIntegration(nStep, t, dt);
       nbStepToDo--;
       emit dataChanged();
     }
@@ -391,7 +399,7 @@ HydroWidget::paintGL()
 {
   makeCurrent();
 
-  // make the convertion and fill PBO
+  // make the conversion and fill PBO
   render();
 
   // Copy the pixel buffer to the texture, ready to display
@@ -441,44 +449,51 @@ HydroWidget::resizeGL(int width, int height)
 
 // =======================================================
 // =======================================================
-void HydroWidget::mousePressEvent(QMouseEvent *event)
+void
+HydroWidget::mousePressEvent(QMouseEvent * event)
 {
   lastPos = event->pos();
 }
 
 // =======================================================
 // =======================================================
-void HydroWidget::mouseMoveEvent(QMouseEvent *event)
+void
+HydroWidget::mouseMoveEvent(QMouseEvent * event)
 {
-  //int dx = event->x() - lastPos.x();
-  //int dy = event->y() - lastPos.y();
+  // int dx = event->x() - lastPos.x();
+  // int dy = event->y() - lastPos.y();
 
-  if (event->buttons() & Qt::LeftButton) {
-  } else if (event->buttons() & Qt::RightButton) {
+  if (event->buttons() & Qt::LeftButton)
+  {
+  }
+  else if (event->buttons() & Qt::RightButton)
+  {
   }
   lastPos = event->pos();
 }
 
 // =======================================================
 // =======================================================
-void HydroWidget::saveGLState()
+void
+HydroWidget::saveGLState()
 {
-    glPushAttrib(GL_ALL_ATTRIB_BITS);
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
+  glPushAttrib(GL_ALL_ATTRIB_BITS);
+  glMatrixMode(GL_PROJECTION);
+  glPushMatrix();
+  glMatrixMode(GL_MODELVIEW);
+  glPushMatrix();
 }
 
 // =======================================================
 // =======================================================
-void HydroWidget::restoreGLState()
+void
+HydroWidget::restoreGLState()
 {
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-    glPopAttrib();
+  glMatrixMode(GL_PROJECTION);
+  glPopMatrix();
+  glMatrixMode(GL_MODELVIEW);
+  glPopMatrix();
+  glPopAttrib();
 }
 
 

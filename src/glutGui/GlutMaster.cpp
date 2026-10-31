@@ -73,28 +73,36 @@ GlutMaster::CallBackKeyboardFunc(unsigned char key, int x, int y)
   viewPorts[windowID]->CallBackKeyboardFunc(key, x, y);
 }
 
-void GlutMaster::CallBackMotionFunc(int x, int y){
+void
+GlutMaster::CallBackMotionFunc(int x, int y)
+{
 
-   int windowID = glutGetWindow();
-   viewPorts[windowID]->CallBackMotionFunc(x, y);
+  int windowID = glutGetWindow();
+  viewPorts[windowID]->CallBackMotionFunc(x, y);
 }
 
-void GlutMaster::CallBackMouseFunc(int button, int state, int x, int y){
+void
+GlutMaster::CallBackMouseFunc(int button, int state, int x, int y)
+{
 
-   int windowID = glutGetWindow();
-   viewPorts[windowID]->CallBackMouseFunc(button, state, x, y);
+  int windowID = glutGetWindow();
+  viewPorts[windowID]->CallBackMouseFunc(button, state, x, y);
 }
 
-void GlutMaster::CallBackPassiveMotionFunc(int x, int y){
+void
+GlutMaster::CallBackPassiveMotionFunc(int x, int y)
+{
 
-   int windowID = glutGetWindow();
-   viewPorts[windowID]->CallBackPassiveMotionFunc(x, y);
+  int windowID = glutGetWindow();
+  viewPorts[windowID]->CallBackPassiveMotionFunc(x, y);
 }
 
-void GlutMaster::CallBackReshapeFunc(int w, int h){
+void
+GlutMaster::CallBackReshapeFunc(int w, int h)
+{
 
-   int windowID = glutGetWindow();
-   viewPorts[windowID]->CallBackReshapeFunc(w, h);
+  int windowID = glutGetWindow();
+  viewPorts[windowID]->CallBackReshapeFunc(w, h);
 }
 
 void
@@ -157,26 +165,34 @@ GlutMaster::DisableIdleFunction(void)
   idleFunctionEnabled = 0;
 }
 
-void GlutMaster::EnableIdleFunction(void){
+void
+GlutMaster::EnableIdleFunction(void)
+{
 
-   idleFunctionEnabled = 1;
+  idleFunctionEnabled = 1;
 }
 
-int GlutMaster::IdleFunctionEnabled(void){
+int
+GlutMaster::IdleFunctionEnabled(void)
+{
 
-   // Is idle function enabled?
+  // Is idle function enabled?
 
-   return(idleFunctionEnabled);
+  return (idleFunctionEnabled);
 }
 
-int GlutMaster::IdleSetToCurrentWindow(void){
+int
+GlutMaster::IdleSetToCurrentWindow(void)
+{
 
-   // Is current idle window same as current window?
+  // Is current idle window same as current window?
 
-   return( currentIdleWindow == glutGetWindow() );
+  return (currentIdleWindow == glutGetWindow());
 }
 
-void GlutMaster::SetIdleToCurrentWindow(void){
+void
+GlutMaster::SetIdleToCurrentWindow(void)
+{
 
-   currentIdleWindow = glutGetWindow();
+  currentIdleWindow = glutGetWindow();
 }

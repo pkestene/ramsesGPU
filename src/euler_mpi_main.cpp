@@ -134,7 +134,7 @@ main(int argc, char * argv[])
     // std::cout << "Build   date : " << build_date()   << std::endl;
     std::cout << "Current date : " << current_date() << std::endl;
 
-    // other usefull information
+    // other useful information
     if (!mhdEnabled)
     {
       std::cout << "unsplit scheme enabled ?  " << unsplitEnabled << std::endl;

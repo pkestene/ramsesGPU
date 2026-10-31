@@ -30,7 +30,7 @@ public:
 
   /** indexed colormap data on device*/
   unsigned int * cmap_rgba_device;
-  /** data to plot (physicaly in the Pixel buffer Object) */
+  /** data to plot (physically in the Pixel buffer Object) */
   unsigned int * plot_rgba_pbo;
   uint           minmaxBlockCount;
 

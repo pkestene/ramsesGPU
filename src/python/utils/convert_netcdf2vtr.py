@@ -72,7 +72,7 @@ def read_h5(filename,fieldName='x-velocity'):
 
 #
 # ###################################################
-#  
+#
 def read_nc(fileName,fieldName='rho'):
     """ReadNetCDF data from RAMSES-GPU simulation run using Scientific.IO.NetCDF module.
 
@@ -134,7 +134,7 @@ def toVtr(filePrefix):
     #
     # write output file
     #
-    
+
     # write file
     gridToVTK(filePrefix, x, y, z, cellData = {"rho" : rho,
                                                "E" : E,
@@ -144,8 +144,8 @@ def toVtr(filePrefix):
                                                "Bx" : Bx,
                                                "By" : By,
                                                "Bz" : Bz})
-    
-    
+
+
 #
 # ######################################
 #
@@ -171,7 +171,7 @@ if __name__ == '__main__':
     while i<=iStop:
 
         iStr='%07d' % i
-        
+
         filePrefix=prefix+iStr+'_IX'
         print 'Converting '+filePrefix+'.nc'+' into VTR file format ...'
         toVtr(filePrefix)
@@ -185,6 +185,3 @@ if __name__ == '__main__':
         toVtr(filePrefix)
 
         i += deltaI
-
-
-

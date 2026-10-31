@@ -24,7 +24,7 @@ def CheckAbort(obj, event):
         obj.SetAbortRender(1)
 
 def doRayCast(filename):
-    
+
     # Create the standard renderer, render window and interactor
     ren = vtk.vtkRenderer()
     renWin = vtk.vtkRenderWindow()
@@ -69,7 +69,7 @@ def doRayCast(filename):
     volumeProperty.SetScalarOpacity(opacityTransferFunction)
     volumeProperty.ShadeOn()
     volumeProperty.SetInterpolationTypeToLinear()
-    
+
     # The mapper / ray cast function know how to render the data
     compositeFunction = vtk.vtkVolumeRayCastCompositeFunction()
     volumeMapper = vtk.vtkVolumeRayCastMapper()
@@ -82,7 +82,7 @@ def doRayCast(filename):
     volume = vtk.vtkVolume()
     volume.SetMapper(volumeMapper)
     volume.SetProperty(volumeProperty)
-    
+
     ren.AddVolume(volume)
     ren.SetBackground(1, 1, 1)
     renWin.SetSize(600, 600)

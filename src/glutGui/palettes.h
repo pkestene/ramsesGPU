@@ -1881,15 +1881,7 @@ static float heat[256*3] = {
 
 /*! \var static float* palette_rgb[]
  *  \brief array of pointers to lookup tables */
-static float* palette_rgb[7] = {
-    rainbow,
-    jh_colors,
-    step8,
-    step32,
-    idl1,
-    idl2,
-    heat
-};
+static float * palette_rgb[7] = { rainbow, jh_colors, step8, step32, idl1, idl2, heat };
 
 /*static float cmap[NBCOLORS][3]={
   {0.0000,    0.0000,    1.0000},

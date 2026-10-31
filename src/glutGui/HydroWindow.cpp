@@ -158,13 +158,13 @@ HydroWindow::HydroWindow(HydroRunBase * _hydroRun,
 HydroWindow::~HydroWindow()
 {
 
-  delete [] plot_rgba;
-  delete [] cmap;
-  delete [] cmap_der;
+  delete[] plot_rgba;
+  delete[] cmap;
+  delete[] cmap_der;
 
 #ifdef __CUDACC__
-  CUDA_SAFE_CALL( cudaFree(d_cmap)     );
-  CUDA_SAFE_CALL( cudaFree(d_cmap_der) );
+  CUDA_SAFE_CALL(cudaFree(d_cmap));
+  CUDA_SAFE_CALL(cudaFree(d_cmap_der));
 #endif // __CUDACC__
 
   deletePBO();
@@ -449,7 +449,9 @@ HydroWindow::CallBackReshapeFunc(int w, int h)
 
 // =======================================================
 // =======================================================
-void HydroWindow::CallBackIdleFunc(void) {
+void
+HydroWindow::CallBackIdleFunc(void)
+{
 
   CallBackDisplayFunc();
 
@@ -514,7 +516,7 @@ format */
 
         // write heavy data in HDF5
         hydroRun->outputHdf5(hydroRun->getDataHost(), nStep, ghostIncluded);
-        // write light data in XDMF for a single step (usefull for
+        // write light data in XDMF for a single step (useful for
         // paraview loading)
         hydroRun->writeXdmfForHdf5Wrapper(nStep, true, ghostIncluded);
         std::cout << "dump results into HDF5/XDMF file for step : " << nStep << std::endl;
@@ -533,8 +535,8 @@ format */
     case 's':
     case 'S': /* Do only a single step */
     {
-      std::cout << "[" << current_date() << "]"
-                << "  nStep : " << nStep << "\t time : " << t << " (dt=" << dt << ")" << std::endl;
+      std::cout << "[" << current_date() << "]" << "  nStep : " << nStep << "\t time : " << t
+                << " (dt=" << dt << ")" << std::endl;
       animate = false;
       nbStepToDo = 1;
     }

@@ -1,4 +1,3 @@
 To build Cython module powerSpectrum2:
 
    python setup.py build_ext --inplace
-

@@ -1,4 +1,4 @@
-# take care that autotroll.am 
+# take care that autotroll.am
 # already defines the following variables
 # SUFFIXES, DISTCLEANFILES and CLEANFILES
 include $(top_srcdir)/am/autotroll.am
@@ -54,12 +54,12 @@ FORCE:
 
 ####################################################
 # clean generated files
-MAINTAINERCLEANFILES = $(srcdir)/Makefile.in 
+MAINTAINERCLEANFILES = $(srcdir)/Makefile.in
 
 AUTOMAKE_OPTIONS = subdir-objects
 SUBDIRS = utils hydro .
 # if ENABLE_QTGUI
-# SUBDIRS += ./qtGui/qtHelloWorld	
+# SUBDIRS += ./qtGui/qtHelloWorld
 # endif
 
 #VTK_CPPFLAGS=
@@ -88,7 +88,7 @@ endif
 AM_CXXFLAGS = -I$(srcdir)/hydro -I$(srcdir)/utils/config -I$(srcdir)/utils/monitoring $(CUDA_CFLAGS) $(VTK_CPPFLAGS) $(TIMING_FLAGS)
 AM_CFLAGS   = $(CUDA_CFLAGS) $(VTK_CPPFLAGS) $(TIMING_FLAGS)
 AM_CPPFLAGS = -I$(srcdir)/hydro -I$(srcdir)/utils/config -I$(srcdir)/utils/monitoring $(CUDA_CFLAGS) $(VTK_CPPFLAGS) $(TIMING_FLAGS)
-AM_LDFLAGS  = $(VTK_LDFLAGS) $(VTK_LIBS) 
+AM_LDFLAGS  = $(VTK_LDFLAGS) $(VTK_LIBS)
 AM_FCFLAGS  = -fno-underscoring
 #NVCCFLAGS  += --host-compilation=c++
 NVCCFLAGS  += --ptxas-options -v
@@ -96,7 +96,7 @@ NVCCFLAGS  += --compiler-options -I$(srcdir) \
 	--compiler-options -I$(srcdir)/hydro \
 	--compiler-options -I$(srcdir)/utils/config \
 	--compiler-options -I$(srcdir)/utils/monitoring \
-	--compiler-options -I$(srcdir)/glutGui 
+	--compiler-options -I$(srcdir)/glutGui
 NVCCFLAGS += --compiler-options -fno-strict-aliasing
 NVCCFLAGS += $(addprefix --compiler-options ,$(VTK_CPPFLAGS) )
 NVCCFLAGS += --compiler-options -Wno-unused-function
@@ -129,7 +129,7 @@ bin_PROGRAMS  = euler_cpu \
 		euler_zslab_cpu
 if USE_DOUBLE_PRECISION
 bin_PROGRAMS += euler_cpu_double \
-		euler_zslab_cpu_double 
+		euler_zslab_cpu_double
 endif
 
 if USE_MPI
@@ -181,7 +181,7 @@ euler_cpu_LDADD = $(GM_LIBS) hydro/libhydroCpu.la utils/config/libIniConfig.la u
 if USE_DOUBLE_PRECISION
 euler_cpu_double_SOURCES = euler_main.cpp
 euler_cpu_double_CXXFLAGS = -DUSE_DOUBLE $(GM_CFLAGS) $(GM_FLAGS_SUPP)
-euler_cpu_double_CPPFLAGS = -DUSE_DOUBLE $(AM_CPPFLAGS) 
+euler_cpu_double_CPPFLAGS = -DUSE_DOUBLE $(AM_CPPFLAGS)
 euler_cpu_double_LDADD = $(GM_LIBS) hydro/libhydroCpu_double.la utils/config/libIniConfig.la utils/monitoring/libMonitoring.la utils/cnpy/libCNpy.la $(PAPI_LDFLAGS)
 endif
 
@@ -217,7 +217,7 @@ if USE_CUDA
 ### SIMPLE PRECISION ###
 BUILT_SOURCES += euler_main.cu
 CLEANFILES    += euler_main.cu
-nodist_euler_gpu_SOURCES = euler_main.cu 
+nodist_euler_gpu_SOURCES = euler_main.cu
 # force CXX link
 nodist_EXTRA_euler_gpu_SOURCES = dummy.cpp
 euler_gpu_CPPFLAGS = $(CUDA_CFLAGS) $(GM_CFLAGS) $(GM_FLAGS_SUPP)
@@ -228,11 +228,11 @@ euler_gpu_LDADD = $(GM_LIBS) utils/cnpy/libCNpy.la
 if USE_DOUBLE_PRECISION
 BUILT_SOURCES += euler_main-double.cu
 CLEANFILES    += euler_main-double.cu
-nodist_euler_gpu_double_SOURCES = euler_main-double.cu 
+nodist_euler_gpu_double_SOURCES = euler_main-double.cu
 # force CXX link
 nodist_EXTRA_euler_gpu_double_SOURCES = dummy.cpp
 euler_gpu_double_CPPFLAGS = -DUSE_DOUBLE $(CUDA_CFLAGS) $(GM_CFLAGS) $(GM_FLAGS_SUPP)
-euler_gpu_double_CXXFLAGS = -DUSE_DOUBLE $(AM_CPPFLAGS) 
+euler_gpu_double_CXXFLAGS = -DUSE_DOUBLE $(AM_CPPFLAGS)
 euler_gpu_double_LDFLAGS  = $(CUDA_LIBS) hydro/libhydroGpu_double.la utils/config/libIniConfigGpu.la utils/monitoring/libMonitoringGpu.la
 euler_gpu_double_LDADD = $(GM_LIBS) utils/cnpy/libCNpy.la
 endif
@@ -251,14 +251,14 @@ nodist_euler_gpu_mpi_SOURCES = euler_mpi_main.cu
 nodist_EXTRA_euler_gpu_mpi_SOURCES = dummy.cpp
 euler_gpu_mpi_CPPFLAGS = $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(GM_CFLAGS) $(GM_FLAGS_SUPP) -I$(srcdir)/utils/mpiUtils $(EXTRA_FLAGS)
 euler_gpu_mpi_CXXFLAGS = $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(GM_CFLAGS) $(GM_FLAGS_SUPP) -I$(srcdir)/utils/mpiUtils $(EXTRA_FLAGS)
-euler_gpu_mpi_LDFLAGS  = $(CUDA_LIBS) $(GM_LIBS) hydro/libhydroGpu.la utils/config/libIniConfigGpu.la utils/monitoring/libMonitoringGpu.la utils/cnpy/libCNpy.la utils/mpiUtils/libMpiUtils.la $(MPI_LDFLAGS) 
+euler_gpu_mpi_LDFLAGS  = $(CUDA_LIBS) $(GM_LIBS) hydro/libhydroGpu.la utils/config/libIniConfigGpu.la utils/monitoring/libMonitoringGpu.la utils/cnpy/libCNpy.la utils/mpiUtils/libMpiUtils.la $(MPI_LDFLAGS)
 endif
 
 ### DOUBLE PRECISION ###
 if USE_MPI_AND_DOUBLE_PRECISION
 BUILT_SOURCES += euler_mpi_main-double.cu
 CLEANFILES    += euler_mpi_main-double.cu
-nodist_euler_gpu_mpi_double_SOURCES = euler_mpi_main-double.cu 
+nodist_euler_gpu_mpi_double_SOURCES = euler_mpi_main-double.cu
 # force CXX link
 nodist_EXTRA_euler_gpu_mpi_double_SOURCES = dummy.cpp
 euler_gpu_mpi_double_CXXFLAGS = -DUSE_DOUBLE $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(GM_CFLAGS) $(GM_FLAGS_SUPP) -I$(srcdir)/utils/mpiUtils $(EXTRA_FLAGS)
@@ -296,7 +296,7 @@ nodist_euler2d_laxliu_gpu_SOURCES = \
 # add dummy C++ source to cause C++ linking.
 nodist_EXTRA_euler2d_laxliu_gpu_SOURCES = dummy.cxx
 euler2d_laxliu_gpu_CPPFLAGS = $(CUDA_CFLAGS) $(GM_CFLAGS) $(GM_FLAGS_SUPP)
-euler2d_laxliu_gpu_LDFLAGS  = $(CUDA_LIBS) 
+euler2d_laxliu_gpu_LDFLAGS  = $(CUDA_LIBS)
 euler2d_laxliu_gpu_LDADD    = hydro/libhydroGpu.la utils/config/libIniConfigGpu.la utils/monitoring/libMonitoringGpu.la utils/cnpy/libCNpy.la $(GM_LIBS)
 endif
 
@@ -307,7 +307,7 @@ endif
 #
 # =======================================================
 ### SIMPLE PRECISION ###
-euler_zslab_cpu_SOURCES = euler_zslab_main.cpp 
+euler_zslab_cpu_SOURCES = euler_zslab_main.cpp
 euler_zslab_cpu_CXXFLAGS = $(GM_CFLAGS) $(GM_FLAGS_SUPP) $(EXTRA_FLAGS)
 euler_zslab_cpu_LDADD = $(GM_LIBS) hydro/libhydroCpu.la utils/config/libIniConfig.la utils/monitoring/libMonitoring.la utils/cnpy/libCNpy.la
 
@@ -315,7 +315,7 @@ euler_zslab_cpu_LDADD = $(GM_LIBS) hydro/libhydroCpu.la utils/config/libIniConfi
 if USE_DOUBLE_PRECISION
 euler_zslab_cpu_double_SOURCES = euler_zslab_main.cpp
 euler_zslab_cpu_double_CXXFLAGS = -DUSE_DOUBLE $(GM_CFLAGS) $(GM_FLAGS_SUPP)
-euler_zslab_cpu_double_CPPFLAGS = -DUSE_DOUBLE $(AM_CPPFLAGS) 
+euler_zslab_cpu_double_CPPFLAGS = -DUSE_DOUBLE $(AM_CPPFLAGS)
 euler_zslab_cpu_double_LDADD = $(GM_LIBS) hydro/libhydroCpu_double.la utils/config/libIniConfig.la utils/monitoring/libMonitoring.la utils/cnpy/libCNpy.la
 endif
 
@@ -334,7 +334,7 @@ nodist_euler_zslab_gpu_SOURCES = euler_zslab_main.cu
 nodist_EXTRA_euler_zslab_gpu_SOURCES = dummy.cpp
 euler_zslab_gpu_CPPFLAGS = $(CUDA_CFLAGS) $(GM_CFLAGS) $(GM_FLAGS_SUPP)
 euler_zslab_gpu_LDFLAGS  = $(CUDA_LIBS) hydro/libhydroGpu.la utils/config/libIniConfigGpu.la utils/monitoring/libMonitoringGpu.la utils/cnpy/libCNpy.la
-euler_zslab_gpu_LDADD = $(GM_LIBS) 
+euler_zslab_gpu_LDADD = $(GM_LIBS)
 
 ### DOUBLE PRECISION ###
 if USE_DOUBLE_PRECISION
@@ -345,7 +345,7 @@ nodist_euler_zslab_gpu_double_SOURCES = \
 # force CXX link
 nodist_EXTRA_euler_zslab_gpu_double_SOURCES = dummy.cpp
 euler_zslab_gpu_double_CPPFLAGS = -DUSE_DOUBLE $(CUDA_CFLAGS) $(GM_CFLAGS) $(GM_FLAGS_SUPP)
-euler_zslab_gpu_double_CXXFLAGS = -DUSE_DOUBLE $(AM_CPPFLAGS) 
+euler_zslab_gpu_double_CXXFLAGS = -DUSE_DOUBLE $(AM_CPPFLAGS)
 euler_zslab_gpu_double_LDFLAGS  = $(CUDA_LIBS) hydro/libhydroGpu_double.la utils/config/libIniConfigGpu.la utils/monitoring/libMonitoringGpu.la utils/cnpy/libCNpy.la
 euler_zslab_gpu_double_LDADD = $(GM_LIBS)
 endif
@@ -359,7 +359,7 @@ endif
 # =================================
 ### Simple Precision - MPI ###
 if USE_MPI
-euler_zslab_cpu_mpi_SOURCES = euler_zslab_mpi_main.cpp 
+euler_zslab_cpu_mpi_SOURCES = euler_zslab_mpi_main.cpp
 euler_zslab_cpu_mpi_CXXFLAGS = $(MPI_CXXFLAGS) $(GM_CFLAGS) $(GM_FLAGS_SUPP) -I$(srcdir)/utils/mpiUtils  $(EXTRA_FLAGS)
 euler_zslab_cpu_mpi_LDFLAGS = $(MPI_LDFLAGS) $(GM_LIBS)
 euler_zslab_cpu_mpi_LDADD = hydro/libhydroCpu.la utils/config/libIniConfig.la utils/monitoring/libMonitoring.la utils/cnpy/libCNpy.la utils/mpiUtils/libMpiUtils.la
@@ -367,7 +367,7 @@ endif
 
 ### Double Precision - MPI ###
 if USE_MPI_AND_DOUBLE_PRECISION
-euler_zslab_cpu_mpi_double_SOURCES = euler_zslab_mpi_main.cpp 
+euler_zslab_cpu_mpi_double_SOURCES = euler_zslab_mpi_main.cpp
 euler_zslab_cpu_mpi_double_CXXFLAGS = -DUSE_DOUBLE $(MPI_CXXFLAGS) $(GM_CFLAGS) $(GM_FLAGS_SUPP) -I$(srcdir)/utils/mpiUtils  $(EXTRA_FLAGS)
 euler_zslab_cpu_mpi_double_CPPFLAGS = -DUSE_DOUBLE $(AM_CPPFLAGS)
 euler_zslab_cpu_mpi_double_LDFLAGS = $(MPI_LDFLAGS) $(GM_LIBS)
@@ -384,19 +384,19 @@ if USE_CUDA
 if USE_MPI
 BUILT_SOURCES += euler_zslab_mpi_main.cu
 CLEANFILES    += euler_zslab_mpi_main.cu
-nodist_euler_zslab_gpu_mpi_SOURCES = euler_zslab_mpi_main.cu 
+nodist_euler_zslab_gpu_mpi_SOURCES = euler_zslab_mpi_main.cu
 # force CXX link
 nodist_EXTRA_euler_zslab_gpu_mpi_SOURCES = dummy.cpp
 euler_zslab_gpu_mpi_CPPFLAGS = $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(GM_CFLAGS) $(GM_FLAGS_SUPP) -I$(srcdir)/utils/mpiUtils $(EXTRA_FLAGS)
 euler_zslab_gpu_mpi_CXXFLAGS = $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(GM_CFLAGS) $(GM_FLAGS_SUPP) -I$(srcdir)/utils/mpiUtils $(EXTRA_FLAGS)
-euler_zslab_gpu_mpi_LDFLAGS  = $(CUDA_LIBS) $(GM_LIBS) hydro/libhydroGpu.la utils/config/libIniConfigGpu.la utils/monitoring/libMonitoringGpu.la utils/cnpy/libCNpy.la utils/mpiUtils/libMpiUtils.la $(MPI_LDFLAGS) 
+euler_zslab_gpu_mpi_LDFLAGS  = $(CUDA_LIBS) $(GM_LIBS) hydro/libhydroGpu.la utils/config/libIniConfigGpu.la utils/monitoring/libMonitoringGpu.la utils/cnpy/libCNpy.la utils/mpiUtils/libMpiUtils.la $(MPI_LDFLAGS)
 endif
 
 ### DOUBLE PRECISION ###
 if USE_MPI_AND_DOUBLE_PRECISION
 BUILT_SOURCES += euler_zslab_mpi_main-double.cu
 CLEANFILES    += euler_zslab_mpi_main-double.cu
-nodist_euler_zslab_gpu_mpi_double_SOURCES = euler_zslab_mpi_main-double.cu 
+nodist_euler_zslab_gpu_mpi_double_SOURCES = euler_zslab_mpi_main-double.cu
 # force CXX link
 nodist_EXTRA_euler_zslab_gpu_mpi_double_SOURCES = dummy.cpp
 euler_zslab_gpu_mpi_double_CXXFLAGS = -DUSE_DOUBLE $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(GM_CFLAGS) $(GM_FLAGS_SUPP) -I$(srcdir)/utils/mpiUtils $(EXTRA_FLAGS)
@@ -474,8 +474,8 @@ nodist_euler2d_gpu_glut_SOURCES = \
 
 nodist_EXTRA_euler2d_gpu_glut_SOURCES = dummy.cpp
 euler2d_gpu_glut_CXXFLAGS = $(CUDA_CFLAGS) $(GM_CFLAGS) $(GM_FLAGS_SUPP)
-euler2d_gpu_glut_LDFLAGS  = $(CUDA_LIBS) $(GLEW_LIBS) $(GLUT_LIBS) $(GL_LIBS) 
-euler2d_gpu_glut_LDADD    = hydro/libhydroGpu.la utils/config/libIniConfigGpu.la utils/monitoring/libMonitoringGpu.la utils/cnpy/libCNpy.la $(GM_LIBS) 
+euler2d_gpu_glut_LDFLAGS  = $(CUDA_LIBS) $(GLEW_LIBS) $(GLUT_LIBS) $(GL_LIBS)
+euler2d_gpu_glut_LDADD    = hydro/libhydroGpu.la utils/config/libIniConfigGpu.la utils/monitoring/libMonitoringGpu.la utils/cnpy/libCNpy.la $(GM_LIBS)
 
 endif
 
@@ -498,7 +498,7 @@ endif
 # 	qtGui/qtHydro2d/HydroWidget.cpp \
 # 	qtGui/qtHydro2d/MainWindow.h \
 # 	qtGui/qtHydro2d/MainWindow.cpp \
-# 	qtGui/qtHydro2d/main.cpp 
+# 	qtGui/qtHydro2d/main.cpp
 # euler2d_cpu_qt_CXXFLAGS = $(GM_CFLAGS) $(GM_FLAGS_SUPP) -fPIC
 # euler2d_cpu_qt_LDADD   = $(GM_LIBS) $(QT_LIBS) hydro/libhydroCpu.la utils/config/libIniConfig.la utils/monitoring/libMonitoring.la utils/cnpy/libCNpy.la $(PAPI_LDFLAGS)
 # euler2d_cpu_qt_LDFLAGS = $(AM_LDFLAGS) $(GLEW_LIBS)
@@ -507,12 +507,12 @@ endif
 # 	qtGui/qtHydro2d/HydroWidget.moc.cpp \
 # 	qtGui/qtHydro2d/MainWindow.moc.cpp
 
-# gen_sources = $(moc_gen_sources) 
+# gen_sources = $(moc_gen_sources)
 
 # nodist_euler2d_cpu_qt_SOURCES = $(gen_sources)
 
-# BUILT_SOURCES += $(moc_gen_sources) 
-# CLEANFILES += $(moc_gen_sources) 
+# BUILT_SOURCES += $(moc_gen_sources)
+# CLEANFILES += $(moc_gen_sources)
 
 # ===================================================
 # euler2d_gpu_qt
@@ -531,19 +531,19 @@ endif
 # 	qtGui/qtHydro2d/HydroWidget.cpp \
 # 	qtGui/qtHydro2d/MainWindow.h \
 # 	qtGui/qtHydro2d/MainWindow.cpp
-# nodist_euler2d_gpu_qt_SOURCES = qtGui/qtHydro2d/main.cu 
+# nodist_euler2d_gpu_qt_SOURCES = qtGui/qtHydro2d/main.cu
 # nodist_EXTRA_euler2d_gpu_qt_SOURCES = dummy.cpp
 # euler2d_gpu_qt_CXXFLAGS = $(CUDA_CFLAGS) $(GM_CFLAGS) $(GM_FLAGS_SUPP)
 # euler2d_gpu_qt_LDFLAGS  = $(CUDA_LIBS) $(GLEW_LIBS) hydro/libhydroGpu.la utils/config/libIniConfigGpu.la utils/monitoring/libMonitoringGpu.la
-# euler2d_gpu_qt_LDADD    = $(GM_LIBS) $(QT_LIBS) 
+# euler2d_gpu_qt_LDADD    = $(GM_LIBS) $(QT_LIBS)
 # gpu_moc_gen_sources = \
 # 	qtGui/qtHydro2d/MainWindow.moc.cpp
 
-# gpu_gen_sources = $(moc_gen_sources) 
+# gpu_gen_sources = $(moc_gen_sources)
 
 # nodist_euler2d_gpu_qt_SOURCES += $(gpu_gen_sources)
 
-# BUILT_SOURCES += $(moc_gen_sources) 
+# BUILT_SOURCES += $(moc_gen_sources)
 # endif
 
 # endif

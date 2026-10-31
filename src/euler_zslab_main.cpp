@@ -54,11 +54,12 @@ void
 fpehandler(int sig_num)
 {
   signal(SIGFPE, fpehandler);
-  printf("SIGFPE: floating point exception occured of type %d, exiting.\n", sig_num);
+  printf("SIGFPE: floating point exception occurred of type %d, exiting.\n", sig_num);
   abort();
 }
 
-void print_help(int argc, char* argv[]);
+void
+print_help(int argc, char * argv[]);
 
 using hydroSimu::HydroRunGodunovZslab;
 using hydroSimu::MHDRunGodunovZslab;
@@ -69,7 +70,7 @@ int
 main(int argc, char * argv[])
 {
 
-  /* install signal handler for floating point errors (only usefull when debugging, doing a
+  /* install signal handler for floating point errors (only useful when debugging, doing a
    * backtrace in gdb) */
   // feenableexcept(FE_DIVBYZERO | FE_INVALID);
   // signal(SIGFPE, fpehandler);

@@ -63,13 +63,14 @@ MainWindow::~MainWindow()
 
 // =======================================================
 // =======================================================
-void MainWindow::updateInfoLabel()
+void
+MainWindow::updateInfoLabel()
 {
   QString timeStr;
   timeStr.setNum(hydroWidget->t, 'f');
   QString nStepStr;
   nStepStr.setNum(hydroWidget->nStep);
-  infoLabel->setText("time : "+timeStr+" (nstep = "+nStepStr+")");
+  infoLabel->setText("time : " + timeStr + " (nstep = " + nStepStr + ")");
 } // MainWindow::updateInfoLabel
 
 // =======================================================
@@ -140,7 +141,7 @@ MainWindow::keyPressEvent(QKeyEvent * e)
       {
         // write heavy data in HDF5
         hydroWidget->hydroRun->outputHdf5(hydroWidget->hydroRun->getDataHost(), hydroWidget->nStep);
-        // write light data in XDMF for a single step (usefull for
+        // write light data in XDMF for a single step (useful for
         // paraview loading)
         hydroWidget->hydroRun->writeXdmfForHdf5Wrapper(hydroWidget->nStep, true);
         std::cout << "dump results into HDF5/XDMF file for step : " << hydroWidget->nStep

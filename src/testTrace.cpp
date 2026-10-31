@@ -57,29 +57,28 @@ real_t dtdz = 0.013867197924410549;
 
 // =========================================================
 // =========================================================
-void testTrace_cpu(real_t (&qm)[3][NVAR_MHD],
-		   real_t (&qp)[3][NVAR_MHD],
-		   real_t (&qEdge)[4][3][NVAR_MHD])
+void
+testTrace_cpu(real_t (&qm)[3][NVAR_MHD], real_t (&qp)[3][NVAR_MHD], real_t (&qEdge)[4][3][NVAR_MHD])
 {
-  real_t xPos=0.0;
+  real_t xPos = 0.0;
 
   // call trace
   trace_unsplit_mhd_3d_simpler(q, dq, bfNb, dbf, elecFields, dtdx, dtdy, dtdz, xPos, qm, qp, qEdge);
-
 }
 
 // =========================================================
 // =========================================================
 // =========================================================
-int main(int argc, char *argv[])
+int
+main(int argc, char * argv[])
 {
 
   /* parse command line arguments */
   GetPot cl(argc, argv);
 
   /* search for configuration parameter file */
-  const std::string default_input_file = std::string(argv[0])+ ".ini";
-  const std::string input_file = cl.follow(default_input_file.c_str(),    "--param");
+  const std::string default_input_file = std::string(argv[0]) + ".ini";
+  const std::string input_file = cl.follow(default_input_file.c_str(), "--param");
 
   /* parse parameters from input file */
   ConfigMap configMap(input_file);
@@ -96,29 +95,66 @@ int main(int argc, char *argv[])
     real_t qEdge[4][3][NVAR_MHD];
 
     // CPU
-    testTrace_cpu(qm,qp,qEdge);
+    testTrace_cpu(qm, qp, qEdge);
 
     // print results on screen
     std::cout << "test trace_unsplit_mhd_3d_simpler\n";
-    for (int i=0; i<NVAR_MHD; i++) {
-      printf("qm[0][%d] = %e\t qm[1][%d] = %e\t qm[2][%d] = %e\n",i,(double)qm[0][i],i,(double)qm[1][i],i,(double)qm[2][i]);
+    for (int i = 0; i < NVAR_MHD; i++)
+    {
+      printf("qm[0][%d] = %e\t qm[1][%d] = %e\t qm[2][%d] = %e\n",
+             i,
+             (double)qm[0][i],
+             i,
+             (double)qm[1][i],
+             i,
+             (double)qm[2][i]);
     }
-    for (int i=0; i<NVAR_MHD; i++) {
-      printf("qp[0][%d] = %e\t qp[1][%d] = %e\t qp[2][%d] = %e\n",i,(double)qp[0][i],i,(double)qp[1][i],i,(double)qp[2][i]);
+    for (int i = 0; i < NVAR_MHD; i++)
+    {
+      printf("qp[0][%d] = %e\t qp[1][%d] = %e\t qp[2][%d] = %e\n",
+             i,
+             (double)qp[0][i],
+             i,
+             (double)qp[1][i],
+             i,
+             (double)qp[2][i]);
     }
-    for (int i=0; i<NVAR_MHD; i++) {
-      printf("qEdge[0][0][%d] = %e\t qEdge[0][1][%d] = %e\t qEdge[0][2][%d] = %e\n",i,(double)qEdge[0][0][i],i,(double)qEdge[0][1][i],i,(double)qEdge[0][2][i]);
-      printf("qEdge[1][0][%d] = %e\t qEdge[1][1][%d] = %e\t qEdge[1][2][%d] = %e\n",i,(double)qEdge[1][0][i],i,(double)qEdge[1][1][i],i,(double)qEdge[1][2][i]);
-      printf("qEdge[2][0][%d] = %e\t qEdge[2][1][%d] = %e\t qEdge[2][2][%d] = %e\n",i,(double)qEdge[2][0][i],i,(double)qEdge[2][1][i],i,(double)qEdge[2][2][i]);
-      printf("qEdge[3][0][%d] = %e\t qEdge[3][1][%d] = %e\t qEdge[3][2][%d] = %e\n",i,(double)qEdge[3][0][i],i,(double)qEdge[3][1][i],i,(double)qEdge[3][2][i]);
+    for (int i = 0; i < NVAR_MHD; i++)
+    {
+      printf("qEdge[0][0][%d] = %e\t qEdge[0][1][%d] = %e\t qEdge[0][2][%d] = %e\n",
+             i,
+             (double)qEdge[0][0][i],
+             i,
+             (double)qEdge[0][1][i],
+             i,
+             (double)qEdge[0][2][i]);
+      printf("qEdge[1][0][%d] = %e\t qEdge[1][1][%d] = %e\t qEdge[1][2][%d] = %e\n",
+             i,
+             (double)qEdge[1][0][i],
+             i,
+             (double)qEdge[1][1][i],
+             i,
+             (double)qEdge[1][2][i]);
+      printf("qEdge[2][0][%d] = %e\t qEdge[2][1][%d] = %e\t qEdge[2][2][%d] = %e\n",
+             i,
+             (double)qEdge[2][0][i],
+             i,
+             (double)qEdge[2][1][i],
+             i,
+             (double)qEdge[2][2][i]);
+      printf("qEdge[3][0][%d] = %e\t qEdge[3][1][%d] = %e\t qEdge[3][2][%d] = %e\n",
+             i,
+             (double)qEdge[3][0][i],
+             i,
+             (double)qEdge[3][1][i],
+             i,
+             (double)qEdge[3][2][i]);
     }
     std::cout << "\n\n";
-
   }
 
   // clean and exit
   delete hydroParam;
 
   return EXIT_SUCCESS;
-
 }

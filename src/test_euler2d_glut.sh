@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 ./euler2d_cpu_glut --posx 200 --posy 100&
 ./euler2d_gpu_glut --posx 420 --posy 100&
 

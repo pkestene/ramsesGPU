@@ -53,19 +53,22 @@ DemoWindow::DemoWindow(GlutMaster * glutMaster,
   glColor4f(1.0, 0.0, 0.0, 1.0);
 }
 
-DemoWindow::~DemoWindow(){
+DemoWindow::~DemoWindow()
+{
 
-   glutDestroyWindow(windowID);
+  glutDestroyWindow(windowID);
 }
 
-void DemoWindow::CallBackDisplayFunc(void){
+void
+DemoWindow::CallBackDisplayFunc(void)
+{
 
-   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-   glColor4f(1.0, 0.0, 0.0, 1.0);
-   glutWireSphere(50, 10, 10);
+  glColor4f(1.0, 0.0, 0.0, 1.0);
+  glutWireSphere(50, 10, 10);
 
-   glutSwapBuffers();
+  glutSwapBuffers();
 }
 
 void
@@ -79,14 +82,18 @@ DemoWindow::CallBackReshapeFunc(int w, int h)
   CallBackDisplayFunc();
 }
 
-void DemoWindow::CallBackIdleFunc(void){
+void
+DemoWindow::CallBackIdleFunc(void)
+{
 
-   glRotatef(0.25, 1, 1, 2);
-   CallBackDisplayFunc();
+  glRotatef(0.25, 1, 1, 2);
+  CallBackDisplayFunc();
 }
 
-void DemoWindow::StartSpinning(GlutMaster * glutMaster){
+void
+DemoWindow::StartSpinning(GlutMaster * glutMaster)
+{
 
-   glutMaster->SetIdleToCurrentWindow();
-   glutMaster->EnableIdleFunction();
+  glutMaster->SetIdleToCurrentWindow();
+  glutMaster->EnableIdleFunction();
 }

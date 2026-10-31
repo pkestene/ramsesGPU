@@ -82,22 +82,24 @@ Window::Window()
 //! [1]
 
 //! [2]
-QSlider *Window::createSlider()
+QSlider *
+Window::createSlider()
 {
-    QSlider *slider = new QSlider(Qt::Vertical);
-    slider->setRange(0, 360 * 16);
-    slider->setSingleStep(16);
-    slider->setPageStep(15 * 16);
-    slider->setTickInterval(15 * 16);
-    slider->setTickPosition(QSlider::TicksRight);
-    return slider;
+  QSlider * slider = new QSlider(Qt::Vertical);
+  slider->setRange(0, 360 * 16);
+  slider->setSingleStep(16);
+  slider->setPageStep(15 * 16);
+  slider->setTickInterval(15 * 16);
+  slider->setTickPosition(QSlider::TicksRight);
+  return slider;
 }
 //! [2]
 
- void Window::keyPressEvent(QKeyEvent *e)
- {
-     if (e->key() == Qt::Key_Escape)
-         close();
-     else
-         QWidget::keyPressEvent(e);
- }
+void
+Window::keyPressEvent(QKeyEvent * e)
+{
+  if (e->key() == Qt::Key_Escape)
+    close();
+  else
+    QWidget::keyPressEvent(e);
+}

@@ -23,38 +23,55 @@
 
 GlutWindow::GlutWindow(void) {}
 
-GlutWindow::~GlutWindow(){
+GlutWindow::~GlutWindow() {}
 
+void
+GlutWindow::CallBackDisplayFunc(void)
+{
+
+  // dummy function
 }
 
-void GlutWindow::CallBackDisplayFunc(void){
+void
+GlutWindow::CallBackIdleFunc(void)
+{
 
-                             //dummy function
+  // dummy function
 }
 
-void GlutWindow::CallBackIdleFunc(void){
+void
+GlutWindow::CallBackKeyboardFunc(unsigned char key, int x, int y)
+{
 
-                             //dummy function
+  (void)key;
+  (void)x;
+  (void)y; // dummy function
 }
 
-void GlutWindow::CallBackKeyboardFunc(unsigned char key, int x, int y){
+void
+GlutWindow::CallBackMotionFunc(int x, int y)
+{
 
-  (void) key; (void) x; (void) y;                //dummy function
+  (void)x;
+  (void)y; // dummy function
 }
 
-void GlutWindow::CallBackMotionFunc(int x, int y){
+void
+GlutWindow::CallBackMouseFunc(int button, int state, int x, int y)
+{
 
-   (void) x; (void) y;                     //dummy function
+  (void)button;
+  (void)state;
+  (void)x;
+  (void)y; // dummy function
 }
 
-void GlutWindow::CallBackMouseFunc(int button, int state, int x, int y){
+void
+GlutWindow::CallBackPassiveMotionFunc(int x, int y)
+{
 
-   (void) button; (void) state; (void) x; (void) y;      //dummy function
-}
-
-void GlutWindow::CallBackPassiveMotionFunc(int x, int y){
-
-   (void) x; (void) y;                     //dummy function
+  (void)x;
+  (void)y; // dummy function
 }
 
 void
@@ -81,12 +98,16 @@ GlutWindow::CallBackVisibilityFunc(int visible)
   (void)visible; // dummy function
 }
 
-void GlutWindow::SetWindowID(int newWindowID){
+void
+GlutWindow::SetWindowID(int newWindowID)
+{
 
-   windowID = newWindowID;
+  windowID = newWindowID;
 }
 
-int GlutWindow::GetWindowID(void){
+int
+GlutWindow::GetWindowID(void)
+{
 
-   return( windowID );
+  return (windowID);
 }

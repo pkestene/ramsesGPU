@@ -35,17 +35,16 @@ testRiemannHLL_gpu(real_t * qleft, real_t * qright, real_t * flux)
   }
 }
 
-__global__ void testRiemannHLLD_gpu(real_riemann_t *qleft,
-				    real_riemann_t *qright,
-				    real_riemann_t *flux)
+__global__ void
+testRiemannHLLD_gpu(real_riemann_t * qleft, real_riemann_t * qright, real_riemann_t * flux)
 {
   real_riemann_t flux2[NVAR_MHD];
   riemann_hlld(qleft, qright, flux2);
 
-  for (int i=0; i<NVAR_MHD; i++) {
+  for (int i = 0; i < NVAR_MHD; i++)
+  {
     flux[i] = flux2[i];
   }
-
 }
 #endif // __CUDACC__
 

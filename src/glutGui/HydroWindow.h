@@ -46,7 +46,7 @@ using hydroSimu::DeviceArray;
 // #define NBCOLORS (236)
 #define NBCOLORS (256)
 
-/** use the grapgics API available from CUDA >= 3.0 */
+/** use the graphics API available from CUDA >= 3.0 */
 // #define USE_CUDA3
 
 /**
@@ -104,7 +104,7 @@ public:
 #ifdef __CUDACC__
   float *        d_cmap;        //!< indexed colormap data on device
   float *        d_cmap_der;    //!< indexed colormap derivative (interpolation)
-  unsigned int * plot_rgba_pbo; //!< data to plot (physicaly in the Pixel buffer Object)
+  unsigned int * plot_rgba_pbo; //!< data to plot (physically in the Pixel buffer Object)
 #endif                          // __CUDACC__
 
 protected:
