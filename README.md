@@ -14,7 +14,7 @@ http://www.maisondelasimulation.fr/projects/RAMSES-GPU/html/index.html
 
 - See doxygen-generated documentation in doc sub-directory
 
-- Quickstart for building RAMSES-GPU using CMake (recommended)
+### Quickstart for building RAMSES-GPU using CMake
 
 Default CUDA compilation flags can be passed to cmake using env variable CUDAFLAGS, or directly set CMAKE_CUDA_FLAGS on the configuration command line (see below).
 
@@ -36,21 +36,14 @@ Please, note that if you use a more recent version of cmake (>= 3.24), at step 2
 
 You should get executable *ramsesGPU_mpi_cuda*. Explore other flag using the ccmake user interface.
 
-- Quickstart for building RAMSES-GPU using autotools (deprecated)
 
-0. make sure to have up-to-date autotools on you build system (autoconf, automake, libtool, m4); then run `sh autogen.sh`
-1. configure --with-cuda=<path to CUDA toolkit root directory>
-2. make (or make -j N to speed-up compilation time; you might need to execute make several times when using option -j)
-
-Note: make sure to have CUDA toolkit installed, and environment variables PATH and LD_LIBRARY_PATH correctly set.
-
-This will build the monoCPU / monoGPU version of the programme to solve hydro/MHD problems. Executable are located in src subdirectory and named euler_cpu / euler_gpu
+This will build the monoCPU / monoGPU version of the programme to solve hydro/MHD problems. Executable are located in src subdirectory and named `ramsesGPU_cpu` / `ramsesGPU_cuda`
 
 Execute a test run:
 
 ```bash
-	cd src
-	./euler_gpu --param ../data/jet2d_gpu.ini
+cd src
+./ramsesGPU_cuda --param ../data/jet2d_gpu.ini
 
 ```
 
@@ -60,10 +53,8 @@ in multiple file format (VTK, Hdf5, ...).
 To visualize Hdf5 output, just run:
 
 ``` bash
-
-	paraview --data=./jet2d_gpu.xmf
+paraview --data=./jet2d_gpu.xmf
 ```
-
 
 Contact, questions, comments:
 
