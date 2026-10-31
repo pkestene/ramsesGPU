@@ -274,7 +274,7 @@ HydroRunRelaxingTVD::relaxing_tvd_cpu(HostArray<real_t> & h_UOld,
           // get averageFlux
           averageFlux<NVAR_2D>(u, w, c);
 
-          // compute left and righ fluxes
+          // compute left and right fluxes
           for (int iVar = 0; iVar < NVAR_2D; ++iVar)
           {
             fr(i, 0, 0, iVar) = (u[iVar] * c + w[iVar]) / 2;
@@ -313,7 +313,7 @@ HydroRunRelaxingTVD::relaxing_tvd_cpu(HostArray<real_t> & h_UOld,
           // get averageFlux
           averageFlux<NVAR_2D>(u, w, c);
 
-          // compute left and righ fluxes
+          // compute left and right fluxes
           for (int iVar = 0; iVar < NVAR_2D; ++iVar)
           {
             fr(i, 0, 0, iVar) = (u[iVar] * c + w[iVar]) / 2;
@@ -426,7 +426,7 @@ HydroRunRelaxingTVD::relaxing_tvd_cpu(HostArray<real_t> & h_UOld,
           // get averageFlux
           averageFlux<NVAR_2D>(u, w, c);
 
-          // compute left and righ fluxes
+          // compute left and right fluxes
           for (int iVar = 0; iVar < NVAR_2D; ++iVar)
           {
             fr(0, j, 0, iVar) = (u[iVar] * c + w[iVar]) / 2;
@@ -465,7 +465,7 @@ HydroRunRelaxingTVD::relaxing_tvd_cpu(HostArray<real_t> & h_UOld,
           // get averageFlux
           averageFlux<NVAR_2D>(u, w, c);
 
-          // compute left and righ fluxes
+          // compute left and right fluxes
           for (int iVar = 0; iVar < NVAR_2D; ++iVar)
           {
             fr(0, j, 0, iVar) = (u[iVar] * c + w[iVar]) / 2;
@@ -593,7 +593,7 @@ HydroRunRelaxingTVD::relaxing_tvd_cpu(HostArray<real_t> & h_UOld,
             // get averageFlux
             averageFlux<NVAR_3D>(u, w, c);
 
-            // compute left and righ fluxes
+            // compute left and right fluxes
             for (int iVar = 0; iVar < NVAR_3D; ++iVar)
             {
               fr(i, 0, 0, iVar) = (u[iVar] * c + w[iVar]) / 2;
@@ -633,7 +633,7 @@ HydroRunRelaxingTVD::relaxing_tvd_cpu(HostArray<real_t> & h_UOld,
             // get averageFlux
             averageFlux<NVAR_3D>(u, w, c);
 
-            // compute left and righ fluxes
+            // compute left and right fluxes
             for (int iVar = 0; iVar < NVAR_3D; ++iVar)
             {
               fr(i, 0, 0, iVar) = (u[iVar] * c + w[iVar]) / 2;
@@ -758,7 +758,7 @@ HydroRunRelaxingTVD::relaxing_tvd_cpu(HostArray<real_t> & h_UOld,
             // get averageFlux
             averageFlux<NVAR_3D>(u, w, c);
 
-            // compute left and righ fluxes
+            // compute left and right fluxes
             for (int iVar = 0; iVar < NVAR_3D; ++iVar)
             {
               fr(0, j, 0, iVar) = (u[iVar] * c + w[iVar]) / 2;
@@ -798,7 +798,7 @@ HydroRunRelaxingTVD::relaxing_tvd_cpu(HostArray<real_t> & h_UOld,
             // get averageFlux
             averageFlux<NVAR_3D>(u, w, c);
 
-            // compute left and righ fluxes
+            // compute left and right fluxes
             for (int iVar = 0; iVar < NVAR_3D; ++iVar)
             {
               fr(0, j, 0, iVar) = (u[iVar] * c + w[iVar]) / 2;
@@ -921,7 +921,7 @@ HydroRunRelaxingTVD::relaxing_tvd_cpu(HostArray<real_t> & h_UOld,
             // get averageFlux
             averageFlux<NVAR_3D>(u, w, c);
 
-            // compute left and righ fluxes
+            // compute left and right fluxes
             for (int iVar = 0; iVar < NVAR_3D; ++iVar)
             {
               fr(0, 0, k, iVar) = (u[iVar] * c + w[iVar]) / 2;
@@ -961,7 +961,7 @@ HydroRunRelaxingTVD::relaxing_tvd_cpu(HostArray<real_t> & h_UOld,
             // get averageFlux
             averageFlux<NVAR_3D>(u, w, c);
 
-            // compute left and righ fluxes
+            // compute left and right fluxes
             for (int iVar = 0; iVar < NVAR_3D; ++iVar)
             {
               fr(0, 0, k, iVar) = (u[iVar] * c + w[iVar]) / 2;
@@ -1087,7 +1087,7 @@ HydroRunRelaxingTVD::start()
 
   // dump information about computations about to start
   std::cout << "Starting time integration (Relaxing TVD)" << std::endl;
-  std::cout << "use directional spliting integration" << std::endl;
+  std::cout << "use directional splitting integration" << std::endl;
   std::cout << "Resolution (nx,ny,nz) " << nx << " " << ny << " " << nz << std::endl;
 
   real_t t = 0;
@@ -1123,9 +1123,8 @@ HydroRunRelaxingTVD::start()
 
       timerWriteOnDisk.stop();
 
-      std::cout << "[" << current_date() << "]"
-                << "  step=" << std::setw(9) << nStep << " t=" << std::setprecision(8) << t
-                << " dt=" << dt << std::endl;
+      std::cout << "[" << current_date() << "]" << "  step=" << std::setw(9) << nStep
+                << " t=" << std::setprecision(8) << t << " dt=" << dt << std::endl;
     }
 
     /* one time step integration (nStep increment) */

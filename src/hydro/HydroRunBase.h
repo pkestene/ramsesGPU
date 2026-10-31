@@ -3,7 +3,7 @@
  * \brief Defines a base C++ class to implement hydrodynamics simulations.
  *
  * HydroRunBase class is base class that gather all functionality
- * usefull to real hydrodynamics simulation implementation (see
+ * useful to real hydrodynamics simulation implementation (see
  * HydroRunGodunov for example).
  *
  * \author P. Kestener
@@ -52,7 +52,7 @@ rescaleToZeroOne(real_t * data, int size, real_t & min, real_t & max);
 
 /**
  * \class HydroRunBase HydroRunBase.h
- * \brief This is the base class containing all usefull methods to hydro
+ * \brief This is the base class containing all useful methods to hydro
  * simulations (handling array initializations, boundary computations, output files).
  *
  * All classes effectively implementing hydro simulations should

@@ -55,7 +55,7 @@
 #include "relaxingTVD.h"
 
 /**
- * Directional splitted relaxing TVD kernel for 2D data along X.
+ * Directional split relaxing TVD kernel for 2D data along X.
  */
 __global__ void
 kernel_relaxing_TVD_2d_xDir(real_t *     U,
@@ -110,7 +110,7 @@ kernel_relaxing_TVD_2d_xDir(real_t *     U,
     // get averageFlux (return w and c from a given hydro state u)
     averageFlux<NVAR_2D>(u, w, c);
 
-    // compute left and righ fluxes
+    // compute left and right fluxes
     fr[ty][tx][ID] = (u[ID] * c + w[ID]) / 2;
     fr[ty][tx][IP] = (u[IP] * c + w[IP]) / 2;
     fr[ty][tx][IU] = (u[IU] * c + w[IU]) / 2;
@@ -154,7 +154,7 @@ kernel_relaxing_TVD_2d_xDir(real_t *     U,
     // get averageFlux
     averageFlux<NVAR_2D>(u1[ty][tx], w, c);
 
-    // compute left and righ fluxes
+    // compute left and right fluxes
     fr[ty][tx][ID] = (u1[ty][tx][ID] * c + w[ID]) / 2;
     fr[ty][tx][IP] = (u1[ty][tx][IP] * c + w[IP]) / 2;
     fr[ty][tx][IU] = (u1[ty][tx][IU] * c + w[IU]) / 2;
@@ -251,7 +251,7 @@ kernel_relaxing_TVD_2d_xDir(real_t *     U,
 } // kernel_relaxing_TVD_2d_xDir
 
 /**
- * Directional splitted relaxing TVD kernel for 2D data along Y.
+ * Directional split relaxing TVD kernel for 2D data along Y.
  */
 __global__ void
 kernel_relaxing_TVD_2d_yDir(real_t *     U,
@@ -307,7 +307,7 @@ kernel_relaxing_TVD_2d_yDir(real_t *     U,
     // get averageFlux (return w and c from a given hydro state u)
     averageFlux<NVAR_2D>(u, w, c);
 
-    // compute left and righ fluxes
+    // compute left and right fluxes
     fr[ty][tx][ID] = (u[ID] * c + w[ID]) / 2;
     fr[ty][tx][IP] = (u[IP] * c + w[IP]) / 2;
     fr[ty][tx][IU] = (u[IU] * c + w[IU]) / 2;
@@ -351,7 +351,7 @@ kernel_relaxing_TVD_2d_yDir(real_t *     U,
     // get averageFlux
     averageFlux<NVAR_2D>(u1[ty][tx], w, c);
 
-    // compute left and righ fluxes
+    // compute left and right fluxes
     fr[ty][tx][ID] = (u1[ty][tx][ID] * c + w[ID]) / 2;
     fr[ty][tx][IP] = (u1[ty][tx][IP] * c + w[IP]) / 2;
     fr[ty][tx][IU] = (u1[ty][tx][IU] * c + w[IU]) / 2;

@@ -3,7 +3,7 @@
  * \brief
  * This file was originally designed by F. Chateau and called HydroRun.h
  * In the process of removing the coupling between fortran and Cuda; the
- * original file HydroRun was splitted into HydroRunBase class, so that we
+ * original file HydroRun was split into HydroRunBase class, so that we
  * can derive from it and have access to base routines (boundary
  * condition, output, etc...) inside the derived class which implements
  * the actual computational scheme.
@@ -80,7 +80,7 @@ public:
   HydroRunGodunov(ConfigMap & _configMap);
   ~HydroRunGodunov();
 
-  //! Godunov integration with directionnal spliting
+  //! Godunov integration with directional splitting
   void
   godunov_split(int idim, real_t dt);
 

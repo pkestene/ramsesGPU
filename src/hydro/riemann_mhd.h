@@ -132,7 +132,7 @@ riemann_llf(real_riemann_t qleft[NVAR_MHD],
  * \warning This version of HLLD integrates the pressure term in
  * flux[IU] (as in RAMSES). This will need to be modified in the
  * future (as it is done in DUMSES) to handle cylindrical / spherical
- * coordinate systems. For example, one could add a new ouput named qStar
+ * coordinate systems. For example, one could add a new output named qStar
  * to store star state, and that could be used to compute geometrical terms
  * outside this routine.
  *
@@ -567,7 +567,7 @@ mag_riemann2d_hllf(real_t qLLRR[4][NVAR_MHD], real_t eLLRR[4])
 /**
  * 2D magnetic riemann solver of type LLF (Local Lax-Friedrich)
  *
- * \see compute_emf Here compoent have been swapped so that
+ * \see compute_emf Here component have been swapped so that
  * iu, iv : parallel velocity indexes
  * iw     : orthogonal velocity index
  * ia, ib, ic : idem for magnetic field

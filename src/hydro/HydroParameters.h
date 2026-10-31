@@ -29,7 +29,7 @@
 
 #include <cassert>
 /*
- * usefull macro for assertion avoiding dummy compiler warning
+ * useful macro for assertion avoiding dummy compiler warning
  * see http://stackoverflow.com/questions/1712713/suppress-c-compiler-warning-from-a-specific-line
  * This macro only works if the message has no white space !
  */
@@ -37,7 +37,7 @@
 
 /**
  * \struct HydroParameters HydroParameters.h
- * \brief This is the base class containing all usefull parameters to perform
+ * \brief This is the base class containing all useful parameters to perform
  * computations.
  *
  * HydroRunBase inherits from this base class.
@@ -49,8 +49,8 @@ struct HydroParameters
    * @param _configMap : a reference to a ConfigMap object
    * @param _initGpu : [only used in GPU version] a boolean that tells to
    *         initialize here the device.
-   *         When using a CUDA+MPI version, running on an achitecture
-   *         with multiple GPU per node, it may be usefull to choose the device,
+   *         When using a CUDA+MPI version, running on an architecture
+   *         with multiple GPU per node, it may be useful to choose the device,
    *         not here buf after getting MPI information (MPI rank for example).
    *         See class HydroMpiParameters' constructor, for a example of
    *         calling cudaSetDevice, to be ensure that each MPI processes
@@ -71,7 +71,7 @@ struct HydroParameters
 
   /** \defgroup param_run run parameters */
   /**@{*/
-  int    nStepmax; //!< maximun number of time steps.
+  int    nStepmax; //!< maximum number of time steps.
   real_t tEnd;     //!< end of simulation time.
   int    nOutput;  //!< number of time step between 2 consecutive outputs.
   /**@}*/
@@ -104,7 +104,7 @@ struct HydroParameters
   std::string problem;      //!< a string used to set initial conditions.
   real_t      cfl;          //!< Courant-Friedrich-Lewy parameter
   real_t      _slope_type;  //!< type of slope computation (only
-                            //!< usefull in case of Godunov scheme)
+                            //!< useful in case of Godunov scheme)
   /**@}*/
 
   /** \defgroup param_mhd mhd parameters */
@@ -239,7 +239,7 @@ inline HydroParameters::HydroParameters(ConfigMap & _configMap, bool _initGpu = 
     dimType = THREE_D;
     nbVar = NVAR_3D;
   }
-  // the follwing is necessary so that grid resolution can be used on GPU
+  // the following is necessary so that grid resolution can be used on GPU
   // (put in constant memory space)
   _gParams.nx = nx;
   _gParams.ny = ny;
@@ -369,7 +369,7 @@ inline HydroParameters::HydroParameters(ConfigMap & _configMap, bool _initGpu = 
   _gParams.gravity_y = configMap.getFloat("gravity", "static_field_y", 0.0f);
   _gParams.gravity_z = configMap.getFloat("gravity", "static_field_z", 0.0f);
 
-  // read dissipative term paramaters
+  // read dissipative term parameters
   _gParams.nu = configMap.getFloat("hydro", "nu", 0.0); // viscosity
   _gParams.eta = configMap.getFloat("MHD", "eta", 0.0); // resistivity
 
@@ -475,7 +475,7 @@ inline HydroParameters::HydroParameters(ConfigMap & _configMap, bool _initGpu = 
   // compilation/translation unit, since __constant__ variables are
   // file-scoped !!!
 #else  // CPU version
-  // we copy this structure into a global variable, just for symetry
+  // we copy this structure into a global variable, just for symmetry
   // with the CUDA code, to be able to call the same functions
   // declared with keywords __device__ and __host__
   ::gParams = _gParams;
@@ -576,7 +576,7 @@ inline HydroParameters::HydroParameters(ConfigMap & _configMap, bool _initGpu = 
 
 
     /*
-     * copy some usefull parameter to constant memory space located on device
+     * copy some useful parameter to constant memory space located on device
      * (if using GPU, otherwise this routine does nothing...)
      */
     copyToSymbolMemory();

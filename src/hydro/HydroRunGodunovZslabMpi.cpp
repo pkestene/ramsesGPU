@@ -98,7 +98,7 @@ HydroRunGodunovZslabMpi::HydroRunGodunovZslabMpi(ConfigMap & _configMap)
   }
 
   /*
-   * allways allocate primitive variables array : h_Q / d_Q
+   * always allocate primitive variables array : h_Q / d_Q
    */
 #ifdef __CUDACC__
 
@@ -2362,9 +2362,8 @@ HydroRunGodunovZslabMpi::start()
     if (myRank == 0 and nLog > 0 and (nStep % nLog) == 0)
     {
 
-      std::cout << "[" << current_date() << "]"
-                << "  step=" << std::setw(9) << nStep << " t=" << fmt(totalTime)
-                << " dt=" << fmt(dt) << std::endl;
+      std::cout << "[" << current_date() << "]" << "  step=" << std::setw(9) << nStep
+                << " t=" << fmt(totalTime) << " dt=" << fmt(dt) << std::endl;
 
     } // end log
 
@@ -2385,9 +2384,8 @@ HydroRunGodunovZslabMpi::start()
 
       if (myRank == 0)
       {
-        std::cout << "[" << current_date() << "]"
-                  << "  step=" << std::setw(9) << nStep << " t=" << fmt(totalTime)
-                  << " dt=" << fmt(dt) << " output " << std::endl;
+        std::cout << "[" << current_date() << "]" << "  step=" << std::setw(9) << nStep
+                  << " t=" << fmt(totalTime) << " dt=" << fmt(dt) << " output " << std::endl;
       }
     } // end output results
 
@@ -2539,7 +2537,7 @@ HydroRunGodunovZslabMpi::oneStepIntegration(int & nStep, real_t & t, real_t & dt
 // =======================================================
 // =======================================================
 /*
- * convert to primitive variables (should only be usefull when using
+ * convert to primitive variables (should only be useful when using
  * the unsplit scheme version 1.
  */
 void

@@ -43,7 +43,7 @@ public:
   HydroRunGodunovMpi(ConfigMap & _configMap);
   ~HydroRunGodunovMpi();
 
-  //! Godunov integration with directionnal spliting
+  //! Godunov integration with directional splitting
   void
   godunov_split(int idim, real_t dt);
 

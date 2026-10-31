@@ -3,7 +3,7 @@
  * \brief Defines a base C++ class to implement magneto-hydrodynamics (MHD) simulations.
  *
  * MHDRunBase class is base class that gather all functionality
- * usefull to real MHD simulation implementation (see
+ * useful to real MHD simulation implementation (see
  * MhdRunGodunov for example).
  *
  * MHDRunBase derives from HydroRunBase (so that the Gui classes like
@@ -25,7 +25,7 @@ namespace hydroSimu
 
 /**
  * \class MHDRunBase MHDRunBase.h
- * \brief This is the base class containing all usefull methods to MHD
+ * \brief This is the base class containing all useful methods to MHD
  * simulations (handling array initializations, boundary computations, output files).
  *
  * All classes effectively implementing MHD simulations should
@@ -144,7 +144,7 @@ public:
 #endif // __CUDACC__
 
   /**
-   * compute resistivity energy flux in the 2D case, only usefull when performing non-isothermal
+   * compute resistivity energy flux in the 2D case, only useful when performing non-isothermal
    * simulations.
    *
    * \param[in]  U      input conservative variables array.
@@ -166,7 +166,7 @@ public:
 #endif // __CUDACC__
 
   /**
-   * compute resistivity energy flux in the 3D case, only usefull when performing non-isothermal
+   * compute resistivity energy flux in the 3D case, only useful when performing non-isothermal
    * simulations.
    *
    * \param[in]  U      input conservative variables array.
@@ -191,7 +191,7 @@ public:
 #endif // __CUDACC__
 
   /**
-   * compute resistivity energy flux in the 3D case, only usefull when performing non-isothermal
+   * compute resistivity energy flux in the 3D case, only useful when performing non-isothermal
    * simulations (z-slab method).
    *
    * \param[in]  U      input conservative variables array.

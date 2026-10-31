@@ -30,7 +30,7 @@ struct RandomGen
 
   RandomGen()
     : IGauss(0)
-    , GaussBak(0.0) {};
+    , GaussBak(0.0){};
 
   void
   ranf(int (&Seed)[IRandNumSize], double & RandNum);

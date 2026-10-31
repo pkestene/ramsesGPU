@@ -91,7 +91,7 @@ HydroRunGodunovMpi::HydroRunGodunovMpi(ConfigMap & _configMap)
               << std::endl;
 
     /*
-     * allways allocate primitive variables array : h_Q / d_Q
+     * always allocate primitive variables array : h_Q / d_Q
      */
 #ifdef __CUDACC__
 
@@ -3759,7 +3759,7 @@ HydroRunGodunovMpi::start()
     if (unsplitEnabled)
       std::cout << "use unsplit integration version : " << unsplitVersion << std::endl;
     else
-      std::cout << "use directional spliting integration" << std::endl;
+      std::cout << "use directional splitting integration" << std::endl;
     std::cout << "Resolution per MPI process (nx,ny,nz) " << nx << " " << ny << " " << nz
               << std::endl;
     std::cout << "MPI grid sizes (mx, my, mz) " << mx << " " << my << " " << mz << std::endl;
@@ -3837,9 +3837,8 @@ HydroRunGodunovMpi::start()
     if (myRank == 0 and nLog > 0 and (nStep % nLog) == 0)
     {
 
-      std::cout << "[" << current_date() << "]"
-                << "  step=" << std::setw(9) << nStep << " t=" << fmt(totalTime)
-                << " dt=" << fmt(dt) << std::endl;
+      std::cout << "[" << current_date() << "]" << "  step=" << std::setw(9) << nStep
+                << " t=" << fmt(totalTime) << " dt=" << fmt(dt) << std::endl;
 
     } // end log
 
@@ -3860,9 +3859,8 @@ HydroRunGodunovMpi::start()
 
       if (myRank == 0)
       {
-        std::cout << "[" << current_date() << "]"
-                  << "  step=" << std::setw(9) << nStep << " t=" << fmt(totalTime)
-                  << " dt=" << fmt(dt) << " output " << std::endl;
+        std::cout << "[" << current_date() << "]" << "  step=" << std::setw(9) << nStep
+                  << " t=" << fmt(totalTime) << " dt=" << fmt(dt) << " output " << std::endl;
       }
     } // end output results
 
@@ -4021,7 +4019,7 @@ HydroRunGodunovMpi::oneStepIntegration(int & nStep, real_t & t, real_t & dt)
     godunov_unsplit(nStep, dt);
   }
   else
-  { // directional spliting Godunov integration
+  { // directional splitting Godunov integration
 
     // when do we need to re-compute dt ?
     if (dimType == TWO_D)

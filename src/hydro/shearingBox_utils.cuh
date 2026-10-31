@@ -514,7 +514,7 @@ kernel_update_shear_borders_3d(real_t *     Uout,
 } // kernel_update_shear_borders_3d
 
 /**
- * Update xmin shear border with remapped density flux, only usefull in GPU+MPI.
+ * Update xmin shear border with remapped density flux, only useful in GPU+MPI.
  *
  * \param[in,out] Uout
  * \param[in]     d_shear_flux_remap XMIN or XMAX shear flux remapped data

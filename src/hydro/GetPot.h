@@ -43,7 +43,7 @@
 extern "C"
 {
 //   leave the 'extern C' to make it 100% sure to work -
-//   expecially with older distributions of header files.
+//   especially with older distributions of header files.
 #ifndef WIN32
 // this is necessary (depending on OS)
 #  include <ctype.h>
@@ -317,7 +317,7 @@ private:
     const std::string *
     get_element(unsigned Idx) const;
 
-    // -- data memebers
+    // -- data members
     std::string   name;     // identifier of variable
     STRING_VECTOR value;    // value of variable stored in vector
     std::string   original; // value of variable as given on command line
@@ -337,7 +337,7 @@ private:
 
   //     --  nominus vector
   int                   nominus_cursor; // cursor for nominus_pointers
-  std::vector<unsigned> idx_nominus;    // indecies of 'no minus' arguments
+  std::vector<unsigned> idx_nominus;    // indices of 'no minus' arguments
 
   //     -- variables
   //       (arguments of the form "variable=value")
@@ -410,7 +410,7 @@ private:
   //                   my-variable   =    '007 J. B.'
   //             into
   //                   my-variable='007 J. B.'
-  //           3) interprete sections like '[../my-section]' etc.
+  //           3) interpret sections like '[../my-section]' etc.
   inline void
   __skip_whitespace(std::istream & istr);
   inline const std::string
@@ -479,7 +479,7 @@ private:
     {
       if (*p == '/')
       {
-        *p = '\0'; // set terminating zero for convinience
+        *p = '\0'; // set terminating zero for convenience
         const std::string Section = Start;
         *p = '/'; // reset slash at place
         result.push_back(Section);
@@ -541,7 +541,7 @@ inline GetPot::GetPot(const int argc_, char ** argv_, const char * FieldSeparato
   // -- make an internal copy of the argument list:
   STRING_VECTOR _apriori_argv;
   // -- for the sake of clarity: we do want to include the first argument in the argument vector !
-  //    it will not be a nominus argument, though. This gives us a minimun vector size of one
+  //    it will not be a nominus argument, though. This gives us a minimum vector size of one
   //    which facilitates error checking in many functions. Also the user will be able to
   //    retrieve the name of his application by "get[0]"
   _apriori_argv.push_back(std::string(argv_[0]));
@@ -549,7 +549,7 @@ inline GetPot::GetPot(const int argc_, char ** argv_, const char * FieldSeparato
   for (; i < argc_; ++i)
   {
     std::string tmp(argv_[i]);    // recall the problem with temporaries,
-    _apriori_argv.push_back(tmp); // reference counting in arguement lists ...
+    _apriori_argv.push_back(tmp); // reference counting in argument lists ...
   }
   __parse_argument_vector(_apriori_argv);
 }
@@ -761,7 +761,7 @@ GetPot::__read_in_stream(std::istream & istr)
   while (i1 < brute_tokens.size())
   {
     const std::string & SRef = brute_tokens[i1];
-    // 1) concatinate 'abcdef' '=' 'efgasdef' to 'abcdef=efgasdef'
+    // 1) concatenate 'abcdef' '=' 'efgasdef' to 'abcdef=efgasdef'
     // note: java.lang.String: substring(a,b) = from a to b-1
     //        C++ string:      substr(a,b)    = from a to a + b
     if (i2 < brute_tokens.size() && brute_tokens[i2] == "=")
@@ -1248,7 +1248,7 @@ GetPot::next(const char * Default)
 
   // (*) function returns a pointer to a char array (inside Remain)
   //     this array will be deleted, though after this function call.
-  //     To ensure propper functioning, create a copy inside *this
+  //     To ensure proper functioning, create a copy inside *this
   //     object and only delete it, when *this is deleted.
   char * result = new char[Remain.length() + 1];
   strncpy(result, Remain.c_str(), Remain.length() + 1);
@@ -1809,7 +1809,7 @@ GetPot::operator()(const char * VarName, const char * Default) const
   const variable * sv = __find_variable(VarName);
   if (sv == 0)
     return Default;
-  // -- returning a c_str() pointer is OK here, since the variable remains existant,
+  // -- returning a c_str() pointer is OK here, since the variable remains existent,
   //    while 'sv' of course is delete at the end of the function.
   return sv->original;
 }
@@ -1976,7 +1976,7 @@ GetPot::__find_variable(const char * VarName) const
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// (*) ouput (basically for debugging reasons
+// (*) output (basically for debugging reasons
 //.............................................................................
 //
 inline int
@@ -2183,7 +2183,7 @@ GetPot::__DBE_get_variable(std::string VarName)
 
   prefix = secure_Prefix;
 
-  // error occured => variable name == ""
+  // error occurred => variable name == ""
   char * tmp = new char[VarName.length() + 25];
 #ifndef WIN32
   snprintf(tmp,
@@ -2207,7 +2207,7 @@ GetPot::__DBE_expand(const std::string expr)
   if (expr[0] == ':')
     return expr.substr(1);
 
-  // ${& expr expr ... } text concatination
+  // ${& expr expr ... } text concatenation
   else if (expr[0] == '&')
   {
     const STRING_VECTOR A = __DBE_get_expr_list(expr.substr(1), 1);
@@ -2423,7 +2423,7 @@ GetPot::__DBE_expand(const std::string expr)
     // error
     if (Var->name == "")
     {
-      // make a copy of the string if an error occured
+      // make a copy of the string if an error occurred
       // (since the error variable is a static variable inside get_variable())
       return std::string(Var->original);
     }
@@ -2459,7 +2459,7 @@ GetPot::__DBE_expand(const std::string expr)
   const STRING_VECTOR      A = __DBE_get_expr_list(expr, 1);
   const GetPot::variable * B = __DBE_get_variable(A[0]);
 
-  // make a copy of the string if an error occured
+  // make a copy of the string if an error occurred
   // (since the error variable is a static variable inside get_variable())
   if (B->name == "")
     return std::string(B->original);

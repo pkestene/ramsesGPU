@@ -143,7 +143,7 @@ public:
     return _data;
   }
 
-  /** access 1d data (only valied if _dim.y and _dim.z are 1)*/
+  /** access 1d data (only valid if _dim.y and _dim.z are 1)*/
   T &
   operator()(int i, int ivar)
   {
@@ -287,7 +287,7 @@ operator<<(std::ostream & os, const HostArray<T> & U)
  * \class DeviceArray Arrays.h
  * \brief Provides an array object with memory allocated on GPU.
  *
- * This class is symetric of HostArray, but allocated in GPU global
+ * This class is symmetric of HostArray, but allocated in GPU global
  * memory.
  * We take care of alignment constraints by using cudaMallocPitch
  * routine for memory allocation.

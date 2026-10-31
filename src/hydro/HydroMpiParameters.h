@@ -25,9 +25,9 @@ namespace hydroSimu
 
 /**
  * \class HydroMpiParameters HydroMpiParameters.h
- * \brief This is the base class containing all usefull methods to hydro
+ * \brief This is the base class containing all useful methods to hydro
  * simulations (handling array initializations, boundary
- * computations, output files) in a pure MPI or MPI/CUDA environnement.
+ * computations, output files) in a pure MPI or MPI/CUDA environment.
  *
  * All classes effectively implementing hydro simulations should
  * inherit from this base class.

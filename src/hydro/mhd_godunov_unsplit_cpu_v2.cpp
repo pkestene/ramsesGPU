@@ -34,7 +34,7 @@ MHDRunGodunov::godunov_unsplit_cpu_v2(HostArray<real_t> & h_UOld,
   if (dimType == TWO_D)
   {
 
-    // fisrt compute electric field Ez
+    // first compute electric field Ez
     for (int j = 1; j < jsize; j++)
     {
       for (int i = 1; i < isize; i++)

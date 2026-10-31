@@ -55,7 +55,7 @@ HydroMpiParameters::HydroMpiParameters(ConfigMap & _configMap)
   mz = configMap.getInteger("mpi", "mz", 1);
 
   // copy MPI topology sizes into gParams structure (so that it will also
-  // be available as a global constant, usefull for GPU implementation in godunov_unsplit_mhd.cuh).
+  // be available as a global constant, useful for GPU implementation in godunov_unsplit_mhd.cuh).
   _gParams.mx = mx;
   _gParams.my = my;
   _gParams.mz = mz;
@@ -104,7 +104,7 @@ HydroMpiParameters::HydroMpiParameters(ConfigMap & _configMap)
   communicator->getMyCoords(&myMpiPos[0]);
 
   // copy coordinate into gParams structure (so that it will also
-  // be available as a global constant, usefull for GPU implementation).
+  // be available as a global constant, useful for GPU implementation).
   _gParams.mpiPosX = myMpiPos[0];
   _gParams.mpiPosY = myMpiPos[1];
   _gParams.mpiPosZ = myMpiPos[2];
@@ -189,8 +189,8 @@ HydroMpiParameters::HydroMpiParameters(ConfigMap & _configMap)
 
   /*
    * Initialize CUDA device if needed.
-   * When running on a Linux machine with mutiple GPU per node, it might be
-   * very helpfull if admin has set the CUDA device compute mode to exclusive
+   * When running on a Linux machine with multiple GPU per node, it might be
+   * very helpful if admin has set the CUDA device compute mode to exclusive
    * so that a device is only attached to 1 host thread (i.e. 2 different host
    * thread can not communicate with the same GPU).
    *
@@ -218,8 +218,8 @@ HydroMpiParameters::HydroMpiParameters(ConfigMap & _configMap)
   cutilSafeCall(cudaGetDevice(&myDevId));
   cutilSafeCall(cudaGetDeviceProperties(&deviceProp, myDevId));
   // faire un cudaSetDevice et cudaGetDeviceProp et aficher le nom
-  // ajouter un booleen dans le constructeur pour savoir si on veut faire ca
-  // sachant que sur Titane, probablement que le mode exclusif est active
+  // ajouter un boolean dans le constructeur pour savoir si on veut faire ca
+  // sachant que sure Titane, probablement que le mode exclusif est active
   // a verifier demain
 
   std::cout << "MPI process " << myRank << " is using GPU device num " << myDevId << std::endl;

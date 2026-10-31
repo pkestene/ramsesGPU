@@ -484,9 +484,9 @@ MHDRunGodunov::godunov_unsplit_cpu_v3(HostArray<real_t> & h_UOld,
            * update mhd array with hydro fluxes.
            *
            * \note the "if" guards
-           * prevents from writing in ghost zones, only usefull
+           * prevents from writing in ghost zones, only useful
            * when degugging, should be removed later as ghostZones
-           * are anyway erased in make_boudaries routine.
+           * are anyway erased in make_boundaries routine.
            */
           if (i > ghostWidth and j < jsize - ghostWidth and k < ksize - ghostWidth)
           {

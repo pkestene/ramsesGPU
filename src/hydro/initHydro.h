@@ -29,7 +29,7 @@ struct PrimitiveEuler
     : rho(0.0f)
     , u(0.0f)
     , v(0.0f)
-    , p(0.0f) {};
+    , p(0.0f){};
   float rho;
   float u;
   float v;
@@ -48,7 +48,7 @@ struct PrimitiveEuler
 struct RiemannConfig2d
 {
 
-  RiemannConfig2d() {};
+  RiemannConfig2d(){};
   PrimitiveEuler pvar[4];
 };
 

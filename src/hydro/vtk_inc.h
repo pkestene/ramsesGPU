@@ -10,7 +10,7 @@
 #ifndef VTK_INC_H_
 #define VTK_INC_H_
 
-// the following symbol prevents some nasting warning about deprecated
+// the following symbol prevents some nesting warning about deprecated
 // strstream header
 #define VTK_EXCLUDE_STRSTREAM_HEADERS
 

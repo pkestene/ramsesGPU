@@ -37,7 +37,7 @@ typedef float real_t;
  * precision
  * if USE_MIXED_PRECISION is not defined, just use regular real_t
  *
- * this typedef is usefull when USE_DOUBLE is not defined, so that
+ * this typedef is useful when USE_DOUBLE is not defined, so that
  * everything is in single precision except the riemann solver routine.
  */
 #ifdef USE_MIXED_PRECISION
@@ -106,7 +106,7 @@ ISNAN(float x)
 #  define TWO_F (2.0f)
 #endif // USE_DOUBLE
 
-// other usefull macros
+// other useful macros
 #define SQR(x) ((x) * (x))
 
 

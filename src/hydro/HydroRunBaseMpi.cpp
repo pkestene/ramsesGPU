@@ -342,7 +342,7 @@ HydroRunBaseMpi::HydroRunBaseMpi(ConfigMap & _configMap)
     HostArray<real_t>::HostMemoryAllocType memAllocType;
 
     /*
-     * In the 3D case, there might be not enought PINNED memory.
+     * In the 3D case, there might be not enough PINNED memory.
      * So we fall back, to PAGEABLE memory.
      */
     // #ifdef __CUDACC__
@@ -4301,7 +4301,7 @@ HydroRunBaseMpi::getDataHost(int nStep)
  * \param[in] nStep The current time step, used to label results filename.
  * \param[in] t time
  * \param[in] iVar Define which variable to save (ID, IP, IU, IV, IW)
- * \param[in] withGhosts Include ghost borders (Usefull for debug).
+ * \param[in] withGhosts Include ghost borders (Useful for debug).
  */
 void
 HydroRunBaseMpi::outputXsm(HostArray<real_t> & U, int nStep, ComponentIndex iVar, bool withGhosts)
@@ -4410,17 +4410,17 @@ HydroRunBaseMpi::outputXsm(HostArray<real_t> & U, int nStep, ComponentIndex iVar
  *   possibly compressed) or the hand written routine.
  * - if USE_VTK is not defined (VTK library not installed), we
  *   automatically fall-back on the hand-written routine.
- * - the hand-written routine can be choosen (even if VTK is
+ * - the hand-written routine can be chosen (even if VTK is
  *   installed), you just need to set parameter
  *   output/outputVtkHandWritten to yes to write the VTK file "by
  *   hand" using either ascii or raw binary non-compressed format
- *  (handling base64 is a bit anoying).
+ *  (handling base64 is a bit annoying).
  *
  *
  * \param[in] U A reference to a hydro simulation HostArray
  * \param[in] nStep The current time step, used to label results filename.
  *
- * Usefull parameters from initialization file :
+ * Useful parameters from initialization file :
  * - output/outputVtkAscii : boolean to enable dump data in ascii format
  * - output/outputVtkBase64 : boolean to enable base64 encoding
  *   (only valid when using the vtk library routines)
@@ -4930,11 +4930,10 @@ HydroRunBaseMpi::outputVtk(HostArray<real_t> & U, int nStep)
               << std::endl;
 
     outFile << "  <ImageData WholeExtent=\"" << xmin << " " << xmax << " " << ymin << " " << ymax
-            << " " << zmin << " " << zmax << ""
-            << "\" Origin=\"0 0 0\" Spacing=\"1 1 1\">" << std::endl;
+            << " " << zmin << " " << zmax << "" << "\" Origin=\"0 0 0\" Spacing=\"1 1 1\">"
+            << std::endl;
     outFile << "  <Piece Extent=\"" << xmin << " " << xmax << " " << ymin << " " << ymax << " "
-            << zmin << " " << zmax << ""
-            << "\">" << std::endl;
+            << zmin << " " << zmax << "" << "\">" << std::endl;
     outFile << "    <PointData>" << std::endl;
 
     if (outputAscii)
@@ -5095,7 +5094,7 @@ HydroRunBaseMpi::outputVtk(HostArray<real_t> & U, int nStep)
 
       outFile << "  <AppendedData encoding=\"raw\">" << std::endl;
 
-      // write the leading undescore
+      // write the leading underscore
       outFile << "_";
       // then write heavy data (column major format)
       if (dimType == TWO_D)
@@ -5152,7 +5151,7 @@ HydroRunBaseMpi::outputVtk(HostArray<real_t> & U, int nStep)
  * One difference with the serial version, is that we can chose if we want
  * - only external ghost zones to be saved (using option ghostIncluded)
  * - all ghost zones to be saved (using option allGhostIncluded):
- *   this one is usefull for a restart run.
+ *   this one is useful for a restart run.
  *
  * Take care of parameter reassembleInFile:
  * - when true (default): different MPI pieces will be naturally put into a single
@@ -6739,9 +6738,8 @@ HydroRunBaseMpi::outputPnetcdf(HostArray<real_t> & U, int nStep)
   // for information MPI config used
   {
     std::ostringstream mpiConf;
-    mpiConf << "MPI configuration used to write file: "
-            << "mx,my,mz=" << mx << "," << my << "," << mz << " "
-            << "nx,ny,nz=" << nx << "," << ny << "," << nz;
+    mpiConf << "MPI configuration used to write file: " << "mx,my,mz=" << mx << "," << my << ","
+            << mz << " " << "nx,ny,nz=" << nx << "," << ny << "," << nz;
 
     err = ncmpi_put_att_text(
       ncFileId, NC_GLOBAL, "MPI conf", mpiConf.str().size(), mpiConf.str().c_str());
@@ -8503,7 +8501,7 @@ HydroRunBaseMpi::inputPnetcdf(HostArray<real_t> & U,
 // =======================================================
 /**
  * Upscale, i.e. increase resolution of input data LowRes into HiRes.
- * This routine is usefull to perform a large resolution run, and taking
+ * This routine is useful to perform a large resolution run, and taking
  * as initial condition a half-resolution input data (coming from a HDF5
  * file, ghostzones included).
  *
@@ -10333,7 +10331,7 @@ HydroRunBaseMpi::init_mhd_Orszag_Tang()
   else
   { // THREE_D
 
-    /* get direction (only usefull for 3D) : 0->XY, 1->YZ, 2->ZX */
+    /* get direction (only useful for 3D) : 0->XY, 1->YZ, 2->ZX */
     int direction = configMap.getInteger("OrszagTang", "direction", 0);
     if (direction < 0 || direction > 3)
     {
@@ -12112,7 +12110,7 @@ HydroRunBaseMpi::history_mhd_mri(int nStep, real_t dt)
       for (int mpiProcNum = 0; mpiProcNum < mx * my * mz; mpiProcNum++)
       {
 
-        // get cartesian coordiante inside topology and
+        // get cartesian coordinate inside topology and
         // check all pieces that come from the same X-coordinate to
         // perform the YZ average
         int mpiProcCoords[3];
@@ -12210,7 +12208,7 @@ HydroRunBaseMpi::history_hydro_turbulence(int nStep, real_t dt)
   if (dimType == TWO_D)
   {
 
-    // don't do anything (this problem is not available in 2D, maybe some day if usefull....)
+    // don't do anything (this problem is not available in 2D, maybe some day if useful....)
   }
   else
   {
@@ -12359,7 +12357,7 @@ HydroRunBaseMpi::history_mhd_turbulence(int nStep, real_t dt)
   if (dimType == TWO_D)
   {
 
-    // don't do anything (this problem is not available in 2D, maybe some day if usefull....)
+    // don't do anything (this problem is not available in 2D, maybe some day if useful....)
   }
   else
   {

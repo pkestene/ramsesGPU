@@ -28,7 +28,7 @@
 
 /**
  * compute primitive variables slope (vector dq) from q and its neighbors.
- * This routine is only used in the 2D/3D directionally splitted integration.
+ * This routine is only used in the 2D/3D directionally split integration.
  *
  * Note that slope_type is a global variable, located in symbol memory when
  * using the GPU version.

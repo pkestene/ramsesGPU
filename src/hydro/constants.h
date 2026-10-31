@@ -1,6 +1,6 @@
 /**
  * \file constants.h
- * \brief Defines some usefull enumerations and constants.
+ * \brief Defines some useful enumerations and constants.
  *
  * \author F. Chateau and P. Kestener
  *
@@ -237,7 +237,7 @@ enum BoundaryConditionType
   BC_PERIODIC,    /*!< periodic border condition */
   BC_SHEARINGBOX, /*!< shearing box border condition (MHD only, only for X direction */
   BC_COPY,        /*!< only used in MPI parallelized version */
-  BC_Z_STRATIFIED /*!< only usefull for stratified MRI problem */
+  BC_Z_STRATIFIED /*!< only useful for stratified MRI problem */
 };
 
 //! direction used in directional splitting scheme
@@ -256,11 +256,11 @@ enum FileFormat
   FF_PNETCDF = 2, /*!< for both mono/multi GPU applications (best performances) */
   FF_VTK = 3,     /*!< binary/ascii supported */
   FF_XSM = 4,     /*!< Xsmurf compatible */
-  FF_NRRD = 5,    /*!< usefull for doing webgl animations */
+  FF_NRRD = 5,    /*!< useful for doing webgl animations */
   FF_BIN = 6      /*!< not really used */
 };
 
-/** list of array pointers (mostly usefull only in GPU version
+/** list of array pointers (mostly useful only in GPU version
  *  so pointers to data can be read from the GlobalConstants structure
  *  instead of being passed to CUDA kernels as arguments) */
 enum ArrayPointerList
@@ -347,7 +347,7 @@ struct MY_ALIGN(8) GlobalConstants
   real_t * arrayList[ARRAY_LIST_MAX];
 }; // GlobalConstants
 
-// variadic uggly macro to make nvcc happy when compiling for hardware < 2.0
+// variadic ugly macro to make nvcc happy when compiling for hardware < 2.0
 #ifdef __CUDACC__
 #  if __CUDA_ARCH__ >= 200
 #    define PRINTF(...) printf(__VA_ARGS__)

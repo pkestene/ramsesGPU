@@ -348,7 +348,7 @@ extern "C"
   //! @param w     width of the image
   //! @param h     height of the image
   //! @note If a NULL pointer is passed to this function and it is
-  //!       initialized  withing Cutil then cutFree() has to be used to
+  //!       initialized  within Cutil then cutFree() has to be used to
   //!       deallocate the memory
   ////////////////////////////////////////////////////////////////////////////
   DLL_MAPPING
@@ -362,7 +362,7 @@ extern "C"
   //! @param w     width of the image
   //! @param h     height of the image
   //! @note If a NULL pointer is passed to this function and it is
-  //!       initialized withing Cutil then cutFree() has to be used to
+  //!       initialized within Cutil then cutFree() has to be used to
   //!       deallocate the memory
   ////////////////////////////////////////////////////////////////////////////
   DLL_MAPPING
@@ -439,7 +439,7 @@ extern "C"
   ////////////////////////////////////////////////////////////////////////////
   // Command line arguments: General notes
   // * All command line arguments begin with '--' followed by the token;
-  //   token and value are seperated by '='; example --samples=50
+  //   token and value are separated by '='; example --samples=50
   // * Arrays have the form --model=[one.obj,two.obj,three.obj]
   //   (without whitespaces)
   ////////////////////////////////////////////////////////////////////////////
@@ -597,7 +597,7 @@ extern "C"
                 const float           threshold);
 
   ////////////////////////////////////////////////////////////////////////////////
-  //! Compare two integer arrays witha n epsilon tolerance for equality
+  //! Compare two integer arrays with n epsilon tolerance for equality
   //! @return  CUTTrue if \a reference and \a data are identical,
   //!          otherwise CUTFalse
   //! @param reference  handle to the reference data / gold image
@@ -897,7 +897,7 @@ extern "C"
   while (0)                                                                                 \
     ;
 
-  //! Check if conditon is true (flexible assert)
+  //! Check if condition is true (flexible assert)
 #define CUT_CONDITION(val)                                    \
   if (CUTFalse == cutCheckCondition(val, __FILE__, __LINE__)) \
   {                                                           \

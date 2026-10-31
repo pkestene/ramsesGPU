@@ -72,7 +72,7 @@
 /**
  * Compute MHD primitive variables in 2D.
  *
- * \param[in]  Uin  input  convervative variable array
+ * \param[in]  Uin  input  conservative variable array
  * \param[out] Qout output primitive variable array
  */
 __global__ void
@@ -172,7 +172,7 @@ kernel_mhd_compute_primitive_variables_2D(const real_t * __restrict__ Uin,
 /**
  * Compute MHD primitive variables in 3D.
  *
- * \param[in]  Uin  input  convervative variable array
+ * \param[in]  Uin  input  conservative variable array
  * \param[out] Qout output primitive variable array
  */
 __global__ void
@@ -1579,7 +1579,7 @@ kernel_godunov_unsplit_mhd_3d_v1(const real_t * __restrict__ Uin,
 
       /*
        * update at position z-1.
-       * Note that position z-1 has already been partialy updated in
+       * Note that position z-1 has already been partially updated in
        * the previous iteration (for loop over k).
        */
       // watchout! IU and IW are swapped !
@@ -1823,7 +1823,7 @@ kernel_godunov_unsplit_mhd_3d_v1(const real_t * __restrict__ Uin,
 /**
  * Compute electric field components (with rotating frame correction terms).
  *
- * \param[in]  Uin  input  convervative variable array
+ * \param[in]  Uin  input  conservative variable array
  * \param[in]  Qin output primitive variable array
  * \param[out] Elec output electric field
  */
@@ -2081,7 +2081,7 @@ kernel_mhd_compute_elec_field(const real_t * __restrict__ Uin,
 /**
  * Compute primitive variables and electric field components
  *
- * \param[in]  Uin  input  convervative variable array
+ * \param[in]  Uin  input  conservative variable array
  * \param[out] Qout output primitive variable array
  * \param[out] Elec output electric field
  */
@@ -2518,7 +2518,7 @@ kernel_mhd_compute_mag_slopes(const real_t * __restrict__ Uin,
  * Compute trace
  *
  * \param[in]  Uin  input MHD conservative variable array
- * \param[out] Uout ouput MHD conservative variable array
+ * \param[out] Uout output MHD conservative variable array
  * \param[in] d_Q input primitive variable array
  * \param[in] dA  input mag slopes (Bx)
  * \param[in] dB  input mag slopes (By)
@@ -3217,7 +3217,7 @@ kernel_mhd_compute_trace(const real_t * __restrict__ Uin,
       {
         /*
          * update at position z-1.
-         * Note that position z-1 has already been partialy updated in
+         * Note that position z-1 has already been partially updated in
          * the previous iteration (for loop over k).
          */
         // watchout! IU and IW are swapped !
@@ -4209,7 +4209,7 @@ kernel_mhd_compute_gravity_predictor_v4(real_t * d_qm_x,
  * \see kernel_mhd_compute_trace_v4 (computation of qm, qp, qEdge buffer)
  *
  * \param[in]  Uin  input MHD conservative variable array
- * \param[out] Uout ouput MHD conservative variable array
+ * \param[out] Uout output MHD conservative variable array
  * \param[in] d_qm_x qm state along x
  * \param[in] d_qm_y qm state along y
  * \param[in] d_qm_z qm state along z
@@ -4637,7 +4637,7 @@ kernel_mhd_flux_update_hydro_v4_old(const real_t * Uin,
       {
         /*
          * update at position z-1.
-         * Note that position z-1 has already been partialy updated in
+         * Note that position z-1 has already been partially updated in
          * the previous iteration (for loop over k).
          */
         // watchout! IU and IW are swapped !
@@ -4908,7 +4908,7 @@ kernel_mhd_flux_update_hydro_v4_old(const real_t * Uin,
  * \see kernel_mhd_compute_trace_v4 (computation of qm, qp, qEdge buffer)
  *
  * \param[in]  Uin  input MHD conservative variable array
- * \param[out] Uout ouput MHD conservative variable array
+ * \param[out] Uout output MHD conservative variable array
  * \param[in] d_qm_x qm state along x
  * \param[in] d_qm_y qm state along y
  * \param[in] d_qm_z qm state along z
@@ -5309,7 +5309,7 @@ kernel_mhd_flux_update_hydro_v4(const real_t * __restrict__ Uin,
       {
         /*
          * update at position z-1.
-         * Note that position z-1 has already been partialy updated in
+         * Note that position z-1 has already been partially updated in
          * the previous iteration (for loop over k).
          */
         // watchout! IU and IW are swapped !
@@ -5625,11 +5625,11 @@ kernel_mhd_compute_emf_v4(const real_t * __restrict__ d_qEdge_RT,
  * Update MHD conservative variables (implementation version 4).
  *
  * This is the final kernel, that given the emf's compute
- * performs magnetic field update, i.e. constraint trasport update
+ * performs magnetic field update, i.e. constraint transport update
  * (similar to routine ct in Dumses).
  *
  * \param[in]  Uin  input MHD conservative variable array
- * \param[out] Uout ouput MHD conservative variable array
+ * \param[out] Uout output MHD conservative variable array
  * \param[in]  d_emf emf input array
  *
  */
@@ -5734,7 +5734,7 @@ kernel_mhd_flux_update_ct_v4(const real_t * __restrict__ Uin,
  * \see kernel_mhd_flux_update_hydro_v4
  *
  * \param[in]  Uin  input MHD conservative variable array
- * \param[out] Uout ouput MHD conservative variable array
+ * \param[out] Uout output MHD conservative variable array
  * \param[in] d_qm_x qm state along x
  * \param[in] d_qm_y qm state along y
  * \param[in] d_qm_z qm state along z
@@ -6183,7 +6183,7 @@ kernel_mhd_flux_update_hydro_v4_shear(const real_t * __restrict__ Uin,
       {
         /*
          * update at position z-1.
-         * Note that position z-1 has already been partialy updated in
+         * Note that position z-1 has already been partially updated in
          * the previous iteration (for loop over k).
          */
         // watchout! IU and IW are swapped !
@@ -6510,7 +6510,7 @@ kernel_mhd_flux_update_hydro_v4_shear(const real_t * __restrict__ Uin,
  * \see kernel_mhd_flux_update_hydro_v4
  *
  * \param[in]  Uin  input MHD conservative variable array
- * \param[out] Uout ouput MHD conservative variable array
+ * \param[out] Uout output MHD conservative variable array
  * \param[in] d_qm_x qm state along x
  * \param[in] d_qm_y qm state along y
  * \param[in] d_qm_z qm state along z
@@ -6928,7 +6928,7 @@ kernel_mhd_flux_update_hydro_v4_shear_part1(const real_t * __restrict__ Uin,
       {
         /*
          * update at position z-1.
-         * Note that position z-1 has already been partialy updated in
+         * Note that position z-1 has already been partially updated in
          * the previous iteration (for loop over k).
          */
         // watchout! IU and IW are swapped !

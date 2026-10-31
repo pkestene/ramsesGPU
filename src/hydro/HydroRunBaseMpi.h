@@ -1,9 +1,9 @@
 /**
  * \file HydroRunBaseMpi.h
  * \brief Defines a base C++ class to implement hydrodynamics
- * simulations in MPI environement.
+ * simulations in MPI environment.
  *
- * HydroRunBaseMpi class is the symetric to HydroRunBase.
+ * HydroRunBaseMpi class is the symmetric to HydroRunBase.
  *
  * \author P. Kestener
  * \date 12 Oct 2010
@@ -58,7 +58,7 @@ namespace hydroSimu
 /**
  * \class HydroRunBaseMpi HydroRunBaseMpi.h
  * \brief This is the MPI specialized version of the base class
- * containing all usefull methods to hydro simulations (handling
+ * containing all useful methods to hydro simulations (handling
  * array initializations, boundary computations, output files).
  *
  * All classes effectively implementing hydro simulations should
@@ -485,7 +485,7 @@ public:
 #endif // __CUDACC__
 
   /**
-   * compute resistivity energy flux in the 2D case, only usefull when performing non-isothermal
+   * compute resistivity energy flux in the 2D case, only useful when performing non-isothermal
    * simulations.
    *
    * \param[in]  U      input conservative variables array.
@@ -507,7 +507,7 @@ public:
 #endif // __CUDACC__
 
   /**
-   * compute resistivity energy flux in the 3D case, only usefull when performing non-isothermal
+   * compute resistivity energy flux in the 3D case, only useful when performing non-isothermal
    * simulations.
    *
    * \param[in]  U      input conservative variables array.
@@ -532,7 +532,7 @@ public:
 #endif // __CUDACC__
 
   /**
-   * compute resistivity energy flux in the 3D case, only usefull when performing non-isothermal
+   * compute resistivity energy flux in the 3D case, only useful when performing non-isothermal
    * simulations (z-slab method).
    *
    * \param[in]  U      input conservative variables array.

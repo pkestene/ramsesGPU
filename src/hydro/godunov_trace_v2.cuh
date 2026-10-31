@@ -320,7 +320,7 @@ godunov_y_2d_v2(real_t *     U,
 /**
  * Directionally split Godunov kernel along X-direction for 3D data
  * This kernel does essentially the same computation as godunov_x_2d,
- * except it loops over all posible X-Y planes through the
+ * except it loops over all possible X-Y planes through the
  * Z-direction.
  * Also note that we must decrease the block dimensions to cope the
  * shared memory limitation.

@@ -1,6 +1,6 @@
 /**
  * \file HydroRunLaxLiu.h
- * \brief Defines a class to perfrom hydro simulations following the
+ * \brief Defines a class to perform hydro simulations following the
  * scheme proposed in article: P.D. Lax, X.-D. Liu, "Solution of
  * Two-Dimensional Riemann Problems of Gas Dynamics by Positive
  * Schemes", SIAM J. Sci. Comput., vol. 19, pp. 319-340, (1998).
@@ -25,7 +25,7 @@ namespace hydroSimu
 /**
  * \class HydroRunLaxLiu HydroRunLaxLiu.h
  * \brief This class derives from HydroRunBase, and
- * implement a positive scheme alogorithm to solve Euler equation.
+ * implement a positive scheme algorithm to solve Euler equation.
  *
  * Some of the code is derived and adapted from Fortran found in
  * original article by Lax and Liu "Solution of the two-dimensional

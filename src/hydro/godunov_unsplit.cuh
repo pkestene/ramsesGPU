@@ -1080,7 +1080,7 @@ kernel_godunov_unsplit_3d(const real_t * __restrict__ Uin,
 
       /*
        * update at position z-1.
-       * Note that position z-1 has already been partialy updated in
+       * Note that position z-1 has already been partially updated in
        * the previous interation (for loop over k).
        */
       // update U with flux : watchout! IU and IW are swapped !
@@ -1465,7 +1465,7 @@ kernel_godunov_unsplit_3d_v0(const real_t * __restrict__ qData,
 
       /*
        * update at position z-1.
-       * Note that position z-1 has already been partialy updated in
+       * Note that position z-1 has already been partially updated in
        * the previous interation (for loop over k).
        */
       // update U with flux : watchout! IU and IW are swapped !
@@ -1554,7 +1554,7 @@ kernel_godunov_unsplit_3d_v0(const real_t * __restrict__ qData,
 /**
  * Compute primitive variables
  *
- * \param[in]  Uin  input  convervative variable array
+ * \param[in]  Uin  input  conservative variable array
  * \param[out] Qout output primitive variable array
  */
 __global__ void
@@ -1630,7 +1630,7 @@ kernel_hydro_compute_primitive_variables_2D(const real_t * __restrict__ Uin,
 /**
  * Compute primitive variables
  *
- * \param[in]  Uin  input  convervative variable array
+ * \param[in]  Uin  input  conservative variable array
  * \param[out] Qout output primitive variable array
  */
 __global__ void
@@ -2507,7 +2507,7 @@ kernel_godunov_trace_by_dir_2d_v2(const real_t * __restrict__ d_Q,
  *
  * \see kernel_hydro_compute_trace_unsplit_2d_v1 (computation of qm, qp buffer)
  *
- * \param[in,out] Uout ouput conservative variable array
+ * \param[in,out] Uout output conservative variable array
  * \param[in] d_qm qm state along dir
  * \param[in] d_qp qp state along dir
  * \param[in] direction : IX, IY or IZ
@@ -2577,7 +2577,7 @@ kernel_hydro_flux_update_unsplit_2d_v2(real_t * Uout,
       offset += arraySize;
     }
 
-    // set qright by re-reading qm from external memory at curent location
+    // set qright by re-reading qm from external memory at current location
     offset = elemOffset;
     for (int iVar = 0; iVar < NVAR_2D; iVar++)
     {
@@ -2676,7 +2676,7 @@ kernel_hydro_flux_update_unsplit_2d_v2(real_t * Uout,
  * This is the final kernel, that given the qm, qp states compute
  * fluxes and perform update.
  *
- * \param[in,out] Uout ouput conservative variable array
+ * \param[in,out] Uout output conservative variable array
  * \param[in] d_qm qm state along dir
  * \param[in] d_qp qp state along dir
  * \param[in] direction : IX, IY or IZ
@@ -3106,7 +3106,7 @@ kernel_godunov_trace_by_dir_3d_v2(const real_t * __restrict__ d_Q,
  * \see kernel_hydro_compute_trace_unsplit_2d_v1 (computation of qm, qp buffer)
  *
  * \param[in]  Uin  input conservative variable array
- * \param[out] Uout ouput conservative variable array
+ * \param[out] Uout output conservative variable array
  * \param[in] d_qm_x qm state along x
  * \param[in] d_qm_y qm state along y
  * \param[in] d_qp_x qp state along x
@@ -3318,7 +3318,7 @@ kernel_hydro_flux_update_unsplit_2d_v1(const real_t * __restrict__ Uin,
  * \see kernel_hydro_compute_trace_unsplit_3d_v1 (computation of qm, qp buffer)
  *
  * \param[in]  Uin  input conservative variable array
- * \param[out] Uout ouput conservative variable array
+ * \param[out] Uout output conservative variable array
  * \param[in] d_qm_x qm state along x
  * \param[in] d_qm_y qm state along y
  * \param[in] d_qm_z qm state along z
@@ -3594,7 +3594,7 @@ kernel_hydro_flux_update_unsplit_3d_v1(const real_t * __restrict__ Uin,
       {
         /*
          * update at position z-1.
-         * Note that position z-1 has already been partialy updated in
+         * Note that position z-1 has already been partially updated in
          * the previous iteration (for loop over k).
          */
         // watchout! IU and IW are swapped !

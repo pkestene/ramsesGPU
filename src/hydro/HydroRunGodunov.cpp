@@ -88,7 +88,7 @@ HydroRunGodunov::HydroRunGodunov(ConfigMap & _configMap)
               << std::endl;
 
     /*
-     * allways allocate primitive variables array : h_Q / d_Q
+     * always allocate primitive variables array : h_Q / d_Q
      */
 #ifdef __CUDACC__
 
@@ -4063,7 +4063,7 @@ HydroRunGodunov::start()
   if (unsplitEnabled)
     std::cout << "use unsplit integration" << std::endl;
   else
-    std::cout << "use directional spliting integration" << std::endl;
+    std::cout << "use directional splitting integration" << std::endl;
   std::cout << "Resolution (nx,ny,nz) " << nx << " " << ny << " " << nz << std::endl;
   std::cout << "Trace computation enabled : " << traceEnabled << std::endl;
   if (traceEnabled)
@@ -4135,9 +4135,8 @@ HydroRunGodunov::start()
     if (nLog > 0 and (nStep % nLog) == 0)
     {
 
-      std::cout << "[" << current_date() << "]"
-                << "  step=" << std::setw(9) << nStep << " t=" << fmt(totalTime)
-                << " dt=" << fmt(dt) << std::endl;
+      std::cout << "[" << current_date() << "]" << "  step=" << std::setw(9) << nStep
+                << " t=" << fmt(totalTime) << " dt=" << fmt(dt) << std::endl;
     }
 
     /* Output results */
@@ -4154,9 +4153,8 @@ HydroRunGodunov::start()
 
       timerWriteOnDisk.stop();
 
-      std::cout << "[" << current_date() << "]"
-                << "  step=" << std::setw(9) << nStep << " t=" << fmt(totalTime)
-                << " dt=" << fmt(dt) << " output " << std::endl;
+      std::cout << "[" << current_date() << "]" << "  step=" << std::setw(9) << nStep
+                << " t=" << fmt(totalTime) << " dt=" << fmt(dt) << " output " << std::endl;
     } // end output results
 
     /* Do we want to output faces of domain ? */
@@ -4283,7 +4281,7 @@ HydroRunGodunov::oneStepIntegration(int & nStep, real_t & t, real_t & dt)
     godunov_unsplit(nStep, dt);
   }
   else
-  { // directional spliting Godunov integration
+  { // directional splitting Godunov integration
 
     // when do we need to re-compute dt ?
     if (dimType == TWO_D)

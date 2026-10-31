@@ -20,7 +20,7 @@
 ////////////////////////////////////////////////////////////////////////////
 /**
  * \fn void spectral_radii(real_t u[NVAR], real_t& rx, real_t& ry)
- * \brief return the maximun absolute value of Roe Matrix eigenvalue.
+ * \brief return the maximum absolute value of Roe Matrix eigenvalue.
  *
  *
  * @param u : input NVAR-dimensional vector

@@ -2908,9 +2908,9 @@ MHDRunGodunovMpi::godunov_unsplit_rotating_cpu(HostArray<real_t> & h_UOld,
            * update mhd array with hydro fluxes.
            *
            * \note the "if" guards
-           * prevents from writing in ghost zones, only usefull
+           * prevents from writing in ghost zones, only useful
            * when debugging, should be removed later as ghostZones
-           * are anyway erased in make_boudaries routine.
+           * are anyway erased in make_boundaries routine.
            */
 
           /* only valid for CARTESIAN geometry !!! */
@@ -4927,9 +4927,8 @@ MHDRunGodunovMpi::start()
     if (myRank == 0 and nLog > 0 and (nStep % nLog) == 0)
     {
 
-      std::cout << "[" << current_date() << "]"
-                << "  step=" << std::setw(9) << nStep << " t=" << fmt(totalTime)
-                << " dt=" << fmt(dt, 16, 12) << std::endl;
+      std::cout << "[" << current_date() << "]" << "  step=" << std::setw(9) << nStep
+                << " t=" << fmt(totalTime) << " dt=" << fmt(dt, 16, 12) << std::endl;
     }
 
     /* Output results */
@@ -4948,9 +4947,9 @@ MHDRunGodunovMpi::start()
 
       if (myRank == 0)
       {
-        std::cout << "[" << current_date() << "]"
-                  << "  step=" << std::setw(9) << nStep << " t=" << fmt(totalTime)
-                  << " dt=" << fmt(dt, 16, 12) << " output " << std::endl;
+        std::cout << "[" << current_date() << "]" << "  step=" << std::setw(9) << nStep
+                  << " t=" << fmt(totalTime) << " dt=" << fmt(dt, 16, 12) << " output "
+                  << std::endl;
       }
 
     } // end if nStep%nOutput == 0

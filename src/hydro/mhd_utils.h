@@ -244,8 +244,8 @@ fast_mhd_speed(real_riemann_t qState[NVAR_MHD], real_riemann_t (&fastMagSpeed)[3
  * \param[out] fastInfoSpeed array containing fastest information speed along
  * x, y, and z direction.
  *
- * Directionnal information speed being defined as :
- * directionnal fast magneto speed + FABS(velocity component)
+ * Directional information speed being defined as :
+ * directional fast magneto speed + FABS(velocity component)
  *
  * \warning This routine uses gamma ! You need to set gamma to something very near to 1
  *

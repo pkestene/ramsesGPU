@@ -90,7 +90,7 @@ HydroRunGodunovZslab::HydroRunGodunovZslab(ConfigMap & _configMap)
             << zSlabWidthG << ")" << std::endl;
 
   /*
-   * allways allocate primitive variables array : h_Q / d_Q
+   * always allocate primitive variables array : h_Q / d_Q
    */
 #ifdef __CUDACC__
 
@@ -2413,9 +2413,8 @@ HydroRunGodunovZslab::start()
     if (nLog > 0 and (nStep % nLog) == 0)
     {
 
-      std::cout << "[" << current_date() << "]"
-                << "  step=" << std::setw(9) << nStep << " t=" << fmt(totalTime)
-                << " dt=" << fmt(dt) << std::endl;
+      std::cout << "[" << current_date() << "]" << "  step=" << std::setw(9) << nStep
+                << " t=" << fmt(totalTime) << " dt=" << fmt(dt) << std::endl;
     }
 
     /* Output results */
@@ -2432,9 +2431,8 @@ HydroRunGodunovZslab::start()
 
       timerWriteOnDisk.stop();
 
-      std::cout << "[" << current_date() << "]"
-                << "  step=" << std::setw(9) << nStep << " t=" << fmt(totalTime)
-                << " dt=" << fmt(dt) << " output " << std::endl;
+      std::cout << "[" << current_date() << "]" << "  step=" << std::setw(9) << nStep
+                << " t=" << fmt(totalTime) << " dt=" << fmt(dt) << " output " << std::endl;
     }
 
     // call history ?

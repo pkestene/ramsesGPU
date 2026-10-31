@@ -39,7 +39,7 @@
 /**
  * CUDA kernel perform magnetic field update (ct) from emf (3D data).
  *
- * This kernel performs magnetic field update, i.e. constraint trasport update
+ * This kernel performs magnetic field update, i.e. constraint transport update
  * (similar to routine ct in Dumses).
  *
  * \param[inout]  Uin   input MHD conservative variable array

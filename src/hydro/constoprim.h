@@ -287,7 +287,7 @@ primToCons_3D(real_t (&U)[NVAR_3D], real_t _gamma0)
 /**
  * Compute primitive variables.
  * The template parameter is used to swap velocities.
- * This is only usefull for the CPU version, when this
+ * This is only useful for the CPU version, when this
  * function is used inside the Godunov procedure.
  *
  * Note : The swap specialization version is defined in implementation file.
@@ -433,7 +433,7 @@ computePrimitives_3D_2(real_t * U, int arraySize, int elemOffset, real_t & c, re
  * \param[in] elemOffset position in data array of current cell.
  * \param[out] c speed of sound
  * \param[out] q primitive variable vector
- * \param[in] dt time step (usefull to compute some predictor step).
+ * \param[in] dt time step (useful to compute some predictor step).
  *
  */
 __DEVICE__
@@ -498,7 +498,7 @@ computePrimitives_MHD_2D(real_t * U,
  * \param[in] elemOffset position in data array of current cell.
  * \param[out] c speed of sound
  * \param[out] q primitive variable vector
- * \param[in] dt time step (usefull to compute some predictor step).
+ * \param[in] dt time step (useful to compute some predictor step).
  *
  */
 __DEVICE__

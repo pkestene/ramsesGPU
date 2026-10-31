@@ -1492,7 +1492,7 @@ MHDRunBase::init_Orszag_Tang()
   else
   { // THREE_D
 
-    /* get direction (only usefull for 3D) : 0->XY, 1->YZ, 2->ZX */
+    /* get direction (only useful for 3D) : 0->XY, 1->YZ, 2->ZX */
     int direction = configMap.getInteger("OrszagTang", "direction", 0);
     if (direction < 0 || direction > 3)
     {
@@ -2255,7 +2255,7 @@ MHDRunBase::init_mhd_BrioWu()
  *
  * Initial conditions are taken from Toth's paper.
  *
- * Initial conditions mentioned in the Flash user's guide are eroneous !
+ * Initial conditions mentioned in the Flash user's guide are erroneous !
  * http://flash.uchicago.edu/website/codesupport/flash3_ug_3p3/node32.html#SECTION08123000000000000000
  *
  */

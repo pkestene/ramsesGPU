@@ -1,6 +1,6 @@
 /**
  * \file base_type.h
- * \brief Defines some usefull base types.
+ * \brief Defines some useful base types.
  *
  * The idea is the replace declaration of type real_t array (for hydro state) by
  * a structure.

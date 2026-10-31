@@ -2705,7 +2705,7 @@ HydroRunBase::outputPng(HostArray<real_t> & U, int nStep, ComponentIndex iVar)
     std::ostringstream outNum;
     if (configMap.getBool("output", "latexAnimation", false))
     {
-      // Latex animation requires not-formated
+      // Latex animation requires not-formatted
       outNum << nStep;
     }
     else
@@ -2809,9 +2809,9 @@ HydroRunBase::outputPng(HostArray<real_t> & U, int nStep, ComponentIndex iVar)
  *
  * The VTK API based version is fully configurable : there are 3
  * output mode (ascii, base64 or raw binary), the last two one can
- * optionnaly be zlib-compressed.
+ * optionally be zlib-compressed.
  *
- * Our own hand-written version (usefull when VTK is not
+ * Our own hand-written version (useful when VTK is not
  * installed/available) : only ascii and raw binary are implemented.
  * (no compression, no base64 encoding).
  */
@@ -3052,11 +3052,10 @@ HydroRunBase::outputVtk(HostArray<real_t> & U, int nStep)
               << std::endl;
 
     outFile << "  <ImageData WholeExtent=\"" << xmin << " " << xmax << " " << ymin << " " << ymax
-            << " " << zmin << " " << zmax << ""
-            << "\" Origin=\"0 0 0\" Spacing=\"1 1 1\">" << std::endl;
+            << " " << zmin << " " << zmax << "" << "\" Origin=\"0 0 0\" Spacing=\"1 1 1\">"
+            << std::endl;
     outFile << "  <Piece Extent=\"" << xmin << " " << xmax << " " << ymin << " " << ymax << " "
-            << zmin << " " << zmax << ""
-            << "\">" << std::endl;
+            << zmin << " " << zmax << "" << "\">" << std::endl;
     outFile << "    <PointData>" << std::endl;
 
     if (outputVtkAscii)
@@ -3175,7 +3174,7 @@ HydroRunBase::outputVtk(HostArray<real_t> & U, int nStep)
 
       outFile << "  <AppendedData encoding=\"raw\">" << std::endl;
 
-      // write the leading undescore
+      // write the leading underscore
       outFile << "_";
       // then write heavy data (column major format)
       if (dimType == TWO_D)
@@ -3315,11 +3314,10 @@ HydroRunBase::outputVtkDebug(HostArray<real_t> & data,
             << std::endl;
 
   outFile << "  <ImageData WholeExtent=\"" << xmin << " " << xmax << " " << ymin << " " << ymax
-          << " " << zmin << " " << zmax << ""
-          << "\" Origin=\"0 0 0\" Spacing=\"1 1 1\">" << std::endl;
+          << " " << zmin << " " << zmax << "" << "\" Origin=\"0 0 0\" Spacing=\"1 1 1\">"
+          << std::endl;
   outFile << "  <Piece Extent=\"" << xmin << " " << xmax << " " << ymin << " " << ymax << " "
-          << zmin << " " << zmax << ""
-          << "\">" << std::endl;
+          << zmin << " " << zmax << "" << "\">" << std::endl;
   outFile << "    <PointData>" << std::endl;
 
   if (outputVtkAscii)
@@ -4353,7 +4351,7 @@ HydroRunBase::writeXdmfForHdf5Wrapper(int totalNumberOfSteps, bool singleStep, b
  * \note we are using C API (instead of C++ API) because to our
  * knowledge the C++ API is not complete (does not allows chunking for
  * example), and it only compatible with Netcdf3 data model.
- * See web documention of the C API at
+ * See web documentation of the C API at
  * http://www.unidata.ucar.edu/software/netcdf/netcdf-4/newdocs/netcdf-c
  * Probably that the new C++ API
  * (http://www.unidata.ucar.edu/software/netcdf/docs/cxx4/) could fit
@@ -4895,8 +4893,7 @@ HydroRunBase::outputFacesVtk(HostArray<real_t> & U, int nStep, ComponentIndex3D 
   outFile << "  <RectilinearGrid WholeExtent=\"" << xmin << " " << xmax << " " << ymin << " "
           << ymax << " " << zmin << " " << zmax << "\">" << std::endl;
   outFile << "    <Piece Extent=\"" << xmin << " " << xmax << " " << ymin << " " << ymax << " "
-          << zmin << " " << zmax << ""
-          << "\">" << std::endl;
+          << zmin << " " << zmax << "" << "\">" << std::endl;
 
   // coordinates
   outFile << "      <Coordinates>" << std::endl;
@@ -5521,7 +5518,7 @@ HydroRunBase::inputHdf5(HostArray<real_t> & U, const std::string filename, bool 
 // =======================================================
 /**
  * Upscale, i.e. increase resolution of input data LowRes into HiRes.
- * This routine is usefull to perform a large resolution run, and taking
+ * This routine is useful to perform a large resolution run, and taking
  * as initial condition a half-resolution input data (coming from a HDF5
  * file, ghostzones included).
  *
@@ -7056,7 +7053,7 @@ HydroRunBase::init_hydro_Keplerian_disk()
   else
   { // THREE_D
 
-    // cylindrical symetry
+    // cylindrical symmetry
     for (int k = 0; k < ksize; k++)
     {
       real_t zPos = zMin + dz / 2 + (k - ghostWidth) * dz;

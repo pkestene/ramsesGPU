@@ -61,7 +61,7 @@ swap_val(real_t & a, real_t & b)
 /**
  * Compute primitive variables
  *
- * \param[in]  Uin  input  convervative variable array
+ * \param[in]  Uin  input  conservative variable array
  * \param[out] Qout output primitive variable array
  */
 __global__ void
@@ -472,7 +472,7 @@ kernel_godunov_unsplit_3d_v0_zslab(const real_t * __restrict__ qData,
 
       /*
        * update at position z-1.
-       * Note that position z-1 has already been partialy updated in
+       * Note that position z-1 has already been partially updated in
        * the previous interation (for loop over k).
        */
       if (kL > 2 and kL < ksizeSlab - 1)
@@ -789,7 +789,7 @@ kernel_hydro_compute_trace_unsplit_3d_v1_zslab(const real_t * __restrict__ Uin,
  * \see kernel_hydro_compute_trace_unsplit_3d_v1 (computation of qm, qp buffer)
  *
  * \param[in]  Uin  input conservative variable array
- * \param[out] Uout ouput conservative variable array
+ * \param[out] Uout output conservative variable array
  * \param[in] d_qm_x qm state along x
  * \param[in] d_qm_y qm state along y
  * \param[in] d_qm_z qm state along z
@@ -1076,7 +1076,7 @@ kernel_hydro_flux_update_unsplit_3d_v1_zslab(const real_t * __restrict__ Uin,
       {
         /*
          * update at position z-1.
-         * Note that position z-1 has already been partialy updated in
+         * Note that position z-1 has already been partially updated in
          * the previous iteration (for loop over k).
          */
         // watchout! IU and IW are swapped !
@@ -1491,7 +1491,7 @@ kernel_godunov_trace_by_dir_3d_v2_zslab(const real_t * __restrict__ d_Q,
  * This is the final kernel, that given the qm, qp states compute
  * fluxes and perform update.
  *
- * \param[in,out] Uout ouput conservative variable array
+ * \param[in,out] Uout output conservative variable array
  * \param[in] d_qm qm state along dir
  * \param[in] d_qp qp state along dir
  * \param[in] direction : IX, IY or IZ

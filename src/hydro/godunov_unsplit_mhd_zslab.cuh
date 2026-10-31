@@ -61,7 +61,7 @@ swap_val_(real_t & a, real_t & b)
 /**
  * Compute primitive variables
  *
- * \param[in]  Uin  input  convervative variable array
+ * \param[in]  Uin  input  conservative variable array
  * \param[out] Qout output primitive variable array
  */
 __global__ void
@@ -179,7 +179,7 @@ kernel_mhd_compute_primitive_variables_zslab(const real_t * __restrict__ Uin,
 /**
  * Compute electric field components (with rotating frame correction terms).
  *
- * \param[in]  Uin  input  convervative variable array
+ * \param[in]  Uin  input  conservative variable array
  * \param[in]  Qin output primitive variable array
  * \param[out] Elec output electric field
  * \param[in]  zSlabInfo
@@ -1345,7 +1345,7 @@ kernel_mhd_compute_gravity_predictor_v4_zslab(real_t *  d_qm_x,
  * \see kernel_mhd_compute_trace_v4 (computation of qm, qp, qEdge buffer)
  *
  * \param[in]  Uin  input MHD conservative variable array
- * \param[out] Uout ouput MHD conservative variable array
+ * \param[out] Uout output MHD conservative variable array
  * \param[in] d_qm_x qm state along x
  * \param[in] d_qm_y qm state along y
  * \param[in] d_qm_z qm state along z
@@ -1764,7 +1764,7 @@ kernel_mhd_flux_update_hydro_v4_zslab(const real_t * __restrict__ Uin,
       {
         /*
          * update at position z-1.
-         * Note that position z-1 has already been partialy updated in
+         * Note that position z-1 has already been partially updated in
          * the previous iteration (for loop over k).
          */
         // watchout! IU and IW are swapped !
@@ -2067,11 +2067,11 @@ kernel_mhd_compute_emf_v4_zslab(const real_t * __restrict__ d_qEdge_RT,
  * Update MHD conservative variables (implementation version 4).
  *
  * This is the final kernel, that given the emf's compute
- * performs magnetic field update, i.e. constraint trasport update
+ * performs magnetic field update, i.e. constraint transport update
  * (similar to routine ct in Dumses).
  *
  * \param[in]  Uin  input MHD conservative variable array
- * \param[out] Uout ouput MHD conservative variable array
+ * \param[out] Uout output MHD conservative variable array
  * \param[in]  d_emf emf input array
  * \param[in]  zSlabInfo
  *
@@ -2192,7 +2192,7 @@ kernel_mhd_flux_update_ct_v4_zslab(const real_t * __restrict__ Uin,
  * \see kernel_mhd_flux_update_hydro_v4
  *
  * \param[in]  Uin  input MHD conservative variable array
- * \param[out] Uout ouput MHD conservative variable array
+ * \param[out] Uout output MHD conservative variable array
  * \param[in] d_qm_x qm state along x
  * \param[in] d_qm_y qm state along y
  * \param[in] d_qm_z qm state along z
@@ -2621,7 +2621,7 @@ kernel_mhd_flux_update_hydro_v4_shear_zslab(const real_t * __restrict__ Uin,
       {
         /*
          * update at position z-1.
-         * Note that position z-1 has already been partialy updated in
+         * Note that position z-1 has already been partially updated in
          * the previous iteration (for loop over k).
          */
         // watchout! IU and IW are swapped !
@@ -2854,7 +2854,7 @@ kernel_mhd_flux_update_hydro_v4_shear_zslab(const real_t * __restrict__ Uin,
  * \see kernel_mhd_flux_update_hydro_v4_shear_zslab
  *
  * \param[in]  Uin  input MHD conservative variable array
- * \param[out] Uout ouput MHD conservative variable array
+ * \param[out] Uout output MHD conservative variable array
  * \param[in] d_qm_x qm state along x
  * \param[in] d_qm_y qm state along y
  * \param[in] d_qm_z qm state along z
@@ -3252,7 +3252,7 @@ kernel_mhd_flux_update_hydro_v4_shear_part1_zslab(const real_t * __restrict__ Ui
       {
         /*
          * update at position z-1.
-         * Note that position z-1 has already been partialy updated in
+         * Note that position z-1 has already been partially updated in
          * the previous iteration (for loop over k).
          */
         // watchout! IU and IW are swapped !

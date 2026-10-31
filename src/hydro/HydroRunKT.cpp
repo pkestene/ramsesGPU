@@ -239,9 +239,8 @@ HydroRunKT::start()
 
       timerWriteOnDisk.stop();
 
-      std::cout << "[" << current_date() << "]"
-                << "  step=" << std::setw(9) << nStep << " t=" << std::setprecision(8) << t
-                << " dt=" << dt << std::endl;
+      std::cout << "[" << current_date() << "]" << "  step=" << std::setw(9) << nStep
+                << " t=" << std::setprecision(8) << t << " dt=" << dt << std::endl;
     }
 
     /* one time step integration */

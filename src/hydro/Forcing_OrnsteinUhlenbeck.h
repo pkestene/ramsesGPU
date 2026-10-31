@@ -64,7 +64,7 @@ public:
 
   double timeScaleTurb;
   double amplitudeTurb;
-  double ksi;         //!< new name for parturfor (used in litterature)
+  double ksi;         //!< new name for parturfor (used in literature)
   int    init_random; //
   int    nDim;        //!< dimension (only 3 is supported, for now)
   int    nCpu;        //!< number of MPI tasks
