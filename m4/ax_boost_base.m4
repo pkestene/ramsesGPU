@@ -99,7 +99,7 @@ if test "x$want_boost" = "xyes"; then
     libsubdir="lib"
 
     dnl first we check the system location for boost libraries
-    dnl this location ist chosen if boost libraries are installed with the --layout=system option
+    dnl this location is chosen if boost libraries are installed with the --layout=system option
     dnl or if you install boost with RPM
     if test "$ac_boost_path" != ""; then
         BOOST_LDFLAGS="-L$ac_boost_path/$libsubdir"

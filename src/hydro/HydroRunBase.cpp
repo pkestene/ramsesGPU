@@ -2257,7 +2257,7 @@ HydroRunBase::make_boundary(DeviceArray<real_t> & U, BoundaryConditionType bct, 
     bool floor = configMap.getBool("MRI", "floor", false);
 
     // will / can only be call for ZMIN / ZMAX
-    // the actuall cuda kernels are called inside
+    // the actual cuda kernels are called inside
     ::make_boundary2_z_stratified<boundaryLoc>(
       U.data(), U.pitch(), U.dimx(), U.dimy(), U.dimz(), U.section(), floor);
   }

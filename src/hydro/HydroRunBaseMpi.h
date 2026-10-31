@@ -788,15 +788,15 @@ protected:
   //! @}
 
   /**
-   * transfert border buffer (MPI communication)
+   * transfer border buffer (MPI communication)
    */
   template <int direction>
   void
-  transfert_boundaries();
+  transfer_boundaries();
 
 #ifdef __CUDACC__
   /**
-   * transfert border buffer (MPI communication):
+   * transfer border buffer (MPI communication):
    * 1. copy border to buffer
    * 2. send and receiver these buffers
    *
@@ -831,7 +831,7 @@ protected:
   make_jet(DeviceArray<real_t> & U);
 #else  // CPU version
   /**
-   * transfert border buffer (MPI communication):
+   * transfer border buffer (MPI communication):
    * 1. copy border to buffer
    * 2. send and receiver these buffers
    */

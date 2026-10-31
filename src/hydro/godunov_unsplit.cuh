@@ -1081,7 +1081,7 @@ kernel_godunov_unsplit_3d(const real_t * __restrict__ Uin,
       /*
        * update at position z-1.
        * Note that position z-1 has already been partially updated in
-       * the previous interation (for loop over k).
+       * the previous iteration (for loop over k).
        */
       // update U with flux : watchout! IU and IW are swapped !
       int offset = elemOffset - pitch * jmax;
@@ -1466,7 +1466,7 @@ kernel_godunov_unsplit_3d_v0(const real_t * __restrict__ qData,
       /*
        * update at position z-1.
        * Note that position z-1 has already been partially updated in
-       * the previous interation (for loop over k).
+       * the previous iteration (for loop over k).
        */
       // update U with flux : watchout! IU and IW are swapped !
       int offset = elemOffset - pitch * jmax;

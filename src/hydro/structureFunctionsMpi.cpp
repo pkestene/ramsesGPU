@@ -523,7 +523,7 @@ structure_functions_hydro_mpi(int                 myRank,
                   }
                   bin = bin1;
 
-                  // compute the higher oder structure functions (be cautious with numerics)
+                  // compute the higher order structure functions (be cautious with numerics)
                   for (int i = 0; i < maxSFOrder; i++)
                     for (int t = 0; t < numberOfTypes; t++)
                     {
@@ -1368,7 +1368,7 @@ structure_functions_mhd_mpi(int                 myRank,
                   }
                   bin = bin1;
 
-                  // compute the higher oder structure functions (be cautious with numerics)
+                  // compute the higher order structure functions (be cautious with numerics)
                   for (int i = 0; i < maxSFOrder; i++)
                     for (int t = 0; t < numberOfTypes; t++)
                     {

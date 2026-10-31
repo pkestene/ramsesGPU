@@ -14,7 +14,7 @@
 
 /**
  * \file turbulenceInit.h
- * \brief Create random fiels used to initialize velocity field in a turbulence simulation.
+ * \brief Create random fields used to initialize velocity field in a turbulence simulation.
  *
  * This turbulence initialization is adapted from Enzo (by A. Kritsuk) in file
  * turboinit.f

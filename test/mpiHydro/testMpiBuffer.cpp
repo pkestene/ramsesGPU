@@ -1,6 +1,6 @@
 /**
  * \file testMpiBuffer.cpp
- * \brief test transfert buffers (HostArray class) between 2 MPI processes.
+ * \brief test transfer buffers (HostArray class) between 2 MPI processes.
  *
  * Note for debug: see http://www.open-mpi.org/faq/?category=debugging
  * 1. mpirun -np 2 xterm -e gdb ./testMpiBuffer

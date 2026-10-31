@@ -302,7 +302,7 @@ HydroRunBaseMpi::HydroRunBaseMpi(ConfigMap & _configMap)
    * NOTES for performances:
    * - The device border buffer are allocated using cudaMalloc
    *   (linear memory) instead of cudaMalloc (pitched memory) : this
-   *   features results in roughly 10x faster transfert between CPU
+   *   features results in roughly 10x faster transfer between CPU
    *   and GPU (around 2 GBytes/s instead of ~150 MBytes/s !!!)
    * - The host border buffers are allocated using new (PAGEABLE)
    *   when using the pure CPU+MPI version
@@ -3457,7 +3457,7 @@ HydroRunBaseMpi::make_boundaries(DeviceArray<real_t> & U, int idim, bool doExter
     {
       dim3 blockCount(blocksFor(jsize, MK_BOUND_BLOCK_SIZE), 1, 1);
       copy_boundaries<XDIR>(U);
-      transfert_boundaries<XDIR>();
+      transfer_boundaries<XDIR>();
       if (doXMin)
         make_boundary<XMIN>(U, borderBufRecv_xmin, neighborsBC[X_MIN], blockCount);
       if (doXMax)
@@ -3467,7 +3467,7 @@ HydroRunBaseMpi::make_boundaries(DeviceArray<real_t> & U, int idim, bool doExter
     {
       dim3 blockCount(blocksFor(isize, MK_BOUND_BLOCK_SIZE), 1, 1);
       copy_boundaries<YDIR>(U);
-      transfert_boundaries<YDIR>();
+      transfer_boundaries<YDIR>();
       if (doYMin)
         make_boundary<YMIN>(U, borderBufRecv_ymin, neighborsBC[Y_MIN], blockCount);
       if (doYMax)
@@ -3484,7 +3484,7 @@ HydroRunBaseMpi::make_boundaries(DeviceArray<real_t> & U, int idim, bool doExter
       dim3 blockCount(
         blocksFor(jsize, MK_BOUND_BLOCK_SIZE_3D), blocksFor(ksize, MK_BOUND_BLOCK_SIZE_3D), 1);
       copy_boundaries<XDIR>(U);
-      transfert_boundaries<XDIR>();
+      transfer_boundaries<XDIR>();
       if (doXMin)
         make_boundary<XMIN>(U, borderBufRecv_xmin, neighborsBC[X_MIN], blockCount);
       if (doXMax)
@@ -3495,7 +3495,7 @@ HydroRunBaseMpi::make_boundaries(DeviceArray<real_t> & U, int idim, bool doExter
       dim3 blockCount(
         blocksFor(isize, MK_BOUND_BLOCK_SIZE_3D), blocksFor(ksize, MK_BOUND_BLOCK_SIZE_3D), 1);
       copy_boundaries<YDIR>(U);
-      transfert_boundaries<YDIR>();
+      transfer_boundaries<YDIR>();
       if (doYMin)
         make_boundary<YMIN>(U, borderBufRecv_ymin, neighborsBC[Y_MIN], blockCount);
       if (doYMax)
@@ -3506,7 +3506,7 @@ HydroRunBaseMpi::make_boundaries(DeviceArray<real_t> & U, int idim, bool doExter
       dim3 blockCount(
         blocksFor(isize, MK_BOUND_BLOCK_SIZE_3D), blocksFor(jsize, MK_BOUND_BLOCK_SIZE_3D), 1);
       copy_boundaries<ZDIR>(U);
-      transfert_boundaries<ZDIR>();
+      transfer_boundaries<ZDIR>();
       if (doZMin)
         make_boundary<ZMIN>(U, borderBufRecv_zmin, neighborsBC[Z_MIN], blockCount);
       if (doZMax)
@@ -3561,7 +3561,7 @@ HydroRunBaseMpi::make_boundaries(HostArray<real_t> & U, int idim, bool doExterna
     if (idim == XDIR) // horizontal boundaries
     {
       copy_boundaries<XDIR>(U);
-      transfert_boundaries<XDIR>();
+      transfer_boundaries<XDIR>();
       if (doXMin)
         make_boundary<XMIN>(U, borderBufRecv_xmin, neighborsBC[X_MIN], 0);
       if (doXMax)
@@ -3570,7 +3570,7 @@ HydroRunBaseMpi::make_boundaries(HostArray<real_t> & U, int idim, bool doExterna
     else // vertical boundaries
     {
       copy_boundaries<YDIR>(U);
-      transfert_boundaries<YDIR>();
+      transfer_boundaries<YDIR>();
       if (doYMin)
         make_boundary<YMIN>(U, borderBufRecv_ymin, neighborsBC[Y_MIN], 0);
       if (doYMax)
@@ -3585,7 +3585,7 @@ HydroRunBaseMpi::make_boundaries(HostArray<real_t> & U, int idim, bool doExterna
     if (idim == XDIR) // X-boundaries
     {
       copy_boundaries<XDIR>(U);
-      transfert_boundaries<XDIR>();
+      transfer_boundaries<XDIR>();
       if (doXMin)
         make_boundary<XMIN>(U, borderBufRecv_xmin, neighborsBC[X_MIN], 0);
       if (doXMax)
@@ -3594,7 +3594,7 @@ HydroRunBaseMpi::make_boundaries(HostArray<real_t> & U, int idim, bool doExterna
     else if (idim == YDIR) // Y-boundaries
     {
       copy_boundaries<YDIR>(U);
-      transfert_boundaries<YDIR>();
+      transfer_boundaries<YDIR>();
       if (doYMin)
         make_boundary<YMIN>(U, borderBufRecv_ymin, neighborsBC[Y_MIN], 0);
       if (doYMax)
@@ -3603,7 +3603,7 @@ HydroRunBaseMpi::make_boundaries(HostArray<real_t> & U, int idim, bool doExterna
     else // Z-boundaries
     {
       copy_boundaries<ZDIR>(U);
-      transfert_boundaries<ZDIR>();
+      transfer_boundaries<ZDIR>();
       if (doZMin)
         make_boundary<ZMIN>(U, borderBufRecv_zmin, neighborsBC[Z_MIN], 0);
       if (doZMax)
@@ -3684,7 +3684,7 @@ HydroRunBaseMpi::oneStepIntegration(int & nStep, real_t & t, real_t & dt)
 // =======================================================
 template <int direction>
 void
-HydroRunBaseMpi::transfert_boundaries()
+HydroRunBaseMpi::transfer_boundaries()
 {
   TIMER_START(timerBoundariesMpi);
 
@@ -3841,7 +3841,7 @@ HydroRunBaseMpi::transfert_boundaries()
 
   TIMER_STOP(timerBoundariesMpi);
 
-} // HydroRunBaseMpi::transfert_boundaries
+} // HydroRunBaseMpi::transfer_boundaries
 
 // =======================================================
 // =======================================================

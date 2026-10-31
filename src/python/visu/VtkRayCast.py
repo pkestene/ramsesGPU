@@ -8,7 +8,7 @@
 #
 # Modified by P. Kestener :
 # - handle vtkImageData type
-# - custom colorTransfertFunction
+# - custom colorTransferFunction
 #
 
 

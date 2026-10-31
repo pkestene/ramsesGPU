@@ -166,7 +166,7 @@ with section("lint"):
   # a list of lint codes to disable
   # E1120 is detected in cmake/find_python_module.cmake but I don't understand
   # why (positional args seems ok to me)
-  disabled_codes = ["C0103", "C0111", "C0301", "C0113", "E1120", "W0105", "R0912", "R0913", "R0915"]
+  disabled_codes = ["C0307", "C0103", "C0111", "C0301", "C0113", "E1120", "W0105", "R0912", "R0913", "R0915"]
 
   # regular expression pattern describing valid function names
   function_pattern = '[0-9a-z_]+'

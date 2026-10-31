@@ -369,7 +369,7 @@ copyDeviceArrayToBorderBufSend_linear_3d_kernel(real_t * border,
 /**
  * cuda kernel for copying 2d array to 1D border buffer (PITCHED
  * memory type)
- * BE VERY CAREFULL U and border MAY NOT HAVE THE SAME PITCH !!!!!!!!!
+ * BE VERY CAREFUL U and border MAY NOT HAVE THE SAME PITCH !!!!!!!!!
  */
 template <BoundaryLocation boundaryLoc, int ghostWidth>
 __GLOBAL__ void

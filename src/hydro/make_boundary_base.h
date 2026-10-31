@@ -264,7 +264,7 @@ incOffset<ZMAX>(int & offset, int pitch, int jmax)
  * \param n : can be either i, j or k depending on border location
  * \param var : can be either ID, IP, IU, IV or IW
  * \param offset0 : output absolute offset of a ghost boundary cell
- * \param offset1 : output absolute offset of the neighboor ghost boundary cell
+ * \param offset1 : output absolute offset of the neighbor ghost boundary cell
  * \param offset2 : output absolute offset of the periodic image of cell at offset0
  * \param offset3 : output absolute offset of the periodic image of cell at offset1
  */
@@ -443,8 +443,8 @@ computeOffsetPeriodic<ZMAX>(int   pitch,
  * \param n : can be either i, j or k depending on border location
  * \param var : can be either ID, IP, IU, IV or IW
  * \param offset0 : output absolute offset of a ghost boundary cell
- * \param offset1 : output absolute offset of the neighboor ghost boundary cell
- * \param offset2 : output absolute offset of the neighboor ghost boundary cell
+ * \param offset1 : output absolute offset of the neighbor ghost boundary cell
+ * \param offset2 : output absolute offset of the neighbor ghost boundary cell
  * \param offset3 : output absolute offset of the periodic image of cell at offset0
  * \param offset4 : output absolute offset of the periodic image of cell at offset1
  * \param offset5 : output absolute offset of the periodic image of cell at offset2

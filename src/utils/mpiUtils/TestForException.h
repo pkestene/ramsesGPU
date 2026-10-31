@@ -76,7 +76,7 @@
  \endverbatim
  *
  * In order to debug this, simply open your debugger (gdb for instance),
- * set a break point at <tt>my_soure_file.cpp:225</tt> and then set the condition
+ * set a break point at <tt>my_source_file.cpp:225</tt> and then set the condition
  * to break for <tt>n > 100</tt> (e.g. in gdb the command
  * is <tt>cond break_point_number n > 100</tt> and then run the
  * program.  The program should stop a the point in the source file

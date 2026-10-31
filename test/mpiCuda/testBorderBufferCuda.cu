@@ -1,6 +1,6 @@
 /**
  * \file testBorderBufferCuda.cpp
- * \brief test transfert border buffers (DeviceArray and HostArray classes).
+ * \brief test transfer border buffers (DeviceArray and HostArray classes).
  *
  * \date 25 Oct 2010
  * \author Pierre Kestener

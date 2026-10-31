@@ -1,6 +1,6 @@
 /**
  * \file testBorderBufferCuda2.cpp
- * \brief test transfert border buffers (DeviceArray and HostArray classes).
+ * \brief test transfer border buffers (DeviceArray and HostArray classes).
  *
  * \date 25 Oct 2010
  * \author Pierre Kestener
@@ -69,53 +69,53 @@ main(int argc, char * argv[])
               << std::endl;
     CudaTimer timer;
 
-    int nTransfert = 100;
+    int nTransfer = 100;
 
     // host To Device (pageable memory)
-    for (int i = 0; i < nTransfert; ++i)
+    for (int i = 0; i < nTransfer; ++i)
     {
       timer.start();
       copyBorderBufRecvToDeviceArray<XMIN, TWO_D, ghostWidth>(d_U, d_border, h_border);
       timer.stop();
     }
-    std::cout << "transfert rate pageable (Host to Device): "
-              << nTransfert * h_border.sizeBytes() / timer.elapsed() / 1000000 << " MBytes/s"
+    std::cout << "transfer rate pageable (Host to Device): "
+              << nTransfer * h_border.sizeBytes() / timer.elapsed() / 1000000 << " MBytes/s"
               << std::endl;
 
-    // Device to Host (pageable meory)
+    // Device to Host (pageable memory)
     timer.reset();
-    for (int i = 0; i < nTransfert; ++i)
+    for (int i = 0; i < nTransfer; ++i)
     {
       timer.start();
       copyDeviceArrayToBorderBufSend<XMIN, TWO_D, ghostWidth>(h_border, d_border, d_U);
       timer.stop();
     }
-    std::cout << "transfert rate pageable (Device to Host): "
-              << nTransfert * h_border.sizeBytes() / timer.elapsed() / 1000000 << " MBytes/s"
+    std::cout << "transfer rate pageable (Device to Host): "
+              << nTransfer * h_border.sizeBytes() / timer.elapsed() / 1000000 << " MBytes/s"
               << std::endl;
 
     // host To Device (pinned memory)
     timer.reset();
-    for (int i = 0; i < nTransfert; ++i)
+    for (int i = 0; i < nTransfer; ++i)
     {
       timer.start();
       copyBorderBufRecvToDeviceArray<XMIN, TWO_D, ghostWidth>(d_U, d_border, h_borderPinned);
       timer.stop();
     }
-    std::cout << "transfert rate pinned   (Host to Device): "
-              << nTransfert * h_border.sizeBytes() / timer.elapsed() / 1000000 << " MBytes/s"
+    std::cout << "transfer rate pinned   (Host to Device): "
+              << nTransfer * h_border.sizeBytes() / timer.elapsed() / 1000000 << " MBytes/s"
               << std::endl;
 
     // Device to Host (pinned memory
     timer.reset();
-    for (int i = 0; i < nTransfert; ++i)
+    for (int i = 0; i < nTransfer; ++i)
     {
       timer.start();
       copyDeviceArrayToBorderBufSend<XMIN, TWO_D, ghostWidth>(h_borderPinned, d_border, d_U);
       timer.stop();
     }
-    std::cout << "transfert rate pinned   (Device to Host): "
-              << nTransfert * h_border.sizeBytes() / timer.elapsed() / 1000000 << " MBytes/s"
+    std::cout << "transfer rate pinned   (Device to Host): "
+              << nTransfer * h_border.sizeBytes() / timer.elapsed() / 1000000 << " MBytes/s"
               << std::endl;
 
     {
@@ -145,46 +145,46 @@ main(int argc, char * argv[])
       // Host -> Device
       timer.reset();
       timer.start();
-      for (int i = 0; i < nTransfert; ++i)
+      for (int i = 0; i < nTransfer; ++i)
       {
         cudaMemcpy((void *)d_data, h_data, sizeInBytes, cudaMemcpyHostToDevice);
       }
       timer.stop();
-      std::cout << "transfert rate pageable (Host to Device): "
-                << nTransfert * sizeInBytes / timer.elapsed() / 1000000 << " MBytes/s" << std::endl;
+      std::cout << "transfer rate pageable (Host to Device): "
+                << nTransfer * sizeInBytes / timer.elapsed() / 1000000 << " MBytes/s" << std::endl;
 
       // Device -> Host
       timer.reset();
       timer.start();
-      for (int i = 0; i < nTransfert; ++i)
+      for (int i = 0; i < nTransfer; ++i)
       {
         cudaMemcpy((void *)h_data, d_data, sizeInBytes, cudaMemcpyDeviceToHost);
       }
       timer.stop();
-      std::cout << "transfert rate pageable (Device To Host): "
-                << nTransfert * sizeInBytes / timer.elapsed() / 1000000 << " MBytes/s" << std::endl;
+      std::cout << "transfer rate pageable (Device To Host): "
+                << nTransfer * sizeInBytes / timer.elapsed() / 1000000 << " MBytes/s" << std::endl;
 
       // Host -> Device async
       timer.reset();
       timer.start();
-      for (int i = 0; i < nTransfert; ++i)
+      for (int i = 0; i < nTransfer; ++i)
       {
         cudaMemcpyAsync((void *)d_data, h_dataPinned, sizeInBytes, cudaMemcpyHostToDevice);
       }
       timer.stop();
-      std::cout << "transfert rate pinned   (Host to Device): "
-                << nTransfert * sizeInBytes / timer.elapsed() / 1000000 << " MBytes/s" << std::endl;
+      std::cout << "transfer rate pinned   (Host to Device): "
+                << nTransfer * sizeInBytes / timer.elapsed() / 1000000 << " MBytes/s" << std::endl;
 
       // Device -> Host async
       timer.reset();
       timer.start();
-      for (int i = 0; i < nTransfert; ++i)
+      for (int i = 0; i < nTransfer; ++i)
       {
         cudaMemcpyAsync((void *)h_dataPinned, d_data, sizeInBytes, cudaMemcpyDeviceToHost);
       }
       timer.stop();
-      std::cout << "transfert rate pinned   (Device To Host): "
-                << nTransfert * sizeInBytes / timer.elapsed() / 1000000 << " MBytes/s" << std::endl;
+      std::cout << "transfer rate pinned   (Device To Host): "
+                << nTransfer * sizeInBytes / timer.elapsed() / 1000000 << " MBytes/s" << std::endl;
 
       cudaFree(d_data);
       free(h_data);

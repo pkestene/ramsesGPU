@@ -77,7 +77,7 @@
 
 	* bug fix in viscosity tensor: affect both CPU/GPU: only one term was slightly false (almost neutral bug)
 
-	* new feature: now GPU memory array can be allocated using pitched or linear memory (before pitched was the default). On new hardware, pitch memory is not anymore a must. Linear memory gives the same performane (thanks to cache improvements). Besides, for a given problem, the amouint of required memory is almost twice smaller when using linear memory, so linear memory is now the default choice.
+	* new feature: now GPU memory array can be allocated using pitched or linear memory (before pitched was the default). On new hardware, pitch memory is not anymore a must. Linear memory gives the same performance (thanks to cache improvements). Besides, for a given problem, the amouint of required memory is almost twice smaller when using linear memory, so linear memory is now the default choice.
 
 	* fix MRI history method for MPI run: output was wrong
 

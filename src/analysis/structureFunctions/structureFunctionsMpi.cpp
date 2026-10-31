@@ -731,7 +731,7 @@ main(int argc, char ** argv)
                       }
                       bin = bin1;
 
-                      // compute the higher oder structure functions (be cautious with numerics)
+                      // compute the higher order structure functions (be cautious with numerics)
                       for (int i = 0; i < MaxSFOrder; i++)
                         for (int t = 0; t < NumberOfTypes; t++)
                         {
@@ -1272,7 +1272,7 @@ main(int argc, char ** argv)
                     }
                     bin = bin1;
 
-                    // compute the higher oder structure functions (be cautious with numerics)
+                    // compute the higher order structure functions (be cautious with numerics)
                     for (int i = 0; i < MaxSFOrder; i++)
                       for (int t = 0; t < NumberOfTypes; t++)
                       {

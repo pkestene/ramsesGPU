@@ -68,7 +68,7 @@ AC_DEFUN([ROOT_PATH],
     ROOTSOVERSION=`dirname $ROOTVERSION`
 
     if test $1 ; then
-      AC_MSG_CHECKING(wether ROOT version >= [$1])
+      AC_MSG_CHECKING(whether ROOT version >= [$1])
       vers=`$ROOTCONF --version | tr './' ' ' | awk 'BEGIN { FS = " "; } { printf "%d", ($''1 * 1000 + $''2) * 1000 + $''3;}'`
       requ=`echo $1 | tr './' ' ' | awk 'BEGIN { FS = " "; } { printf "%d", ($''1 * 1000 + $''2) * 1000 + $''3;}'`
       if test $vers -lt $requ ; then
