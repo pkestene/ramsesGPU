@@ -14,7 +14,7 @@ SUBDIRS = .
 # Some convenience library
 # ===================================================
 
-noinst_LTLIBRARIES = libIniConfig.la 
+noinst_LTLIBRARIES = libIniConfig.la
 if USE_CUDA
 noinst_LTLIBRARIES += libIniConfigGpu.la
 endif
@@ -36,7 +36,7 @@ CLEANFILES    = inih/ini.cu inih/INIReader.cu ConfigMap.cu ConfigMapTest.cu
 libIniConfigGpu_la_SOURCES = \
 	inih/ini.h \
 	inih/INIReader.h \
-	ConfigMap.h 
+	ConfigMap.h
 nodist_libIniConfigGpu_la_SOURCES = \
 	inih/ini.cu \
 	inih/INIReader.cu \
@@ -49,7 +49,7 @@ endif
 bin_PROGRAMS = INIReaderTest ConfigMapTest
 if USE_CUDA
 bin_PROGRAMS += ConfigMapTestGpu
-endif 
+endif
 
 INIReaderTest_SOURCES = inih/INIReaderTest.cpp
 INIReaderTest_LDFLAGS = libIniConfig.la
@@ -64,7 +64,7 @@ if USE_CUDA
 nodist_ConfigMapTestGpu_SOURCES = ConfigMapTest.cu
 # add dummy C++ source to cause C++ linking.
 nodist_EXTRA_ConfigMapTestGpu_SOURCES = dummy.cxx
-ConfigMapTestGpu_CPPFLAGS = $(CUDA_CFLAGS) 
+ConfigMapTestGpu_CPPFLAGS = $(CUDA_CFLAGS)
 ConfigMapTestGpu_LDFLAGS  = $(CUDA_LIBS) libIniConfigGpu.la
 ConfigMapTestGpu_DEPENDENCIES = libIniConfigGpu.la
 

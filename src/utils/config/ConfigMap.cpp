@@ -24,24 +24,22 @@ ConfigMap::ConfigMap(std::string filename)
 
 // =======================================================
 // =======================================================
-ConfigMap::ConfigMap(char* &buffer, int buffer_size) :
-  INIReader(buffer, buffer_size)
-{
-} // ConfigMap::ConfigMap
+ConfigMap::ConfigMap(char *& buffer, int buffer_size)
+  : INIReader(buffer, buffer_size)
+{} // ConfigMap::ConfigMap
 
 // =======================================================
 // =======================================================
-ConfigMap::~ConfigMap()
-{
-} // ConfigMap::~ConfigMap
+ConfigMap::~ConfigMap() {} // ConfigMap::~ConfigMap
 
 // =======================================================
 // =======================================================
-float ConfigMap::getFloat(std::string section, std::string name, float default_value) const
+float
+ConfigMap::getFloat(std::string section, std::string name, float default_value) const
 {
-  std::string valstr = getString(section, name, "");
-  const char* value = valstr.c_str();
-  char* end;
+  std::string  valstr = getString(section, name, "");
+  const char * value = valstr.c_str();
+  char *       end;
   // This parses "1234" (decimal) and also "0x4D2" (hex)
   float valFloat = strtof(value, &end);
   return end > value ? valFloat : default_value;
@@ -49,7 +47,8 @@ float ConfigMap::getFloat(std::string section, std::string name, float default_v
 
 // =======================================================
 // =======================================================
-void ConfigMap::setFloat(std::string section, std::string name, float value)
+void
+ConfigMap::setFloat(std::string section, std::string name, float value)
 {
 
   std::stringstream ss;
@@ -84,7 +83,8 @@ ConfigMap::getBool(std::string section, std::string name, bool default_value) co
 
 // =======================================================
 // =======================================================
-void ConfigMap::setBool(std::string section, std::string name, bool value)
+void
+ConfigMap::setBool(std::string section, std::string name, bool value)
 {
 
   if (value)
@@ -125,7 +125,7 @@ broadcast_parameters(std::string filename)
     filein.read(buffer, buffer_size);
   }
 
-  // broacast buffer size (collective)
+  // broadcast buffer size (collective)
   MPI_Bcast(&buffer_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   // all other MPI task need to allocate buffer

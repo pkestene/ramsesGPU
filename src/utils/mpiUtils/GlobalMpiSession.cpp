@@ -198,7 +198,7 @@ GlobalMpiSession::initialize(std::ostream * out)
 
   if (mpiIsFinalized_)
   {
-    // MPI has aleady been finalized so we have a serial machine again!
+    // MPI has already been finalized so we have a serial machine again!
     rank_ = 0;
     nProc_ = 1;
     return;

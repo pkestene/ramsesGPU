@@ -10,7 +10,7 @@
  * - clean TEUCHOS_LIB_DLL_EXPORT macro which does not seem to exist anymore ?
  * - change namespace into hydroSimu
  *
- * I found this class usefull, considering official MPI C++ API is
+ * I found this class useful, considering official MPI C++ API is
  * deprecated, and also to avoid using boost::mpi
  *
  * \author Pierre Kestener
@@ -58,7 +58,7 @@ namespace hydroSimu
 /** \brief This class provides methods for initializing, finalizing, and
  * querying the global MPI session.
  *
- * This class is primarilly designed to insulate basic <tt>main()</tt>
+ * This class is primarily designed to insulate basic <tt>main()</tt>
  * program type of code from having to know if MPI is enabled or not.
  *
  * ToDo: Give examples!
@@ -71,8 +71,8 @@ public:
 
   /** \brief Calls <tt>MPI_Init()</tt> if MPI is enabled.
    *
-   * \param argc  [in] Argment passed into <tt>main(argc,argv)</tt>
-   * \param argv  [in] Argment passed into <tt>main(argc,argv)</tt>
+   * \param argc  [in] Argument passed into <tt>main(argc,argv)</tt>
+   * \param argv  [in] Argument passed into <tt>main(argc,argv)</tt>
    * \param out   [in] If <tt>out!=NULL</tt>, then a small message on each
    *              processor will be printed to this stream.  The default is <tt>&std::cout</tt>.
    *

@@ -103,7 +103,7 @@
  * by setting a breakpoint in the function <tt>ThrowException_break()</tt>.
  *
  * NOTE: This macro will only evaluate <tt>throw_exception_test</tt> once
- * reguardless if the test fails and the exception is thrown or
+ * regardless if the test fails and the exception is thrown or
  * not. Therefore, it is safe to call a function with side-effects as the
  * <tt>throw_exception_test</tt> argument.
  */

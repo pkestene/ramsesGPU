@@ -18,8 +18,8 @@ namespace hydroSimu
 class PapiInfoTest
 {
 public:
-  PapiInfoTest() {};
-  ~PapiInfoTest() {};
+  PapiInfoTest(){};
+  ~PapiInfoTest(){};
 
   Timer    aTimer;
   PapiInfo papiFlops_total;
@@ -47,7 +47,9 @@ public:
 
 } // namespace hydroSimu
 
-int main(int argc, char *argv[]) {
+int
+main(int argc, char * argv[])
+{
   hydroSimu::PapiInfoTest test;
 
   test.run();
