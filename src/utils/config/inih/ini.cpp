@@ -23,12 +23,13 @@ http://code.google.com/p/inih/
 #define MAX_NAME 50
 
 /* Strip whitespace chars off end of given string, in place. Return s. */
-static char* rstrip(char* s)
+static char *
+rstrip(char * s)
 {
-    char* p = s + strlen(s);
-    while (p > s && isspace(*--p))
-        *p = '\0';
-    return s;
+  char * p = s + strlen(s);
+  while (p > s && isspace(*--p))
+    *p = '\0';
+  return s;
 }
 
 /* Return pointer to first non-whitespace char in given string. */
@@ -64,174 +65,195 @@ static char* strncpy0(char* dest, const char* src, size_t size)
 // ================================================================
 // ================================================================
 /* See documentation in header file. */
-int ini_parse(const char* filename,
-              int (*handler)(void*, const char*, const char*, const char*),
-              void* user)
+int
+ini_parse(const char * filename,
+          int (*handler)(void *, const char *, const char *, const char *),
+          void * user)
 {
-    /* Uses a fair bit of stack (use heap instead if you need to) */
-    char line[MAX_LINE];
-    char section[MAX_SECTION] = "";
-    char prev_name[MAX_NAME] = "";
+  /* Uses a fair bit of stack (use heap instead if you need to) */
+  char line[MAX_LINE];
+  char section[MAX_SECTION] = "";
+  char prev_name[MAX_NAME] = "";
 
-    FILE* file;
-    char* start;
-    char* end;
-    char* name;
-    char* value;
-    int lineno = 0;
-    int error = 0;
+  FILE * file;
+  char * start;
+  char * end;
+  char * name;
+  char * value;
+  int    lineno = 0;
+  int    error = 0;
 
-    file = fopen(filename, "r");
-    if (!file)
-        return -1;
+  file = fopen(filename, "r");
+  if (!file)
+    return -1;
 
-    /* Scan through file line by line */
-    while (fgets(line, sizeof(line), file) != NULL) {
-        lineno++;
-        start = lskip(rstrip(line));
+  /* Scan through file line by line */
+  while (fgets(line, sizeof(line), file) != NULL)
+  {
+    lineno++;
+    start = lskip(rstrip(line));
 
 #if INI_ALLOW_MULTILINE
-        if (*prev_name && *start && start > line) {
-            /* Non-black line with leading whitespace, treat as continuation
-               of previous name's value (as per Python ConfigParser). */
-            if (!handler(user, section, prev_name, start) && !error)
-                error = lineno;
-        }
-        else
-#endif
-        if (*start == ';' || *start == '#') {
-            /* Per Python ConfigParser, allow '#' comments at start of line */
-        }
-        else if (*start == '[') {
-            /* A "[section]" line */
-            end = find_char_or_comment(start + 1, ']');
-            if (*end == ']') {
-                *end = '\0';
-                strncpy0(section, start + 1, sizeof(section));
-                *prev_name = '\0';
-            }
-            else if (!error) {
-                /* No ']' found on section line */
-                error = lineno;
-            }
-        }
-        else if (*start && *start != ';') {
-            /* Not a comment, must be a name=value pair */
-            end = find_char_or_comment(start, '=');
-            if (*end == '=') {
-                *end = '\0';
-                name = rstrip(start);
-                value = lskip(end + 1);
-                end = find_char_or_comment(value, '\0');
-                if (*end == ';')
-                    *end = '\0';
-                rstrip(value);
-
-                /* Valid name=value pair found, call handler */
-                strncpy0(prev_name, name, sizeof(prev_name));
-                if (!handler(user, section, name, value) && !error)
-                    error = lineno;
-            }
-            else if (!error) {
-                /* No '=' found on name=value line */
-                error = lineno;
-            }
-        }
+    if (*prev_name && *start && start > line)
+    {
+      /* Non-black line with leading whitespace, treat as continuation
+         of previous name's value (as per Python ConfigParser). */
+      if (!handler(user, section, prev_name, start) && !error)
+        error = lineno;
     }
+    else
+#endif
+      if (*start == ';' || *start == '#')
+    {
+      /* Per Python ConfigParser, allow '#' comments at start of line */
+    }
+    else if (*start == '[')
+    {
+      /* A "[section]" line */
+      end = find_char_or_comment(start + 1, ']');
+      if (*end == ']')
+      {
+        *end = '\0';
+        strncpy0(section, start + 1, sizeof(section));
+        *prev_name = '\0';
+      }
+      else if (!error)
+      {
+        /* No ']' found on section line */
+        error = lineno;
+      }
+    }
+    else if (*start && *start != ';')
+    {
+      /* Not a comment, must be a name=value pair */
+      end = find_char_or_comment(start, '=');
+      if (*end == '=')
+      {
+        *end = '\0';
+        name = rstrip(start);
+        value = lskip(end + 1);
+        end = find_char_or_comment(value, '\0');
+        if (*end == ';')
+          *end = '\0';
+        rstrip(value);
 
-    fclose(file);
+        /* Valid name=value pair found, call handler */
+        strncpy0(prev_name, name, sizeof(prev_name));
+        if (!handler(user, section, name, value) && !error)
+          error = lineno;
+      }
+      else if (!error)
+      {
+        /* No '=' found on name=value line */
+        error = lineno;
+      }
+    }
+  }
 
-    return error;
-    
+  fclose(file);
+
+  return error;
+
 } // ini_parse
 
 // ================================================================
 // ================================================================
 // ================================================================
-int ini_parse_buffer(char* &buffer, int buffer_size,
-		     int (*handler)(void*, const char*, const char*, const char*),
-		     void* user)
+int
+ini_parse_buffer(char *& buffer,
+                 int     buffer_size,
+                 int (*handler)(void *, const char *, const char *, const char *),
+                 void * user)
 {
   /* Uses a fair bit of stack (use heap instead if you need to) */
-  char* line = NULL;
-  char section[MAX_SECTION] = "";
-  char prev_name[MAX_NAME] = "";
+  char * line = NULL;
+  char   section[MAX_SECTION] = "";
+  char   prev_name[MAX_NAME] = "";
 
   // convert the input buffer into an input string stream
   std::istringstream strs;
   strs.rdbuf()->pubsetbuf(buffer, buffer_size);
 
-  
-  char* start;
-  char* end;
-  char* name;
-  char* value;
-  int lineno = 0;
-  int error = 0;
-  
-  
+
+  char * start;
+  char * end;
+  char * name;
+  char * value;
+  int    lineno = 0;
+  int    error = 0;
+
+
   // Scan through string stream line by line
-  for (std::string linestr=""; std::getline(strs, linestr); ) {
+  for (std::string linestr = ""; std::getline(strs, linestr);)
+  {
 
     lineno++;
 
     // copy std::string into a regular C char array
     line = new char[linestr.length() + 1];
     strcpy(line, linestr.c_str());
-    
+
     start = lskip(rstrip(line));
-    
+
 #if INI_ALLOW_MULTILINE
-    if (*prev_name && *start && start > line) {
+    if (*prev_name && *start && start > line)
+    {
       /* Non-black line with leading whitespace, treat as continuation
-	 of previous name's value (as per Python ConfigParser). */
+   of previous name's value (as per Python ConfigParser). */
       if (!handler(user, section, prev_name, start) && !error)
-	error = lineno;
+        error = lineno;
     }
     else
 #endif
-      if (*start == ';' || *start == '#') {
-	/* Per Python ConfigParser, allow '#' comments at start of line */
+      if (*start == ';' || *start == '#')
+    {
+      /* Per Python ConfigParser, allow '#' comments at start of line */
+    }
+    else if (*start == '[')
+    {
+      /* A "[section]" line */
+      end = find_char_or_comment(start + 1, ']');
+      if (*end == ']')
+      {
+        *end = '\0';
+        strncpy0(section, start + 1, sizeof(section));
+        *prev_name = '\0';
       }
-      else if (*start == '[') {
-	/* A "[section]" line */
-	end = find_char_or_comment(start + 1, ']');
-	if (*end == ']') {
-	  *end = '\0';
-	  strncpy0(section, start + 1, sizeof(section));
-	  *prev_name = '\0';
-	}
-	else if (!error) {
-	  /* No ']' found on section line */
-	  error = lineno;
-	}
+      else if (!error)
+      {
+        /* No ']' found on section line */
+        error = lineno;
       }
-      else if (*start && *start != ';') {
-	/* Not a comment, must be a name=value pair */
-	end = find_char_or_comment(start, '=');
-	if (*end == '=') {
-	  *end = '\0';
-	  name = rstrip(start);
-	  value = lskip(end + 1);
-	  end = find_char_or_comment(value, '\0');
-	  if (*end == ';')
-	    *end = '\0';
-	  rstrip(value);
-	  
-	  /* Valid name=value pair found, call handler */
-	  strncpy0(prev_name, name, sizeof(prev_name));
-	  if (!handler(user, section, name, value) && !error)
-	    error = lineno;
-	}
-	else if (!error) {
-	  /* No '=' found on name=value line */
-	  error = lineno;
-	}
-      }
+    }
+    else if (*start && *start != ';')
+    {
+      /* Not a comment, must be a name=value pair */
+      end = find_char_or_comment(start, '=');
+      if (*end == '=')
+      {
+        *end = '\0';
+        name = rstrip(start);
+        value = lskip(end + 1);
+        end = find_char_or_comment(value, '\0');
+        if (*end == ';')
+          *end = '\0';
+        rstrip(value);
 
-    delete [] line;
+        /* Valid name=value pair found, call handler */
+        strncpy0(prev_name, name, sizeof(prev_name));
+        if (!handler(user, section, name, value) && !error)
+          error = lineno;
+      }
+      else if (!error)
+      {
+        /* No '=' found on name=value line */
+        error = lineno;
+      }
+    }
+
+    delete[] line;
   }
-  
+
   return error;
-    
+
 } // init_parse_buffer

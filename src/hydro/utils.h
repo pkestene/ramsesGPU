@@ -11,10 +11,14 @@
 
 enum FPUPrecision
 {
-	FPUSingle = 0, FPUDouble = 1, FPUExtended = 2
+  FPUSingle = 0,
+  FPUDouble = 1,
+  FPUExtended = 2
 };
 
-void unix_gettimeofday(int* sec, int* usec);
-void set_fpu_precision(enum FPUPrecision* prec);
+void
+unix_gettimeofday(int * sec, int * usec);
+void
+set_fpu_precision(enum FPUPrecision * prec);
 
 #endif /*UTILS_H_*/

@@ -1,8 +1,9 @@
 #ifndef COMMON_SF_H_
 #define COMMON_SF_H_
 
-enum SF_TYPES {
-  SF_TYPE_V     = 0, /* v         */
+enum SF_TYPES
+{
+  SF_TYPE_V = 0,     /* v         */
   SF_TYPE_RHO2V = 1, /* rho^1/2*v */
   SF_TYPE_RHO3V = 2  /* rho^1/3*v */
 };

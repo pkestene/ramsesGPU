@@ -51,16 +51,16 @@
 #include "glwidget.h"
 
 //! [0]
-GLWidget::GLWidget(QWidget *parent)
-    : QGLWidget(parent)
+GLWidget::GLWidget(QWidget * parent)
+  : QGLWidget(parent)
 {
-    object = 0;
-    xRot = 0;
-    yRot = 0;
-    zRot = 0;
+  object = 0;
+  xRot = 0;
+  yRot = 0;
+  zRot = 0;
 
-    trolltechGreen = QColor::fromCmykF(0.40, 0.0, 1.0, 0.0);
-    trolltechPurple = QColor::fromCmykF(0.39, 0.39, 0.0, 0.0);
+  trolltechGreen = QColor::fromCmykF(0.40, 0.0, 1.0, 0.0);
+  trolltechPurple = QColor::fromCmykF(0.39, 0.39, 0.0, 0.0);
 }
 //! [0]
 

@@ -18,7 +18,7 @@
 /**
  * a simple structure designed to replace a real_t array in pure hydro computation.
  *
- * On GPU declaring an array results in register spilling (since register are not 
+ * On GPU declaring an array results in register spilling (since register are not
  * indexable.
  */
 struct qStateHydro
@@ -29,7 +29,9 @@ struct qStateHydro
   real_t V;
   real_t W;
 
-  __DEVICE__ void reset() {
+  __DEVICE__ void
+  reset()
+  {
     D = ZERO_F;
     P = ZERO_F;
     U = ZERO_F;
@@ -53,7 +55,9 @@ struct qStateMHD
   real_t B;
   real_t C;
 
-  __DEVICE__ void reset() {
+  __DEVICE__ void
+  reset()
+  {
     D = ZERO_F;
     P = ZERO_F;
     U = ZERO_F;

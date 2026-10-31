@@ -1,17 +1,19 @@
-//Copyright (C) 2011 Carl Rogers
-//Released under MIT License
-//license available in LICENSE file, or at http://www.opensource.org/licenses/mit-license.php
+// Copyright (C) 2011 Carl Rogers
+// Released under MIT License
+// license available in LICENSE file, or at http://www.opensource.org/licenses/mit-license.php
 
-#include"cnpy.h"
-#include<complex>
-#include<cstdlib>
-#include<algorithm>
-#include<cstring>
-#include<iomanip>
+#include "cnpy.h"
+#include <complex>
+#include <cstdlib>
+#include <algorithm>
+#include <cstring>
+#include <iomanip>
 
-char cnpy::BigEndianTest() {
-  unsigned char x[] = {1,0};
-  short y = *(short*) x;
+char
+cnpy::BigEndianTest()
+{
+  unsigned char x[] = { 1, 0 };
+  short         y = *(short *)x;
   return y == 1 ? '<' : '>';
 }
 
@@ -244,5 +246,3 @@ cnpy::NpyArray cnpy::npy_load(std::string fname) {
   fclose(fp);
   return arr;
 }
-
-

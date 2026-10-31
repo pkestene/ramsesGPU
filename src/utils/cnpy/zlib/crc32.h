@@ -2,6 +2,7 @@
  * Generated automatically by crc32.c
  */
 
+// clang-format off
 local const z_crc_t FAR crc_table[TBLS][256] =
 {
   {
@@ -439,3 +440,4 @@ local const z_crc_t FAR crc_table[TBLS][256] =
 #endif
   }
 };
+// clang-format on

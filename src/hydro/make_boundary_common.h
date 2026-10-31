@@ -16,9 +16,9 @@
 #define MAKE_BOUNDARY_COMMON_H_
 
 /** only usefull for GPU implementation */
-#define MK_BOUND_BLOCK_SIZE             128
-#define MK_BOUND_BLOCK_SIZE_3D           16
-#define MAKE_JET_BLOCK_SIZE             128
-#define MAKE_JET_BLOCK_SIZE_3D           16
+#define MK_BOUND_BLOCK_SIZE 128
+#define MK_BOUND_BLOCK_SIZE_3D 16
+#define MAKE_JET_BLOCK_SIZE 128
+#define MAKE_JET_BLOCK_SIZE_3D 16
 
 #endif // MAKE_BOUNDARY_COMMON_H_

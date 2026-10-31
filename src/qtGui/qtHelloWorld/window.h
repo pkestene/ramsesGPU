@@ -57,21 +57,23 @@ class GLWidget;
 
 class Window : public QWidget
 {
-    Q_OBJECT
+  Q_OBJECT
 
 public:
-    Window();
+  Window();
 
 protected:
-     void keyPressEvent(QKeyEvent *event);
+  void
+  keyPressEvent(QKeyEvent * event);
 
 private:
-    QSlider *createSlider();
+  QSlider *
+  createSlider();
 
-    GLWidget *glWidget;
-    QSlider *xSlider;
-    QSlider *ySlider;
-    QSlider *zSlider;
+  GLWidget * glWidget;
+  QSlider *  xSlider;
+  QSlider *  ySlider;
+  QSlider *  zSlider;
 };
 //! [0]
 

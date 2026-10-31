@@ -1,10 +1,10 @@
 /**
  * \file GlutWindow.h
  * \brief Defines a base class for handling Glut interface callbacks.
- * 
+ *
  * \see http://www.stetten.com/george/glutmaster/glutmaster.html
  *
- * $Id: GlutWindow.h 1784 2012-02-21 10:34:58Z pkestene $ 
+ * $Id: GlutWindow.h 1784 2012-02-21 10:34:58Z pkestene $
  */
 
 ////////////////////////////////////////////////////////////////
@@ -27,32 +27,38 @@
  * \class GlutWindow GlutWindow.h
  * \brief Handle Glut interface callbacks.
  */
-class GlutWindow {
+class GlutWindow
+{
 protected:
-
-   int          windowID;
+  int windowID;
 
 public:
+  GlutWindow(void);
+  ~GlutWindow();
 
-   GlutWindow(void);
-   ~GlutWindow();
+  virtual void
+  CallBackDisplayFunc();
+  virtual void
+  CallBackIdleFunc(void);
+  virtual void
+  CallBackKeyboardFunc(unsigned char key, int x, int y);
+  virtual void
+  CallBackMotionFunc(int x, int y);
+  virtual void
+  CallBackMouseFunc(int button, int state, int x, int y);
+  virtual void
+  CallBackPassiveMotionFunc(int x, int y);
+  virtual void
+  CallBackReshapeFunc(int w, int h);
+  virtual void
+  CallBackSpecialFunc(int key, int x, int y);
+  virtual void
+  CallBackVisibilityFunc(int visible);
 
-   virtual void CallBackDisplayFunc();
-   virtual void CallBackIdleFunc(void);
-   virtual void CallBackKeyboardFunc(unsigned char key, int x, int y);
-   virtual void CallBackMotionFunc(int x, int y);
-   virtual void CallBackMouseFunc(int button, int state, int x, int y);
-   virtual void CallBackPassiveMotionFunc(int x, int y);
-   virtual void CallBackReshapeFunc(int w, int h);   
-   virtual void CallBackSpecialFunc(int key, int x, int y);   
-   virtual void CallBackVisibilityFunc(int visible);
-
-   void    SetWindowID(int newWindowID);
-   int     GetWindowID(void);
-
+  void
+  SetWindowID(int newWindowID);
+  int
+  GetWindowID(void);
 };
 
 #endif // GLUT_WINDOW_H_
-
-
-

@@ -12,23 +12,28 @@
 #include <fstream>
 #include <iostream>
 
-namespace hydroSimu {
+namespace hydroSimu
+{
 
-class PapiInfoTest {
+class PapiInfoTest
+{
 public:
-  PapiInfoTest(){};
-  ~PapiInfoTest(){};
+  PapiInfoTest() {};
+  ~PapiInfoTest() {};
 
-  Timer aTimer;
+  Timer    aTimer;
   PapiInfo papiFlops_total;
 
-  void run() {
+  void
+  run()
+  {
     double tmp = 1.1;
 
     papiFlops_total.start();
     {
 
-      for (int i = 1; i < 2000; i++) {
+      for (int i = 1; i < 2000; i++)
+      {
         tmp = (tmp + 100) / i;
       }
     }
@@ -36,8 +41,7 @@ public:
 
     printf("tmp : %g \n", tmp);
     printf("total flpops %lld\n", papiFlops_total.getFlop());
-    printf("MFLOPS %g\n",
-           1e-6 * papiFlops_total.getFlop() / papiFlops_total.elapsed());
+    printf("MFLOPS %g\n", 1e-6 * papiFlops_total.getFlop() / papiFlops_total.elapsed());
   };
 };
 

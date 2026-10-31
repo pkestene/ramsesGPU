@@ -1,7 +1,7 @@
 /**
  * \file GlutMaster.cpp
  * \brief Implements a class for handling multiple GlutWindows.
- * 
+ *
  * \see http://www.stetten.com/george/glutmaster/glutmaster.html
  *
  * $Id: GlutMaster.cpp 1784 2012-02-21 10:34:58Z pkestene $
@@ -19,53 +19,58 @@
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-#include <cstdio>    
+#include <cstdio>
 
 #include "GlutMaster.h"
 #include "GlutWindow.h"
-                                                 
-GlutWindow * viewPorts[MAX_NUMBER_OF_WINDOWS]; 
 
-int GlutMaster::currentIdleWindow   = 0;
+GlutWindow * viewPorts[MAX_NUMBER_OF_WINDOWS];
+
+int GlutMaster::currentIdleWindow = 0;
 int GlutMaster::idleFunctionEnabled = 0;
 
-GlutMaster::GlutMaster(){
+GlutMaster::GlutMaster()
+{
 
-   // Create dummy variables 
+  // Create dummy variables
 
-   const char * dummy_argv[1];
-   dummy_argv[0] = "run";
-   int dummy_argc = 1;
+  const char * dummy_argv[1];
+  dummy_argv[0] = "run";
+  int dummy_argc = 1;
 
-   // Initialize GLUT
+  // Initialize GLUT
 
-   glutInit(&dummy_argc, const_cast<char**>(dummy_argv));
-   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
-   
+  glutInit(&dummy_argc, const_cast<char **>(dummy_argv));
+  glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 }
 
-GlutMaster::~GlutMaster(){
+GlutMaster::~GlutMaster() {}
 
+void
+GlutMaster::CallBackDisplayFunc(void)
+{
+
+  int windowID = glutGetWindow();
+  viewPorts[windowID]->CallBackDisplayFunc();
 }
- 
-void GlutMaster::CallBackDisplayFunc(void){
 
-   int windowID = glutGetWindow();
-   viewPorts[windowID]->CallBackDisplayFunc();
+void
+GlutMaster::CallBackIdleFunc(void)
+{
+
+  if (idleFunctionEnabled && currentIdleWindow)
+  {
+    glutSetWindow(currentIdleWindow);
+    viewPorts[currentIdleWindow]->CallBackIdleFunc();
+  }
 }
 
-void GlutMaster::CallBackIdleFunc(void){
+void
+GlutMaster::CallBackKeyboardFunc(unsigned char key, int x, int y)
+{
 
-   if(idleFunctionEnabled && currentIdleWindow){
-      glutSetWindow(currentIdleWindow);
-      viewPorts[currentIdleWindow]->CallBackIdleFunc();
-   }
-}
- 
-void GlutMaster::CallBackKeyboardFunc(unsigned char key, int x, int y){
-
-   int windowID = glutGetWindow();
-   viewPorts[windowID]->CallBackKeyboardFunc(key, x, y);
+  int windowID = glutGetWindow();
+  viewPorts[windowID]->CallBackKeyboardFunc(key, x, y);
 }
 
 void GlutMaster::CallBackMotionFunc(int x, int y){
@@ -92,54 +97,64 @@ void GlutMaster::CallBackReshapeFunc(int w, int h){
    viewPorts[windowID]->CallBackReshapeFunc(w, h);
 }
 
-void GlutMaster::CallBackSpecialFunc(int key, int x, int y){
+void
+GlutMaster::CallBackSpecialFunc(int key, int x, int y)
+{
 
-   int windowID = glutGetWindow();
-   viewPorts[windowID]->CallBackSpecialFunc(key, x, y);
-}   
-
-void GlutMaster::CallBackVisibilityFunc(int visible){
-
-   int windowID = glutGetWindow();
-   viewPorts[windowID]->CallBackVisibilityFunc(visible);
+  int windowID = glutGetWindow();
+  viewPorts[windowID]->CallBackSpecialFunc(key, x, y);
 }
 
-void GlutMaster::CallGlutCreateWindow(const char* setTitle, GlutWindow* glutWindow){
+void
+GlutMaster::CallBackVisibilityFunc(int visible)
+{
 
-   // Open new window, record its windowID , 
-
-   int windowID = glutCreateWindow(setTitle);
-
-   glutWindow->SetWindowID(windowID);
-
-   // Store the address of new window in global array 
-   // so GlutMaster can send events to propoer callback functions.
-
-   viewPorts[windowID] = glutWindow;
-
-   // Hand address of universal static callback functions to Glut.
-   // This must be for each new window, even though the address are constant.
-
-   glutDisplayFunc(CallBackDisplayFunc);
-   glutIdleFunc(CallBackIdleFunc); 
-   glutKeyboardFunc(CallBackKeyboardFunc);
-   glutSpecialFunc(CallBackSpecialFunc);
-   glutMouseFunc(CallBackMouseFunc);
-   glutMotionFunc(CallBackMotionFunc);
-   glutPassiveMotionFunc(CallBackPassiveMotionFunc);
-   glutReshapeFunc(CallBackReshapeFunc); 
-   glutVisibilityFunc(CallBackVisibilityFunc);
+  int windowID = glutGetWindow();
+  viewPorts[windowID]->CallBackVisibilityFunc(visible);
 }
 
-void GlutMaster::CallGlutMainLoop(void){
+void
+GlutMaster::CallGlutCreateWindow(const char * setTitle, GlutWindow * glutWindow)
+{
 
-   printf("Starting GLUT main loop...\n");
-   glutMainLoop();
+  // Open new window, record its windowID ,
+
+  int windowID = glutCreateWindow(setTitle);
+
+  glutWindow->SetWindowID(windowID);
+
+  // Store the address of new window in global array
+  // so GlutMaster can send events to propoer callback functions.
+
+  viewPorts[windowID] = glutWindow;
+
+  // Hand address of universal static callback functions to Glut.
+  // This must be for each new window, even though the address are constant.
+
+  glutDisplayFunc(CallBackDisplayFunc);
+  glutIdleFunc(CallBackIdleFunc);
+  glutKeyboardFunc(CallBackKeyboardFunc);
+  glutSpecialFunc(CallBackSpecialFunc);
+  glutMouseFunc(CallBackMouseFunc);
+  glutMotionFunc(CallBackMotionFunc);
+  glutPassiveMotionFunc(CallBackPassiveMotionFunc);
+  glutReshapeFunc(CallBackReshapeFunc);
+  glutVisibilityFunc(CallBackVisibilityFunc);
 }
-                              
-void GlutMaster::DisableIdleFunction(void){
 
-   idleFunctionEnabled = 0;
+void
+GlutMaster::CallGlutMainLoop(void)
+{
+
+  printf("Starting GLUT main loop...\n");
+  glutMainLoop();
+}
+
+void
+GlutMaster::DisableIdleFunction(void)
+{
+
+  idleFunctionEnabled = 0;
 }
 
 void GlutMaster::EnableIdleFunction(void){
@@ -165,17 +180,3 @@ void GlutMaster::SetIdleToCurrentWindow(void){
 
    currentIdleWindow = glutGetWindow();
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

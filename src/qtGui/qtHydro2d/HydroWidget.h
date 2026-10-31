@@ -16,7 +16,7 @@
 #include <ConfigMap.h>
 #include <HydroRunBase.h>
 
-#define I2D(nx,i,j) (((nx)*(j)) + i)
+#define I2D(nx, i, j) (((nx) * (j)) + i)
 #define NBCOLORS (236)
 
 using hydroSimu::HydroRunBase;
@@ -32,50 +32,69 @@ class HydroWidget : public QGLWidget
 {
   Q_OBJECT
 
-  public:
-  HydroWidget(ConfigMap& _param, HydroRunBase* _hydroRun, QWidget* parent = 0);
+public:
+  HydroWidget(ConfigMap & _param, HydroRunBase * _hydroRun, QWidget * parent = 0);
   virtual ~HydroWidget();
 
-  QSize minimumSizeHint() const;
-  QSize sizeHint() const;
+  QSize
+  minimumSizeHint() const;
+  QSize
+  sizeHint() const;
 
-  void startSimulation();
-  void updateData();
+  void
+  startSimulation();
+  void
+  updateData();
 
 signals:
-  void plotXCut(int x, int y);
-  void dataChanged();
+  void
+  plotXCut(int x, int y);
+  void
+  dataChanged();
 
 protected:
-  virtual void initializeGL();
-  void paintGL();
-  void resizeGL(int width, int height);
-  void mousePressEvent(QMouseEvent *event);
-  void mouseMoveEvent(QMouseEvent *event);
-  void saveGLState();
-  void restoreGLState();
-  void timerEvent(QTimerEvent *);
+  virtual void
+  initializeGL();
+  void
+  paintGL();
+  void
+  resizeGL(int width, int height);
+  void
+  mousePressEvent(QMouseEvent * event);
+  void
+  mouseMoveEvent(QMouseEvent * event);
+  void
+  saveGLState();
+  void
+  restoreGLState();
+  void
+  timerEvent(QTimerEvent *);
 
-  virtual void createPBO();
-  virtual void deletePBO();
-  virtual void createTexture();
-  virtual void deleteTexture();
-  virtual void render();
+  virtual void
+  createPBO();
+  virtual void
+  deletePBO();
+  virtual void
+  createTexture();
+  virtual void
+  deleteTexture();
+  virtual void
+  render();
 
-  int          nx,ny;
+  int nx, ny;
   // OpenGL pixel buffer object and texture identifiers
   GLuint gl_PBO, gl_Tex;
 
   // simulation data
   ConfigMap param;
 
- public:
+public:
   HydroRunBase * hydroRun;
-  real_t t;
-  real_t dt;
-  int nStep; 
-  int nbStepToDo;
-  bool animate;
+  real_t         t;
+  real_t         dt;
+  int            nStep;
+  int            nbStepToDo;
+  bool           animate;
 
   int useColor;
   int manualContrast;
@@ -83,14 +102,16 @@ protected:
 
   // colormap
   unsigned int cmap_rgba[236];
-  virtual void initColormap();
-  unsigned int *plot_rgba;
-  real_t minvar,maxvar;
-  int displayVar;
-  
+  virtual void
+                 initColormap();
+  unsigned int * plot_rgba;
+  real_t         minvar, maxvar;
+  int            displayVar;
+
 protected:
-  QPoint lastPos;  
-  virtual void computeMinMax(real_t *U, int size, int iVar);
+  QPoint lastPos;
+  virtual void
+  computeMinMax(real_t * U, int size, int iVar);
 };
 
 #endif // GODUNOV_WIDGET_H_

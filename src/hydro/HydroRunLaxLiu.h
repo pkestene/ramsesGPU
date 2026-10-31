@@ -19,7 +19,8 @@
 
 #include "HydroRunBase.h"
 
-namespace hydroSimu {
+namespace hydroSimu
+{
 
 /**
  * \class HydroRunLaxLiu HydroRunLaxLiu.h
@@ -34,27 +35,33 @@ namespace hydroSimu {
 class HydroRunLaxLiu : public HydroRunBase
 {
 public:
-  HydroRunLaxLiu(ConfigMap &_configMap);
+  HydroRunLaxLiu(ConfigMap & _configMap);
   ~HydroRunLaxLiu();
 
-  void init_hydro_jet();
-  void start(); 
+  void
+  init_hydro_jet();
+  void
+  start();
 
   //! perform only one time step integration
-  void oneStepIntegration(int& nStep, real_t& t, real_t& dt);
+  void
+  oneStepIntegration(int & nStep, real_t & t, real_t & dt);
 
 protected:
 #ifdef __CUDACC__
-  void laxliu_evolve(DeviceArray<float> &a1, DeviceArray<float> &a2);
-  void averageArray (DeviceArray<float> &a1, DeviceArray<float> &a2);
+  void
+  laxliu_evolve(DeviceArray<float> & a1, DeviceArray<float> & a2);
+  void
+  averageArray(DeviceArray<float> & a1, DeviceArray<float> & a2);
 #else
-  void laxliu_evolve(HostArray<float>   &a1, HostArray<float>   &a2);
-  void averageArray (HostArray<float>   &a1, HostArray<float>   &a2);
+  void
+  laxliu_evolve(HostArray<float> & a1, HostArray<float> & a2);
+  void
+  averageArray(HostArray<float> & a1, HostArray<float> & a2);
 #endif
 
 
 private:
-
   // Data Arrays
   HostArray<float> h_U1;
   HostArray<float> h_tmp1;
@@ -62,7 +69,6 @@ private:
   DeviceArray<float> d_U1;
   DeviceArray<float> d_tmp1;
 #endif // __CUDACC__
-
 };
 
 } // namespace hydroSimu

@@ -13,15 +13,14 @@
 #include <fstream>
 
 #if USE_MPI
-#include <mpi.h>
+#  include <mpi.h>
 #endif
 
 // =======================================================
 // =======================================================
-ConfigMap::ConfigMap(std::string filename) :
-  INIReader(filename)
-{
-} // ConfigMap::ConfigMap
+ConfigMap::ConfigMap(std::string filename)
+  : INIReader(filename)
+{} // ConfigMap::ConfigMap
 
 // =======================================================
 // =======================================================
@@ -62,22 +61,19 @@ void ConfigMap::setFloat(std::string section, std::string name, float value)
 
 // =======================================================
 // =======================================================
-bool ConfigMap::getBool(std::string section, std::string name, bool default_value) const
+bool
+ConfigMap::getBool(std::string section, std::string name, bool default_value) const
 {
-  bool val = default_value;
+  bool        val = default_value;
   std::string valstr = getString(section, name, "");
-  
-  if (!valstr.compare("1") or 
-      !valstr.compare("yes") or 
-      !valstr.compare("true") or
+
+  if (!valstr.compare("1") or !valstr.compare("yes") or !valstr.compare("true") or
       !valstr.compare("on"))
     val = true;
-  if (!valstr.compare("0") or 
-      !valstr.compare("no") or 
-      !valstr.compare("false") or
+  if (!valstr.compare("0") or !valstr.compare("no") or !valstr.compare("false") or
       !valstr.compare("off"))
-    val=false;
-  
+    val = false;
+
   // if valstr is empty, return the default value
   if (!valstr.size())
     val = default_value;
@@ -100,7 +96,8 @@ void ConfigMap::setBool(std::string section, std::string name, bool value)
 
 // =======================================================
 // =======================================================
-ConfigMap broadcast_parameters(std::string filename)
+ConfigMap
+broadcast_parameters(std::string filename)
 {
 #ifdef USE_MPI
 
@@ -108,22 +105,23 @@ ConfigMap broadcast_parameters(std::string filename)
   int nTasks;
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
   MPI_Comm_size(MPI_COMM_WORLD, &nTasks);
-  
-  char* buffer = nullptr;
-  int buffer_size = 0;
-  
+
+  char * buffer = nullptr;
+  int    buffer_size = 0;
+
   // MPI rank 0 reads parameter file
-  if (myRank == 0) {
-    
+  if (myRank == 0)
+  {
+
     // open file and go to the end to get file size in bytes
     std::ifstream filein(filename.c_str(), std::ifstream::ate);
-    int file_size = filein.tellg();
-    
+    int           file_size = filein.tellg();
+
     filein.seekg(0); // rewind
-    
+
     buffer_size = file_size;
     buffer = new char[buffer_size];
-    
+
     filein.read(buffer, buffer_size);
   }
 
@@ -131,19 +129,20 @@ ConfigMap broadcast_parameters(std::string filename)
   MPI_Bcast(&buffer_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   // all other MPI task need to allocate buffer
-  if (myRank>0) {
-    //printf("I'm rank %d allocating buffer of size %d\n",myRank,buffer_size);
+  if (myRank > 0)
+  {
+    // printf("I'm rank %d allocating buffer of size %d\n",myRank,buffer_size);
     buffer = new char[buffer_size];
   }
 
   // broastcast buffer itself (collective)
   MPI_Bcast(&buffer[0], buffer_size, MPI_CHAR, 0, MPI_COMM_WORLD);
-  
+
   // now all MPI rank should have buffer filled, try to build a ConfigMap
-  ConfigMap configMap(buffer,buffer_size);
+  ConfigMap configMap(buffer, buffer_size);
 
   if (buffer)
-    delete [] buffer;
+    delete[] buffer;
 
   return configMap;
 
@@ -151,6 +150,5 @@ ConfigMap broadcast_parameters(std::string filename)
   ConfigMap configMap(filename);
   return configMap;
 #endif
-    
-} // broadcast_parameters
 
+} // broadcast_parameters

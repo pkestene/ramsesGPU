@@ -10,34 +10,33 @@
  * $Id: TestForException.h 1783 2012-02-21 10:20:07Z pkestene $
  */
 // ***********************************************************************
-// 
+//
 //                    Teuchos: Common Tools Package
 //                 Copyright (2004) Sandia Corporation
-// 
+//
 // Under terms of Contract DE-AC04-94AL85000, there is a non-exclusive
 // license for use of this work by or on behalf of the U.S. Government.
-// 
+//
 // This library is free software; you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as
 // published by the Free Software Foundation; either version 2.1 of the
 // License, or (at your option) any later version.
-//  
+//
 // This library is distributed in the hope that it will be useful, but
 // WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-//  
+//
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA
-// Questions? Contact Michael A. Heroux (maherou@sandia.gov) 
-// 
+// Questions? Contact Michael A. Heroux (maherou@sandia.gov)
+//
 // ***********************************************************************
 
 #ifndef TEST_FOR_EXCEPTION_H_
 #define TEST_FOR_EXCEPTION_H_
-
 
 
 /** \brief Macro for throwing an exception with breakpointing to ease debugging
@@ -57,7 +56,7 @@
  * <tt>throw_exception_test</tt> evaluates to <tt>true</tt> when an exception
  * is throw.
  *
- * The way that this macro is intended to be used is to 
+ * The way that this macro is intended to be used is to
  * call it in the source code like a function.  For example,
  * suppose that in a piece of code in the file <tt>my_source_file.cpp</tt>
  * that the exception <tt>std::out_of_range</tt> is thrown if <tt>n > 100</tt>.
@@ -108,19 +107,19 @@
  * not. Therefore, it is safe to call a function with side-effects as the
  * <tt>throw_exception_test</tt> argument.
  */
-#define TEST_FOR_EXCEPTION(throw_exception_test, Exception, msg) \
-{ \
-  const bool throw_exception = (throw_exception_test);	\
-  if(throw_exception) {					\
-    std::ostringstream omsg;				\
-    omsg								\
-      << __FILE__ << ":" << __LINE__ << ":\n\n"				\
-      << "Throw test that evaluated to true: "#throw_exception_test << "\n\n" \
-      << msg;								\
-    const std::string &omsgstr = omsg.str();				\
-    throw Exception(omsgstr);						\
-  }									\
-}
+#define TEST_FOR_EXCEPTION(throw_exception_test, Exception, msg)                    \
+  {                                                                                 \
+    const bool throw_exception = (throw_exception_test);                            \
+    if (throw_exception)                                                            \
+    {                                                                               \
+      std::ostringstream omsg;                                                      \
+      omsg << __FILE__ << ":" << __LINE__ << ":\n\n"                                \
+           << "Throw test that evaluated to true: " #throw_exception_test << "\n\n" \
+           << msg;                                                                  \
+      const std::string & omsgstr = omsg.str();                                     \
+      throw Exception(omsgstr);                                                     \
+    }                                                                               \
+  }
 
 /** \brief Macro for throwing an exception with breakpointing to ease debugging
  *
@@ -128,16 +127,17 @@
  * the file name, line number, and test condition are not printed.
  */
 #define TEST_FOR_EXCEPTION_PURE_MSG(throw_exception_test, Exception, msg) \
-{ \
-  const bool throw_exception = (throw_exception_test);	\
-  if(throw_exception) {					\
-    std::ostringstream omsg;				\
-    omsg << msg;					\
-    omsg  << "\n\n";					\
-    const std::string &omsgstr = omsg.str();		\
-    throw Exception(omsgstr);				\
-  }							\
-}
+  {                                                                       \
+    const bool throw_exception = (throw_exception_test);                  \
+    if (throw_exception)                                                  \
+    {                                                                     \
+      std::ostringstream omsg;                                            \
+      omsg << msg;                                                        \
+      omsg << "\n\n";                                                     \
+      const std::string & omsgstr = omsg.str();                           \
+      throw Exception(omsgstr);                                           \
+    }                                                                     \
+  }
 
 /** \brief This macro is designed to be a short version of
  * <tt>TEST_FOR_EXCEPTION()</tt> that is easier to call.
@@ -150,7 +150,7 @@
  * \note The exception thrown is <tt>std::logic_error</tt>.
  */
 #define TEST_FOR_EXCEPT(throw_exception_test) \
-  TEST_FOR_EXCEPTION(throw_exception_test,std::logic_error,"Error!")
+  TEST_FOR_EXCEPTION(throw_exception_test, std::logic_error, "Error!")
 
 /** \brief This macro is designed to be a short version of
  * <tt>TEST_FOR_EXCEPTION()</tt> that is easier to call.
@@ -165,7 +165,7 @@
  * \note The exception thrown is <tt>std::logic_error</tt>.
  */
 #define TEST_FOR_EXCEPT_MSG(throw_exception_test, msg) \
-  TEST_FOR_EXCEPTION(throw_exception_test,std::logic_error,msg)
+  TEST_FOR_EXCEPTION(throw_exception_test, std::logic_error, msg)
 
 /** \brief This macro is the same as <tt>TEST_FOR_EXCEPTION()</tt> except that the
  * exception will be caught, the message printed, and then rethrown.
@@ -180,19 +180,20 @@
  * receive a printout of a line of output that gives the exception type and
  * the error message that is generated.
  */
-#define TEST_FOR_EXCEPTION_PRINT(throw_exception_test, Exception, msg, out_ptr) \
-try { \
-  TEST_FOR_EXCEPTION(throw_exception_test,Exception,msg); \
-} \
-catch(const std::exception &except) { \
-  std::ostream *l_out_ptr = (out_ptr); \
-  if(l_out_ptr) { \
-    *l_out_ptr \
-      << "\nThrowing an std::exception with the error message: " \
-      << except.what(); \
-  } \
-  throw; \
-}
+#define TEST_FOR_EXCEPTION_PRINT(throw_exception_test, Exception, msg, out_ptr)               \
+  try                                                                                         \
+  {                                                                                           \
+    TEST_FOR_EXCEPTION(throw_exception_test, Exception, msg);                                 \
+  }                                                                                           \
+  catch (const std::exception & except)                                                       \
+  {                                                                                           \
+    std::ostream * l_out_ptr = (out_ptr);                                                     \
+    if (l_out_ptr)                                                                            \
+    {                                                                                         \
+      *l_out_ptr << "\nThrowing an std::exception with the error message: " << except.what(); \
+    }                                                                                         \
+    throw;                                                                                    \
+  }
 
 /** \brief This macro is the same as <tt>TEST_FOR_EXCEPT()</tt> except that the
  * exception will be caught, the message printed, and then rethrown.
@@ -204,7 +205,7 @@ catch(const std::exception &except) { \
  * the error message that is generated.
  */
 #define TEST_FOR_EXCEPT_PRINT(throw_exception_test, out_ptr) \
-  TEST_FOR_EXCEPTION_PRINT(throw_exception_test,std::logic_error,"Error!",out_ptr)
+  TEST_FOR_EXCEPTION_PRINT(throw_exception_test, std::logic_error, "Error!", out_ptr)
 
 
 /** \brief This macro intercepts an exception, prints a standardized message including
@@ -212,12 +213,11 @@ catch(const std::exception &except) { \
  *
  * \param exc [in] the exception that has been caught
  */
-#define HYDROSIMU_TRACE(exc)\
-{ \
-  std::ostringstream omsg; \
-	omsg << exc.what() << std::endl \
-       << "caught in " << __FILE__ << ":" << __LINE__ << std::endl ; \
-  throw std::runtime_error(omsg.str()); \
-}
+#define HYDROSIMU_TRACE(exc)                                                                     \
+  {                                                                                              \
+    std::ostringstream omsg;                                                                     \
+    omsg << exc.what() << std::endl << "caught in " << __FILE__ << ":" << __LINE__ << std::endl; \
+    throw std::runtime_error(omsg.str());                                                        \
+  }
 
 #endif // TEST_FOR_EXCEPTION_H_

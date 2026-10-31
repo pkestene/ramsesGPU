@@ -21,10 +21,11 @@ using hydroSimu::HostArray;
  * Memory allocation for HostArray is done outside.
  *
  */
-void read_pnetcdf(const std::string &filename,
-		  int                iVar,
-		  ConfigMap         &configMap,
-		  HostArray<double> &localData);
+void
+read_pnetcdf(const std::string & filename,
+             int                 iVar,
+             ConfigMap &         configMap,
+             HostArray<double> & localData);
 
 /**
  * Write netcdf file using Parallel-NetCDF, with/without ghosts.
@@ -39,8 +40,7 @@ void read_pnetcdf(const std::string &filename,
  * \param[inout] localData A reference to a HostArray (data to write)
  *
  */
-void write_pnetcdf(const std::string &filename,
-		   HostArray<double> &localData,
-		   ConfigMap         &configMap);
+void
+write_pnetcdf(const std::string & filename, HostArray<double> & localData, ConfigMap & configMap);
 
 #endif /* PNETCDF_IO_H_ */

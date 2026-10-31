@@ -15,44 +15,50 @@
 
 #include "Timer.h"
 
-namespace hydroSimu {
-  
-  class PapiInfo
-  {
-  public:
-    /**
-     * constructor
-     */
-    PapiInfo();
-    
-    /**
-     * destructor
-     */
-    ~PapiInfo();
+namespace hydroSimu
+{
 
-    void start();
-    void stop();
-    double getFlops();
-    long long int getFlop();
-    double elapsed();
+class PapiInfo
+{
+public:
+  /**
+   * constructor
+   */
+  PapiInfo();
 
-  protected:
-    /* Wall clock time */
-    Timer               papiTimer;
-    
-    /* cumulative counters */
-    float               crtime;   /* cumulative real time */
-    float               cptime;   /* cumulative process time */
-    long long int       cflpops;  /* cumulative floating point operations */
+  /**
+   * destructor
+   */
+  ~PapiInfo();
 
-    /* values used in start routine */
-    float               irtime;   /* interval real time */
-    float               iptime;   /* interval process time */
-    long long int       iflpops;  /* interval floating point operations */
+  void
+  start();
+  void
+  stop();
+  double
+  getFlops();
+  long long int
+  getFlop();
+  double
+  elapsed();
 
-    double              mflops;   /* MFlop/s rate  */
-    
-  }; // class PapiInfo
+protected:
+  /* Wall clock time */
+  Timer papiTimer;
+
+  /* cumulative counters */
+  float         crtime;  /* cumulative real time */
+  float         cptime;  /* cumulative process time */
+  long long int cflpops; /* cumulative floating point operations */
+
+  /* values used in start routine */
+  float         irtime;  /* interval real time */
+  float         iptime;  /* interval process time */
+  long long int iflpops; /* interval floating point operations */
+
+  double mflops; /* MFlop/s rate  */
+
+}; // class PapiInfo
 
 } // namespace hydroSimu
 

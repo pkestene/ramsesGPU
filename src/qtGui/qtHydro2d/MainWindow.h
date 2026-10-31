@@ -22,21 +22,22 @@
 class MainWindow : public QWidget
 {
   Q_OBJECT
-  
-  public:
-  MainWindow(ConfigMap& _param, NumScheme numScheme, HydroWidget *hydroWidget_, QWidget *parent);
+
+public:
+  MainWindow(ConfigMap & _param, NumScheme numScheme, HydroWidget * hydroWidget_, QWidget * parent);
   ~MainWindow();
-  ConfigMap      param;
-  HydroWidget   *hydroWidget;
-  QGroupBox     *groupBox;
-  QLabel        *infoLabel;
-  
+  ConfigMap     param;
+  HydroWidget * hydroWidget;
+  QGroupBox *   groupBox;
+  QLabel *      infoLabel;
+
 public slots:
-  void updateInfoLabel();
+  void
+  updateInfoLabel();
 
 protected:
-  void keyPressEvent(QKeyEvent *event);
-  
+  void
+  keyPressEvent(QKeyEvent * event);
 };
 
 #endif // MAIN_WINDOW_H_

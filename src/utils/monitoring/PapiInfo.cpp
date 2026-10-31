@@ -18,7 +18,8 @@
 #include <papi.h>
 #include <stdio.h>
 
-namespace hydroSimu {
+namespace hydroSimu
+{
 
 ////////////////////////////////////////////////////////////////////////////////
 // PapiInfo class methods body
@@ -26,7 +27,8 @@ namespace hydroSimu {
 
 // =======================================================
 // =======================================================
-PapiInfo::PapiInfo() {
+PapiInfo::PapiInfo()
+{
 
   crtime = 0.0f;
   cptime = 0.0f;
@@ -39,9 +41,9 @@ PapiInfo::PapiInfo() {
 
   // initialize PAPI counters
   int status = 0;
-  if ( (status = PAPI_flops_rate(PAPI_FP_OPS, &irtime, &iptime, &iflpops, &tmp)) < PAPI_OK )
+  if ((status = PAPI_flops_rate(PAPI_FP_OPS, &irtime, &iptime, &iflpops, &tmp)) < PAPI_OK)
   {
-    fprintf(stderr, "PAPI_flops_rate failed with error %d\n",status);
+    fprintf(stderr, "PAPI_flops_rate failed with error %d\n", status);
   }
 
 } // PapiInfo::PapiInfo
@@ -52,31 +54,35 @@ PapiInfo::~PapiInfo() {} // PapiInfo::~PapiInfo
 
 // =======================================================
 // =======================================================
-void PapiInfo::start() {
+void
+PapiInfo::start()
+{
 
   float tmp;
-  int status = 0;
+  int   status = 0;
 
   papiTimer.start();
-  if ( (status = PAPI_flops_rate(PAPI_FP_OPS, &irtime, &iptime, &iflpops, &tmp)) < PAPI_OK )
+  if ((status = PAPI_flops_rate(PAPI_FP_OPS, &irtime, &iptime, &iflpops, &tmp)) < PAPI_OK)
   {
-    fprintf(stderr, "PAPI_flops_rate failed with error %d\n",status);
+    fprintf(stderr, "PAPI_flops_rate failed with error %d\n", status);
   }
 
 } // PapiInfo::start
 
 // =======================================================
 // =======================================================
-void PapiInfo::stop() {
+void
+PapiInfo::stop()
+{
 
-  float rtime, ptime;
+  float         rtime, ptime;
   long long int flpops;
-  float tmp;
+  float         tmp;
 
   int status = 0;
-  if ( (status = PAPI_flops_rate(PAPI_FP_OPS, &rtime, &ptime, &flpops, &tmp)) < PAPI_OK )
+  if ((status = PAPI_flops_rate(PAPI_FP_OPS, &rtime, &ptime, &flpops, &tmp)) < PAPI_OK)
   {
-    fprintf(stderr, "PAPI_flops_rate failed with error %d\n",status);
+    fprintf(stderr, "PAPI_flops_rate failed with error %d\n", status);
   }
   papiTimer.stop();
 
@@ -91,14 +97,26 @@ void PapiInfo::stop() {
 
 // =======================================================
 // =======================================================
-double PapiInfo::getFlops() { return mflops; } // PapiInfo::getFlops
+double
+PapiInfo::getFlops()
+{
+  return mflops;
+} // PapiInfo::getFlops
 
 // =======================================================
 // =======================================================
-long long int PapiInfo::getFlop() { return cflpops; } // PapiInfo::getFlop
+long long int
+PapiInfo::getFlop()
+{
+  return cflpops;
+} // PapiInfo::getFlop
 
 // =======================================================
 // =======================================================
-double PapiInfo::elapsed() { return papiTimer.elapsed(); } // PapiInfo::elapsed
+double
+PapiInfo::elapsed()
+{
+  return papiTimer.elapsed();
+} // PapiInfo::elapsed
 
 } // namespace hydroSimu

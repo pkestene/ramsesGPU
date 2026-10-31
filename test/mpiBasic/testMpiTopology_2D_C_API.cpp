@@ -19,12 +19,13 @@
 #define SIZE_3D (SIZE_X * SIZE_Y * SIZE_Z)
 
 // identifying neighbors
-enum {
-  X_PLUS_1  = 0,
+enum
+{
+  X_PLUS_1 = 0,
   X_MINUS_1 = 1,
-  Y_PLUS_1  = 2,
+  Y_PLUS_1 = 2,
   Y_MINUS_1 = 3,
-  Z_PLUS_1  = 4,
+  Z_PLUS_1 = 4,
   Z_MINUS_1 = 5
 };
 
@@ -57,27 +58,34 @@ enum {
 
 #define NDIM 2
 
-int main(int argc, char* argv[])
+int
+main(int argc, char * argv[])
 {
-  int numtasks, rank, source, dest, outbuf, i, tag=1;
-  int inbuf[N_NEIGHBORS_2D]={MPI_PROC_NULL,MPI_PROC_NULL,MPI_PROC_NULL,MPI_PROC_NULL,};
+  int numtasks, rank, source, dest, outbuf, i, tag = 1;
+  int inbuf[N_NEIGHBORS_2D] = {
+    MPI_PROC_NULL,
+    MPI_PROC_NULL,
+    MPI_PROC_NULL,
+    MPI_PROC_NULL,
+  };
   int nbrs[N_NEIGHBORS_2D];
   int nbrs2[N_NEIGHBORS_2D];
-  
-  int dims[NDIM]={SIZE_X,SIZE_Y};
-  int periods[NDIM]={MPI_CART_PERIODIC_TRUE, MPI_CART_PERIODIC_TRUE};
-  int reorder=MPI_REORDER_TRUE;
+
+  int dims[NDIM] = { SIZE_X, SIZE_Y };
+  int periods[NDIM] = { MPI_CART_PERIODIC_TRUE, MPI_CART_PERIODIC_TRUE };
+  int reorder = MPI_REORDER_TRUE;
   int coords[NDIM];
-  
-  MPI_Request reqs[2*N_NEIGHBORS_2D];
-  MPI_Status stats[2*N_NEIGHBORS_2D];
-  MPI_Comm cartcomm;
-  
-  MPI_Init(&argc,&argv);
+
+  MPI_Request reqs[2 * N_NEIGHBORS_2D];
+  MPI_Status  stats[2 * N_NEIGHBORS_2D];
+  MPI_Comm    cartcomm;
+
+  MPI_Init(&argc, &argv);
   MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
 
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  if (rank == 0) {
+  if (rank == 0)
+  {
     printf("Take care that MPI Cartesian Topology uses COLUMN MAJOR-FORMAT !!!\n");
     printf("\n");
     printf("In this test, each MPI process of the cartesian grid sends a message\n");
@@ -88,8 +96,9 @@ int main(int argc, char* argv[])
   }
 
   // 2D CARTESIAN MPI MESH
-  if (numtasks == SIZE_2D) {
-  
+  if (numtasks == SIZE_2D)
+  {
+
     // create the cartesian topology
     MPI_Cart_create(MPI_COMM_WORLD, NDIM, dims, periods, reorder, &cartcomm);
 
@@ -122,58 +131,66 @@ int main(int argc, char* argv[])
 
 
     outbuf = rank;
- 
+
     // send    my rank to   each of my neighbors
     // receive my rank from each of my neighbors
     // inbuf should contain the rank of all neighbors
-    for (i=0; i<N_NEIGHBORS_2D; i++) {
+    for (i = 0; i < N_NEIGHBORS_2D; i++)
+    {
       dest = nbrs[i];
       source = nbrs[i];
-      MPI_Isend(&outbuf, 1, MPI_INT, dest, tag, 
-		MPI_COMM_WORLD, &reqs[i]);
-      MPI_Irecv(&inbuf[i], 1, MPI_INT, source, tag, 
-		MPI_COMM_WORLD, &reqs[i+N_NEIGHBORS_2D]);
+      MPI_Isend(&outbuf, 1, MPI_INT, dest, tag, MPI_COMM_WORLD, &reqs[i]);
+      MPI_Irecv(&inbuf[i], 1, MPI_INT, source, tag, MPI_COMM_WORLD, &reqs[i + N_NEIGHBORS_2D]);
     }
 
-    MPI_Waitall(2*N_NEIGHBORS_2D, reqs, stats);
-   
-    printf("rank= %2d coords= %d %d  neighbors(x+,x-,y+,y-) = %2d %2d %2d %2d\n", 
-	   rank,
-	   coords[0],coords[1], 
-	   nbrs[X_PLUS_1], 
-	   nbrs[X_MINUS_1], 
-	   nbrs[Y_PLUS_1], 
-	   nbrs[Y_MINUS_1]);
-    printf("rank= %2d coords= %d %d  neighbors(x+,x-,y+,y-) = %2d %2d %2d %2d\n", 
-	   rank,
-	   coords[0],coords[1], 
-	   nbrs2[X_PLUS_1], 
-	   nbrs2[X_MINUS_1], 
-	   nbrs2[Y_PLUS_1], 
-	   nbrs2[Y_MINUS_1]);
-    printf("rank= %2d coords= %d %d  inbuf    (x+,x-,y+,y-) = %2d %2d %2d %2d\n", 
-	   rank,
-	   coords[0],coords[1],
-	   inbuf[X_PLUS_1],
-	   inbuf[X_MINUS_1],
-	   inbuf[Y_PLUS_1],
-	   inbuf[Y_MINUS_1]);
+    MPI_Waitall(2 * N_NEIGHBORS_2D, reqs, stats);
+
+    printf("rank= %2d coords= %d %d  neighbors(x+,x-,y+,y-) = %2d %2d %2d %2d\n",
+           rank,
+           coords[0],
+           coords[1],
+           nbrs[X_PLUS_1],
+           nbrs[X_MINUS_1],
+           nbrs[Y_PLUS_1],
+           nbrs[Y_MINUS_1]);
+    printf("rank= %2d coords= %d %d  neighbors(x+,x-,y+,y-) = %2d %2d %2d %2d\n",
+           rank,
+           coords[0],
+           coords[1],
+           nbrs2[X_PLUS_1],
+           nbrs2[X_MINUS_1],
+           nbrs2[Y_PLUS_1],
+           nbrs2[Y_MINUS_1]);
+    printf("rank= %2d coords= %d %d  inbuf    (x+,x-,y+,y-) = %2d %2d %2d %2d\n",
+           rank,
+           coords[0],
+           coords[1],
+           inbuf[X_PLUS_1],
+           inbuf[X_MINUS_1],
+           inbuf[Y_PLUS_1],
+           inbuf[Y_MINUS_1]);
 
     // print topology
     MPI_Barrier(MPI_COMM_WORLD);
     sleep(1);
 
-    if (rank == 0) {
-      printf("Print topology (COLUMN MAJOR-ORDER) for %dx%d 2D grid:\n",SIZE_X,SIZE_Y);
+    if (rank == 0)
+    {
+      printf("Print topology (COLUMN MAJOR-ORDER) for %dx%d 2D grid:\n", SIZE_X, SIZE_Y);
       printf(" rank     i     j\n");
     }
-    printf("%5d %5d %5d %10d %10d %10d %10d\n",rank,
-	   coords[0],coords[1],
-	   nbrs[X_PLUS_1], nbrs[X_MINUS_1],
-	   nbrs[Y_PLUS_1], nbrs[Y_MINUS_1]
-	   );
-  } else {
-    printf("Must specify %d processors. Terminating.\n",SIZE_2D);
+    printf("%5d %5d %5d %10d %10d %10d %10d\n",
+           rank,
+           coords[0],
+           coords[1],
+           nbrs[X_PLUS_1],
+           nbrs[X_MINUS_1],
+           nbrs[Y_PLUS_1],
+           nbrs[Y_MINUS_1]);
+  }
+  else
+  {
+    printf("Must specify %d processors. Terminating.\n", SIZE_2D);
   }
 
   MPI_Finalize();

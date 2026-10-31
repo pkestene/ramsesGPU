@@ -15,38 +15,42 @@
 
 typedef struct timeval timeval_t;
 
-namespace hydroSimu {
+namespace hydroSimu
+{
 
-  /**
-   * \brief a simple Timer class.
-   * If MPI is enabled, should we use MPI_WTime instead of gettimeofday (?!?)
-   */
-  class Timer
-  {
-  public:
-    /** default constructor, timing starts rightaway */
-    Timer();
-    
-    Timer(double t);
-    Timer(Timer const& aTimer);
-    ~Timer();
+/**
+ * \brief a simple Timer class.
+ * If MPI is enabled, should we use MPI_WTime instead of gettimeofday (?!?)
+ */
+class Timer
+{
+public:
+  /** default constructor, timing starts rightaway */
+  Timer();
 
-    /** start time measure */
-    void start();
-    
-    /** stop time measure and add result to total_time */
-    void stop();
+  Timer(double t);
+  Timer(Timer const & aTimer);
+  ~Timer();
 
-    /** return elapsed time in seconds (as stored in total_time) */
-    double elapsed() const;
+  /** start time measure */
+  void
+  start();
 
-  protected:
-    timeval_t start_time;
+  /** stop time measure and add result to total_time */
+  void
+  stop();
 
-    /** store total accumulated timings */
-    double    total_time;
+  /** return elapsed time in seconds (as stored in total_time) */
+  double
+  elapsed() const;
 
-  }; // class Timer
+protected:
+  timeval_t start_time;
+
+  /** store total accumulated timings */
+  double total_time;
+
+}; // class Timer
 
 } // namespace hydroSimu
 

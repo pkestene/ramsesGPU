@@ -1,7 +1,7 @@
 /**
  * \file testHydroMpiParameters.cpp
  * \brief test class HydroMpiParameters
-  *
+ *
  * \date 7 Oct 2010
  * \author P. Kestener
  */
@@ -15,10 +15,12 @@
 #include "hydro/GetPot.h"
 #include "utils/config/ConfigMap.h"
 
-void make_test_paramFile(std::string fileName) {
+void
+make_test_paramFile(std::string fileName)
+{
 
   std::fstream outFile;
-  outFile.open (fileName.c_str(), std::ios_base::out);
+  outFile.open(fileName.c_str(), std::ios_base::out);
 
   outFile << "# define a 2D MPI cartesian mesh with mx x my MPI processes\n";
   outFile << "[mpi]\n";

@@ -1,7 +1,7 @@
 /**
  * \file GlutWindow.cpp
  * \brief Implements a base class for handling Glut interface callbacks.
- * 
+ *
  * \see http://www.stetten.com/george/glutmaster/glutmaster.html
  *
  * $Id: GlutWindow.cpp 1784 2012-02-21 10:34:58Z pkestene $
@@ -21,9 +21,7 @@
 
 #include "GlutWindow.h"
 
-GlutWindow::GlutWindow(void){
-
-}
+GlutWindow::GlutWindow(void) {}
 
 GlutWindow::~GlutWindow(){
 
@@ -59,19 +57,28 @@ void GlutWindow::CallBackPassiveMotionFunc(int x, int y){
    (void) x; (void) y;                     //dummy function
 }
 
-void  GlutWindow::CallBackReshapeFunc(int w, int h){
+void
+GlutWindow::CallBackReshapeFunc(int w, int h)
+{
 
-   (void) w; (void) h;                     //dummy function
+  (void)w;
+  (void)h; // dummy function
 }
-   
-void GlutWindow::CallBackSpecialFunc(int key, int x, int y){
 
-   (void) key; (void) x; (void) y;
-}   
+void
+GlutWindow::CallBackSpecialFunc(int key, int x, int y)
+{
 
-void GlutWindow::CallBackVisibilityFunc(int visible){
+  (void)key;
+  (void)x;
+  (void)y;
+}
 
-   (void) visible;                  //dummy function
+void
+GlutWindow::CallBackVisibilityFunc(int visible)
+{
+
+  (void)visible; // dummy function
 }
 
 void GlutWindow::SetWindowID(int newWindowID){
@@ -83,4 +90,3 @@ int GlutWindow::GetWindowID(void){
 
    return( windowID );
 }
-

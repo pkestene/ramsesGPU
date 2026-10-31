@@ -14,7 +14,7 @@
 using hydroSimu::DeviceArray;
 
 /** use the graphics OpenGL/CUDA interoperability API available from CUDA >= 3.0 */
-//#define USE_CUDA3
+// #define USE_CUDA3
 
 /**
  * \class HydroWidgetGpu HydroWidgetGpu.h
@@ -25,34 +25,41 @@ class HydroWidgetGpu : public HydroWidget
 {
 
 public:
-  HydroWidgetGpu(ConfigMap& _param, HydroRunBase* _hydroRun, QWidget *parent = 0);
+  HydroWidgetGpu(ConfigMap & _param, HydroRunBase * _hydroRun, QWidget * parent = 0);
   virtual ~HydroWidgetGpu();
 
   /** indexed colormap data on device*/
-  unsigned int *cmap_rgba_device;
+  unsigned int * cmap_rgba_device;
   /** data to plot (physicaly in the Pixel buffer Object) */
-  unsigned int *plot_rgba_pbo;
-  uint minmaxBlockCount;
+  unsigned int * plot_rgba_pbo;
+  uint           minmaxBlockCount;
 
 public:
-  virtual void initColormap();
+  virtual void
+  initColormap();
 
 protected:
   // Data Arrays
   HostArray<real2_t>   h_minmax;
   DeviceArray<real2_t> d_minmax;
-  void convertDataForPlotting(int _useColor);
-  virtual void computeMinMax(real_t *U, int size, int iVar);
+  void
+  convertDataForPlotting(int _useColor);
+  virtual void
+  computeMinMax(real_t * U, int size, int iVar);
 
-  virtual void createPBO();
-  virtual void deletePBO();
-  virtual void render();
-  virtual void initializeGL();
+  virtual void
+  createPBO();
+  virtual void
+  deletePBO();
+  virtual void
+  render();
+  virtual void
+  initializeGL();
 
 private:
-#  ifdef USE_CUDA3
-  struct cudaGraphicsResource* cuda_PBO;
-#  endif // USE_CUDA3
+#ifdef USE_CUDA3
+  struct cudaGraphicsResource * cuda_PBO;
+#endif // USE_CUDA3
 
 }; // class HydroWidgetGpu
 
