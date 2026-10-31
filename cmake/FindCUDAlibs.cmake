@@ -252,7 +252,7 @@ if(CUDAlibs_FOUND)
       if(NOT "${_dependent_libraries}" STREQUAL "")
         message(STATUS "Adding dependencies: ${_dependent_libraries}")
         set_target_properties(CUDAlibs::${UPPERCOMPONENT} PROPERTIES INTERFACE_LINK_LIBRARIES
-                                                                     "${_dependent_libraries}")
+                              "${_dependent_libraries}")
       endif()
     endif()
   endforeach()

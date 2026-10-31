@@ -90,7 +90,7 @@ main(int argc, char * argv[])
     printf("\n");
     printf("In this test, each MPI process of the cartesian grid sends a message\n");
     printf("containing a integer (rank of the current process) to all of its\n");
-    printf("neighbors. So you must chech that arrays \"neighbors\" and \"inbuf\"\n");
+    printf("neighbors. So you must check that arrays \"neighbors\" and \"inbuf\"\n");
     printf("contain the same information !\n");
     printf("\n");
   }

@@ -91,11 +91,11 @@ public:
   //! @name Static functions
   //@{
 
-  /** \brief Return wether MPI was initialized. */
+  /** \brief Return whether MPI was initialized. */
   static bool
   mpiIsInitialized();
 
-  /** \brief Return wether MPI was already finalized. */
+  /** \brief Return whether MPI was already finalized. */
   static bool
   mpiIsFinalized();
 

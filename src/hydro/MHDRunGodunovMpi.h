@@ -60,7 +60,7 @@ namespace hydroSimu
  * h_dB, h_dC (resp d_dA, d_dB, d_dC).<BR>
  * One for loop to compute hydro slopes then trace and store qm, qp,
  * qEdge states in external memory buffers.<BR>
- * One for loop to comute riemann problems and perform updates.
+ * One for loop to compute riemann problems and perform updates.
  * available on CPU (3D only)<BR>
  * available on GPU (3D only)<BR>
  * Note that this 3D GPU version was really hard to debug (see Trac

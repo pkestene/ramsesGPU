@@ -1,5 +1,5 @@
 ---
-exclude: '^License,^src/utils/cnpy/,^doc/,^sr/utils/cnpy/zlib'
+exclude: '^License|^src/utils/cnpy/|^doc/|^src/utils/cnpy/zlib'
 repos:
   # common checks
   - repo: https://github.com/pre-commit/pre-commit-hooks

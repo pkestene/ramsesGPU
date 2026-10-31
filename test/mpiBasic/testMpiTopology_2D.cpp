@@ -85,7 +85,7 @@ main(int argc, char * argv[])
     std::cout << "\n";
     std::cout << "In this test, each MPI process of the cartesian grid sends a message\n";
     std::cout << "containing a integer (rank of the current process) to all of its\n";
-    std::cout << "neighbors. So you must chech that arrays \"neighbors\" and \"inbuf\"\n";
+    std::cout << "neighbors. So you must check that arrays \"neighbors\" and \"inbuf\"\n";
     std::cout << "contain the same information !\n\n";
   }
 

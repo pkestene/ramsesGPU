@@ -473,7 +473,7 @@ kernel_godunov_unsplit_3d_v0_zslab(const real_t * __restrict__ qData,
       /*
        * update at position z-1.
        * Note that position z-1 has already been partially updated in
-       * the previous interation (for loop over k).
+       * the previous iteration (for loop over k).
        */
       if (kL > 2 and kL < ksizeSlab - 1)
       {
