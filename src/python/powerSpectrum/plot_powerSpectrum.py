@@ -16,9 +16,9 @@ from powerSpectrum2 import squareModulusFourier
 #
 if __name__ == '__main__':
     from timeit import Timer
-    
+
     Nbins=64
-    
+
     # default data name is density
     dataname='density'
 
@@ -43,6 +43,6 @@ if __name__ == '__main__':
 
     # plot spectrum
     import matplotlib.pyplot as plt
-    
+
     plt.loglog(freq, pow_data)
     plt.show()

@@ -81,12 +81,14 @@
 #
 # Distributed under the OSI-approved BSD License (the "License")
 #
-# This software is distributed WITHOUT ANY WARRANTY; without even the
-# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# This software is distributed WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 # ==============================================================================
 
 if(CMAKE_VERSION VERSION_LESS 3.8)
-  message(FATAL_ERROR "Cannot use find_package(CUDAlibs ...) with CMake < 3.8! Use find_package(CUDA) instead.")
+  message(
+    FATAL_ERROR
+      "Cannot use find_package(CUDAlibs ...) with CMake < 3.8! Use find_package(CUDA) instead.")
 endif()
 
 # ------------------------------------------------------------------------------
@@ -98,25 +100,34 @@ foreach(_dir ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
 endforeach()
 
 set(CUDAlibs_SEARCH_PATHS
-  ${_cuda_root_dir_hint}
-  ${CUDA_ROOT}
-  $ENV{CUDA_ROOT}
-  ${CUDA_TOOLKIT_ROOT_DIR}
-  $ENV{CUDA_TOOLKIT_ROOT_DIR}
-  ${CMAKE_PREFIX_PATH}
-  $ENV{CMAKE_PREFIX_PATH}
-  /usr
-  /usr/local
-  /usr/local/cuda
-  /opt
-  /opt/local
-  )
+    ${_cuda_root_dir_hint}
+    ${CUDA_ROOT}
+    $ENV{CUDA_ROOT}
+    ${CUDA_TOOLKIT_ROOT_DIR}
+    $ENV{CUDA_TOOLKIT_ROOT_DIR}
+    ${CMAKE_PREFIX_PATH}
+    $ENV{CMAKE_PREFIX_PATH}
+    /usr
+    /usr/local
+    /usr/local/cuda
+    /opt
+    /opt/local)
 
-set(PATH_SUFFIXES_LIST lib/x64 lib64 libx64 lib lib/Win32 lib libWin32)
+set(PATH_SUFFIXES_LIST
+    lib/x64
+    lib64
+    libx64
+    lib
+    lib/Win32
+    lib
+    libWin32)
 
 if(WIN32)
   set(_root_dir "C:/Program\ Files/NVIDIA\ GPU\ Computing\ Toolkit/CUDA")
-  file(GLOB _children RELATIVE ${_root_dir} ${_root_dir}/*)
+  file(
+    GLOB _children
+    RELATIVE ${_root_dir}
+    ${_root_dir}/*)
   list(SORT _children)
   list(REVERSE _children)
   foreach(_child ${_children})
@@ -136,7 +147,8 @@ set(CUDAlibs_REQUIRED_VARS)
 macro(cuda_find_library component)
   string(TOLOWER ${COMPONENT} libnames)
 
-  find_library(CUDAlibs_${component}_LIB
+  find_library(
+    CUDAlibs_${component}_LIB
     NAMES ${libnames}
     PATHS ${CUDAlibs_SEARCH_PATHS}
     PATH_SUFFIXES ${PATH_SUFFIXES_LIST}
@@ -146,7 +158,7 @@ macro(cuda_find_library component)
     set(CUDAlibs_${component}_LIB_FOUND 1)
   endif()
   list(APPEND CUDAlibs_REQUIRED_VARS "CUDAlibs_${component}_LIB")
-  
+
   if(CUDAlibs_${component}_LIB_FOUND)
     set(CUDAlibs_${component}_FOUND 1)
   else()
@@ -156,7 +168,9 @@ endmacro()
 
 # ------------------------------------------------------------------------------
 
-set(CUDAlibs_ALL_LIBS "CUDART;CUBLAS;CUFFT;CUFFTW;CUPTI;CURAND;CUSOLVER;CUSPARSE;NPP;NPPC;NPPI;NPPIAL;NPPICC;NPPICOM;NPPIDEI;NPPIF;NPPIG;NPPIM;NPPIST;NPPISU;NPPITC;NPPS;NVBLAS")
+set(CUDAlibs_ALL_LIBS
+    "CUDART;CUBLAS;CUFFT;CUFFTW;CUPTI;CURAND;CUSOLVER;CUSPARSE;NPP;NPPC;NPPI;NPPIAL;NPPICC;NPPICOM;NPPIDEI;NPPIF;NPPIG;NPPIM;NPPIST;NPPISU;NPPITC;NPPS;NVBLAS"
+)
 
 # List dependent libraries for relevant targets
 set(CUDAlibs_DEP_CUFFTW "CUFFT")
@@ -184,26 +198,25 @@ endif()
 foreach(COMPONENT ${CUDAlibs_FIND_COMPONENTS})
   string(TOUPPER ${COMPONENT} UPPERCOMPONENT)
 
-  if (${UPPERCOMPONENT} IN_LIST CUDAlibs_ALL_LIBS)
+  if(${UPPERCOMPONENT} IN_LIST CUDAlibs_ALL_LIBS)
     cuda_find_library(${UPPERCOMPONENT})
     foreach(_dep "${CUDAlibs_DEP_${UPPERCOMPONENT}}")
       if(NOT "${_dep}" STREQUAL "")
-	cuda_find_library(${_dep})
+        cuda_find_library(${_dep})
       endif()
     endforeach()
   else()
     message(FATAL_ERROR "Unknown component: ${COMPONENT}")
   endif()
 
-  mark_as_advanced(
-    CUDAlibs_${UPPERCOMPONENT}_LIB
-    CUDAlibs_${UPPERCOMPONENT}_INCLUDE_DIR)
+  mark_as_advanced(CUDAlibs_${UPPERCOMPONENT}_LIB CUDAlibs_${UPPERCOMPONENT}_INCLUDE_DIR)
 endforeach()
 
 # ==============================================================================
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(CUDAlibs
+find_package_handle_standard_args(
+  CUDAlibs
   FOUND_VAR CUDAlibs_FOUND
   REQUIRED_VARS ${CUDAlibs_REQUIRED_VARS}
   HANDLE_COMPONENTS)
@@ -224,21 +237,22 @@ if(CUDAlibs_FOUND)
       endif()
 
       add_library(CUDAlibs::${UPPERCOMPONENT} ${LIB_TYPE} IMPORTED GLOBAL)
-      set_target_properties(CUDAlibs::${UPPERCOMPONENT} PROPERTIES
-	IMPORTED_LOCATION "${CUDAlibs_${UPPERCOMPONENT}_LIB}"
-        INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
+      set_target_properties(
+        CUDAlibs::${UPPERCOMPONENT}
+        PROPERTIES IMPORTED_LOCATION "${CUDAlibs_${UPPERCOMPONENT}_LIB}"
+                   INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
 
       # ------------------------------------------------------------------------
-      
+
       set(_dependent_libraries)
       foreach(_dep "${CUDAlibs_DEP_${UPPERCOMPONENT}}")
-	list(APPEND _dependent_libraries ${_dep})
+        list(APPEND _dependent_libraries ${_dep})
       endforeach()
-      
+
       if(NOT "${_dependent_libraries}" STREQUAL "")
-	message(STATUS "Adding dependencies: ${_dependent_libraries}")
-	set_target_properties(CUDAlibs::${UPPERCOMPONENT} PROPERTIES
-          INTERFACE_LINK_LIBRARIES "${_dependent_libraries}")
+        message(STATUS "Adding dependencies: ${_dependent_libraries}")
+        set_target_properties(CUDAlibs::${UPPERCOMPONENT} PROPERTIES INTERFACE_LINK_LIBRARIES
+                                                                     "${_dependent_libraries}")
       endif()
     endif()
   endforeach()
@@ -255,7 +269,4 @@ endif()
 
 # ==============================================================================
 
-mark_as_advanced(
-  CUDAlibs_FOUND
-  )
-
+mark_as_advanced(CUDAlibs_FOUND)

@@ -2,7 +2,7 @@
 #------------------------------------------------------------------------
 #
 # SYNOPSIS
-#  AX_ENABLE_RTEMS_BSP  
+#  AX_ENABLE_RTEMS_BSP
 #
 # DESCRIPTION
 #    This macro provides a configure's option --enable-rtems-bsp to specify the name
@@ -59,8 +59,8 @@ AC_DEFUN([AX_ENABLE_RTEMS_TOOLCHAIN],
 #   AX_RTEMS_PORTABILITY
 #
 # DESCRIPTION
-#    This macro enables to port a module to RTEMS by seting up the environment
-#    when perfoming a RTEMS cross compilation.
+#    This macro enables to port a module to RTEMS by setting up the environment
+#    when performing a RTEMS cross compilation.
 #    It has no effect if the host OS defined with --host is not rtems.
 #
 #
@@ -140,12 +140,12 @@ AC_DEFUN([AX_RTEMS_PORTABILITY],
 			CROSS_CFLAGS+="$PKGNAME_RTEMS_BSP_CFLAGS"
 		fi
 
-		# Finaly set build FLAGS
+		# Finally set build FLAGS
 		CFLAGS="${CFLAGS} ${CROSS_CFLAGS} ${RTEMS_BSP_CFLAGS}"
 		CXXFLAGS="${CXXFLAGS} ${CROSS_CFLAGS} ${RTEMS_BSP_CFLAGS}"
 		CPPFLAGS="${CPPFLAGS} ${CROSS_CPPFLAGS}"
 		LDFLAGS="${LDFLAGS} ${CROSS_LDFLAGS} ${RTEMS_BSP_LDFLAGS}"
-		
+
 		EXEEXT=".exe"
 		AC_SUBST([EXEEXT])
 	esac

@@ -1,4 +1,4 @@
-# take care that autotroll.am 
+# take care that autotroll.am
 # already defines the following variables
 # SUFFIXES, DISTCLEANFILES and CLEANFILES
 include $(top_srcdir)/am/autotroll.am
@@ -8,11 +8,11 @@ SUFFIXES += .cu
 include $(top_srcdir)/am/cuda.am
 
 # clean generated files
-MAINTAINERCLEANFILES = $(srcdir)/Makefile.in 
+MAINTAINERCLEANFILES = $(srcdir)/Makefile.in
 
 AUTOMAKE_OPTIONS = subdir-objects
 
-# define some usefull preprocessor symbols
+# define some useful preprocessor symbols
 CONFIG_CPPFLAGS = -I$(top_srcdir)/src/utils/config -I$(top_srcdir)/src
 CNPY_CPPFLAGS   = -I$(top_srcdir)/src/utils/cnpy
 
@@ -23,7 +23,7 @@ endif
 
 # HDF5 flags
 if HAVE_HDF5
-HDF5_CPPFLAGS += -DUSE_HDF5 -DH5_NO_DEPRECATED_SYMBOLS 
+HDF5_CPPFLAGS += -DUSE_HDF5 -DH5_NO_DEPRECATED_SYMBOLS
 endif
 
 if HAVE_HDF5_PARALLEL
@@ -75,10 +75,10 @@ AM_FCFLAGS  = -fno-underscoring
 NVCCFLAGS += $(filter -DHAVE%, $(DEFS))
 
 NVCCFLAGS += --ptxas-options -v
-NVCCFLAGS += --compiler-options -I$(srcdir) --compiler-options $(CONFIG_CPPFLAGS) 
+NVCCFLAGS += --compiler-options -I$(srcdir) --compiler-options $(CONFIG_CPPFLAGS)
 NVCCFLAGS += --compiler-options -I$(srcdir)/glutGui
 NVCCFLAGS += --compiler-options -I$(srcdir)/qtGui/qtHydro2d
-NVCCFLAGS += $(addprefix --compiler-options ,$(QT_CPPFLAGS)) 
+NVCCFLAGS += $(addprefix --compiler-options ,$(QT_CPPFLAGS))
 NVCCFLAGS += $(addprefix --compiler-options ,$(QT_CXXFLAGS))
 NVCCFLAGS += --compiler-options -fno-strict-aliasing
 NVCCFLAGS += $(addprefix --compiler-options ,$(VTK_CPPFLAGS) )
@@ -90,7 +90,7 @@ NVCCFLAGS += $(addprefix --compiler-options ,$(GM_CPPFLAGS) )
 endif
 NVCCFLAGS += $(addprefix --compiler-options ,$(MPI_CXXFLAGS) )
 NVCCFLAGS += --compiler-options -I$(srcdir)/../utils/mpiUtils
-NVCCFLAGS += --compiler-options $(CNPY_CPPFLAGS) 
+NVCCFLAGS += --compiler-options $(CNPY_CPPFLAGS)
 NVCCFLAGS += --compiler-options -Wno-unused-function
 NVCCFLAGS += --compiler-options -Wno-unused-parameter
 if DO_TIMING
@@ -185,7 +185,7 @@ HYDRO_SRC += \
 	MHDRunGodunovZslabMpi.h \
 	MHDRunGodunovZslabMpi.cpp \
 	structureFunctionsMpi.h \
-	structureFunctionsMpi.cpp 
+	structureFunctionsMpi.cpp
 endif
 
 HYDRO_SRC_CUDA = \
@@ -247,7 +247,7 @@ HYDRO_SRC_CUDA = \
 	HydroRunBase.h \
 	HydroRunGodunov.h \
 	HydroRunKT.h \
-	HydroRunRelaxingTVD.h 
+	HydroRunRelaxingTVD.h
 
 HYDRO_SRC_CUDA_SIMPLE = $(HYDRO_SRC_CUDA) \
 	gpu_macros.cu \
@@ -312,7 +312,7 @@ HYDRO_SRC_CUDA_DOUBLE += \
 	MHDRunGodunovZslabMpi.h \
 	MHDRunGodunovZslabMpi-double.cu \
 	structureFunctionsMpi.h \
-	structureFunctionsMpi-double.cu 
+	structureFunctionsMpi-double.cu
 endif
 
 # ===================================================
@@ -344,7 +344,7 @@ if USE_CUDA
 
 ### SIMPLE PRECISION ###
 BUILT_SOURCES = gpu_macros.cu RandomGen.cu Forcing_OrnsteinUhlenbeck.cu HydroRunBase.cu HydroRunGodunov.cu HydroRunGodunovZslab.cu HydroRunKT.cu HydroRunRelaxingTVD.cu HydroRunLaxLiu.cu MHDRunBase.cu MHDRunGodunov.cu MHDRunGodunovZslab.cu structureFunctions.cu
-CLEANFILES   += gpu_macros.cu RandomGen.cu Forcing_OrnsteinUhlenbeck.cu HydroRunBase.cu HydroRunGodunov.cu HydroRunGodunovZslab.cu HydroRunKT.cu HydroRunRelaxingTVD.cu HydroRunLaxLiu.cu MHDRunBase.cu MHDRunGodunov.cu MHDRunGodunovZslab.cu structureFunctions.cu 
+CLEANFILES   += gpu_macros.cu RandomGen.cu Forcing_OrnsteinUhlenbeck.cu HydroRunBase.cu HydroRunGodunov.cu HydroRunGodunovZslab.cu HydroRunKT.cu HydroRunRelaxingTVD.cu HydroRunLaxLiu.cu MHDRunBase.cu MHDRunGodunov.cu MHDRunGodunovZslab.cu structureFunctions.cu
 
 ### DOUBLE PRECISION ###
 BUILT_SOURCES += gpu_macros-double.cu RandomGen-double.cu Forcing_OrnsteinUhlenbeck-double.cu HydroRunBase-double.cu HydroRunGodunov-double.cu HydroRunGodunovZslab-double.cu HydroRunKT-double.cu HydroRunRelaxingTVD-double.cu MHDRunBase-double.cu MHDRunGodunov-double.cu MHDRunGodunovZslab-double.cu structureFunctions-double.cu
@@ -360,13 +360,13 @@ BUILT_SOURCES += HydroMpiParameters-double.cu HydroRunBaseMpi-double.cu HydroRun
 CLEANFILES    += HydroMpiParameters-double.cu HydroRunBaseMpi-double.cu HydroRunGodunovMpi-double.cu MHDRunGodunovMpi-double.cu HydroRunGodunovZslabMpi-double.cu MHDRunGodunovZslabMpi-double.cu structureFunctions-double.cu
 endif
 
-# simple precision 
+# simple precision
 noinst_LTLIBRARIES += libhydroGpu.la
 libhydroGpu_la_SOURCES = $(HYDRO_SRC_CUDA_SIMPLE)
 libhydroGpu_la_CPPFLAGS = $(AM_CPPFLAGS) $(CUDA_CFLAGS) -I$(srcdir)/../utils/mpiUtils
 libhydroGpu_la_CXXFLAGS = $(AM_CXXFLAGS) $(CUDA_CFLAGS) -I$(srcdir)/../utils/mpiUtils  -std=c++11
 
-# double precision 
+# double precision
 if USE_DOUBLE_PRECISION
 noinst_LTLIBRARIES += libhydroGpu_double.la
 libhydroGpu_double_la_SOURCES = $(HYDRO_SRC_CUDA_DOUBLE)

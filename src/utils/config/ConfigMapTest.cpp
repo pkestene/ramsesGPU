@@ -12,30 +12,32 @@
 #include <fstream>
 #include "ConfigMap.h"
 
-int main(int argc, char* argv[])
+int
+main(int argc, char * argv[])
 {
   // make test.ini file
   std::fstream iniFile;
-  iniFile.open ("./test.ini", std::ios_base::out);
+  iniFile.open("./test.ini", std::ios_base::out);
   iniFile << "; Test config file for ConfigMapTest.cpp" << std::endl;
-  
+
   iniFile << "[Hydro]             ; Hydrodynamics simulations configuration" << std::endl;
   iniFile << "scheme=godunov      ; numerical scheme" << std::endl;
-  
+
   iniFile << "[Jet]" << std::endl;
   iniFile << "# another type of comment" << std::endl;
   iniFile << "ijet = 10      ; injection width" << std::endl;
   iniFile << "djet = 3.5     ; jet density" << std::endl;
   iniFile << "[output]" << std::endl;
   iniFile << "useHdf5 = yes" << std::endl;
-  iniFile << "outputDir=./"  << std::endl;
-  iniFile << "out_type=png"  << std::endl;
+  iniFile << "outputDir=./" << std::endl;
+  iniFile << "out_type=png" << std::endl;
   iniFile.close();
 
   // create a INIReader instance
   ConfigMap cfg("./test.ini");
-  
-  if (cfg.ParseError() < 0) {
+
+  if (cfg.ParseError() < 0)
+  {
     std::cout << "Can't load 'test.ini'\n";
     return 1;
   }

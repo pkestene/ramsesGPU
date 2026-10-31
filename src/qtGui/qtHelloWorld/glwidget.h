@@ -51,51 +51,74 @@
 //! example specialization of a QGLWidget
 class GLWidget : public QGLWidget
 {
-    Q_OBJECT
+  Q_OBJECT
 
 public:
-    GLWidget(QWidget *parent = 0);
-    ~GLWidget();
+  GLWidget(QWidget * parent = 0);
+  ~GLWidget();
 
-    QSize minimumSizeHint() const;
-    QSize sizeHint() const;
+  QSize
+  minimumSizeHint() const;
+  QSize
+  sizeHint() const;
 
-//! [1]
+  //! [1]
 public slots:
-    void setXRotation(int angle);
-    void setYRotation(int angle);
-    void setZRotation(int angle);
+  void
+  setXRotation(int angle);
+  void
+  setYRotation(int angle);
+  void
+  setZRotation(int angle);
 
 signals:
-    void xRotationChanged(int angle);
-    void yRotationChanged(int angle);
-    void zRotationChanged(int angle);
-//! [1]
+  void
+  xRotationChanged(int angle);
+  void
+  yRotationChanged(int angle);
+  void
+  zRotationChanged(int angle);
+  //! [1]
 
-//! [2]
+  //! [2]
 protected:
-    void initializeGL();
-    void paintGL();
-    void resizeGL(int width, int height);
-    void mousePressEvent(QMouseEvent *event);
-    void mouseMoveEvent(QMouseEvent *event);
-//! [2]
+  void
+  initializeGL();
+  void
+  paintGL();
+  void
+  resizeGL(int width, int height);
+  void
+  mousePressEvent(QMouseEvent * event);
+  void
+  mouseMoveEvent(QMouseEvent * event);
+  //! [2]
 
-//! [3]
+  //! [3]
 private:
-    GLuint makeObject();
-    void quad(GLdouble x1, GLdouble y1, GLdouble x2, GLdouble y2,
-              GLdouble x3, GLdouble y3, GLdouble x4, GLdouble y4);
-    void extrude(GLdouble x1, GLdouble y1, GLdouble x2, GLdouble y2);
-    void normalizeAngle(int *angle);
+  GLuint
+  makeObject();
+  void
+  quad(GLdouble x1,
+       GLdouble y1,
+       GLdouble x2,
+       GLdouble y2,
+       GLdouble x3,
+       GLdouble y3,
+       GLdouble x4,
+       GLdouble y4);
+  void
+  extrude(GLdouble x1, GLdouble y1, GLdouble x2, GLdouble y2);
+  void
+  normalizeAngle(int * angle);
 
-    GLuint object;
-    int xRot;
-    int yRot;
-    int zRot;
-    QPoint lastPos;
-    QColor trolltechGreen;
-    QColor trolltechPurple;
+  GLuint object;
+  int    xRot;
+  int    yRot;
+  int    zRot;
+  QPoint lastPos;
+  QColor trolltechGreen;
+  QColor trolltechPurple;
 };
 //! [3]
 

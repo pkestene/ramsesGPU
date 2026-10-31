@@ -78,4 +78,3 @@ if __name__ == '__main__':
         view_data(filename,dataname)
     else:
         view_data(filename)
-

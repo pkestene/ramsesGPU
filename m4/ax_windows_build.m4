@@ -13,7 +13,7 @@
 AC_DEFUN([AX_WINDOWS_BUILD],
 [
 	case $host_os in
-    *mingw32*) 
+    *mingw32*)
 		;;
     *) AC_MSG_ERROR([this project can only be built for Windows (*mingw32*). Please use --host to specify a Windows cross compiler.])
 		;;
@@ -27,7 +27,7 @@ AC_DEFUN([AX_WINDOWS_BUILD],
 #
 # DESCRIPTION
 #    This macro enables to port a module on Windows by setting up the environment
-#    when perfoming a Windows cross compilation.
+#    when performing a Windows cross compilation.
 #    It has no effect if the host OS defined with --host is not mingw32msvc.
 #
 #    This macro calls:
@@ -64,8 +64,7 @@ AC_DEFUN([AX_WINDOWS_PORTABILITY],
 # without success, but I arrived with a working program, without exception crossing using the following options:
 # CXXFLAGS="-fno-strict-aliasing -mthreads -shared-libgcc -D_DLL"
 # LDFLAGS="-Wl,--enable-auto-import -shared -shared-libgcc"
-# LIBS="-lws2_32 -lrpcrt4 -lgcc_s  -L/usr/lib/gcc/i586-mingw32msvc/4.2.1-sjlj  -lstdc++_s 
+# LIBS="-lws2_32 -lrpcrt4 -lgcc_s  -L/usr/lib/gcc/i586-mingw32msvc/4.2.1-sjlj  -lstdc++_s
 #
 # I have also replaced the post-dependency CXX flags at the end of configure.ac with:
 # postdeps_CXX="-lmingw32 -lmoldname -lmingwex -lmsvcrt -luser32 -lkernel32 -ladvapi32 -lshell32 -lmingw32 -lmoldname -lmingwex -lmsvcrt"
-

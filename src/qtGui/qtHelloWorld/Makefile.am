@@ -19,11 +19,11 @@ moc_gen_sources = \
 	glwidget.moc.cpp \
 	window.moc.cpp
 
-gen_sources = $(moc_gen_sources) 
+gen_sources = $(moc_gen_sources)
 
 nodist_qtHelloWorld_SOURCES = $(gen_sources)
 
-BUILT_SOURCES = $(moc_gen_sources) 
+BUILT_SOURCES = $(moc_gen_sources)
 
 # ===================================================
 

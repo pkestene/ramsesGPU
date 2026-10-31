@@ -44,7 +44,7 @@ nstepmax=2000
 for nx in 50 100;
 do
     ny=$nx
-    
+
     makeConf='@CMAKE_BINARY_DIR@/test/makeConfigHydro --nx $nx --ny $ny --noutput $noutput --nstepmax $nstepmax'
     # use time full path to avoid bash built-in time
     #cpuCmd=`printf "/usr/bin/time -f \"%d %%e\" -o results.txt -a %s --param ./conf.ini" $nx $cpuExe`
@@ -53,7 +53,7 @@ do
     # run GPU version
     echo "################################"
     echo "GPU : `basename $gpuExe` $nx $ny"
-    echo "################################"    
+    echo "################################"
     cd $basedir/$runDir/gpu
     eval $makeConf > conf.ini
     runSimul "$gpuExe"
@@ -61,7 +61,7 @@ do
     # run cpu version
     echo "################################"
     echo "CPU : `basename $cpuExe` $nx $ny"
-    echo "################################"    
+    echo "################################"
     cd $basedir/$runDir/cpu
     eval $makeConf > conf.ini
     runSimul "$cpuExe"
@@ -69,7 +69,7 @@ do
     echo
     echo "compare CPU/GPU results: relative L2 norm"
     cd $basedir
-    for cpuFile in $( ls ./$runDir/cpu/riemann_d*.xsm ); 
+    for cpuFile in $( ls ./$runDir/cpu/riemann_d*.xsm );
     do
 	baseFile=`basename $cpuFile`
 	gpuFile=./$runDir/gpu/$baseFile
@@ -86,4 +86,4 @@ echo "you may look at timing results in $runDir/cpu/results.txt"
 echo "                           and in $runDir/gpu/results.txt"
 
 echo "you can plot results by running the python script:"
-echo "python ./plotCpuGpuComparaison.py"
+echo "python ./plotCpuGpuComparison.py"

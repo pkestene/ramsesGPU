@@ -21,44 +21,49 @@
 
 /* Graphics Magick C++ API to dump PNG image files */
 #ifdef USE_GM
-#include <Magick++.h>
+#  include <Magick++.h>
 #endif // USE_GM
 
-void print_help(int argc, char* argv[]);
+void
+print_help(int argc, char * argv[]);
 
 using hydroSimu::HydroRunLaxLiu;
 
 /***********************************
  ***********************************/
-int main (int argc, char * argv[]) {
+int
+main(int argc, char * argv[])
+{
 
-  /* 
+  /*
    * read parameters from parameter file or command line arguments
    */
-  
+
   /* parse command line arguments */
   GetPot cl(argc, argv);
-  
+
   /* search for multiple options with the same meaning HELP */
-  if( cl.search(3, "--help", "-h", "--sos") ) {
-    print_help(argc,argv);
+  if (cl.search(3, "--help", "-h", "--sos"))
+  {
+    print_help(argc, argv);
     exit(0);
   }
 
   /* search for configuration parameter file */
-  const std::string default_input_file = std::string(argv[0])+ ".ini";
-  const std::string input_file = cl.follow(default_input_file.c_str(),    "--param");
+  const std::string default_input_file = std::string(argv[0]) + ".ini";
+  const std::string input_file = cl.follow(default_input_file.c_str(), "--param");
 
   /* parse parameters from input file */
-  ConfigMap configMap(input_file); 
+  ConfigMap configMap(input_file);
 
   /* dump input file and exit */
-  if( cl.search(2, "--dump-param-file", "-d") ) {
+  if (cl.search(2, "--dump-param-file", "-d"))
+  {
     std::cout << configMap << std::endl;
     exit(0);
-  }  
+  }
 
-  /* 
+  /*
    * process parameter file when constructing HydroParameter object;
    * initialize hydro grid.
    */
@@ -86,18 +91,19 @@ int main (int argc, char * argv[]) {
    * memory free
    */
   delete hydroRun;
-  //deletea par;
+  // deletea par;
   return EXIT_SUCCESS;
-
 }
 
 // -------------------------------------------------------
 // -------------------------------------------------------
 // -------------------------------------------------------
-void print_help(int argc, char* argv[]) {
-  
-  (void) argc;
-  
+void
+print_help(int argc, char * argv[])
+{
+
+  (void)argc;
+
   using std::cerr;
   using std::cout;
   using std::endl;
@@ -105,13 +111,13 @@ void print_help(int argc, char* argv[]) {
   cerr << endl;
   cout << argv[0] << ": " << endl;
   cout << "solve 2D Euler equations on a cartesian grid using Lax-Liu positive scheme." << endl;
-  cerr << endl; 
+  cerr << endl;
   cerr << "USAGE:" << endl;
   cerr << "--help, -h, --sos" << endl;
   cerr << "        get some help about this program." << endl << endl;
   cerr << "--param [string]" << endl;
   cerr << "        specify configuration parameter file (INI format)" << endl;
-  cerr << endl << endl;       
+  cerr << endl << endl;
   cerr << "--dump-param-file, -d" << endl;
   cerr << "        show contents of database that was created by file parser.";
   cerr << endl;

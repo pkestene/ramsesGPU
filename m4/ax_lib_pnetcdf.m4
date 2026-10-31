@@ -10,7 +10,7 @@
 #	Checks the availability of Parallel-NetCDF library.
 #	Options:
 #	--with-pnetcdf=(path|yes|no)
-#		Indicates whether to use Parallel-NetCDF or not, and the path 
+#		Indicates whether to use Parallel-NetCDF or not, and the path
 #               to installation location.
 #
 #	This macro defines the following variables:
@@ -32,7 +32,7 @@ AC_REQUIRE([AC_PROG_GREP])
 PNETCDF_ROOT_GIVEN=
 AC_ARG_WITH([pnetcdf],
     AS_HELP_STRING(
-	[--with-pnetcdf@<:@=yes|no|DIR@:>@], 
+	[--with-pnetcdf@<:@=yes|no|DIR@:>@],
 	[full path to Parallel-NetCDF installation (default=no); MPI is REQUIRED to be able to use Parallel-netCDF.]),
     [if test "$withval" = "no"; then
     	with_pnetcdf="no"
@@ -58,7 +58,7 @@ if test ! "$with_pnetcdf" = "no"; then
    if test -n "$PNETCDF_ROOT"; then
       echo "using PNETCDF_ROOT from environment ($PNETCDF_ROOT)"
       PNETCDF_PATH=$PNETCDF_ROOT
-   else 
+   else
    	if test ! "$PNETCDF_ROOT_GIVEN" = ""; then
 	   echo "using PNETCDF_PATH : $PNETCDF_ROOT_GIVEN"
 	   PNETCDF_PATH=$PNETCDF_ROOT_GIVEN
@@ -90,7 +90,7 @@ if test ! "$with_pnetcdf" = "no"; then
 
    AC_MSG_CHECKING([for libpnetcdf.a in $PNETCDF_PATH/lib])
    if test -f $PNETCDF_PATH/lib/libpnetcdf.a; then
-      AC_MSG_RESULT(yes) 
+      AC_MSG_RESULT(yes)
    else
       AC_MSG_WARN( [libpnetcdf.a not found in $PNETCDF_PATH/lib disabling pnetcdf support ])
       with_pnetcdf=no
@@ -103,7 +103,7 @@ if test "x$with_pnetcdf" = "xyes"; then
       PNETCDF_VERSION_MAJOR=$(eval cat $PNETCDF_PATH/include/pnetcdf.h | $GREP 'define PNETCDF_VERSION_MAJOR' | $AWK '{print $[]3}')
       PNETCDF_VERSION_MINOR=$(eval cat $PNETCDF_PATH/include/pnetcdf.h | $GREP 'define PNETCDF_VERSION_MINOR' | $AWK '{print $[]3}')
       PNETCDF_VERSION_SUB=$(eval cat $PNETCDF_PATH/include/pnetcdf.h | $GREP 'define PNETCDF_VERSION_SUB' | $AWK '{print $[]3}')
-      
+
       PNETCDF_VERSION="$PNETCDF_VERSION_MAJOR.$PNETCDF_VERSION_MINOR.$PNETCDF_VERSION_SUB"
 
       PNETCDF_CFLAGS="-I$PNETCDF_PATH/include"
@@ -111,7 +111,7 @@ if test "x$with_pnetcdf" = "xyes"; then
       PNETCDF_CPPFLAGS="$PNETCDF_CFLAGS"
       PNETCDF_LDFLAGS="-L$PNETCDF_PATH/lib -lpnetcdf"
       AC_MSG_RESULT([yes])
-  
+
       # MPI compiler wrapper required here !
       old_CXX=$CXX
       old_CFLAGS=$CFLAGS

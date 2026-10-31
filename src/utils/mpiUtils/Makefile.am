@@ -22,6 +22,5 @@ libMpiUtils_la_SOURCES = \
 	MpiComm.cpp \
 	MpiCommCart.h \
 	MpiCommCart.cpp
-libMpiUtils_la_CPPFLAGS = $(AM_CPPFLAGS) 
+libMpiUtils_la_CPPFLAGS = $(AM_CPPFLAGS)
 # -Wno-unused-function -Wno-unused-parameter
-

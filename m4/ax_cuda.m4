@@ -84,7 +84,7 @@ then
 	# test if nvcc version is >= 2.3
 	NVCC_VERSION=`$NVCC --version | grep release | awk 'gsub(/,/, "") {print [$]5}'`
 	AC_MSG_RESULT([nvcc version : $NVCC_VERSION - $host_cpu])
-	
+
 	# test if architecture is 64 bits and NVCC version >= 2.3
         libdir=lib
 	if test "x$host_cpu" = xx86_64 ; then
@@ -120,7 +120,7 @@ then
 	fi
 
 	# Env var CUDA_DRIVER_LIB_PATH can be used to set an alternate driver library path
-	# this is usefull when building on a host where only toolkit (nvcc) is installed
+	# this is useful when building on a host where only toolkit (nvcc) is installed
 	# and not driver. Driver libs must be placed in some location specified by this var.
 	if test -n "$CUDA_DRIVER_LIB_PATH"
 	then
@@ -175,7 +175,7 @@ then
 
 	CPPFLAGS=$saved_CPPFLAGS
 	LIBS=$saved_LIBS
-	
+
 	if test "$have_cuda_headers" = "yes" -a "$have_cuda_libs" = "yes" -a "$have_nvcc" = "yes"
 	then
 		have_cuda="yes"

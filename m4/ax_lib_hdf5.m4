@@ -231,7 +231,7 @@ dnl
         fi
 
 	dnl set a variable with information about serial/parallel
-	dnl version of hdf5 library  
+	dnl version of hdf5 library
 	HDF5_PARALLEL_ENABLED=$(eval $H5CC -showconfig | grep '\bParallel HDF5:'   \
             | $AWK -F: '{print $[]2}' | $AWK '{sub(/^[[ \t]]+/, ""); print}')
 

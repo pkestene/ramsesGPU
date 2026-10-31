@@ -10,5 +10,3 @@
 set -x
 cd ${BRIDGE_MSUB_PWD}
 ccc_mprun ./dumpMpiInfo -fname test.txt
-
-

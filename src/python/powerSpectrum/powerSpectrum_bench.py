@@ -20,12 +20,12 @@ def bench_powerSpectrum_cy(data,Nbins):
 #
 if __name__ == '__main__':
     from timeit import Timer
-    
+
     nb =  1
     Nx = 100
     Ny = 100
     Nz = 100
-    
+
     argc=len(sys.argv)
     if (argc>1):
         Nx=int(sys.argv[1])
@@ -33,8 +33,8 @@ if __name__ == '__main__':
         Ny=int(sys.argv[2])
     if (argc>3):
         Nz=int(sys.argv[3])
-        
-    N  = Nx*Ny*Nz    
+
+    N  = Nx*Ny*Nz
 
     Nbins = 32
 
@@ -47,4 +47,3 @@ if __name__ == '__main__':
     print 'power spectrum      cython (%d,%d,%d) : %f seconds' % (Nx,Ny,Nz,time_ps_cy)
 
     print 'speedup cython versus python %f' % (time_ps_py/time_ps_cy)
-

@@ -4,7 +4,7 @@ SUFFIXES = .cu
 include $(top_srcdir)/am/cuda.am
 
 # clean generated files
-MAINTAINERCLEANFILES = $(srcdir)/Makefile.in 
+MAINTAINERCLEANFILES = $(srcdir)/Makefile.in
 
 AUTOMAKE_OPTIONS = subdir-objects
 
@@ -29,7 +29,7 @@ testHelloMpiCuda_SOURCES  = testHelloMpiCuda.cu
 # add dummy C++ source to cause C++ linking.
 nodist_EXTRA_testHelloMpiCuda_SOURCES = dummy.cxx
 testHelloMpiCuda_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CXXFLAGS) -I$(top_srcdir)/src/utils/mpiUtils
-testHelloMpiCuda_LDFLAGS  = $(AM_LDFLAGS)  $(CUDA_LIBS) ../../src/utils/mpiUtils/libMpiUtils.la $(MPI_LDFLAGS) 
+testHelloMpiCuda_LDFLAGS  = $(AM_LDFLAGS)  $(CUDA_LIBS) ../../src/utils/mpiUtils/libMpiUtils.la $(MPI_LDFLAGS)
 
 #
 # testBorderBufferCuda
@@ -48,4 +48,3 @@ testBorderBufferCuda2_SOURCES = testBorderBufferCuda2.cu
 nodist_EXTRA_testBorderBufferCuda2_SOURCES = dummy.cxx
 testBorderBufferCuda2_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CXXFLAGS) -I$(top_srcdir)/src/hydro -I$(top_srcdir)/src/utils/mpiUtils
 testBorderBufferCuda2_LDFLAGS  = $(AM_LDFLAGS)  $(MPI_LDFLAGS) $(CUDA_LIBS) ../../src/hydro/libhydroGpu.la ../../src/utils/mpiUtils/libMpiUtils.la
-

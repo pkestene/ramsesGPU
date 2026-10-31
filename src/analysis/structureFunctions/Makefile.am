@@ -63,5 +63,4 @@ test_pnetcdf_write_SOURCES = \
 	test_pnetcdf_write.cpp
 
 test_pnetcdf_write_CPPFLAGS = $(AM_CPPFLAGS) $(STRUCTURE_FUNCTIONS_C_FLAGS) -I$(top_srcdir)/src/utils/config -I$(top_srcdir)/src/hydro
-test_pnetcdf_write_LDFLAGS  = $(AM_LDFLAGS) ../../utils/config/libIniConfig.la $(STRUCTURE_FUNCTIONS_LD_FLAGS) 
-
+test_pnetcdf_write_LDFLAGS  = $(AM_LDFLAGS) ../../utils/config/libIniConfig.la $(STRUCTURE_FUNCTIONS_LD_FLAGS)

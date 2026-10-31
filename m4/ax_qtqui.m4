@@ -28,19 +28,19 @@
 #	AX_QTGUI()
 #
 # DESCRIPTION
-#	Add configure' option --enable-qtgui / --disable-qtgui. 
+#	Add configure' option --enable-qtgui / --disable-qtgui.
 #	Defines AM_CONDITIONAL : ENABLE_QTGUI
 #       Autotrol macro AT_WITH_QT is called only if qt gui build is required.
 #
 AC_DEFUN([AX_QTGUI],
 [dnl
-	
+
 	AC_ARG_ENABLE([qtgui],
 			[AC_HELP_STRING([--disable-qtgui],
 			[disable QT gui (graphical user interface) compilation])],
 			[enable_qtgui=$enableval],
 			[enable_qtgui=yes])
-			
+
 	if test x$enable_qtgui = xyes; then
 	   AT_WITH_QT([$1])
 	fi

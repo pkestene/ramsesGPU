@@ -18,12 +18,12 @@
 #		PAPI_LDFLAGS
 #------------------------------------------------------------------------
 
-AC_DEFUN([AX_LIB_PAPI], 
+AC_DEFUN([AX_LIB_PAPI],
 [
 
 # try to parse PAPI_ROOT location from option --with-papi
 PAPI_ROOT_GIVEN=
-AC_ARG_WITH(papi, 
+AC_ARG_WITH(papi,
     AS_HELP_STRING([--with-papi=@<:@=yes|no|DIR@:>@],
 	[use papi, and get include files from DIR/include
 		    and lib files from DIR/lib]),
@@ -44,7 +44,7 @@ if test ! "$with_papi" = "no"; then
    if test -n "$PAPI_ROOT"; then
       echo "using PAPI_ROOT from environment ($PAPI_ROOT)"
       PAPI_PATH=$PAPI_ROOT
-   else 
+   else
    	if test ! "$PAPI_ROOT_GIVEN" = ""; then
 	   echo "using PAPI_PATH : $PAPI_ROOT_GIVEN"
 	   PAPI_PATH=$PAPI_ROOT_GIVEN
@@ -94,7 +94,7 @@ if test "x$with_papi" = "xyes"; then
       PAPI_CPPFLAGS="$PAPI_CFLAGS"
       PAPI_LDFLAGS="-L$THE_PAPI_LIBDIR -lpapi"
       AC_MSG_RESULT([yes])
-  
+
 fi
 
 AC_SUBST([PAPI_PATH])

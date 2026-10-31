@@ -22,23 +22,29 @@
 
 #include "GlutMaster.h"
 
-class DemoWindow : public GlutWindow{
+class DemoWindow : public GlutWindow
+{
 public:
+  int height, width;
+  int initPositionX, initPositionY;
 
-   int          height, width;
-   int          initPositionX, initPositionY;
+  DemoWindow(GlutMaster * glutMaster,
+             int          setWidth,
+             int          setHeight,
+             int          setInitPositionX,
+             int          setInitPositionY,
+             const char * title);
+  ~DemoWindow();
 
-   DemoWindow(GlutMaster * glutMaster,
-              int setWidth, int setHeight,
-              int setInitPositionX, int setInitPositionY,
-              const char* title);
-   ~DemoWindow();
+  void
+  CallBackDisplayFunc(void);
+  void
+  CallBackReshapeFunc(int w, int h);
+  void
+  CallBackIdleFunc(void);
 
-   void CallBackDisplayFunc(void);
-   void CallBackReshapeFunc(int w, int h);   
-   void CallBackIdleFunc(void);
-
-   void StartSpinning(GlutMaster * glutMaster);
+  void
+  StartSpinning(GlutMaster * glutMaster);
 };
 
 #endif // DEMO_WINDOW_H_

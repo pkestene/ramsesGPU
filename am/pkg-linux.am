@@ -17,7 +17,7 @@ pkg-deb: pkg-deb-clean
 pkg-deb-clean:
 	rm -rf lib$(PACKAGE_TARNAME)_$(PACKAGE_VERSION)* $(distdir)/
 
-# RPM # - The first line set the .rpmmacros file to point to the 'rpm build dir'. 
+# RPM # - The first line set the .rpmmacros file to point to the 'rpm build dir'.
 pkg-rpm: pkg-rpm-clean
 	echo '%_topdir' $(RPM_BUILD_DIR) > ~/.rpmmacros; \
 	mkdir -p $(RPM_BUILD_DIR)/{BUILD,RPMS,SOURCES,SRPMS,SPECS}; \

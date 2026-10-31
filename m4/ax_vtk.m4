@@ -1,13 +1,13 @@
 # ax_vtk.m4: A m4 macro to detect and configure Vtk library.
 #
-# loosely adapted from the original vtk.m4 by Francesco Montorsi found on 
+# loosely adapted from the original vtk.m4 by Francesco Montorsi found on
 # the following web page : http://www.itk.org/Wiki/VTK_Autoconf
 #
 # Pierre Kestener.
 
 #
 # SYNOPSIS
-#       AX_VTK([minimun-version], [action-if-found], [action-if-not-found])
+#       AX_VTK([minimum-version], [action-if-found], [action-if-not-found])
 #
 # DESCRIPTION
 #       Adds the --with-vtk=path option to the configure options
@@ -28,7 +28,7 @@ AC_DEFUN([AX_VTK],
 [
 	AC_ARG_WITH([vtk],
 		[AC_HELP_STRING([--with-vtk],
-		[The prefix where VTK is installed (default is /usr). You can also set environment variable VTK_INC_DIR / VTK_LIB_DIR. You can also pass a list of vtk libs to link with (usefull for vtk-6 where names have changed)])],
+		[The prefix where VTK is installed (default is /usr). You can also set environment variable VTK_INC_DIR / VTK_LIB_DIR. You can also pass a list of vtk libs to link with (useful for vtk-6 where names have changed)])],
               	[
 			if test "$withval" = "no"
 			then
@@ -57,7 +57,7 @@ AC_DEFUN([AX_VTK],
 	# as an env variable: "-lvtkImaging ..."
 	if test "xVTK_LINK_LIBS" != x
 	then
-		VTK_LIBS=$VTK_LINK_LIBS 
+		VTK_LIBS=$VTK_LINK_LIBS
 	fi
 
 	# try to find a valid vtk location
@@ -106,7 +106,7 @@ AC_DEFUN([AX_VTK],
 					# on Ubuntu, vtk libs for version < 6.0
 					# are located in a subfolder of /usr/lib
 					if test -d "${VTK_PREFIX_TMP}/lib/vtk${vtk_suffix}"
-					then 
+					then
 						VTK_LIBRARY_PATH="${VTK_PREFIX_TMP}/lib/vtk$vtk_suffix"
 					fi
 
@@ -117,7 +117,7 @@ AC_DEFUN([AX_VTK],
 					fi
 					have_vtk="yes"
 					break;
-				fi	
+				fi
 			done
 		fi
 
@@ -127,29 +127,29 @@ AC_DEFUN([AX_VTK],
 			VTK_CPPFLAGS="-I${VTK_INCLUDE_PATH}"
 			VTK_LDFLAGS="-L${VTK_LIBRARY_PATH}"
 			if test "x$VTK_LIBS" = x
-			then 
+			then
 			     VTK_LIBS="-lvtkCommon -lvtkDICOMParser -lvtkFiltering -lvtkftgl -lvtkGraphics -lvtkHybrid -lvtkImaging -lvtkIO -lvtkRendering -lvtkParallel "
 			fi
 
 			AC_MSG_CHECKING([for vtk library])
 
 		      	# now, eventually check version
-      			if [[ -n "$1" ]]; 
+      			if [[ -n "$1" ]];
 			then
 			   #
-        		   # A version was specified... 
+        		   # A version was specified...
 			   # parse the version string in $1
-			   
+
 			   # The version of VTK that we need:
         		   maj=`echo $1 | sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\1/'`
 			   min=`echo $1 | sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\2/'`
 			   rel=`echo $1 | sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\3/'`
 			   AC_MSG_CHECKING([if VTK version is at least $maj.$min.$rel])
-			   
+
  			   # Compare required version of VTK against installed version:
 			   #
 			   # Note that in order to be able to compile the following
-			   # test program, we need to add to the current flags, 
+			   # test program, we need to add to the current flags,
 			   # the VTK settings...
 			   OLD_CFLAGS=$CFLAGS
 			   OLD_CXXFLAGS=$CXXFLAGS
@@ -178,7 +178,7 @@ AC_DEFUN([AX_VTK],
                 		#error Installed VTK is too old !
                 		#endif
               			])
-        			], 
+        			],
 				[vtkVersion="OK"])
 			    #
 			    # restore all flags without VTK values
@@ -187,7 +187,7 @@ AC_DEFUN([AX_VTK],
 			    LDFLAGS=$OLD_LDFLAGS
 			    LIBS=$OLD_LIBS
         		    #
-			    # Execute $2 if version is ok, 
+			    # Execute $2 if version is ok,
 			    # otherwise execute $3
         		    if [[ "$vtkVersion" = "OK" ]]; then
 			       	AC_MSG_RESULT([yes])
@@ -208,7 +208,7 @@ AC_DEFUN([AX_VTK],
  			# Compare required version of VTK against installed version:
 			#
 			# Note that in order to be able to compile the following
-		        # test program, we need to add to the current flags, 
+		        # test program, we need to add to the current flags,
 		        # the VTK settings...
 			OLD_CFLAGS=$CFLAGS
 			OLD_CXXFLAGS=$CXXFLAGS
@@ -231,7 +231,7 @@ AC_DEFUN([AX_VTK],
                 		#error Installed VTK 6
                 		#endif
               			])
-        			], 
+        			],
 				[vtkVersion6="KO"])
 			 #
 			 # restore all flags without VTK values
@@ -239,20 +239,20 @@ AC_DEFUN([AX_VTK],
 			 CXXFLAGS=$OLD_CXXFLAGS
 			 LDFLAGS=$OLD_LDFLAGS
 			 LIBS=$OLD_LIBS
-			 
+
 			 #
 			 # if VTK 6 detected
-			 # 
+			 #
         		 if [[ "x$vtkVersion6" = "xKO" ]]; then
 			       	AC_MSG_RESULT([no $vtkVersion6])
           			VTK6_FOUND="no"
         		 else
 				AC_MSG_RESULT([yes])
-          			VTK6_FOUND="yes"          			
+          			VTK6_FOUND="yes"
 				# modify VTK_LIBS if not already set
 				# by env variable VTK_LINK_LIBS
 				if test "x$VTK_LINK_LIBS" = x
-				then 
+				then
 					VTK_LIBS="-lvtkCommonCore-6.0 -lvtkCommonDataModel-6.0 -lvtkDICOMParser-6.0 -lvtkFiltersCore-6.0 -lvtkftgl-6.0 -lvtkalglib-6.0 -lvtksys-6.0 -lvtkImagingCore-6.0 -lvtkIOCore-6.0 -lvtkRenderingCore-6.0 -lvtkIOXML-6.0 -lvtkParallelCore-6.0 -lvtkParallelCore-6.0 -lvtkParallelMPI-6.0"
 				fi
 
@@ -283,5 +283,3 @@ AC_DEFUN([AX_VTK],
 	     have_vtk="no"
 	fi
 ])# AX_VTK
-
-

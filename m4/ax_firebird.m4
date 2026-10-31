@@ -1,19 +1,19 @@
 dnl $Id: ax_firebird.m4,v 1.2 2006/08/30 14:28:55 mloskot Exp $
 dnl
 dnl @synopsis AX_LIB_FIREBIRD([MINIMUM-VERSION])
-dnl 
+dnl
 dnl Test for the Firebird client library of a particular version (or newer)
 dnl
 dnl This macro takes only one optional argument, required version
 dnl of Firebird library. If required version is not
-dnl passed, then 1.5.0 is used in test of existance of Firebird
+dnl passed, then 1.5.0 is used in test of existence of Firebird
 dnl client library.
 dnl
 dnl For more information about Firebird API versioning check:
 dnl API Identifies Client Version
 dnl http://www.firebirdsql.org/rlsnotes20/rnfbtwo-apiods.html
 dnl
-dnl If no intallation prefix to the installed Firebird library is given
+dnl If no installation prefix to the installed Firebird library is given
 dnl the macro searches under /usr, /usr/local, and /opt.
 dnl
 dnl This macro calls:
@@ -62,7 +62,7 @@ AC_DEFUN([AX_LIB_FIREBIRD],
     if test "x$WANT_FIREBIRD" = "xyes"; then
 
         ac_firebird_header="ibase.h"
-        
+
         firebird_version_req=ifelse([$1], [], [3.0.0], [$1])
         firebird_version_req_shorten=`expr $firebird_version_req : '\([[0-9]]*\.[[0-9]]*\)'`
         firebird_version_req_major=`expr $firebird_version_req : '\([[0-9]]*\)'`
@@ -95,7 +95,7 @@ AC_DEFUN([AX_LIB_FIREBIRD],
                 fi
             done
         fi
-        
+
         ac_firebird_header_path="$ac_firebird_path/include/$ac_firebird_header"
 
         if test ! -f "$ac_firebird_header_path"; then
@@ -135,7 +135,7 @@ AC_DEFUN([AX_LIB_FIREBIRD],
             CPPFLAGS="$saved_CPPFLAGS"
 
             if test "$success" = "yes"; then
-                
+
                 FIREBIRD_CFLAGS="$ac_firebird_cppflags"
                 FIREBIRD_LDFLAGS="$ac_firebird_ldflags"
 
@@ -144,14 +144,14 @@ AC_DEFUN([AX_LIB_FIREBIRD],
                 ac_firebird_version=`cat $ac_firebird_header_path | \
                                      grep '#define.*FB_API_VER.*' | \
                                      sed -e 's/.* //'`
-                
+
                 if test -n "$ac_firebird_version"; then
                     ac_firebird_version_major=`expr $ac_firebird_version \/ 10`
                     ac_firebird_version_minor=`expr $ac_firebird_version \% 10`
 
                     FIREBIRD_VERSION="$ac_firebird_version_major.$ac_firebird_version_minor.x"
                 else
-                    AC_MSG_WARN([Could not find FB_API_VER macro in $ac_firebird_header to get Firebird version.]) 
+                    AC_MSG_WARN([Could not find FB_API_VER macro in $ac_firebird_header to get Firebird version.])
                 fi
 
                 AC_SUBST(FIREBIRD_CFLAGS)
@@ -162,4 +162,3 @@ AC_DEFUN([AX_LIB_FIREBIRD],
         fi
     fi
 ])
-

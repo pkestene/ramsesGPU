@@ -1,7 +1,7 @@
 /**
  * \file GlutWindow.cpp
  * \brief Implements a base class for handling Glut interface callbacks.
- * 
+ *
  * \see http://www.stetten.com/george/glutmaster/glutmaster.html
  *
  * $Id: GlutWindow.cpp 1784 2012-02-21 10:34:58Z pkestene $
@@ -21,66 +21,93 @@
 
 #include "GlutWindow.h"
 
-GlutWindow::GlutWindow(void){
+GlutWindow::GlutWindow(void) {}
 
+GlutWindow::~GlutWindow() {}
+
+void
+GlutWindow::CallBackDisplayFunc(void)
+{
+
+  // dummy function
 }
 
-GlutWindow::~GlutWindow(){
+void
+GlutWindow::CallBackIdleFunc(void)
+{
 
+  // dummy function
 }
 
-void GlutWindow::CallBackDisplayFunc(void){
+void
+GlutWindow::CallBackKeyboardFunc(unsigned char key, int x, int y)
+{
 
-                             //dummy function
+  (void)key;
+  (void)x;
+  (void)y; // dummy function
 }
 
-void GlutWindow::CallBackIdleFunc(void){
+void
+GlutWindow::CallBackMotionFunc(int x, int y)
+{
 
-                             //dummy function
+  (void)x;
+  (void)y; // dummy function
 }
 
-void GlutWindow::CallBackKeyboardFunc(unsigned char key, int x, int y){
+void
+GlutWindow::CallBackMouseFunc(int button, int state, int x, int y)
+{
 
-  (void) key; (void) x; (void) y;                //dummy function
+  (void)button;
+  (void)state;
+  (void)x;
+  (void)y; // dummy function
 }
 
-void GlutWindow::CallBackMotionFunc(int x, int y){
+void
+GlutWindow::CallBackPassiveMotionFunc(int x, int y)
+{
 
-   (void) x; (void) y;                     //dummy function
+  (void)x;
+  (void)y; // dummy function
 }
 
-void GlutWindow::CallBackMouseFunc(int button, int state, int x, int y){
+void
+GlutWindow::CallBackReshapeFunc(int w, int h)
+{
 
-   (void) button; (void) state; (void) x; (void) y;      //dummy function
+  (void)w;
+  (void)h; // dummy function
 }
 
-void GlutWindow::CallBackPassiveMotionFunc(int x, int y){
+void
+GlutWindow::CallBackSpecialFunc(int key, int x, int y)
+{
 
-   (void) x; (void) y;                     //dummy function
+  (void)key;
+  (void)x;
+  (void)y;
 }
 
-void  GlutWindow::CallBackReshapeFunc(int w, int h){
+void
+GlutWindow::CallBackVisibilityFunc(int visible)
+{
 
-   (void) w; (void) h;                     //dummy function
-}
-   
-void GlutWindow::CallBackSpecialFunc(int key, int x, int y){
-
-   (void) key; (void) x; (void) y;
-}   
-
-void GlutWindow::CallBackVisibilityFunc(int visible){
-
-   (void) visible;                  //dummy function
+  (void)visible; // dummy function
 }
 
-void GlutWindow::SetWindowID(int newWindowID){
+void
+GlutWindow::SetWindowID(int newWindowID)
+{
 
-   windowID = newWindowID;
+  windowID = newWindowID;
 }
 
-int GlutWindow::GetWindowID(void){
+int
+GlutWindow::GetWindowID(void)
+{
 
-   return( windowID );
+  return (windowID);
 }
-

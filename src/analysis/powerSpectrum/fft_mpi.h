@@ -14,14 +14,14 @@
 #define FFT_MPI_H_
 
 #ifdef USE_FFTW3_MPI
-#include <fftw3-mpi.h>
+#  include <fftw3-mpi.h>
 #endif /* USE_FFTW3_MPI */
 
 #include "utils/config/ConfigMap.h"
 
 #ifdef GEN_FBM
-#include <random> // c++11
-#endif // GEN_FBM
+#  include <random> // c++11
+#endif              // GEN_FBM
 
 /**
  * Compute forward transform FFT (real to complex).
@@ -30,9 +30,8 @@
  * dataOut must also be allocated in the calling routine.
  *
  */
-void compute_fft_mpi(ConfigMap    &configMap, 
-		     double       *dataIn, 
-		     double       *dataOut);
+void
+compute_fft_mpi(ConfigMap & configMap, double * dataIn, double * dataOut);
 
 /**
  * Compute backward transform IFFT (complex to real).
@@ -41,9 +40,8 @@ void compute_fft_mpi(ConfigMap    &configMap,
  * dataOut must also be allocated in the calling routine.
  *
  */
-void compute_ifft_mpi(ConfigMap    &configMap, 
-		      double       *dataIn, 
-		      double       *dataOut);
+void
+compute_ifft_mpi(ConfigMap & configMap, double * dataIn, double * dataOut);
 
 /**
  *
@@ -54,18 +52,20 @@ void compute_ifft_mpi(ConfigMap    &configMap,
  * @param[out] dataHisto
  * @param[out] dataPsd
  */
-void compute_power_spectrum_mpi(ConfigMap    &configMap, 
-				double       *dataFFT, 
-				double       *dataHisto,
-				double       *dataPsd);
+void
+compute_power_spectrum_mpi(ConfigMap & configMap,
+                           double *    dataFFT,
+                           double *    dataHisto,
+                           double *    dataPsd);
 
 #ifdef GEN_FBM
 /**
  * generate Fourier coefficients for a 3D Fractional Browniam motion realization.
  */
-void set_power_law_power_spectrum(ConfigMap &configMap,
-				  double    *data_fft,
-				  std::default_random_engine& generator);
+void
+set_power_law_power_spectrum(ConfigMap &                  configMap,
+                             double *                     data_fft,
+                             std::default_random_engine & generator);
 
 #endif /* GEN_FBM */
 

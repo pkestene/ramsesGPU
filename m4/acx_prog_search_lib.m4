@@ -48,7 +48,7 @@ AC_DEFUN([ACX_PROG_SEARCH_LIB],
 [
 	saved_LIBS="$LIBS"
 	has_found_lib="no"
-	m4_foreach_w([tested_lib], [$2], 
+	m4_foreach_w([tested_lib], [$2],
 	[
 		if test "$has_found_lib" != "yes"
 		then

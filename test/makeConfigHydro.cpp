@@ -12,14 +12,15 @@
 
 using namespace std;
 
-int main(int argc, char **argv)
+int
+main(int argc, char ** argv)
 {
   /* parse command line arguments */
   GetPot cl(argc, argv);
 
-  const int nx  = cl.follow(100,   "--nx"); 
-  const int ny  = cl.follow(100,   "--ny");
-  const int nz  = cl.follow(1,     "--nz");
+  const int nx = cl.follow(100, "--nx");
+  const int ny = cl.follow(100, "--ny");
+  const int nz = cl.follow(1, "--nz");
   const int noutput = cl.follow(100, "--noutput");
   const int nstepmax = cl.follow(1000, "--nstepmax");
 
@@ -27,7 +28,7 @@ int main(int argc, char **argv)
   cout << "[run]" << endl;
   cout << "tend=1.2" << endl;
   cout << "noutput=" << noutput << endl;
-  cout << "nstepmax="<< nstepmax << endl;
+  cout << "nstepmax=" << nstepmax << endl;
   cout << endl;
   cout << endl;
   cout << "[mesh]" << endl;
@@ -73,10 +74,10 @@ int main(int argc, char **argv)
   cout << "[output]" << endl;
   cout << "latexAnimation=no" << endl;
   cout << "outputXsm=yes" << endl;
-  cout << "outputVtk=no"  << endl;
+  cout << "outputVtk=no" << endl;
   cout << "outputhdf5=no" << endl;
   cout << "outputPrefix=riemann" << endl;
   cout << "colorPng=no" << endl;
-  
+
   return EXIT_SUCCESS;
 }

@@ -7,7 +7,7 @@
 #         Use env variable FFTW3_ROOT as a guess to installation path
 #         to fftw.
 #         Use env variable FFTW3_LIBDIR to set a custom lib dir (e.g.
-#         /usr/lib/x86_64-linux-gnu/ for Ubuntu)	  
+#         /usr/lib/x86_64-linux-gnu/ for Ubuntu)
 #
 # Arguments:
 #	none
@@ -25,12 +25,12 @@
 #		FFTW3_LDFLAGS
 #------------------------------------------------------------------------
 
-AC_DEFUN([AX_LIB_FFTW3_DOUBLE], 
+AC_DEFUN([AX_LIB_FFTW3_DOUBLE],
 [
 
 # try to parse FFTW3D location from option --with-fftw3
 FFTW3_ROOT_GIVEN=
-AC_ARG_WITH(fftw3, 
+AC_ARG_WITH(fftw3,
     AS_HELP_STRING([--with-fftw3=@<:@=yes|no|DIR@:>@],
 	[use fftw3, and get include files from DIR/include
 		    and lib files from DIR/lib]),
@@ -45,7 +45,7 @@ AC_ARG_WITH(fftw3,
 	 [with_fftw3="no"]
 )
 
-AC_ARG_WITH(fftw3-mpi, 
+AC_ARG_WITH(fftw3-mpi,
     AS_HELP_STRING([--with-fftw3-mpi=@<:@=yes|no@:>@],
 	[use distributed (MPI) fftw3]),
 	[if   test "$withval" = "no" ; then
@@ -65,7 +65,7 @@ if test ! "$with_fftw3" = "no"; then
    if test -n "$FFTW3_ROOT"; then
       echo "using FFTW3_ROOT from environment ($FFTW3_ROOT)"
       FFTW3_PATH=$FFTW3_ROOT
-   else 
+   else
    	if test ! "$FFTW3_ROOT_GIVEN" = ""; then
 	   echo "using FFTW3_PATH : $FFTW3_ROOT_GIVEN"
 	   FFTW3_PATH=$FFTW3_ROOT_GIVEN
@@ -112,7 +112,7 @@ if test ! "$with_fftw3" = "no"; then
       else
 	 AC_MSG_WARN( [libfftw3 not found in $FFTW3_LIBDIR disabling fftw3 support ])
       	 with_fftw3=no
-      fi  
+      fi
    fi
 
 fi
@@ -134,7 +134,7 @@ if test "x$with_fftw3" = "xyes"; then
       	 FFTW3_LDFLAGS="-L$FFTW3_PATH/lib -lfftw3_mpi -lfftw3f_mpi -lfftw3 -lfftw3f"
       fi
       AC_MSG_RESULT([yes])
-  
+
 fi
 
 # fftw3 is necessary to have fftw3-mpi enabled !

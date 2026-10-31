@@ -1,6 +1,6 @@
 <h1>Hydrodynamics simulations animations</h1>
 
-<!-- 
+<!--
 voir la page suivante pour savoir comment embarquer une video dans du
    html:
 http://joliclic.free.fr/html/object-tag/object-video.html
@@ -17,7 +17,7 @@ http://joliclic.free.fr/html/object-tag/object-video.html
 </object>
 </td>
 <!-- Kurganov 2D -->
-<td> 
+<td>
 <object data="@abs_top_srcdir@/doc/jet2d_kurganov.avi" type="video/x-msvideo" width="100" height="400">
   <param name="src" value="@abs_top_srcdir@/doc/jet2d_kurganov.avi">
   <param name="autoStart" value="0">
@@ -25,7 +25,7 @@ http://joliclic.free.fr/html/object-tag/object-video.html
 </object>
 </td>
 <!-- Godunov 3D -->
-<td> 
+<td>
 <object data="@abs_top_srcdir@/doc/jet3d_godunov.mpg" type="video/mpeg" width="400" height="400">
   <param name="src" value="@abs_top_srcdir@/doc/jet3d_godunov.mpg">
   <param name="autoStart" value="1">

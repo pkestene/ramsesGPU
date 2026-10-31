@@ -30,10 +30,11 @@ using hydroSimu::HostArray;
  * \param[inout] localData A reference to a HostArray already allocated
  *
  */
-void read_pnetcdf(const std::string &filename,
-		  MPI_Offset         starts[3],
-		  MPI_Offset         counts[3],
-		  HostArray<double> &localData);
+void
+read_pnetcdf(const std::string & filename,
+             MPI_Offset          starts[3],
+             MPI_Offset          counts[3],
+             HostArray<double> & localData);
 
 /**
  * Write netcdf file using Parallel-NetCDF, with/without ghosts.
@@ -50,11 +51,12 @@ void read_pnetcdf(const std::string &filename,
  * \param[inout] localData A reference to a HostArray (data to write)
  *
  */
-void write_pnetcdf(const std::string &filename,
-		   MPI_Offset         starts[3],
-		   MPI_Offset         counts[3],
-		   int                gsizes[3],
-		   HostArray<double> &localData,
-		   ConfigMap         &configMap);
+void
+write_pnetcdf(const std::string & filename,
+              MPI_Offset          starts[3],
+              MPI_Offset          counts[3],
+              int                 gsizes[3],
+              HostArray<double> & localData,
+              ConfigMap &         configMap);
 
 #endif /* PNETCDF_IO_H_ */

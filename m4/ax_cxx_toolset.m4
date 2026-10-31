@@ -118,7 +118,7 @@ AC_DEFUN([AX_CXX_TOOLSET],
 [
     AC_REQUIRE([AC_PROG_CXX])
     AC_REQUIRE([AC_PROG_CXXCPP])
-    
+
     AC_CACHE_CHECK([the C++ compiler vendor],
         [ac_cxx_toolset_vendor],
         [
@@ -159,5 +159,5 @@ AC_DEFUN([AX_CXX_TOOLSET],
     CXX_TOOLSET_FULLNAME=$ac_cxx_toolset_fullname
     CXX_TOOLSET_NAME=$ac_cxx_toolset_name
     CXX_TOOLSET_COMMAND=$ac_cxx_toolset_cmd
-    
+
 ])

@@ -11,19 +11,22 @@
 /* A Fortran-callable gettimeofday routine to give access
  * to the wall clock timer.
  */
-void unix_gettimeofday(int* sec, int* usec)
+void
+unix_gettimeofday(int * sec, int * usec)
 {
-	struct timeval tp;
-	gettimeofday(&tp, 0);
-	*sec = tp.tv_sec;
-	*usec = tp.tv_usec;
+  struct timeval tp;
+  gettimeofday(&tp, 0);
+  *sec = tp.tv_sec;
+  *usec = tp.tv_usec;
 }
 
-void set_fpu_precision(enum FPUPrecision* prec)
+void
+set_fpu_precision(enum FPUPrecision * prec)
 {
-	unsigned precisionFlag = (*prec == FPUSingle ? _FPU_SINGLE : (*prec == FPUDouble ? _FPU_DOUBLE : _FPU_EXTENDED));
-	unsigned originalCW;
-	_FPU_GETCW(originalCW);
-	unsigned cw = (originalCW & ~_FPU_EXTENDED) | precisionFlag;
-	_FPU_SETCW(cw);
+  unsigned precisionFlag =
+    (*prec == FPUSingle ? _FPU_SINGLE : (*prec == FPUDouble ? _FPU_DOUBLE : _FPU_EXTENDED));
+  unsigned originalCW;
+  _FPU_GETCW(originalCW);
+  unsigned cw = (originalCW & ~_FPU_EXTENDED) | precisionFlag;
+  _FPU_SETCW(cw);
 }

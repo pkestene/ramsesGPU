@@ -1,7 +1,7 @@
 /**
  * \file testHydroMpiParameters.cpp
  * \brief test class HydroMpiParameters
-  *
+ *
  * \date 7 Oct 2010
  * \author P. Kestener
  */
@@ -15,10 +15,12 @@
 #include "hydro/GetPot.h"
 #include "utils/config/ConfigMap.h"
 
-void make_test_paramFile(std::string fileName) {
+void
+make_test_paramFile(std::string fileName)
+{
 
   std::fstream outFile;
-  outFile.open (fileName.c_str(), std::ios_base::out);
+  outFile.open(fileName.c_str(), std::ios_base::out);
 
   outFile << "# define a 2D MPI cartesian mesh with mx x my MPI processes\n";
   outFile << "[mpi]\n";
@@ -37,19 +39,22 @@ void make_test_paramFile(std::string fileName) {
 }
 
 
-int main(int argc, char * argv[]) {
+int
+main(int argc, char * argv[])
+{
 
-  int myRank, numTasks, namelength;
-  char processor_name[MPI_MAX_PROCESSOR_NAME+1];
+  int  myRank, numTasks, namelength;
+  char processor_name[MPI_MAX_PROCESSOR_NAME + 1];
 
   /* Initialize MPI session */
-  hydroSimu::GlobalMpiSession mpiSession(&argc,&argv);
-  hydroSimu::MpiComm worldComm = hydroSimu::MpiComm::world();
+  hydroSimu::GlobalMpiSession mpiSession(&argc, &argv);
+  hydroSimu::MpiComm          worldComm = hydroSimu::MpiComm::world();
   myRank = worldComm.getRank();
   numTasks = worldComm.getNProc();
   MPI_Get_processor_name(processor_name, &namelength);
 
-  try {
+  try
+  {
 
 
     /*
@@ -60,10 +65,11 @@ int main(int argc, char * argv[]) {
     GetPot cl(argc, argv);
 
     // default parameter file name
-    const std::string default_input_file = std::string(argv[0])+ ".ini";
+    const std::string default_input_file = std::string(argv[0]) + ".ini";
 
     /* search for multiple options with the same meaning HELP */
-    if( !cl.search(1, "--param") ) {
+    if (!cl.search(1, "--param"))
+    {
       std::cout << "[Warning] You did not provide a .pot parameter file !\n";
       std::cout << "[Warning] Using the built-in one\n";
       std::cout << "[Warning] Make test parameter file : " << default_input_file << std::endl;
@@ -71,7 +77,7 @@ int main(int argc, char * argv[]) {
     }
 
     /* search for configuration parameter file */
-    const std::string input_file = cl.follow(default_input_file.c_str(),    "--param");
+    const std::string input_file = cl.follow(default_input_file.c_str(), "--param");
 
     /* parse parameters from input file */
     ConfigMap configMap(input_file);
@@ -79,16 +85,16 @@ int main(int argc, char * argv[]) {
     /* create HydroMpiParameter object */
     hydroSimu::HydroMpiParameters param(configMap);
 
-    std::cout << "[" << processor_name << "] : MPI proc " << myRank << " out of " << numTasks << std::endl;
+    std::cout << "[" << processor_name << "] : MPI proc " << myRank << " out of " << numTasks
+              << std::endl;
     std::cout << "param nx : " << param.nx << std::endl;
-
-  } catch (...) {
+  }
+  catch (...)
+  {
 
     std::cerr << "Exception caught, something really bad happened...\n\n\n";
     return EXIT_FAILURE;
-
   }
 
   return EXIT_SUCCESS;
-
 }

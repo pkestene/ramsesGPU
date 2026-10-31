@@ -25,7 +25,7 @@ AC_DEFUN([AX_VXWORKS_BUILD],
 #
 # DESCRIPTION
 #    This macro enables to port a module on VxWorks by setting up the environment
-#    when perfoming a VxWorks cross compilation.
+#    when performing a VxWorks cross compilation.
 #    It has no effect if the host OS defined with --host is not vxworks.
 #
 #    Options:
@@ -119,7 +119,7 @@ AC_DEFUN([AX_VXWORKS_PORTABILITY],
 			AC_MSG_ERROR([Unsupported CPU in the buildspec. Currently SIMLINUX, SIMPENTIUM_RTP, PPC440 and PPC405 are supported.])
 			;;
 		esac
-		
+
 		# sets floating point flags
 		if test "$WRS_CONFIG_FP" = "sf"
 		then
@@ -127,7 +127,7 @@ AC_DEFUN([AX_VXWORKS_PORTABILITY],
 		else
 			CROSS_CFLAGS="${CROSS_CFLAGS} -mhard-float"
 		fi
-		
+
 		# sets v8 flag
 		if test "$WRS_CONFIG_V8" = "v8"
 		then
@@ -165,4 +165,3 @@ AC_DEFUN([AX_VXWORKS_PORTABILITY],
 	AM_CONDITIONAL([VXWORKS], [test "$host_os" = "vxworks"])
 	AM_CONDITIONAL([VXWORKS_KERNEL], [test "$host_os" = "vxworks" -a -z "$RTP"])
 ])
-

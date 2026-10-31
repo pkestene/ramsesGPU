@@ -30,24 +30,24 @@ using hydroSimu::DeviceArray;
 
 // CUDA / OpenGl interoperability
 #ifdef __CUDACC__
-#include "cutil_inline.h"
-#include <cuda_gl_interop.h>
-#include "pbo.cuh"
-#include "minmax.cuh"
+#  include "cutil_inline.h"
+#  include <cuda_gl_interop.h>
+#  include "pbo.cuh"
+#  include "minmax.cuh"
 #endif // __CUDACC__
 
 // for HDF5 file format output
 #ifdef USE_HDF5
-#include <hdf5.h>
+#  include <hdf5.h>
 #endif // USE_HDF5
 
 
-#define I2D(nx,i,j) (((nx)*(j)) + i)
-//#define NBCOLORS (236)
+#define I2D(nx, i, j) (((nx) * (j)) + i)
+// #define NBCOLORS (236)
 #define NBCOLORS (256)
 
-/** use the grapgics API available from CUDA >= 3.0 */
-//#define USE_CUDA3
+/** use the graphics API available from CUDA >= 3.0 */
+// #define USE_CUDA3
 
 /**
  * \class HydroWindow HydroWindow.h
@@ -55,65 +55,71 @@ using hydroSimu::DeviceArray;
  * and interaction with a running hydrodynamics simulation (display
  * update as results are computed).
  */
-class HydroWindow : public GlutWindow {
+class HydroWindow : public GlutWindow
+{
 public:
-  
-  int          nx,ny;
-  int          ghostWidth;
-  int          nxg, nyg;
-  int          initPositionX, initPositionY;
-  bool         ghostIncluded;
-  bool         unsplitEnabled;
+  int  nx, ny;
+  int  ghostWidth;
+  int  nxg, nyg;
+  int  initPositionX, initPositionY;
+  bool ghostIncluded;
+  bool unsplitEnabled;
 
   // OpenGL pixel buffer object and texture
   GLuint gl_PBO, gl_Tex;
 #ifdef __CUDACC__
 #  ifdef USE_CUDA3
-  struct cudaGraphicsResource* cuda_PBO;
+  struct cudaGraphicsResource * cuda_PBO;
 #  endif // USE_CUDA3
-#endif // __CUDACC__
+#endif   // __CUDACC__
 
   // simulation data
-  ConfigMap param;
+  ConfigMap      param;
   HydroRunBase * hydroRun;
-  real_t t;
-  real_t dt;
-  int nStep;
-  int nbStepToDo;
-  bool animate;                 //!< if true perform continuous computation
-  int useColor;                 //!< enable color (default is 0 : gray scale)
-  int manualContrast;           //!< enable manual contrast
-			        //! (minvar and maxvar are not
-			        //! computed at each time step
-			        //! but controlled through
-			        //! keyboard shortcut 'a' and 'b'
+  real_t         t;
+  real_t         dt;
+  int            nStep;
+  int            nbStepToDo;
+  bool           animate;        //!< if true perform continuous computation
+  int            useColor;       //!< enable color (default is 0 : gray scale)
+  int            manualContrast; //!< enable manual contrast
+                                 //! (minvar and maxvar are not
+                                 //! computed at each time step
+                                 //! but controlled through
+                                 //! keyboard shortcut 'a' and 'b'
   int currentRiemannConfigNb;
 
   // colormap
-  float *cmap;                  //!< pointer to colormap array
-			        //!  defined in palettes.h
-  float *cmap_der;              //!< array needed for color interpolation
-  void initColormap();               
-  unsigned int *plot_rgba;       //!< array of pixel color
-  real_t minvar;                //!< minimum value used to rescale data
-  real_t maxvar;                //!< maximum value used to rescale data
-  int displayVar;               //!< integer identifying component to display
-  uint minmaxBlockCount;
+  float * cmap;     //!< pointer to colormap array
+                    //!  defined in palettes.h
+  float * cmap_der; //!< array needed for color interpolation
+  void
+                 initColormap();
+  unsigned int * plot_rgba;  //!< array of pixel color
+  real_t         minvar;     //!< minimum value used to rescale data
+  real_t         maxvar;     //!< maximum value used to rescale data
+  int            displayVar; //!< integer identifying component to display
+  uint           minmaxBlockCount;
 
 #ifdef __CUDACC__
-  float *d_cmap;               //!< indexed colormap data on device
-  float *d_cmap_der;           //!< indexed colormap derivative (interpolation)
-  unsigned int *plot_rgba_pbo; //!< data to plot (physicaly in the Pixel buffer Object)
-#endif // __CUDACC__
+  float *        d_cmap;        //!< indexed colormap data on device
+  float *        d_cmap_der;    //!< indexed colormap derivative (interpolation)
+  unsigned int * plot_rgba_pbo; //!< data to plot (physically in the Pixel buffer Object)
+#endif                          // __CUDACC__
 
 protected:
-  void createPBO();
-  void deletePBO();
-  void createTexture();
-  void deleteTexture();
+  void
+  createPBO();
+  void
+  deletePBO();
+  void
+  createTexture();
+  void
+  deleteTexture();
   //! bufferChoice allows to choose between h_U and h_U2 (CPU) or
   //! between d_U and d_U2 (GPU)
-  void render(int bufferChoice);
+  void
+  render(int bufferChoice);
 
 private:
   // Data Arrays
@@ -122,35 +128,43 @@ private:
   DeviceArray<real2_t> d_minmax;
 #endif // __CUDACC__
 
-  
-public:
-  HydroWindow(HydroRunBase* _hydroRun,
-	      GlutMaster * glutMaster,
-	      int setInitPositionX, 
-	      int setInitPositionY,
-	      const char* title,
-	      ConfigMap & _param);
-  ~HydroWindow();
-  
-  void CallBackDisplayFunc(void);
-  void CallBackReshapeFunc(int w, int h);   
-  void CallBackIdleFunc(void);
-  void CallBackKeyboardFunc(unsigned char key, int x, int y);
 
-  void startSimulation(GlutMaster * glutMaster);
-  void computeOneStepAndDisplay();
+public:
+  HydroWindow(HydroRunBase * _hydroRun,
+              GlutMaster *   glutMaster,
+              int            setInitPositionX,
+              int            setInitPositionY,
+              const char *   title,
+              ConfigMap &    _param);
+  ~HydroWindow();
+
+  void
+  CallBackDisplayFunc(void);
+  void
+  CallBackReshapeFunc(int w, int h);
+  void
+  CallBackIdleFunc(void);
+  void
+  CallBackKeyboardFunc(unsigned char key, int x, int y);
+
+  void
+  startSimulation(GlutMaster * glutMaster);
+  void
+  computeOneStepAndDisplay();
 
 #ifdef __CUDACC__
-  void convertDataForPlotting(int _useColor, int bufferChoice);
+  void
+  convertDataForPlotting(int _useColor, int bufferChoice);
 #endif // __CUDACC__
 
   //! compute minvar and maxvar (simple reduction).
-  void computeMinMax(HostArray<real_t> &U, int size, int iVar);
+  void
+  computeMinMax(HostArray<real_t> & U, int size, int iVar);
 #ifdef __CUDACC__
   //! this is the GPU version which wraps the CUDA kernel call.
-  void computeMinMax(DeviceArray<real_t> &U, int size, int iVar);
+  void
+  computeMinMax(DeviceArray<real_t> & U, int size, int iVar);
 #endif // __CUDACC__
-
 };
 
 #endif // HYDRO_WINDOW_H_

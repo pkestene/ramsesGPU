@@ -32,24 +32,19 @@
 #  PAPI_LIBRARY            The PAPI library
 #  PAPI_INCLUDE_DIR        The location of PAPI headers
 
-find_library(PAPI_LIBRARY
-    NAMES libpapi.so libpapi.a papi
-    HINTS ENV PAPI_ROOT
-    PATH_SUFFIXES lib lib64
-)
+find_library(
+  PAPI_LIBRARY
+  NAMES libpapi.so libpapi.a papi
+  HINTS ENV PAPI_ROOT
+  PATH_SUFFIXES lib lib64)
 
-find_path(PAPI_INCLUDE_DIR
-    NAMES papi.h
-    HINTS ENV PAPI_ROOT
-    PATH_SUFFIXES include
-)
+find_path(
+  PAPI_INCLUDE_DIR
+  NAMES papi.h
+  HINTS ENV PAPI_ROOT
+  PATH_SUFFIXES include)
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(PAPI 
-  REQUIRED_VARS PAPI_LIBRARY PAPI_INCLUDE_DIR
-)
+find_package_handle_standard_args(PAPI REQUIRED_VARS PAPI_LIBRARY PAPI_INCLUDE_DIR)
 
-mark_as_advanced(
-    PAPI_LIBRARY
-    PAPI_INCLUDE_DIR
-)
+mark_as_advanced(PAPI_LIBRARY PAPI_INCLUDE_DIR)

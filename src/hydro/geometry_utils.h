@@ -31,17 +31,18 @@
  * \tparam NDIM 2 or 3
  * \tparam geometry GEO_CYLINDRICAL or GEO_SPHERICAL
  */
-template<DimensionType NDIM, GeometryType geometry>
-__DEVICE__
-void compute_ds_dv(real_t (&ds)[NDIM], real_t &dv, int i, int j, int k, int ghostWidth)
+template <DimensionType NDIM, GeometryType geometry>
+__DEVICE__ void
+compute_ds_dv(real_t (&ds)[NDIM], real_t & dv, int i, int j, int k, int ghostWidth)
 {
 
-  //int &geometry = ::gParams.geometry;
-  real_t &dx    = ::gParams.dx;
-  real_t &dy    = ::gParams.dy;
-  real_t &dz    = ::gParams.dz;
+  // int &geometry = ::gParams.geometry;
+  real_t & dx = ::gParams.dx;
+  real_t & dy = ::gParams.dy;
+  real_t & dz = ::gParams.dz;
 
-  if (NDIM == TWO_D) {
+  if (NDIM == TWO_D)
+  {
 
     /*if (geometry == GEO_CARTESIAN) {
       dv     = dx*dy;
@@ -49,14 +50,16 @@ void compute_ds_dv(real_t (&ds)[NDIM], real_t &dv, int i, int j, int k, int ghos
       ds[IY] = dx;
       }*/
 
-    if (geometry == GEO_CYLINDRICAL) {
-      real_t xPos = ::gParams.xMin + dx/2 + (i-ghostWidth)*dx;
-      dv = dx*xPos*dy;
-      ds[IX] = (xPos+dx/2)*dy;
+    if (geometry == GEO_CYLINDRICAL)
+    {
+      real_t xPos = ::gParams.xMin + dx / 2 + (i - ghostWidth) * dx;
+      dv = dx * xPos * dy;
+      ds[IX] = (xPos + dx / 2) * dy;
       ds[IY] = dx;
     }
-
-  } else { // THREE_D
+  }
+  else
+  { // THREE_D
 
     /*if (geometry == GEO_CARTESIAN) {
       dv     = dx*dy*dz;
@@ -65,26 +68,28 @@ void compute_ds_dv(real_t (&ds)[NDIM], real_t &dv, int i, int j, int k, int ghos
       ds[IZ] = dx*dy;
       }*/
 
-    if (geometry == GEO_CYLINDRICAL) {
-      real_t xPos = ::gParams.xMin + dx/2 + (i-ghostWidth)*dx;
-      dv = dx*xPos*dy;
-      ds[IX] = (xPos+dx/2)*dy*dz;
-      ds[IY] = dx*dz;
-      ds[IZ] = xPos*dx*dy;
+    if (geometry == GEO_CYLINDRICAL)
+    {
+      real_t xPos = ::gParams.xMin + dx / 2 + (i - ghostWidth) * dx;
+      dv = dx * xPos * dy;
+      ds[IX] = (xPos + dx / 2) * dy * dz;
+      ds[IY] = dx * dz;
+      ds[IZ] = xPos * dx * dy;
     }
 
-    if (geometry == GEO_SPHERICAL) {
-      real_t xPos = ::gParams.xMin + dx/2 + (i-ghostWidth)*dx;
-      real_t yPos = ::gParams.yMin + dy/2 + (j-ghostWidth)*dy;
-      real_t zPos = ::gParams.zMin + dz/2 + (k-ghostWidth)*dz;
-      dv = dx*xPos*dy*xPos*sin(yPos)*dz;
-      ds[IX] = (xPos+dx/2)*dy*dz;
-      ds[IY] = (xPos+dx/2)*dx*dz;
-      ds[IZ] = xPos*sin(zPos)*dx*dy;
+    if (geometry == GEO_SPHERICAL)
+    {
+      real_t xPos = ::gParams.xMin + dx / 2 + (i - ghostWidth) * dx;
+      real_t yPos = ::gParams.yMin + dy / 2 + (j - ghostWidth) * dy;
+      real_t zPos = ::gParams.zMin + dz / 2 + (k - ghostWidth) * dz;
+      dv = dx * xPos * dy * xPos * sin(yPos) * dz;
+      ds[IX] = (xPos + dx / 2) * dy * dz;
+      ds[IY] = (xPos + dx / 2) * dx * dz;
+      ds[IZ] = xPos * sin(zPos) * dx * dy;
     }
 
   } // end THREE_D
-  
+
 
 } // compute_ds_dv
 

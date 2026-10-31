@@ -20,74 +20,80 @@
 #include "DemoWindow.h"
 
 DemoWindow::DemoWindow(GlutMaster * glutMaster,
-                       int setWidth, int setHeight,
-                       int setInitPositionX, int setInitPositionY,
-                       const char* title){
+                       int          setWidth,
+                       int          setHeight,
+                       int          setInitPositionX,
+                       int          setInitPositionY,
+                       const char * title)
+{
 
-   width  = setWidth;               
-   height = setHeight;
+  width = setWidth;
+  height = setHeight;
 
-   initPositionX = setInitPositionX;
-   initPositionY = setInitPositionY;
+  initPositionX = setInitPositionX;
+  initPositionY = setInitPositionY;
 
-   glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
-   glutInitWindowSize(width, height);
-   glutInitWindowPosition(initPositionX, initPositionY);
-   glViewport(0, 0, width, height);   // This may have to be moved to after the next line on some platforms
+  glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
+  glutInitWindowSize(width, height);
+  glutInitWindowPosition(initPositionX, initPositionY);
+  glViewport(
+    0, 0, width, height); // This may have to be moved to after the next line on some platforms
 
-   glutMaster->CallGlutCreateWindow(title, this);
+  glutMaster->CallGlutCreateWindow(title, this);
 
-   glEnable(GL_DEPTH_TEST);
+  glEnable(GL_DEPTH_TEST);
 
-   glMatrixMode(GL_PROJECTION);
-   glOrtho(-80.0, 80.0, -80.0, 80.0, -500.0, 500.0);
+  glMatrixMode(GL_PROJECTION);
+  glOrtho(-80.0, 80.0, -80.0, 80.0, -500.0, 500.0);
 
-   glMatrixMode(GL_MODELVIEW);
-   glLoadIdentity();
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
 
-   glRotatef(60, 1, 1, 1);
-   glColor4f(1.0, 0.0, 0.0, 1.0);
+  glRotatef(60, 1, 1, 1);
+  glColor4f(1.0, 0.0, 0.0, 1.0);
 }
 
-DemoWindow::~DemoWindow(){
+DemoWindow::~DemoWindow()
+{
 
-   glutDestroyWindow(windowID);
+  glutDestroyWindow(windowID);
 }
 
-void DemoWindow::CallBackDisplayFunc(void){
+void
+DemoWindow::CallBackDisplayFunc(void)
+{
 
-   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-   glColor4f(1.0, 0.0, 0.0, 1.0);
-   glutWireSphere(50, 10, 10);
+  glColor4f(1.0, 0.0, 0.0, 1.0);
+  glutWireSphere(50, 10, 10);
 
-   glutSwapBuffers();
+  glutSwapBuffers();
 }
 
-void DemoWindow::CallBackReshapeFunc(int w, int h){
+void
+DemoWindow::CallBackReshapeFunc(int w, int h)
+{
 
-   width = w;
-   height= h;
+  width = w;
+  height = h;
 
-   glViewport(0, 0, width, height); 
-   CallBackDisplayFunc();
+  glViewport(0, 0, width, height);
+  CallBackDisplayFunc();
 }
 
-void DemoWindow::CallBackIdleFunc(void){
+void
+DemoWindow::CallBackIdleFunc(void)
+{
 
-   glRotatef(0.25, 1, 1, 2);
-   CallBackDisplayFunc();
+  glRotatef(0.25, 1, 1, 2);
+  CallBackDisplayFunc();
 }
 
-void DemoWindow::StartSpinning(GlutMaster * glutMaster){
+void
+DemoWindow::StartSpinning(GlutMaster * glutMaster)
+{
 
-   glutMaster->SetIdleToCurrentWindow();
-   glutMaster->EnableIdleFunction();
+  glutMaster->SetIdleToCurrentWindow();
+  glutMaster->EnableIdleFunction();
 }
-   
-
-
-
-
-
-

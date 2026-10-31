@@ -17,23 +17,26 @@
 #include "utils/config/ConfigMap.h"
 #include "constants.h"
 
-namespace hydroSimu {
+namespace hydroSimu
+{
 
-  // =======================================================
-  // =======================================================
-  void structure_functions_hydro_mpi(int myRank,
-				     int nStep, 
-				     ConfigMap &configMap,
-				     GlobalConstants &_gParams,
-				     HostArray<real_t> &U);
-  
-  // =======================================================
-  // =======================================================
-  void structure_functions_mhd_mpi(int myRank,
-				   int nStep,
-				   ConfigMap &configMap,
-				   GlobalConstants &_gParams,
-				   HostArray<real_t> &U);
+// =======================================================
+// =======================================================
+void
+structure_functions_hydro_mpi(int                 myRank,
+                              int                 nStep,
+                              ConfigMap &         configMap,
+                              GlobalConstants &   _gParams,
+                              HostArray<real_t> & U);
+
+// =======================================================
+// =======================================================
+void
+structure_functions_mhd_mpi(int                 myRank,
+                            int                 nStep,
+                            ConfigMap &         configMap,
+                            GlobalConstants &   _gParams,
+                            HostArray<real_t> & U);
 
 } // namespace hydroSimu
 

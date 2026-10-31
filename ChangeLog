@@ -37,7 +37,7 @@
 	simulation (ex. 2000^3 for MHD turbulence simulation on Keeneland)
 
 	* new major feature: output using PNetCDF library; restart can
-	load a NetCDF file; minor feature: one can output optionnally
+	load a NetCDF file; minor feature: one can output optionally
 	output data on external faces for making movies (output at much
 	high frequency than regular output of the entire 3D domain).
 
@@ -77,11 +77,11 @@
 
 	* bug fix in viscosity tensor: affect both CPU/GPU: only one term was slightly false (almost neutral bug)
 
-	* new feature: now GPU memory array can be allocated using pitched or linear memory (before pitched was the default). On new hardware, pitch memory is not anymore a must. Linear memory gives the same performane (thanks to cache improvements). Besides, for a given problem, the amouint of required memory is almost twice smaller when using linear memory, so linear memory is now the default choice.
+	* new feature: now GPU memory array can be allocated using pitched or linear memory (before pitched was the default). On new hardware, pitch memory is not anymore a must. Linear memory gives the same performance (thanks to cache improvements). Besides, for a given problem, the amouint of required memory is almost twice smaller when using linear memory, so linear memory is now the default choice.
 
 	* fix MRI history method for MPI run: output was wrong
 
-	* improvement: much better restart procedure; now one can read an HDF5 file at a twice smaller resolution and perform an upscale. This is usefull for MRI problem to restart a job by increasing resolution with a factor of 2.
+	* improvement: much better restart procedure; now one can read an HDF5 file at a twice smaller resolution and perform an upscale. This is useful for MRI problem to restart a job by increasing resolution with a factor of 2.
 
 2012-5-23 Pierre Kestener
 	* Version 1.0; package name is now RAMSES-GPU with a dedicated website :

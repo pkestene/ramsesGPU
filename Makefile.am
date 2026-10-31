@@ -15,5 +15,4 @@ dist_data_DATA = \
 include $(top_srcdir)/am/am_include_doxygen.am
 
 # clean generated files
-MAINTAINERCLEANFILES = $(srcdir)/Makefile.in 
-
+MAINTAINERCLEANFILES = $(srcdir)/Makefile.in

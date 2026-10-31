@@ -40,8 +40,8 @@
 #		installation location of Ice if necessary.
 #	--with-ice-bin=path
 #		Specify the directory where the Ice binary utilities (like slice2cpp)
-#		are, in case they would not be in the directory designated by --with-ice 
-#	
+#		are, in case they would not be in the directory designated by --with-ice
+#
 #		See also ACX_PTHREAD
 #
 # 	This macro calls:
@@ -72,7 +72,7 @@ AC_DEFUN([AX_LIB_ICE],
 #	--with-icee-bin=path
 #		Specify the directory where the Ice binary utilities (like slice2cppe)
 #		are, in case they would not be in the directory designated by --with-icee
-#	
+#
 #		See also ACX_PTHREAD
 #
 #	This macro calls:
@@ -118,7 +118,7 @@ AC_DEFUN([AX_SLICE2CPP_SILENT],
 #
 AC_DEFUN([AX_LIB_ICE_IMPL],
 [
-if test "$want_$2" = "yes" 
+if test "$want_$2" = "yes"
 then
 	AC_MSG_ERROR([The Ice macro should not be called more than once])
 fi
@@ -239,9 +239,9 @@ then
 			AC_MSG_RESULT([no])
 			CXXFLAGS=`echo $CXXFLAGS | sed 's,-pedantic-errors,,' | sed 's,-pedantic,,'`
 		])
-	
+
 	dnl The IceUtil/Config.h does not check limits.h unless HAVE_LIMITS_H is defined
-	dnl However, the type used for Ice::Long should be the same as the one used to bulid the Ice library,
+	dnl However, the type used for Ice::Long should be the same as the one used to build the Ice library,
 	dnl so there is no point in defining HAVE_LIMITS_H
 	dnl AC_CHECK_HEADER([limits.h],[ICE_CPPFLAGS="$ICE_CPPFLAGS -DHAVE_LIMITS_H=1"], [])
 
@@ -289,7 +289,7 @@ then
 		have_$2_libs="no"
 		AC_MSG_RESULT([not found])
 	])
-	
+
 # The MacPorts port of Ice to MacOSX renames libIce.dylib into libZeroCIce.dylib to avoid conflicts with libICE.dylib
     AC_MSG_CHECKING([for $1 libraries from MacPorts])
 	if test "$1" = "Ice" -a "$have_$2_libs" = "no" -a "$$2_lib_path" = "/opt/local/lib"
@@ -394,7 +394,7 @@ AC_DEFUN([AX_LIB_ICE_OR_ICEE],
 	then
 		AX_LIB_ICE("default-enabled")
 	fi
-	
+
 	if test "$have_ice" = "yes" -o "$have_icee" = "yes"
 	then
 		use_ice="yes"

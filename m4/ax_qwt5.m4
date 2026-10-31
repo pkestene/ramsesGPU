@@ -38,7 +38,7 @@
 #    QWT_LIBS
 #    QWT_VERSION_STR
 #    QWT_VERSION_MAJOR
-#    
+#
 #
 AC_DEFUN([AX_QWT5],
 [
@@ -53,7 +53,7 @@ AC_DEFUN([AX_QWT5],
 				want_qwt="yes"
 			else
 				with_qwt="$withval"
-				want_qwt="yes"	
+				want_qwt="yes"
 			fi
 		],
 		[
@@ -108,7 +108,7 @@ AC_DEFUN([AX_QWT5],
 				fi
 			done
 		fi
-		
+
 		if test "$have_qwt" = "yes"
 		then
 			QWT_CPPFLAGS="-I${qwt_include_path}"
@@ -129,12 +129,12 @@ AC_DEFUN([AX_QWT5],
 			CPPFLAGS="$QWT_CPPFLAGS $QT_CPPFLAGS $CPPFLAGS"
 			LDFLAGS="$QWT_LDFLAGS $QT_LDFLAGS $LDFLAGS"
 			LIBS="$QT_LIBS $LIBS"
-			
+
 			# Protect against use of non-ISO type 'long long' by Qt on TBD hosts
 			CXXFLAGS="$CXXFLAGS -Wno-long-long"
 
 			AC_MSG_CHECKING([for Qwt library])
-			
+
 			# The name of the QWT library may vary from one system to another.
 			# This macro will find which is one works.
 			ACX_PROG_SEARCH_LIB(
@@ -146,7 +146,7 @@ AC_DEFUN([AX_QWT5],
 					int main(int argc, char** argv)
 					{
 						QApplication a(argc, argv);
-						QwtPlot plot;			
+						QwtPlot plot;
 						plot.resize(600,400);
 	    				plot.show();
 	    				return a.exec();
@@ -163,7 +163,7 @@ AC_DEFUN([AX_QWT5],
 				have_qwt="no"
 				AC_MSG_RESULT([not found])
 			])
-			
+
 			# Check library version
 			AC_CHECK_FILE([${qwt_include_path}/qwt_global.h],
 				[
@@ -177,12 +177,12 @@ AC_DEFUN([AX_QWT5],
 				AC_SUBST([QWT_VERSION_MAJOR], [$qwt_version_major])
 				],
 				[AC_MSG_WARN([Could not find version of Qwt library])])
-				
+
 			CPPFLAGS="$CPPFLAGS_backup"
 			LDFLAGS="$LDFLAGS_backup"
 			LIBS="$LIBS_backup"
 		fi
-		
+
 		if test "$have_qwt" = "yes"
 		then
 			QWT_LIBS="-l$qwt_lib"
@@ -196,4 +196,3 @@ AC_DEFUN([AX_QWT5],
 		have_qwt="no"
 	fi
 ])
-	

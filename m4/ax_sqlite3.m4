@@ -1,14 +1,14 @@
 dnl $Id: ax_sqlite3.m4,v 1.2 2006/08/30 14:28:55 mloskot Exp $
 dnl
 dnl @synopsis AX_LIB_SQLITE3([MINIMUM-VERSION])
-dnl 
+dnl
 dnl Test for the SQLite 3 library of a particular version (or newer)
 dnl
 dnl This macro takes only one optional argument, required version
 dnl of SQLite 3 library. If required version is not passed,
-dnl 3.0.0 is used in the test of existance of SQLite 3.
+dnl 3.0.0 is used in the test of existence of SQLite 3.
 dnl
-dnl If no intallation prefix to the installed SQLite library is given
+dnl If no installation prefix to the installed SQLite library is given
 dnl the macro searches under /usr, /usr/local, and /opt.
 dnl
 dnl This macro calls:
@@ -57,7 +57,7 @@ AC_DEFUN([AX_LIB_SQLITE3],
     if test "x$WANT_SQLITE3" = "xyes"; then
 
         ac_sqlite3_header="sqlite3.h"
-        
+
         sqlite3_version_req=ifelse([$1], [], [3.0.0], [$1])
         sqlite3_version_req_shorten=`expr $sqlite3_version_req : '\([[0-9]]*\.[[0-9]]*\)'`
         sqlite3_version_req_major=`expr $sqlite3_version_req : '\([[0-9]]*\)'`
@@ -123,7 +123,7 @@ AC_DEFUN([AX_LIB_SQLITE3],
 
         sqlite3_version_check=0
         if test "$success" = "yes"; then
-            
+
             SQLITE3_CFLAGS="$ac_sqlite3_cppflags"
             SQLITE3_LDFLAGS="$ac_sqlite3_ldflags"
 
@@ -165,4 +165,3 @@ AC_DEFUN([AX_LIB_SQLITE3],
         fi
     fi
 ])
-

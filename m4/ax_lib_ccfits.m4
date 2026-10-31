@@ -33,7 +33,7 @@ dnl Save initial flags
 	saved_LDFLAGS="$LDFLAGS"
 	saved_LIBS="$LIBS"
 
-dnl Set flags	
+dnl Set flags
 	AS_IF([test "x$ccfits_includedir" != "x" ], [CCFITS_CPPFLAGS="-I$ccfits_includedir"])
 	AS_IF([test "x$ccfits_libdir" != "x" ], [CCFITS_LDFLAGS="-L$ccfits_libdir"])
 	CCFITS_LIBS="-lCCfits"

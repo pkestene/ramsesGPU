@@ -5,7 +5,7 @@
 # in autotroll.am)
 #SUFFIXES = .cu
 
-# these are default values for the maximun register count parameter
+# these are default values for the maximum register count parameter
 # passed to nvcc compiler (you might need to change it sometimes; all you need
 # is to set is as an environment variable).
 MAX_REG_COUNT_SINGLE ?=48
@@ -32,5 +32,3 @@ NVCCFLAGS_DOUBLE = --compiler-options -DUSE_DOUBLE
 	cp $< $@
 %-double.cu : %.cpp
 	cp $< $@
-
-

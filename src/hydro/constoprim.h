@@ -3,7 +3,7 @@
  * \brief Commonly used function to compute primitive variables from
  * conservatibes variables.
  *
- * \author F. Chateau, P. Kestener 
+ * \author F. Chateau, P. Kestener
  *
  * $Id: constoprim.h 3587 2014-11-01 21:57:10Z pkestene $
  */
@@ -19,14 +19,15 @@
  * of state : \f$ eint=\frac{p}{\rho (\gamma-1)} \f$
  * Recall that \f$ \gamma \f$ is equal to the ratio of specific heats \f$ \left[
  * c_p/c_v \right] \f$.
- * 
+ *
  * @param[in]  rho  density
  * @param[in]  eint internal energy per mass unit
  * @param[out] p    pressure
  * @param[out] c    speed of sound
  */
- __DEVICE__ 
-void eos(real_t rho, real_t eint, real_t& p, real_t& c)
+__DEVICE__
+void
+eos(real_t rho, real_t eint, real_t & p, real_t & c)
 {
   p = FMAX((::gParams.gamma0 - 1.0f) * rho * eint, rho * ::gParams.smallp);
   c = SQRT(::gParams.gamma0 * p / rho);
@@ -39,8 +40,9 @@ void eos(real_t rho, real_t eint, real_t& p, real_t& c)
  * @param[out] q  primitive    variables
  * @param[out] c  local speed of sound
  */
- __DEVICE__ 
-void constoprim_2D(real_t u[NVAR_2D], real_t (&q)[NVAR_2D], real_t& c)
+__DEVICE__
+void
+constoprim_2D(real_t u[NVAR_2D], real_t (&q)[NVAR_2D], real_t & c)
 {
   q[ID] = FMAX(u[ID], ::gParams.smallr);
 
@@ -51,17 +53,26 @@ void constoprim_2D(real_t u[NVAR_2D], real_t (&q)[NVAR_2D], real_t& c)
   real_t eken = 0.5f * (q[IU] * q[IU] + q[IV] * q[IV]);
 
   // compute pressure
-  if (::gParams.cIso > 0) { // isothermal eos : P = c_s^2 * \rho
-    
-    q[IP] = q[ID] * (::gParams.cIso) * (::gParams.cIso);
-    c     =  ::gParams.cIso;
+  if (::gParams.cIso > 0)
+  { // isothermal eos : P = c_s^2 * \rho
 
-  } else {
-    
+    q[IP] = q[ID] * (::gParams.cIso) * (::gParams.cIso);
+    c = ::gParams.cIso;
+  }
+  else
+  {
+
     // internal energy = total energy - kinetic energy (per mass unit)
     real_t eint = u[IP] / q[ID] - eken;
-    if (eint < 0) {
-      PRINTF("hydro eint < 0  : e %f eken %f diff %f d %f u %f v %f\n",u[IP]/q[ID],eken,u[IP]/q[ID]-eken,u[ID],u[IU],u[IV]);
+    if (eint < 0)
+    {
+      PRINTF("hydro eint < 0  : e %f eken %f diff %f d %f u %f v %f\n",
+             u[IP] / q[ID],
+             eken,
+             u[IP] / q[ID] - eken,
+             u[ID],
+             u[IU],
+             u[IV]);
     }
     // use perfect gas equation of state to compute P
     eos(q[ID], eint, q[IP], c);
@@ -78,8 +89,9 @@ void constoprim_2D(real_t u[NVAR_2D], real_t (&q)[NVAR_2D], real_t& c)
  * @param[out] q  primitive    variables
  * @param[out] c  local speed of sound
  */
- __DEVICE__ 
-void constoprim_3D(real_t u[NVAR_3D], real_t (&q)[NVAR_3D], real_t& c)
+__DEVICE__
+void
+constoprim_3D(real_t u[NVAR_3D], real_t (&q)[NVAR_3D], real_t & c)
 {
 
   q[ID] = FMAX(u[ID], ::gParams.smallr);
@@ -87,21 +99,30 @@ void constoprim_3D(real_t u[NVAR_3D], real_t (&q)[NVAR_3D], real_t& c)
   q[IU] = u[IU] / q[ID];
   q[IV] = u[IV] / q[ID];
   q[IW] = u[IW] / q[ID];
-  
+
   // kinetic energy
   real_t eken = 0.5f * (q[IU] * q[IU] + q[IV] * q[IV] + q[IW] * q[IW]);
 
   // compute pressure
-  if (::gParams.cIso > 0) { // isothermal eos : P = c_s^2 * \rho
-    
+  if (::gParams.cIso > 0)
+  { // isothermal eos : P = c_s^2 * \rho
+
     q[IP] = q[ID] * (::gParams.cIso) * (::gParams.cIso);
-    c     =  ::gParams.cIso;
-    
-  } else {
+    c = ::gParams.cIso;
+  }
+  else
+  {
 
     real_t eint = u[IP] / q[ID] - eken;
-    if (eint < 0) {
-      PRINTF("hydro eint < 0  : e %f eken %f d %f u %f v %f w %f\n",u[IP],eken,u[ID],u[IU],u[IV],u[IW]);
+    if (eint < 0)
+    {
+      PRINTF("hydro eint < 0  : e %f eken %f d %f u %f v %f w %f\n",
+             u[IP],
+             eken,
+             u[ID],
+             u[IU],
+             u[IV],
+             u[IW]);
     }
     // use perfect gas equation of state to compute P
     eos(q[ID], eint, q[IP], c);
@@ -112,20 +133,20 @@ void constoprim_3D(real_t u[NVAR_3D], real_t (&q)[NVAR_3D], real_t& c)
 
 /**
  * MHD convert conservative to primitive variables.
- * The main difference with hydro is that we need neighbors data because 
+ * The main difference with hydro is that we need neighbors data because
  * we need to compute cell-centered magnetic field from face-centered values.
  *
  * \sa DUMSES/src/ctoprim.f90
- * The main difference with DUMSES is that we do not store right face-centered 
+ * The main difference with DUMSES is that we do not store right face-centered
  * variables, so we absolutely need a ghostWidth of 3.
  *
- * Please also remember that in present code, all functions are pointwise 
- * (loop over the entire domain are handled in the calling routine or in the 
+ * Please also remember that in present code, all functions are pointwise
+ * (loop over the entire domain are handled in the calling routine or in the
  * CUDA kernel).
  *
- * magFieldNeighbors is a 3 component array, containing left face-centered 
+ * magFieldNeighbors is a 3 component array, containing left face-centered
  * magnetic field BX in cell located at i+1 (resp. BY in cell at j+1 and BZ
- * in cell at k+1). 
+ * in cell at k+1).
  *
  * @param[in]  u                 conservative variables
  * @param[in]  magFieldNeighbors face-centered magnetic fields in neighboring cells.
@@ -133,15 +154,16 @@ void constoprim_3D(real_t u[NVAR_3D], real_t (&q)[NVAR_3D], real_t& c)
  * @param[out] c                 local speed of sound
  * @param[in]  dt                time step (needed for predictor computations)
  */
- __DEVICE__ 
-bool constoprim_mhd(real_t u[NVAR_MHD], 
-		    real_t magFieldNeighbors[3], 
-		    real_t (&q)[NVAR_MHD], 
-		    real_t& c, 
-		    real_t dt)
+__DEVICE__
+bool
+constoprim_mhd(real_t u[NVAR_MHD],
+               real_t magFieldNeighbors[3],
+               real_t (&q)[NVAR_MHD],
+               real_t & c,
+               real_t   dt)
 {
   bool status = true;
-  
+
   // compute density
   q[ID] = FMAX(u[ID], ::gParams.smallr);
 
@@ -151,9 +173,9 @@ bool constoprim_mhd(real_t u[NVAR_MHD],
   q[IW] = u[IW] / q[ID];
 
   // compute CELL-CENTERED magnetic field
-  q[IA] = HALF_F * ( u[IA] + magFieldNeighbors[0] );
-  q[IB] = HALF_F * ( u[IB] + magFieldNeighbors[1] );
-  q[IC] = HALF_F * ( u[IC] + magFieldNeighbors[2] );
+  q[IA] = HALF_F * (u[IA] + magFieldNeighbors[0]);
+  q[IB] = HALF_F * (u[IB] + magFieldNeighbors[1]);
+  q[IC] = HALF_F * (u[IC] + magFieldNeighbors[2]);
 
   // compute specific kinetic energy and magnetic energy
   real_t eken = HALF_F * (q[IU] * q[IU] + q[IV] * q[IV] + q[IW] * q[IW]);
@@ -161,22 +183,27 @@ bool constoprim_mhd(real_t u[NVAR_MHD],
 
   // compute pressure
 
-  if (::gParams.cIso > 0) { // isothermal
+  if (::gParams.cIso > 0)
+  { // isothermal
 
     q[IP] = q[ID] * (::gParams.cIso) * (::gParams.cIso);
-    c     =  ::gParams.cIso;
-
-  } else {
+    c = ::gParams.cIso;
+  }
+  else
+  {
 
     real_t eint = (u[IP] - emag) / q[ID] - eken;
-    if (eint < 0) {
-      //printf("MHD eint < 0  : e %f eken %f emag %f d %f u %f v %f w %f\n",u[IP],eken,emag,u[ID],u[IU],u[IV],u[IW]);
+    if (eint < 0)
+    {
+      // printf("MHD eint < 0  : e %f eken %f emag %f d %f u %f v %f w
+      // %f\n",u[IP],eken,emag,u[ID],u[IU],u[IV],u[IW]);
       status = false;
     }
 
-    q[IP] = FMAX((::gParams.gamma0-ONE_F) * q[ID] * eint, q[ID] * ::gParams.smallp);
-  
-    if (q[IP] < 0) {
+    q[IP] = FMAX((::gParams.gamma0 - ONE_F) * q[ID] * eint, q[ID] * ::gParams.smallp);
+
+    if (q[IP] < 0)
+    {
       PRINTF("MHD pressure neg !!!\n");
     }
 
@@ -187,18 +214,19 @@ bool constoprim_mhd(real_t u[NVAR_MHD],
 
 
   // Coriolis force predictor step
-  if (/* cartesian */ ::gParams.Omega0 > 0) {
-    real_t dvx= 2.0 * ::gParams.Omega0 * q[IV];
-    real_t dvy=-0.5 * ::gParams.Omega0 * q[IU];
-    q[IU] += dvx*dt*HALF_F;
-    q[IV] += dvy*dt*HALF_F;
+  if (/* cartesian */ ::gParams.Omega0 > 0)
+  {
+    real_t dvx = 2.0 * ::gParams.Omega0 * q[IV];
+    real_t dvy = -0.5 * ::gParams.Omega0 * q[IU];
+    q[IU] += dvx * dt * HALF_F;
+    q[IV] += dvy * dt * HALF_F;
   }
 
   return status;
 
 } // constoprim_mhd
 
-// __DEVICE__ 
+// __DEVICE__
 // void constoprim_3D(real_t u[NVAR_3D], real_t (&q)[NVAR_3D], real_t& c)
 // {
 //   q[ID] = FMAX(u[ID], ::gParams.smallr);
@@ -217,19 +245,19 @@ bool constoprim_mhd(real_t u[NVAR_MHD],
  * @param U       input (primitive variables) / output (conservative variables)
  * @param _gamma0 specific heat ratio
  */
-inline
-void primToCons_2D(real_t (&U)[NVAR_2D], real_t _gamma0)
+inline void
+primToCons_2D(real_t (&U)[NVAR_2D], real_t _gamma0)
 {
-      
+
   real_t rho = U[ID];
-  real_t p   = U[IP];
-  real_t u   = U[IU];
-  real_t v   = U[IV];
+  real_t p = U[IP];
+  real_t u = U[IU];
+  real_t v = U[IV];
 
   U[IU] *= rho; // rho*u
   U[IV] *= rho; // rho*v
 
-  U[IP] = p/(_gamma0-1.0f) + rho*(u*u+v*v)*0.5f;
+  U[IP] = p / (_gamma0 - 1.0f) + rho * (u * u + v * v) * 0.5f;
 
 } // primToCons_2D
 
@@ -239,34 +267,34 @@ void primToCons_2D(real_t (&U)[NVAR_2D], real_t _gamma0)
  * @param U       input (primitive variables) / output (conservative variables)
  * @param _gamma0 specific heat ratio
  */
-inline
-void primToCons_3D(real_t (&U)[NVAR_3D], real_t _gamma0)
+inline void
+primToCons_3D(real_t (&U)[NVAR_3D], real_t _gamma0)
 {
-      
+
   real_t rho = U[ID];
-  real_t p   = U[IP];
-  real_t u   = U[IU];
-  real_t v   = U[IV];
-  real_t w   = U[IW];
+  real_t p = U[IP];
+  real_t u = U[IU];
+  real_t v = U[IV];
+  real_t w = U[IW];
 
   U[IU] *= rho; // rho*u
   U[IV] *= rho; // rho*v
   U[IW] *= rho; // rho*w
-  U[IP] = p/(_gamma0-1.0f) + rho*(u*u+v*v+w*w)*0.5f;
-  
+  U[IP] = p / (_gamma0 - 1.0f) + rho * (u * u + v * v + w * w) * 0.5f;
+
 } // primToCons_3D
 
-/** 
+/**
  * Compute primitive variables.
  * The template parameter is used to swap velocities.
- * This is only usefull for the CPU version, when this
+ * This is only useful for the CPU version, when this
  * function is used inside the Godunov procedure.
  *
  * Note : The swap specialization version is defined in implementation file.
  */
 /*
-template<int swap_v, unsigned int NVAR> 
- __DEVICE__ 
+template<int swap_v, unsigned int NVAR>
+ __DEVICE__
 void computePrimitives(real_t* U, int arraySize, int elemOffset, real_t& c, real_t (&q)[NVAR])
 {
   real_t u[NVAR];
@@ -282,7 +310,7 @@ void computePrimitives(real_t* U, int arraySize, int elemOffset, real_t& c, real
   u[ID] = U[offset];  offset += arraySize;
   u[IP] = U[offset];  offset += arraySize;
   u[iu] = U[offset];  offset += arraySize;
-  u[iv] = U[offset];  
+  u[iv] = U[offset];
   constoprim<NVAR>(u, q, c);
 }
 */
@@ -290,14 +318,18 @@ void computePrimitives(real_t* U, int arraySize, int elemOffset, real_t& c, real
 /**
  * Compute hydro primitive variables in 2D
  */
- __DEVICE__
-void computePrimitives_0(real_t* U, int arraySize, int elemOffset, real_t& c, real_t (&q)[NVAR_2D])
+__DEVICE__
+void
+computePrimitives_0(real_t * U, int arraySize, int elemOffset, real_t & c, real_t (&q)[NVAR_2D])
 {
   real_t u[NVAR_2D];
-  int offset = elemOffset;
-  u[ID] = U[offset];  offset += arraySize;
-  u[IP] = U[offset];  offset += arraySize;
-  u[IU] = U[offset];  offset += arraySize;
+  int    offset = elemOffset;
+  u[ID] = U[offset];
+  offset += arraySize;
+  u[IP] = U[offset];
+  offset += arraySize;
+  u[IU] = U[offset];
+  offset += arraySize;
   u[IV] = U[offset];
   constoprim_2D(u, q, c);
 }
@@ -305,14 +337,18 @@ void computePrimitives_0(real_t* U, int arraySize, int elemOffset, real_t& c, re
 /**
  * Compute hydro primitive variables in 2D (with swapping IU and IV)
  */
- __DEVICE__
-void computePrimitives_1(real_t* U, int arraySize, int elemOffset, real_t& c, real_t (&q)[NVAR_2D])
+__DEVICE__
+void
+computePrimitives_1(real_t * U, int arraySize, int elemOffset, real_t & c, real_t (&q)[NVAR_2D])
 {
   real_t u[NVAR_2D];
-  int offset = elemOffset;
-  u[ID] = U[offset];  offset += arraySize;
-  u[IP] = U[offset];  offset += arraySize;
-  u[IV] = U[offset];  offset += arraySize;
+  int    offset = elemOffset;
+  u[ID] = U[offset];
+  offset += arraySize;
+  u[IP] = U[offset];
+  offset += arraySize;
+  u[IV] = U[offset];
+  offset += arraySize;
   u[IU] = U[offset];
   constoprim_2D(u, q, c);
 }
@@ -320,15 +356,20 @@ void computePrimitives_1(real_t* U, int arraySize, int elemOffset, real_t& c, re
 /**
  * Compute hydro primitive variables in 3D
  */
- __DEVICE__
-void computePrimitives_3D_0(real_t* U, int arraySize, int elemOffset, real_t& c, real_t (&q)[NVAR_3D])
+__DEVICE__
+void
+computePrimitives_3D_0(real_t * U, int arraySize, int elemOffset, real_t & c, real_t (&q)[NVAR_3D])
 {
   real_t u[NVAR_3D];
-  int offset = elemOffset;
-  u[ID] = U[offset];  offset += arraySize;
-  u[IP] = U[offset];  offset += arraySize;
-  u[IU] = U[offset];  offset += arraySize;
-  u[IV] = U[offset];  offset += arraySize;
+  int    offset = elemOffset;
+  u[ID] = U[offset];
+  offset += arraySize;
+  u[IP] = U[offset];
+  offset += arraySize;
+  u[IU] = U[offset];
+  offset += arraySize;
+  u[IV] = U[offset];
+  offset += arraySize;
   u[IW] = U[offset];
   constoprim_3D(u, q, c);
 }
@@ -336,15 +377,20 @@ void computePrimitives_3D_0(real_t* U, int arraySize, int elemOffset, real_t& c,
 /**
  * Compute hydro primitive variables in 3D after swapping IU and IV indexes
  */
- __DEVICE__
-void computePrimitives_3D_1(real_t* U, int arraySize, int elemOffset, real_t& c, real_t (&q)[NVAR_3D])
+__DEVICE__
+void
+computePrimitives_3D_1(real_t * U, int arraySize, int elemOffset, real_t & c, real_t (&q)[NVAR_3D])
 {
   real_t u[NVAR_3D];
-  int offset = elemOffset;
-  u[ID] = U[offset];  offset += arraySize;
-  u[IP] = U[offset];  offset += arraySize;
-  u[IV] = U[offset];  offset += arraySize;
-  u[IU] = U[offset];  offset += arraySize;
+  int    offset = elemOffset;
+  u[ID] = U[offset];
+  offset += arraySize;
+  u[IP] = U[offset];
+  offset += arraySize;
+  u[IV] = U[offset];
+  offset += arraySize;
+  u[IU] = U[offset];
+  offset += arraySize;
   u[IW] = U[offset];
   constoprim_3D(u, q, c);
 }
@@ -352,15 +398,20 @@ void computePrimitives_3D_1(real_t* U, int arraySize, int elemOffset, real_t& c,
 /**
  * Compute hydro primitive variables in 3D after swapping IU and IW indexes
  */
- __DEVICE__
-void computePrimitives_3D_2(real_t* U, int arraySize, int elemOffset, real_t& c, real_t (&q)[NVAR_3D])
+__DEVICE__
+void
+computePrimitives_3D_2(real_t * U, int arraySize, int elemOffset, real_t & c, real_t (&q)[NVAR_3D])
 {
   real_t u[NVAR_3D];
-  int offset = elemOffset;
-  u[ID] = U[offset];  offset += arraySize;
-  u[IP] = U[offset];  offset += arraySize;
-  u[IW] = U[offset];  offset += arraySize;
-  u[IV] = U[offset];  offset += arraySize;
+  int    offset = elemOffset;
+  u[ID] = U[offset];
+  offset += arraySize;
+  u[IP] = U[offset];
+  offset += arraySize;
+  u[IW] = U[offset];
+  offset += arraySize;
+  u[IV] = U[offset];
+  offset += arraySize;
   u[IU] = U[offset];
   constoprim_3D(u, q, c);
 }
@@ -382,38 +433,54 @@ void computePrimitives_3D_2(real_t* U, int arraySize, int elemOffset, real_t& c,
  * \param[in] elemOffset position in data array of current cell.
  * \param[out] c speed of sound
  * \param[out] q primitive variable vector
- * \param[in] dt time step (usefull to compute some predictor step).
+ * \param[in] dt time step (useful to compute some predictor step).
  *
  */
- __DEVICE__
-void computePrimitives_MHD_2D(real_t* U, int dim[2], int elemOffset, real_t& c, real_t (&q)[NVAR_MHD], real_t dt)
+__DEVICE__
+void
+computePrimitives_MHD_2D(real_t * U,
+                         int      dim[2],
+                         int      elemOffset,
+                         real_t & c,
+                         real_t (&q)[NVAR_MHD],
+                         real_t dt)
 {
   real_t u[NVAR_MHD];
   real_t magFieldNeighbors[3];
-  int arraySize = dim[0]*dim[1];
+  int    arraySize = dim[0] * dim[1];
 
   int offset = elemOffset;
-  u[ID] = U[offset];  offset += arraySize;
-  u[IP] = U[offset];  offset += arraySize;
-  u[IU] = U[offset];  offset += arraySize;
-  u[IV] = U[offset];  offset += arraySize;
-  u[IW] = U[offset];  offset += arraySize;
-  u[IA] = U[offset];  offset += arraySize;
-  u[IB] = U[offset];  offset += arraySize;
+  u[ID] = U[offset];
+  offset += arraySize;
+  u[IP] = U[offset];
+  offset += arraySize;
+  u[IU] = U[offset];
+  offset += arraySize;
+  u[IV] = U[offset];
+  offset += arraySize;
+  u[IW] = U[offset];
+  offset += arraySize;
+  u[IA] = U[offset];
+  offset += arraySize;
+  u[IB] = U[offset];
+  offset += arraySize;
   u[IC] = U[offset];
 
   // go to magnetic field components and get values from neighbors on the right
   offset = elemOffset + 5 * arraySize;
-  magFieldNeighbors[IX] = U[offset+1];        offset += arraySize;
-  magFieldNeighbors[IY] = U[offset+dim[0]];
+  magFieldNeighbors[IX] = U[offset + 1];
+  offset += arraySize;
+  magFieldNeighbors[IY] = U[offset + dim[0]];
   magFieldNeighbors[IZ] = ZERO_F;
 
   // return the primitive variable vector for current cell
   bool status = constoprim_mhd(u, magFieldNeighbors, q, c, dt);
 
 #ifndef __CUDACC__
-  if (!status) {
-    //std::cout << "constoprim_mhd error @ x=" << elemOffset-(elemOffset/dim[0])*dim[0] << " y=" << elemOffset/dim[0] << std::endl;
+  if (!status)
+  {
+    // std::cout << "constoprim_mhd error @ x=" << elemOffset-(elemOffset/dim[0])*dim[0] << " y=" <<
+    // elemOffset/dim[0] << std::endl;
   }
 #endif
 
@@ -431,31 +498,46 @@ void computePrimitives_MHD_2D(real_t* U, int dim[2], int elemOffset, real_t& c, 
  * \param[in] elemOffset position in data array of current cell.
  * \param[out] c speed of sound
  * \param[out] q primitive variable vector
- * \param[in] dt time step (usefull to compute some predictor step).
+ * \param[in] dt time step (useful to compute some predictor step).
  *
  */
- __DEVICE__
-void computePrimitives_MHD_3D(real_t* U, int dim[3], int elemOffset, real_t& c, real_t (&q)[NVAR_MHD], real_t dt)
+__DEVICE__
+void
+computePrimitives_MHD_3D(real_t * U,
+                         int      dim[3],
+                         int      elemOffset,
+                         real_t & c,
+                         real_t (&q)[NVAR_MHD],
+                         real_t dt)
 {
   real_t u[NVAR_MHD];
   real_t magFieldNeighbors[3];
-  int arraySize = dim[0]*dim[1]*dim[2];
+  int    arraySize = dim[0] * dim[1] * dim[2];
 
   int offset = elemOffset;
-  u[ID] = U[offset];  offset += arraySize;
-  u[IP] = U[offset];  offset += arraySize;
-  u[IU] = U[offset];  offset += arraySize;
-  u[IV] = U[offset];  offset += arraySize;
-  u[IW] = U[offset];  offset += arraySize;
-  u[IA] = U[offset];  offset += arraySize;
-  u[IB] = U[offset];  offset += arraySize;
+  u[ID] = U[offset];
+  offset += arraySize;
+  u[IP] = U[offset];
+  offset += arraySize;
+  u[IU] = U[offset];
+  offset += arraySize;
+  u[IV] = U[offset];
+  offset += arraySize;
+  u[IW] = U[offset];
+  offset += arraySize;
+  u[IA] = U[offset];
+  offset += arraySize;
+  u[IB] = U[offset];
+  offset += arraySize;
   u[IC] = U[offset];
 
   // go to magnetic field components and get values from neighbors on the right
   offset = elemOffset + 5 * arraySize;
-  magFieldNeighbors[IX] = U[offset+1];        offset += arraySize;
-  magFieldNeighbors[IY] = U[offset+dim[0]];   offset += arraySize;
-  magFieldNeighbors[IZ] = U[offset+dim[0]*dim[1]];
+  magFieldNeighbors[IX] = U[offset + 1];
+  offset += arraySize;
+  magFieldNeighbors[IY] = U[offset + dim[0]];
+  offset += arraySize;
+  magFieldNeighbors[IZ] = U[offset + dim[0] * dim[1]];
 
   // return the primitive variable vector for current cell
   constoprim_mhd(u, magFieldNeighbors, q, c, dt);
@@ -466,22 +548,31 @@ void computePrimitives_MHD_3D(real_t* U, int dim[3], int elemOffset, real_t& c, 
  * get primitive variable vector state at some location.
  *
  * \param[in]  Q          Primitive variable raw array
- * \param[in]  arraySize  Domain size 
+ * \param[in]  arraySize  Domain size
  * \param[in]  elemOffset offset to current location
  * \param[out] q          returned state vector of primitive variables
  * at current location.
  */
- __DEVICE__
-void getPrimitiveVector(real_t* Q, int arraySize, int elemOffset, real_t (&q)[NVAR_MHD]) {
+__DEVICE__
+void
+getPrimitiveVector(real_t * Q, int arraySize, int elemOffset, real_t (&q)[NVAR_MHD])
+{
 
   int offset = elemOffset;
-  q[ID] = Q[offset];  offset += arraySize;
-  q[IP] = Q[offset];  offset += arraySize;
-  q[IU] = Q[offset];  offset += arraySize;
-  q[IV] = Q[offset];  offset += arraySize;
-  q[IW] = Q[offset];  offset += arraySize;
-  q[IA] = Q[offset];  offset += arraySize;
-  q[IB] = Q[offset];  offset += arraySize;
+  q[ID] = Q[offset];
+  offset += arraySize;
+  q[IP] = Q[offset];
+  offset += arraySize;
+  q[IU] = Q[offset];
+  offset += arraySize;
+  q[IV] = Q[offset];
+  offset += arraySize;
+  q[IW] = Q[offset];
+  offset += arraySize;
+  q[IA] = Q[offset];
+  offset += arraySize;
+  q[IB] = Q[offset];
+  offset += arraySize;
   q[IC] = Q[offset];
 
 } // getPrimitiveVector
@@ -491,21 +582,21 @@ void getPrimitiveVector(real_t* Q, int arraySize, int elemOffset, real_t (&q)[NV
  * get face-centered mag Field at some location.
  *
  * \param[in]  U          Conserved variable raw array
- * \param[in]  arraySize  Domain size 
+ * \param[in]  arraySize  Domain size
  * \param[in]  elemOffset offset to current location
  * \param[out] bf         returned magnetic field
  */
- __DEVICE__
-void getMagField(real_t*  U, 
-		 int      arraySize, 
-		 int      elemOffset, 
-		 real_t (&bf)[3])
+__DEVICE__
+void
+getMagField(real_t * U, int arraySize, int elemOffset, real_t (&bf)[3])
 {
 
   int offset = elemOffset + 5 * arraySize;
-  bf[IX]  = U[offset];  offset += arraySize;
-  bf[IY]  = U[offset];  offset += arraySize;
-  bf[IZ]  = U[offset];
+  bf[IX] = U[offset];
+  offset += arraySize;
+  bf[IY] = U[offset];
+  offset += arraySize;
+  bf[IZ] = U[offset];
 
 } // getMagField
 

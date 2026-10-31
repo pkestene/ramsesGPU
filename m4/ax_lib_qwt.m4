@@ -38,7 +38,7 @@
 #    QWT_LIBS
 #    QWT_VERSION_STR
 #    QWT_VERSION_MAJOR
-#    
+#
 #serial 2
 #
 AC_DEFUN([AX_LIB_QWT],
@@ -58,7 +58,7 @@ dnl Let users provide the location
 				want_qwt="yes"
 			else
 				with_qwt="$withval"
-				want_qwt="yes"	
+				want_qwt="yes"
 			fi
 		],
 		[
@@ -107,7 +107,7 @@ dnl Check if user provided top directory of include directory
 			done
 dnl Check if user provided framework directory
 			if test "${qwt_header_found}" != "yes";
-			then 
+			then
 				for qwt_framework in 'qwt' 'qwt-qt4' 'qwt5-qt4'
 				do
 					qwt_include_dir=${with_qwt}/lib/${qwt_framework}.framework/Versions/Current/Headers
@@ -181,7 +181,7 @@ dnl Check for Qwt library
 					int main(int argc, char** argv)
 					{
 						QApplication a(argc, argv);
-						QwtPlot plot;			
+						QwtPlot plot;
 						plot.resize(600,400);
 	    				plot.show();
 	    				return a.exec();
@@ -213,7 +213,7 @@ dnl Check for Qwt framework
 							int main(int argc, char** argv)
 							{
 								QApplication a(argc, argv);
-								QwtPlot plot;			
+								QwtPlot plot;
 								plot.resize(600,400);
 	    					plot.show();
 	    					return a.exec();
@@ -248,7 +248,7 @@ dnl ----------------------------------------------------------------------------
 				AC_SUBST([QWT_VERSION_MAJOR], [$qwt_version_major])
 				],
 				[AC_MSG_WARN([Could not find version of Qwt library])])
-				
+
 dnl Define Qwt flags
 			have_qwt=yes
 			AC_SUBST([QWT_CPPFLAGS])
@@ -256,7 +256,7 @@ dnl Define Qwt flags
 			AC_SUBST([QWT_LIBS])
 			AC_DEFINE([HAVE_QWT], [1], [Define if you have Qwt library])
 		fi
-		
+
 dnl Restore initial flags
 		CPPFLAGS="$saved_CPPFLAGS"
 		LDFLAGS="$saved_LDFLAGS"

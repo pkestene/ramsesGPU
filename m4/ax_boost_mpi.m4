@@ -7,8 +7,8 @@
 # DESCRIPTION
 #
 #   Test for MPI library from the Boost C++ libraries. The macro
-#   requires a preceding call to AX_BOOST_BASE, AX_BOOST_SERIALIZATION 
-#   and AX_MPI. You also need to set CXX="$MPICXX" before calling the 
+#   requires a preceding call to AX_BOOST_BASE, AX_BOOST_SERIALIZATION
+#   and AX_MPI. You also need to set CXX="$MPICXX" before calling the
 #   macro.
 #
 #   This macro calls:
@@ -35,7 +35,7 @@ AC_DEFUN([AX_BOOST_MPI],
 [
     AC_ARG_WITH([boost-mpi],
     AS_HELP_STRING([--with-boost-mpi@<:@=special-lib@:>@],
-                   [use the MPI library from boost - it is possible to 
+                   [use the MPI library from boost - it is possible to
                       specify a certain library for the linker
                       e.g. --with-boost-mpi=boost_mpi-gcc-mt-d-1_33_1 ]),
         [
@@ -69,7 +69,7 @@ AC_DEFUN([AX_BOOST_MPI],
         [AC_LANG_PUSH([C++])
              AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[@%:@include <boost/mpi.hpp>
                                                 ]],
-                                   [[int argc=0; 
+                                   [[int argc=0;
 				     char** argv=0;
 				     boost::mpi::environment env(argc,argv);
                                      return 0;
@@ -89,7 +89,7 @@ AC_DEFUN([AX_BOOST_MPI],
                   done
                 if test "x$link_mpi" != "xyes"; then
                 for libextension in `ls $BOOSTLIBDIR/boost_mpi*.{dll,a}* 2>/dev/null | grep -v python | sed 's,.*/,,' | sed -e 's;^\(boost_mpi.*\)\.dll.*$;\1;' -e 's;^\(boost_mpi.*\)\.a*$;\1;'` ; do
-                     ax_lib=${libextension} 
+                     ax_lib=${libextension}
                     AC_CHECK_LIB($ax_lib, exit,
                                  [BOOST_MPI_LIB="-l$ax_lib"; AC_SUBST(BOOST_MPI_LIB) link_mpi="yes"; break],
                                  [link_mpi="no"])

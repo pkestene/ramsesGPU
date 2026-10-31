@@ -36,7 +36,7 @@ if USE_CUDA
 # libMonitoring parsed/compiled with nvcc
 BUILT_SOURCES = Timer.cu
 CLEANFILES    = Timer.cu
-libMonitoringGpu_la_SOURCES = Timer.h 
+libMonitoringGpu_la_SOURCES = Timer.h
 nodist_libMonitoringGpu_la_SOURCES = Timer.cu
 nodist_EXTRA_libMonitoringGpu_la_SOURCES = dummy.cpp
 libMonitoringGpu_la_CPPFLAGS = $(AM_CPPFLAGS) $(CUDA_CFLAGS)

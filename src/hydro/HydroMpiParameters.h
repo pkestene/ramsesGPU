@@ -20,56 +20,56 @@
 
 #include <vector>
 
-namespace hydroSimu {
+namespace hydroSimu
+{
 
-  /**
-   * \class HydroMpiParameters HydroMpiParameters.h
-   * \brief This is the base class containing all usefull methods to hydro
-   * simulations (handling array initializations, boundary
-   * computations, output files) in a pure MPI or MPI/CUDA environnement.
-   *
-   * All classes effectively implementing hydro simulations should
-   * inherit from this base class.
-   */
-  class HydroMpiParameters : public HydroParameters
-  {
-  public:
-    HydroMpiParameters(ConfigMap &_configMap);
-    virtual ~HydroMpiParameters();
-    
-  protected:
-    //! size of the MPI cartesian grid
-    int mx,my,mz;
-    
-    //! MPI communicator in a cartesian virtual topology
-    MpiCommCart *communicator;
-    
-    //! number of dimension
-    int nDim;
+/**
+ * \class HydroMpiParameters HydroMpiParameters.h
+ * \brief This is the base class containing all useful methods to hydro
+ * simulations (handling array initializations, boundary
+ * computations, output files) in a pure MPI or MPI/CUDA environment.
+ *
+ * All classes effectively implementing hydro simulations should
+ * inherit from this base class.
+ */
+class HydroMpiParameters : public HydroParameters
+{
+public:
+  HydroMpiParameters(ConfigMap & _configMap);
+  virtual ~HydroMpiParameters();
 
-    //! MPI rank of current process
-    int myRank;
+protected:
+  //! size of the MPI cartesian grid
+  int mx, my, mz;
 
-    //! number of MPI processes
-    int nProcs;
+  //! MPI communicator in a cartesian virtual topology
+  MpiCommCart * communicator;
 
-    //! MPI cartesian coordinates inside MPI topology
-    std::vector<int> myMpiPos;
+  //! number of dimension
+  int nDim;
 
-    //! number of MPI process neighbors (4 in 2D and 6 in 3D)
-    int nNeighbors;
-    
-    //! MPI rank of adjacent MPI processes
-    std::vector<int> neighborsRank;
-    
-    //! boundary condition type with adjacent domains (corresponding to
-    //! neighbor MPI processes)
-    std::vector<BoundaryConditionType> neighborsBC;
+  //! MPI rank of current process
+  int myRank;
 
-  };
+  //! number of MPI processes
+  int nProcs;
 
-  //! print information about current Mpi parameters
-  // std::ostream& operator<<( std::ostream& s, const HydroMpiParameters& param );
+  //! MPI cartesian coordinates inside MPI topology
+  std::vector<int> myMpiPos;
+
+  //! number of MPI process neighbors (4 in 2D and 6 in 3D)
+  int nNeighbors;
+
+  //! MPI rank of adjacent MPI processes
+  std::vector<int> neighborsRank;
+
+  //! boundary condition type with adjacent domains (corresponding to
+  //! neighbor MPI processes)
+  std::vector<BoundaryConditionType> neighborsBC;
+};
+
+//! print information about current Mpi parameters
+// std::ostream& operator<<( std::ostream& s, const HydroMpiParameters& param );
 
 } // namespace hydroSimu
 

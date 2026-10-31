@@ -10,10 +10,11 @@
 #ifndef UTILITIES_H_
 #define UTILITIES_H_
 
-inline bool isBigEndian()
+inline bool
+isBigEndian()
 {
   const int i = 1;
-  return ( (*(char*)&i) == 0 );
+  return ((*(char *)&i) == 0);
 }
 
 #endif /* UTILITIES_H_ */

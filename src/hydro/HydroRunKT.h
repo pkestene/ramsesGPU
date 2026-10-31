@@ -13,8 +13,8 @@
  * Numer. Methods Partial Differential Equations, vol 18, pp 548-608, 2002.
  * - Kurganov and Tadmor, "New high-resolution central
  * schemes for nonlinear conservation laws and convection-diffusion
- * equations.", J. Comput. Phys., 160(1):241-282, 2000. 
- * 
+ * equations.", J. Comput. Phys., 160(1):241-282, 2000.
+ *
  * \date 05/02/2010
  * \author P. Kestener
  *
@@ -30,7 +30,8 @@
 
 #include "HydroRunBase.h"
 
-namespace hydroSimu {
+namespace hydroSimu
+{
 
 /**
  * \class HydroRunKT HydroRunKT.h
@@ -40,32 +41,38 @@ namespace hydroSimu {
 class HydroRunKT : public HydroRunBase
 {
 public:
-  HydroRunKT(ConfigMap &_configMap);
+  HydroRunKT(ConfigMap & _configMap);
   ~HydroRunKT();
 
-  void start(); 
-  void oneStepIntegration(int& nStep, real_t& t, real_t& dt);
+  void
+  start();
+  void
+  oneStepIntegration(int & nStep, real_t & t, real_t & dt);
 
   uint cmpdtBlockCount;
-  void copyGpuToCpu(int nStep=0);
+  void
+  copyGpuToCpu(int nStep = 0);
 
 protected:
-
 #ifdef __CUDACC__
-  void kt_evolve();
+  void
+  kt_evolve();
 #else
-  void kt_evolve();
-  void reconstruction_2d_FD2();
-  void predictor_corrector_2d_FD2();
+  void
+  kt_evolve();
+  void
+  reconstruction_2d_FD2();
+  void
+  predictor_corrector_2d_FD2();
 #endif
-  real_t computeDt();
+  real_t
+  computeDt();
 
   real_t dX, dY;
   real_t xLambda, yLambda;
-  bool odd;
+  bool   odd;
 
 private:
-
   // Data Arrays
   HostArray<real2_t> h_spectralRadii;
 #ifdef __CUDACC__
@@ -79,10 +86,9 @@ private:
   HostArray<real_t> h_Uprime;
   HostArray<real_t> h_Uqrime;
   HostArray<real_t> h_Ustar;
-  HostArray<real_t> f,g;
-  HostArray<real_t> f_prime,g_qrime;
+  HostArray<real_t> f, g;
+  HostArray<real_t> f_prime, g_qrime;
 #endif // __CUDACC__
-
 };
 
 } // namespace hydroSimu

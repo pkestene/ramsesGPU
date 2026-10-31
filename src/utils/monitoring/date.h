@@ -13,19 +13,19 @@
 #include <string> // for std::string
 #include <time.h> // for time_t, localtime, strftime
 
-inline
-const std::string current_date()
+inline const std::string
+current_date()
 {
   /* get current time */
-  time_t     now = time(NULL); 
-  
+  time_t now = time(NULL);
+
   /* Format and print the time, "ddd yyyy-mm-dd hh:mm:ss zzz" */
-  struct tm  *ts; 
+  struct tm * ts;
   ts = localtime(&now);
 
-  char       buf[80];
+  char buf[80];
   strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S %Z", ts);
-  
+
   return std::string(buf);
 
 } // current_date
