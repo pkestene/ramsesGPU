@@ -8,14 +8,14 @@
 /*
  * Copyright 1993-2010 NVIDIA Corporation.  All rights reserved.
  *
- * NVIDIA Corporation and its licensors retain all intellectual property and 
- * proprietary rights in and to this software and related documentation. 
- * Any use, reproduction, disclosure, or distribution of this software 
+ * NVIDIA Corporation and its licensors retain all intellectual property and
+ * proprietary rights in and to this software and related documentation.
+ * Any use, reproduction, disclosure, or distribution of this software
  * and related documentation without an express license agreement from
  * NVIDIA Corporation is strictly prohibited.
- * 
+ *
  */
- 
+
 #ifndef _CUTIL_INLINE_FUNCTIONS_RUNTIME_H_
 #define _CUTIL_INLINE_FUNCTIONS_RUNTIME_H_
 
@@ -48,7 +48,7 @@
 #define cutilCondition(val)          __cutilCondition    (val, __FILE__, __LINE__)
 #define cutilExit(argc, argv)        __cutilExit         (argc, argv)
 
-inline void __cutilCondition(int val, char *file, int line) 
+inline void __cutilCondition(int val, char *file, int line)
 {
     if( CUTFalse == cutCheckCondition( val, file, line ) ) {
         exit(EXIT_FAILURE);
@@ -75,7 +75,7 @@ inline int cutGetMaxGflopsDeviceId()
 	int current_device   = 0, sm_per_multiproc = 0;
 	int max_compute_perf = 0, max_perf_device  = 0;
 	int device_count     = 0, best_SM_arch     = 0;
-    int arch_cores_sm[3] = { 1, 8, 32 };
+        int arch_cores_sm[3] = { 1, 8, 32 };
 	cudaDeviceProp deviceProp;
 
 	cudaGetDeviceCount( &device_count );
@@ -88,7 +88,7 @@ inline int cutGetMaxGflopsDeviceId()
 		current_device++;
 	}
 
-    // Find the best CUDA capable GPU device
+        // Find the best CUDA capable GPU device
 	current_device = 0;
 	while( current_device < device_count ) {
 		cudaGetDeviceProperties( &deviceProp, current_device );
@@ -100,12 +100,18 @@ inline int cutGetMaxGflopsDeviceId()
 			sm_per_multiproc = arch_cores_sm[2];
 		}
 
-		int compute_perf  = deviceProp.multiProcessorCount * sm_per_multiproc * deviceProp.clockRate;
+                int clockRate = 0;
+#if CUDART_VERSION >= 13000
+                cudaDeviceGetAttribute(&clockRate, cudaDevAttrClockRate, current_device);
+#else
+                clockRate = deviceProp.clockRate;
+#endif
+                int compute_perf  = deviceProp.multiProcessorCount * sm_per_multiproc * clockRate;
 		if( compute_perf  > max_compute_perf ) {
             // If we find GPU with SM major > 2, search only these
 			if ( best_SM_arch > 2 ) {
 				// If our device==dest_SM_arch, choose this, or else pass
-				if (deviceProp.major == best_SM_arch) {	
+				if (deviceProp.major == best_SM_arch) {
 					max_compute_perf  = compute_perf;
 					max_perf_device   = current_device;
 				}
@@ -278,7 +284,7 @@ inline void __cutilSafeMalloc( void *pointer, const char *file, const int line )
 
 
 //! Check for CUDA context lost
-inline void cutilCudaCheckCtxLost(const char *errorMessage, const char *file, const int line ) 
+inline void cutilCudaCheckCtxLost(const char *errorMessage, const char *file, const int line )
 {
     cudaError_t err = cudaGetLastError();
     if( cudaSuccess != err) {
