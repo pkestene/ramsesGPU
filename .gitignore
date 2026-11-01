@@ -25,3 +25,4 @@ _build
 memory_footprint.pyc
 .ccls-cache
 .cache
+compile_commands.json
