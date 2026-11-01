@@ -1,0 +1,427 @@
+#include "real_type.h"
+#include "constants.h"
+
+// 2D-kernel block dimensions
+#ifdef USE_DOUBLE
+#  define UNSPLIT_BLOCK_DIMX_2D_V3 16
+#  define UNSPLIT_BLOCK_INNER_DIMX_2D_V3 (UNSPLIT_BLOCK_DIMX_2D_V3 - 4)
+#  define UNSPLIT_BLOCK_DIMY_2D_V3 16
+#  define UNSPLIT_BLOCK_INNER_DIMY_2D_V3 (UNSPLIT_BLOCK_DIMY_2D_V3 - 4)
+#else // simple precision
+#  define UNSPLIT_BLOCK_DIMX_2D_V3 16
+#  define UNSPLIT_BLOCK_INNER_DIMX_2D_V3 (UNSPLIT_BLOCK_DIMX_2D_V3 - 4)
+#  define UNSPLIT_BLOCK_DIMY_2D_V3 16
+#  define UNSPLIT_BLOCK_INNER_DIMY_2D_V3 (UNSPLIT_BLOCK_DIMY_2D_V3 - 4)
+#endif // USE_DOUBLE
+
+/**
+ * Primitive variables array (for shared memory storage).
+ */
+class QShmem
+{
+private:
+  real_t data[UNSPLIT_BLOCK_DIMX_2D_V3 * UNSPLIT_BLOCK_DIMY_2D_V3 * NVAR_2D];
+
+  static const int DIM_XY = UNSPLIT_BLOCK_DIMX_2D_V3 * UNSPLIT_BLOCK_DIMY_2D_V3;
+
+public:
+  __device__ real_t &
+  operator()(int const tx, int const ty, int const i_var)
+  {
+    return data[tx + UNSPLIT_BLOCK_DIMX_2D_V3 * ty + DIM_XY * i_var];
+  }
+
+  __device__ real_t const &
+  operator()(int const tx, int const ty, int const i_var) const
+  {
+    return data[tx + UNSPLIT_BLOCK_DIMX_2D_V3 * ty + DIM_XY * i_var];
+  }
+};
+
+/**
+ * Reconstructed states array (for shared memory storage).
+ *
+ *
+ */
+class QReconsShmem
+{
+private:
+  static const int DIM_X1 = UNSPLIT_BLOCK_INNER_DIMX_2D_V3 + 2;
+  static const int DIM_Y1 = UNSPLIT_BLOCK_INNER_DIMY_2D_V3 + 0;
+  static const int DIM_XY1 = DIM_X1 * DIM_Y1;
+
+  static const int DIM_X2 = UNSPLIT_BLOCK_INNER_DIMX_2D_V3 + 0;
+  static const int DIM_Y2 = UNSPLIT_BLOCK_INNER_DIMY_2D_V3 + 2;
+  static const int DIM_XY2 = DIM_X2 * DIM_Y2;
+
+  real_t data[(UNSPLIT_BLOCK_INNER_DIMX_2D_V3 + 2) * UNSPLIT_BLOCK_DIMY_2D_V3 * NVAR_2D];
+
+public:
+  __device__ real_t &
+  operator()(int const tx, int const ty, int const i_var, const int dir)
+  {
+    if (dir == IX)
+      return data[tx + DIM_X1 * ty + DIM_XY1 * i_var];
+    else if (dir == IY)
+      return data[tx + DIM_X2 * ty + DIM_XY2 * i_var];
+  }
+
+  __device__ real_t const &
+  operator()(int const tx, int const ty, int const i_var, const int dir) const
+  {
+    if (dir == IX)
+      return data[tx + DIM_X1 * ty + DIM_XY1 * i_var];
+    else if (dir == IY)
+      return data[tx + DIM_X2 * ty + DIM_XY2 * i_var];
+  }
+
+}; // class QreconsShmem
+
+/**
+ * conservative (rho, rho*u, rho*v, e) to primitive variables (rho,
+ * u,v,p)
+ * @param[in]  u  conservative variables
+ * @param[out] q  primitive    variables
+ * @param[out] c  local speed of sound
+ */
+__DEVICE__
+void
+constoprim_2D(const real_t u[NVAR_2D], QShmem & q, int tx, int ty, real_t & c)
+{
+  const real_t rho = FMAX(u[ID], ::gParams.smallr);
+
+  q(tx, ty, ID) = rho;
+  q(tx, ty, IU) = u[IU] / rho;
+  q(tx, ty, IV) = u[IV] / rho;
+
+  // kinetic energy per mass unit
+  real_t eken = 0.5f * (q(tx, ty, IU) * q(tx, ty, IU) + q(tx, ty, IV) * q(tx, ty, IV));
+
+  // compute pressure
+  if (::gParams.cIso > 0)
+  { // isothermal eos : P = c_s^2 * \rho
+
+    q(tx, ty, IP) = rho * (::gParams.cIso) * (::gParams.cIso);
+    c = ::gParams.cIso;
+  }
+  else
+  {
+
+    // internal energy = total energy - kinetic energy (per mass unit)
+    real_t eint = u[IP] / rho - eken;
+    if (eint < 0)
+    {
+      PRINTF("hydro eint < 0  : e %f eken %f diff %f d %f u %f v %f - tx=%d ty=%d\n",
+             u[IP] / rho,
+             eken,
+             u[IP] / rho - eken,
+             u[ID],
+             u[IU],
+             u[IV],
+             tx,
+             ty);
+    }
+    // use perfect gas equation of state to compute P
+    const real_t p = FMAX((::gParams.gamma0 - 1.0f) * rho * eint, rho * ::gParams.smallp);
+    c = SQRT(::gParams.gamma0 * p / rho);
+
+    q(tx, ty, IP) = p;
+
+  } // end compute pressure
+
+} // constoprim_2D
+
+/**
+ * This another implementation of trace computations for 2D data;
+ * slopes are computed outside; it is used when unsplitVersion = 0
+ *
+ * Note that :
+ * - hydro slopes computations are done outside this routine
+ *
+ * \param[in]  q  primitive variable array (shared memory)
+ * \param[in]  dtdx dt divided by dx
+ * \param[in]  dtdy dt divided by dy
+ * \param[in]  dir direction (either X or Y)
+ * \param[out] qL the reconstructed state from the left
+ * \param[out] qR the reconstructed state from the right
+ */
+__DEVICE__
+void
+trace_unsplit_hydro_2d_by_direction_shmem(QShmem const & q,
+                                          int const &    tx,
+                                          int const &    ty,
+                                          real_t const & dtdx,
+                                          real_t const & dtdy,
+                                          int const      dir,
+                                          QReconsShmem & qm,
+                                          QReconsShmem & qp)
+{
+
+  // some aliases
+  real_t & smallR = ::gParams.smallr;
+  real_t & smallp = ::gParams.smallp;
+  real_t & gamma = ::gParams.gamma0;
+
+  // Cell centered values
+  real_t r = q(tx, ty, ID);
+  real_t p = q(tx, ty, IP);
+  real_t u = q(tx, ty, IU);
+  real_t v = q(tx, ty, IV);
+
+  // Cell centered TVD slopes in X direction
+  real_t drx = slope_scalar(q(tx, ty, ID), q(tx + 1, ty, ID), q(tx - 1, ty, ID));
+  real_t dpx = slope_scalar(q(tx, ty, IP), q(tx + 1, ty, IP), q(tx - 1, ty, IP));
+  real_t dux = slope_scalar(q(tx, ty, IU), q(tx + 1, ty, IU), q(tx - 1, ty, IU));
+  real_t dvx = slope_scalar(q(tx, ty, IV), q(tx + 1, ty, IV), q(tx - 1, ty, IV));
+
+  // Cell centered TVD slopes in Y direction
+  real_t dry = slope_scalar(q(tx, ty, ID), q(tx, ty + 1, ID), q(tx, ty - 1, ID));
+  real_t dpy = slope_scalar(q(tx, ty, IP), q(tx, ty + 1, IP), q(tx, ty - 1, IP));
+  real_t duy = slope_scalar(q(tx, ty, IU), q(tx, ty + 1, IU), q(tx, ty - 1, IU));
+  real_t dvy = slope_scalar(q(tx, ty, IV), q(tx, ty + 1, IV), q(tx, ty - 1, IV));
+
+  // Hancock term
+  const real_t sr0 = (-u * drx - dux * r) * dtdx + (-v * dry - dvy * r) * dtdy;
+  const real_t su0 = (-u * dux - dpx / r) * dtdx + (-v * duy) * dtdy;
+  const real_t sv0 = (-u * dvx) * dtdx + (-v * dvy - dpy / r) * dtdy;
+  const real_t sp0 = (-u * dpx - dux * gamma * p) * dtdx + (-v * dpy - dvy * gamma * p) * dtdy;
+
+  // Update in time the  primitive variables
+  r = r + HALF_F * sr0;
+  u = u + HALF_F * su0;
+  v = v + HALF_F * sv0;
+  p = p + HALF_F * sp0;
+
+  if (dir == IX)
+  {
+    const int tx2 = tx - 1;
+    const int ty2 = ty - 2;
+
+    qm(tx2, ty2, ID, IX) = r - HALF_F * drx;
+    qm(tx2, ty2, IU, IX) = u - HALF_F * dux;
+    qm(tx2, ty2, IV, IX) = v - HALF_F * dvx;
+    qm(tx2, ty2, IP, IX) = p - HALF_F * dpx;
+    qm(tx2, ty2, ID, IX) = FMAX(smallR, qm(tx2, ty2, ID, IX));
+    qm(tx2, ty2, IP, IX) = FMAX(smallp * qm(tx2, ty2, ID, IX), qm(tx2, ty2, IP, IX));
+
+    qp(tx2, ty2, ID, IX) = r + HALF_F * drx;
+    qp(tx2, ty2, IU, IX) = u + HALF_F * dux;
+    qp(tx2, ty2, IV, IX) = v + HALF_F * dvx;
+    qp(tx2, ty2, IP, IX) = p + HALF_F * dpx;
+    qp(tx2, ty2, ID, IX) = FMAX(smallR, qp(tx2, ty2, ID, IX));
+    qp(tx2, ty2, IP, IX) = FMAX(smallp * qp(tx2, ty2, ID, IX), qp(tx2, ty2, IP, IX));
+  }
+  else if (dir == IY)
+  {
+    const int tx2 = tx - 2;
+    const int ty2 = ty - 1;
+
+    qm(tx2, ty2, ID, IY) = r - HALF_F * dry;
+    qm(tx2, ty2, IU, IY) = u - HALF_F * duy;
+    qm(tx2, ty2, IV, IY) = v - HALF_F * dvy;
+    qm(tx2, ty2, IP, IY) = p - HALF_F * dpy;
+    qm(tx2, ty2, ID, IY) = FMAX(smallR, qm(tx2, ty2, ID, IY));
+    qm(tx2, ty2, IP, IY) = FMAX(smallp * qm(tx2, ty2, ID, IY), qm(tx2, ty2, IP, IY));
+
+    qp(tx2, ty2, ID, IY) = r + HALF_F * dry;
+    qp(tx2, ty2, IU, IY) = u + HALF_F * duy;
+    qp(tx2, ty2, IV, IY) = v + HALF_F * dvy;
+    qp(tx2, ty2, IP, IY) = p + HALF_F * dpy;
+    qp(tx2, ty2, ID, IY) = FMAX(smallR, qp(tx2, ty2, ID, IY));
+    qp(tx2, ty2, IP, IY) = FMAX(smallp * qp(tx2, ty2, ID, IY), qp(tx2, ty2, IP, IY));
+  }
+
+} // trace_unsplit_hydro_2d_by_direction_shmem
+
+/**
+ * Riemann solver, equivalent to riemann_hllc in RAMSES (see file
+ * godunov_utils.f90 in RAMSES).
+ *
+ * Hydro ONLY. When doing MHD use hlld (see file riemann_mhd.h) !
+ *
+ * @param[in] qleft : input left state
+ * @param[in] qright : input right state
+ * @param[out] qgdnv : output Godunov state
+ * @param[out] flux  : output flux
+ */
+template <size_t dim, int dir>
+__DEVICE__ void
+riemann_hllc(QReconsShmem const & qm,
+             QReconsShmem const & qp,
+             int                  tx2,
+             int                  ty2,
+             QReconsShmem &       flux)
+{
+
+  // offset to access qp
+  int offset_x = 0;
+  int offset_y = 0;
+
+  if constexpr (dir == IX)
+    offset_x = -1;
+  if constexpr (dir == IY)
+    offset_y = -1;
+
+  // swap velocity indexes
+  int IUU = IU;
+  int IVV = IV;
+  int IWW = IW;
+  if constexpr (dir == IY)
+  {
+    IUU = IV;
+    IVV = IU;
+  }
+  else if constexpr (dir == IZ)
+  {
+    IUU = IW;
+    IWW = IU;
+  }
+
+  const real_t entho = ONE_F / (gParams.gamma0 - ONE_F);
+
+  // Left variables
+  const real_t rl = FMAX(qp(tx2 + offset_x, ty2 + offset_y, ID, dir), gParams.smallr);
+  const real_t pl = FMAX(qp(tx2 + offset_x, ty2 + offset_y, IP, dir), rl * gParams.smallp);
+  const real_t ul = qp(tx2 + offset_x, ty2 + offset_y, IUU, dir);
+
+  real_t ecinl = HALF_F * rl * ul * ul;
+  ecinl += HALF_F * rl * qp(tx2 + offset_x, ty2 + offset_y, IVV, dir) *
+           qp(tx2 + offset_x, ty2 + offset_y, IVV, dir);
+  if constexpr (dim == 3)
+    ecinl += HALF_F * rl * qp(tx2 + offset_x, ty2 + offset_y, IWW, dir) *
+             qp(tx2 + offset_x, ty2 + offset_y, IWW, dir);
+
+  const real_t   etotl = pl * entho + ecinl;
+  real_t const & ptotl = pl;
+
+  // Right variables
+  const real_t rr = FMAX(qm(tx2, ty2, ID, dir), gParams.smallr);
+  const real_t pr = FMAX(qm(tx2, ty2, IP, dir), rr * gParams.smallp);
+  const real_t ur = qm(tx2, ty2, IUU, dir);
+
+  real_t ecinr = HALF_F * rr * ur * ur;
+  ecinr += HALF_F * rr * qm(tx2, ty2, IVV, dir) * qm(tx2, ty2, IVV, dir);
+  if constexpr (dim == 3)
+    ecinr += HALF_F * rr * qm(tx2, ty2, IWW, dir) * qm(tx2, ty2, IWW, dir);
+
+  const real_t   etotr = pr * entho + ecinr;
+  real_t const & ptotr = pr;
+
+  // {
+  //   // const int tx2 = tx - 1;
+  //   // const int ty2 = ty - 2;
+  //   PRINTF("pl(%d,%d)=%e pr(%d,%d)=%e\n",
+  //          tx2,
+  //          ty2,
+  //          qm(tx2, ty2, IP, dir),
+  //          tx2,
+  //          ty2,
+  //          qp(tx2 + offset_x, ty2 + offset_y, IP, dir));
+  // }
+
+  // Find the largest eigenvalues in the normal direction to the interface
+  const real_t cfastl = SQRT(FMAX(gParams.gamma0 * pl / rl, gParams.smallc * gParams.smallc));
+  const real_t cfastr = SQRT(FMAX(gParams.gamma0 * pr / rr, gParams.smallc * gParams.smallc));
+
+  // Compute HLL wave speed
+  const real_t SL = FMIN(ul, ur) - FMAX(cfastl, cfastr);
+  const real_t SR = FMAX(ul, ur) + FMAX(cfastl, cfastr);
+
+  // Compute lagrangian sound speed
+  const real_t rcl = rl * (ul - SL);
+  const real_t rcr = rr * (SR - ur);
+
+  // Compute acoustic star state
+  const real_t ustar = (rcr * ur + rcl * ul + (ptotl - ptotr)) / (rcr + rcl);
+  const real_t ptotstar = (rcr * ptotl + rcl * ptotr + rcl * rcr * (ul - ur)) / (rcr + rcl);
+
+  // Left star region variables
+  const real_t rstarl = rl * (SL - ul) / (SL - ustar);
+  const real_t etotstarl = ((SL - ul) * etotl - ptotl * ul + ptotstar * ustar) / (SL - ustar);
+
+  // Right star region variables
+  const real_t rstarr = rr * (SR - ur) / (SR - ustar);
+  const real_t etotstarr = ((SR - ur) * etotr - ptotr * ur + ptotstar * ustar) / (SR - ustar);
+
+  // Sample the solution at x/t=0
+  real_t ro, uo, ptoto, etoto;
+  if (SL > ZERO_F)
+  {
+    ro = rl;
+    uo = ul;
+    ptoto = ptotl;
+    etoto = etotl;
+  }
+  else if (ustar > ZERO_F)
+  {
+    ro = rstarl;
+    uo = ustar;
+    ptoto = ptotstar;
+    etoto = etotstarl;
+  }
+  else if (SR > ZERO_F)
+  {
+    ro = rstarr;
+    uo = ustar;
+    ptoto = ptotstar;
+    etoto = etotstarr;
+  }
+  else
+  {
+    ro = rr;
+    uo = ur;
+    ptoto = ptotr;
+    etoto = etotr;
+  }
+
+  // Compute the Godunov flux
+  flux(tx2, ty2, ID, dir) = ro * uo;
+  flux(tx2, ty2, IUU, dir) = ro * uo * uo + ptoto;
+  flux(tx2, ty2, IP, dir) = (etoto + ptoto) * uo;
+  if (flux(tx2, ty2, ID, dir) > ZERO_F)
+  {
+    flux(tx2, ty2, IVV, dir) =
+      flux(tx2, ty2, ID, dir) * qp(tx2 + offset_x, ty2 + offset_y, IVV, dir);
+  }
+  else
+  {
+    flux(tx2, ty2, IVV, dir) = flux(tx2, ty2, ID, dir) * qm(tx2, ty2, IVV, dir);
+  }
+
+  if constexpr (dim == 3)
+  {
+    if (flux(tx2, ty2, ID, dir) > ZERO_F)
+    {
+      flux(tx2, ty2, IWW, dir) =
+        flux(tx2, ty2, ID, dir) * qp(tx2 + offset_x, ty2 + offset_y, IWW, dir);
+    }
+    else
+    {
+      flux(tx2, ty2, IWW, dir) = flux(tx2, ty2, ID, dir) * qm(tx2, ty2, IWW, dir);
+    }
+  }
+
+} // riemann_hllc
+
+/**
+ * Wrapper routine to call the right Riemann solver routine according
+ * to the global parameter riemannSolver
+ *
+ * @param[in] qleft : input left state
+ * @param[in] qright : input right state
+ * @param[out] qgdnv : output Godunov state
+ * @param[out] flux  : output flux vector
+ *
+ * template parameter:
+ * @tparam NVAR size of state vector (can only be NVAR_2D, NVAR_3D or NVAR_MHD)
+ */
+template <size_t dim, int dir>
+__DEVICE__ void
+riemann(QReconsShmem const & qm, QReconsShmem const & qp, int tx2, int ty2, QReconsShmem & flux)
+{
+  if (gParams.riemannSolver == HLLC)
+  {
+    riemann_hllc<dim, dir>(qm, qp, tx2, ty2, flux);
+  }
+
+} // riemann
