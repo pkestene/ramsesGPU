@@ -107,7 +107,7 @@ HydroMpiParameters::HydroMpiParameters(ConfigMap & _configMap)
   // be available as a global constant, useful for GPU implementation).
   _gParams.mpiPosX = myMpiPos[0];
   _gParams.mpiPosY = myMpiPos[1];
-  _gParams.mpiPosZ = myMpiPos[2];
+  _gParams.mpiPosZ = nDim == 2 ? 0 : myMpiPos[2];
 
   /*
    * compute MPI ranks of our neighbors and
