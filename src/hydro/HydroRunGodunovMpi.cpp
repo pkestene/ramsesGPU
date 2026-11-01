@@ -766,19 +766,21 @@ HydroRunGodunovMpi::godunov_unsplit_gpu_v0(DeviceArray<real_t> & d_UOld,
     // In this version primitive variables are computed as needed inside
     // kernel
     //
-    // // 2D Godunov unsplit kernel
-    // dim3 dimBlock(UNSPLIT_BLOCK_DIMX_2D,
-    // 		    UNSPLIT_BLOCK_DIMY_2D);
-    // dim3 dimGrid(blocksFor(isize, UNSPLIT_BLOCK_INNER_DIMX_2D),
-    // 		   blocksFor(jsize, UNSPLIT_BLOCK_INNER_DIMY_2D));
-    // kernel_godunov_unsplit_2d<<<dimGrid, dimBlock>>>(d_UOld.data(),
-    // 						       d_UNew.data(),
-    // 						       d_UOld.pitch(),
-    // 						       d_UOld.dimx(),
-    // 						       d_UOld.dimy(),
-    // 						       dt / dx, dt,
-    // 						       gravityEnabled);
-    // checkCudaError("HydroRunGodunov :: kernel_godunov_unsplit_2d error");
+    // 2D Godunov unsplit kernel
+    {
+      dim3 dimBlock(UNSPLIT_BLOCK_DIMX_2D, UNSPLIT_BLOCK_DIMY_2D);
+      dim3 dimGrid(blocksFor(isize, UNSPLIT_BLOCK_INNER_DIMX_2D),
+                   blocksFor(jsize, UNSPLIT_BLOCK_INNER_DIMY_2D));
+      kernel_godunov_unsplit_2d<<<dimGrid, dimBlock>>>(d_UOld.data(),
+                                                       d_UNew.data(),
+                                                       d_UOld.pitch(),
+                                                       d_UOld.dimx(),
+                                                       d_UOld.dimy(),
+                                                       dt / dx,
+                                                       dt,
+                                                       gravityEnabled);
+      checkCudaError("HydroRunGodunov :: kernel_godunov_unsplit_2d error");
+    }
 
     {
       dim3 dimBlock(UNSPLIT_BLOCK_DIMX_2D_V0, UNSPLIT_BLOCK_DIMY_2D_V0);
