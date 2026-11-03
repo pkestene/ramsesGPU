@@ -413,4 +413,27 @@ cutilCudaCapabilities(int major_version, int minor_version)
   }
 }
 
+// This function returns the best GPU (with maximum GFLOPS)
+inline int
+cutGetMaxSharedMemoryPerBlock()
+{
+  int myDevId = -1;
+  int maxSharedMem = 0;
+  cutilSafeCall(cudaGetDevice(&myDevId));
+  cutilSafeCall(cudaDeviceGetAttribute(&maxSharedMem, cudaDevAttrMaxSharedMemoryPerBlock, myDevId));
+  return maxSharedMem;
+}
+
+inline int
+cutGetMaxSharedMemoryPerSM()
+{
+  int myDevId = -1;
+  int maxSharedMem = 0;
+  cutilSafeCall(cudaGetDevice(&myDevId));
+  cutilSafeCall(
+    cudaDeviceGetAttribute(&maxSharedMem, cudaDevAttrMaxSharedMemoryPerMultiprocessor, myDevId));
+  return maxSharedMem;
+}
+
+
 #endif // _CUTIL_INLINE_FUNCTIONS_RUNTIME_H_

@@ -1,18 +1,24 @@
 #include "real_type.h"
 #include "constants.h"
+#include "utils/config/ConfigMap.h"
+#include <cuda/std/algorithm> // for cuda::std::max
 
-// 2D-kernel block dimensions
-#ifdef USE_DOUBLE
-#  define UNSPLIT_BLOCK_DIMX_2D_V3 16
-#  define UNSPLIT_BLOCK_INNER_DIMX_2D_V3 (UNSPLIT_BLOCK_DIMX_2D_V3 - 4)
-#  define UNSPLIT_BLOCK_DIMY_2D_V3 16
-#  define UNSPLIT_BLOCK_INNER_DIMY_2D_V3 (UNSPLIT_BLOCK_DIMY_2D_V3 - 4)
-#else // simple precision
-#  define UNSPLIT_BLOCK_DIMX_2D_V3 16
-#  define UNSPLIT_BLOCK_INNER_DIMX_2D_V3 (UNSPLIT_BLOCK_DIMX_2D_V3 - 4)
-#  define UNSPLIT_BLOCK_DIMY_2D_V3 16
-#  define UNSPLIT_BLOCK_INNER_DIMY_2D_V3 (UNSPLIT_BLOCK_DIMY_2D_V3 - 4)
-#endif // USE_DOUBLE
+// // 2D-kernel block dimensions
+// #ifdef USE_DOUBLE
+// #  define UNSPLIT_BLOCK_DIMX_2D_V3 64
+// #  define UNSPLIT_BLOCK_INNER_DIMX_2D_V3 (UNSPLIT_BLOCK_DIMX_2D_V3 - 4)
+// #  define UNSPLIT_BLOCK_DIMY_2D_V3 16
+// #  define UNSPLIT_BLOCK_INNER_DIMY_2D_V3 (UNSPLIT_BLOCK_DIMY_2D_V3 - 4)
+// #else // simple precision
+// #  define UNSPLIT_BLOCK_DIMX_2D_V3 16
+// #  define UNSPLIT_BLOCK_INNER_DIMX_2D_V3 (UNSPLIT_BLOCK_DIMX_2D_V3 - 4)
+// #  define UNSPLIT_BLOCK_DIMY_2D_V3 16
+// #  define UNSPLIT_BLOCK_INNER_DIMY_2D_V3 (UNSPLIT_BLOCK_DIMY_2D_V3 - 4)
+// #endif // USE_DOUBLE
+
+// #ifndef MAX
+// #  define MAX(a, b) ((a) > (b) ? (a) : (b))
+// #endif
 
 /**
  * Primitive variables array (for shared memory storage).
@@ -30,26 +36,56 @@
  *   |_|_|_|_|_|_|_|_|
  *   |_|_|_|_|_|_|_|_|
  */
-class QShmem
+class QPrim
 {
-private:
-  real_t data[UNSPLIT_BLOCK_DIMX_2D_V3 * UNSPLIT_BLOCK_DIMY_2D_V3 * NVAR_2D];
+public:
+  // static constexpr int    DIM_XY = UNSPLIT_BLOCK_DIMX_2D_V3 * UNSPLIT_BLOCK_DIMY_2D_V3;
+  // static constexpr size_t NUM_ELEMENTS = static_cast<size_t>(DIM_XY * NVAR_2D);
 
-  static const int DIM_XY = UNSPLIT_BLOCK_DIMX_2D_V3 * UNSPLIT_BLOCK_DIMY_2D_V3;
+  __host__ __device__ static size_t
+  required_size_in_bytes(int dim_x, int dim_y)
+  {
+    return static_cast<size_t>(dim_x * dim_y * NVAR_2D) * sizeof(real_t);
+  }
+
+private:
+  //! externally managed memory (e.g. cuda shared memory)
+  real_t * m_data;
+
+  //! size along x axis
+  int m_dim_x;
+
+  //! size along y axis
+  int m_dim_y;
+
+  //! total x-y size
+  int m_dim_xy;
 
 public:
+  __device__
+  QPrim()
+  {}
+
+  __device__
+  QPrim(void * ptr, int dim_x, int dim_y)
+    : m_data(reinterpret_cast<real_t *>(ptr))
+    , m_dim_x(dim_x)
+    , m_dim_y(dim_y)
+    , m_dim_xy(dim_x * dim_y)
+  {}
+
   __device__ real_t &
   operator()(int const tx, int const ty, int const i_var)
   {
-    return data[tx + UNSPLIT_BLOCK_DIMX_2D_V3 * ty + DIM_XY * i_var];
+    return m_data[tx + m_dim_x * ty + m_dim_xy * i_var];
   }
 
   __device__ real_t const &
   operator()(int const tx, int const ty, int const i_var) const
   {
-    return data[tx + UNSPLIT_BLOCK_DIMX_2D_V3 * ty + DIM_XY * i_var];
+    return m_data[tx + m_dim_x * ty + m_dim_xy * i_var];
   }
-};
+}; // class QPrim
 
 /**
  * Reconstructed states array (for shared memory storage).
@@ -82,41 +118,148 @@ public:
  * The shared memory array has 2 memory layouts depending whether doing computations along X or Y
  * axis
  */
-class QReconsShmem
+class QRecons
 {
+public:
+  // // memory layout for computing along X axis
+  // static constexpr int DIM_X1 = UNSPLIT_BLOCK_INNER_DIMX_2D_V3 + 2;
+  // static constexpr int DIM_Y1 = UNSPLIT_BLOCK_INNER_DIMY_2D_V3 + 0;
+  // static constexpr int DIM_XY1 = DIM_X1 * DIM_Y1;
+
+  // // memory layout for computing along Y axis
+  // static constexpr int DIM_X2 = UNSPLIT_BLOCK_INNER_DIMX_2D_V3 + 0;
+  // static constexpr int DIM_Y2 = UNSPLIT_BLOCK_INNER_DIMY_2D_V3 + 2;
+  // static constexpr int DIM_XY2 = DIM_X2 * DIM_Y2;
+
+  // static constexpr size_t NUM_ELEMENTS = static_cast<size_t>(std::max(DIM_XY1, DIM_XY2) *
+  // NVAR_2D);
+
+  __host__ __device__ static size_t
+  required_size_in_bytes(int dim_x, int dim_y)
+  {
+    const auto dim_xy1 = static_cast<size_t>((dim_x - 2) * (dim_y - 4));
+    const auto dim_xy2 = static_cast<size_t>((dim_x - 4) * (dim_y - 2));
+    return cuda::std::max(dim_xy1, dim_xy2) * NVAR_2D * sizeof(real_t);
+  }
+
 private:
-  // memory layout for computing along X axis
-  static const int DIM_X1 = UNSPLIT_BLOCK_INNER_DIMX_2D_V3 + 2;
-  static const int DIM_Y1 = UNSPLIT_BLOCK_INNER_DIMY_2D_V3 + 0;
-  static const int DIM_XY1 = DIM_X1 * DIM_Y1;
+  //! externally managed memory (e.g. cuda shared memory)
+  real_t * m_data;
 
-  // memory layout for computing along Y axis
-  static const int DIM_X2 = UNSPLIT_BLOCK_INNER_DIMX_2D_V3 + 0;
-  static const int DIM_Y2 = UNSPLIT_BLOCK_INNER_DIMY_2D_V3 + 2;
-  static const int DIM_XY2 = DIM_X2 * DIM_Y2;
+  //! size along x axis when computing along x axis
+  int m_dim_x1;
 
-  real_t data[(UNSPLIT_BLOCK_INNER_DIMX_2D_V3 + 2) * UNSPLIT_BLOCK_DIMY_2D_V3 * NVAR_2D];
+  //! size along y axis when computing along x axis
+  int m_dim_y1;
+
+  //! total number of cells excluding ghost cells when computing along x axis
+  int m_dim_xy1;
+
+  //! size along x axis when computing along y axis
+  int m_dim_x2;
+
+  //! size along y axis when computing along y axis
+  int m_dim_y2;
+
+  //! total number of cells excluding ghost cells when computing along y axis
+  int m_dim_xy2;
 
 public:
+  __device__
+  QRecons()
+  {}
+
+  __device__
+  QRecons(void * ptr, int dim_x, int dim_y)
+    : m_data(reinterpret_cast<real_t *>(ptr))
+    , m_dim_x1(dim_x - 2)
+    , m_dim_y1(dim_y - 4)
+    , m_dim_xy1(m_dim_x1 * m_dim_y1)
+    , m_dim_x2(dim_x - 4)
+    , m_dim_y2(dim_y - 2)
+    , m_dim_xy2(m_dim_x2 * m_dim_y2)
+  {}
+
   __device__ real_t &
   operator()(int const tx, int const ty, int const i_var, const int dir)
   {
     if (dir == IX)
-      return data[tx + DIM_X1 * ty + DIM_XY1 * i_var];
+      return m_data[tx + m_dim_x1 * ty + m_dim_xy1 * i_var];
     else if (dir == IY)
-      return data[tx + DIM_X2 * ty + DIM_XY2 * i_var];
+      return m_data[tx + m_dim_x2 * ty + m_dim_xy2 * i_var];
+    return m_data[0];
   }
 
   __device__ real_t const &
   operator()(int const tx, int const ty, int const i_var, const int dir) const
   {
     if (dir == IX)
-      return data[tx + DIM_X1 * ty + DIM_XY1 * i_var];
+      return m_data[tx + m_dim_x1 * ty + m_dim_xy1 * i_var];
     else if (dir == IY)
-      return data[tx + DIM_X2 * ty + DIM_XY2 * i_var];
+      return m_data[tx + m_dim_x2 * ty + m_dim_xy2 * i_var];
+    return m_data[0];
   }
 
-}; // class QReconsShmem
+}; // class QRecons
+
+/**
+ * \brief Gathering configuration information for running CUDA kernel kernel_godunov_unsplit_2d_v3.
+ *
+ * Example : amount of required shared memory
+ */
+class GodunovUnsplitConfigV3
+{
+public:
+  __device__ static size_t
+  offset_bytes_qm(int dim_x, int dim_y)
+  {
+    return QPrim::required_size_in_bytes(dim_x, dim_y);
+  };
+
+  __device__ static size_t
+  offset_bytes_qp(int dim_x, int dim_y)
+  {
+    return offset_bytes_qm(dim_x, dim_y) + QRecons::required_size_in_bytes(dim_x, dim_y);
+  }
+
+  __device__ static size_t
+  offset_bytes_flux(int dim_x, int dim_y)
+  {
+    return offset_bytes_qp(dim_y, dim_y) + QRecons::required_size_in_bytes(dim_x, dim_y);
+  }
+
+  static size_t
+  required_shared_mem_bytes(int dim_x, int dim_y)
+  {
+    return QPrim::required_size_in_bytes(dim_x, dim_y) +
+           3 * QRecons::required_size_in_bytes(dim_x, dim_y);
+  }
+
+  static size_t
+  required_shared_mem_bytes(ConfigMap const & config_map)
+  {
+    const auto dim_x = config_map.getInteger("hydro_unsplit_version_3", "dim_x", 16);
+    const auto dim_y = config_map.getInteger("hydro_unsplit_version_3", "dim_y", 16);
+
+    return required_shared_mem_bytes(dim_x, dim_y);
+  }
+};
+
+//! compute the total amount of shared memory required by CUDA kernel kernel_godunov_unsplit_2d_v3
+// size_t
+// kernel_godunov_unsplit_2d_v3_required_shared_mem_bytes()
+// {
+//   return (QPrim::NUM_ELEMENTS + 3 * QRecons::NUM_ELEMENTS) * sizeof(real_t);
+// }
+
+//! compute required shared memory for a given shared memory block configuration
+// size_t
+// required_shared_memory_in_bytes(int dim_x, int dim_y)
+// {
+//   const size_t size_qprim = dim_x * dim_y;
+//   const size_t size_qrecons = std::max((dim_x - 4) * (dim_y - 2), (dim_x - 2) * (dim_y - 4));
+//   return static_cast<size_t>((size_qprim + 3 * size_qrecons) * NVAR_2D * sizeof(real_t));
+// }
 
 /**
  * conservative (rho, rho*u, rho*v, e) to primitive variables (rho,
@@ -127,7 +270,7 @@ public:
  */
 __DEVICE__
 void
-constoprim_2D(const real_t u[NVAR_2D], QShmem & q, int tx, int ty, real_t & c)
+constoprim_2D(const real_t u[NVAR_2D], QPrim & q, int tx, int ty, real_t & c)
 {
   const real_t rho = FMAX(u[ID], ::gParams.smallr);
 
@@ -190,14 +333,14 @@ constoprim_2D(const real_t u[NVAR_2D], QShmem & q, int tx, int ty, real_t & c)
  */
 __DEVICE__
 void
-trace_unsplit_hydro_2d_by_direction_shmem(QShmem const & q,
+trace_unsplit_hydro_2d_by_direction_shmem(QPrim const &  q,
                                           int const &    tx,
                                           int const &    ty,
                                           real_t const & dtdx,
                                           real_t const & dtdy,
                                           int const      dir,
-                                          QReconsShmem & qm,
-                                          QReconsShmem & qp)
+                                          QRecons &      qm,
+                                          QRecons &      qp)
 {
 
   // some aliases
@@ -290,11 +433,7 @@ trace_unsplit_hydro_2d_by_direction_shmem(QShmem const & q,
  */
 template <size_t dim, int dir>
 __DEVICE__ void
-riemann_hllc(QReconsShmem const & qm,
-             QReconsShmem const & qp,
-             int                  tx2,
-             int                  ty2,
-             QReconsShmem &       flux)
+riemann_hllc(QRecons const & qm, QRecons const & qp, int tx2, int ty2, QRecons & flux)
 {
 
   // offset to access qp
@@ -450,7 +589,7 @@ riemann_hllc(QReconsShmem const & qm,
  */
 template <size_t dim, int dir>
 __DEVICE__ void
-riemann(QReconsShmem const & qm, QReconsShmem const & qp, int tx2, int ty2, QReconsShmem & flux)
+riemann(QRecons const & qm, QRecons const & qp, int tx2, int ty2, QRecons & flux)
 {
   if (gParams.riemannSolver == HLLC)
   {

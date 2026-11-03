@@ -141,6 +141,15 @@ private:
                          real_t                dt,
                          int                   nStep);
 
+  //! unplitVersion = 3 (variant of 0))
+  //! memory footprint is very low
+  //! nothing is stored globally, heavily use shared memory
+  void
+  godunov_unsplit_gpu_v3(DeviceArray<real_t> & d_UOld,
+                         DeviceArray<real_t> & d_UNew,
+                         real_t                dt,
+                         int                   nStep);
+
 #else
   //! Actual computation of the godunov integration on CPU using
   //! directionally split scheme.

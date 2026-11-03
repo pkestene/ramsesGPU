@@ -270,6 +270,25 @@ HydroRunGodunovMpi::HydroRunGodunovMpi(ConfigMap & _configMap)
 #endif // __CUDACC__
 
     } // end unsplitVersion == 2
+    else if (unsplitVersion == 3)
+    {
+#ifdef __CUDACC__
+      if (myRank == 0)
+      {
+        const auto max_shared_mem_per_SM = cutGetMaxSharedMemoryPerSM();
+        const auto required_shared_mem =
+          GodunovUnsplitConfigV3::required_shared_mem_bytes(configMap);
+        std::cout << "Maximum  shared memory is " << max_shared_mem_per_SM / 1000.0 << " kB\n";
+        std::cout << "Required shared memory is " << required_shared_mem / 1000.0 << " kB\n";
+        if (required_shared_mem > max_shared_mem_per_SM)
+        {
+          std::cerr
+            << "Can't go further. Cuda kernel (unsplit v3) requests too much shared memory\n";
+          MPI_Abort(communicator->getComm(), -1);
+        }
+      }
+#endif // __CUDACC__
+    }
 
   } // end unsplitEnabled
 
@@ -1402,18 +1421,38 @@ HydroRunGodunovMpi::godunov_unsplit_gpu_v3(DeviceArray<real_t> & d_UOld,
     //
     // 2D Godunov unsplit kernel
     {
-      dim3 dimBlock(UNSPLIT_BLOCK_DIMX_2D_V3, UNSPLIT_BLOCK_DIMY_2D_V3);
-      dim3 dimGrid(blocksFor(isize, UNSPLIT_BLOCK_INNER_DIMX_2D_V3),
-                   blocksFor(jsize, UNSPLIT_BLOCK_INNER_DIMY_2D_V3));
-      kernel_godunov_unsplit_2d_v3<<<dimGrid, dimBlock>>>(d_UOld.data(),
-                                                          d_UNew.data(),
-                                                          d_UNew.pitch(),
-                                                          d_UNew.dimx(),
-                                                          d_UNew.dimy(),
-                                                          dt / dx,
-                                                          dt / dy,
-                                                          dt,
-                                                          gravityEnabled);
+
+      const auto dim_x = configMap.getInteger("hydro_unsplit_version_3", "dim_x", 16);
+      const auto dim_y = configMap.getInteger("hydro_unsplit_version_3", "dim_y", 16);
+
+
+      // make sure the required amount of shared memory is valid for the underlying GPU hardware
+      cudaError_t status =
+        cudaFuncSetAttribute(kernel_godunov_unsplit_2d_v3,
+                             cudaFuncAttributeMaxDynamicSharedMemorySize,
+                             GodunovUnsplitConfigV3::required_shared_mem_bytes(dim_x, dim_y));
+
+      if (status != cudaSuccess)
+      {
+        std::cerr << "You GPU doesn't support using "
+                  << GodunovUnsplitConfigV3::required_shared_mem_bytes(dim_x, dim_y) / 1000
+                  << " kBytes of shared memory required by kernel_godunov_unsplit_2d_v3\n";
+      }
+
+      dim3 dimBlock(dim_x, dim_y);
+      dim3 dimGrid(blocksFor(isize, dim_x - 4), blocksFor(jsize, dim_y - 4));
+      kernel_godunov_unsplit_2d_v3<<<dimGrid,
+                                     dimBlock,
+                                     GodunovUnsplitConfigV3::required_shared_mem_bytes(
+                                       dim_x, dim_y)>>>(d_UOld.data(),
+                                                        d_UNew.data(),
+                                                        d_UNew.pitch(),
+                                                        d_UNew.dimx(),
+                                                        d_UNew.dimy(),
+                                                        dt / dx,
+                                                        dt / dy,
+                                                        dt,
+                                                        gravityEnabled);
       checkCudaErrorMpi("HydroRunGodunov :: kernel_godunov_unsplit_2d_v3 error", myRank);
 
     } // end compute unsplit v3

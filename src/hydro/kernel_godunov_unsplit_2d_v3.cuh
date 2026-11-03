@@ -41,32 +41,53 @@ kernel_godunov_unsplit_2d_v3(const real_t * __restrict__ Uin,
                              bool   gravityEnabled)
 {
   // Block index
-  const int bx = blockIdx.x;
-  const int by = blockIdx.y;
+  auto const & bx = blockIdx.x;
+  auto const & by = blockIdx.y;
+
+  // block dimension
+  auto const dim_x = blockDim.x;
+  auto const dim_y = blockDim.y;
 
   // Thread index
-  const int tx = threadIdx.x;
-  const int ty = threadIdx.y;
+  auto const & tx = threadIdx.x;
+  auto const & ty = threadIdx.y;
 
-  const int i = __mul24(bx, UNSPLIT_BLOCK_INNER_DIMX_2D_V3) + tx;
-  const int j = __mul24(by, UNSPLIT_BLOCK_INNER_DIMY_2D_V3) + ty;
+  const int i = __mul24(bx, dim_x - 4) + tx;
+  const int j = __mul24(by, dim_y - 4) + ty;
 
   const int arraySize = __umul24(pitch, jmax);
   const int elemOffset = __umul24(pitch, j) + i;
 
-  // primitive variables inner + ghost cells
-  __shared__ QShmem q;
+  extern __shared__ char storage[];
 
-  // reconstructed states on X interface
-  __shared__ QReconsShmem qm;
-  __shared__ QReconsShmem qp;
+  void * qprim_data_ptr = reinterpret_cast<void *>(&storage);
+  void * qm_data_ptr =
+    reinterpret_cast<void *>(&storage[QPrim::required_size_in_bytes(dim_x, dim_y)]);
+  void * qp_data_ptr =
+    reinterpret_cast<void *>(&storage[QPrim::required_size_in_bytes(dim_x, dim_y) +
+                                      QRecons::required_size_in_bytes(dim_x, dim_y)]);
+  void * flux_data_ptr =
+    reinterpret_cast<void *>(&storage[QPrim::required_size_in_bytes(dim_x, dim_y) +
+                                      2 * QRecons::required_size_in_bytes(dim_x, dim_y)]);
 
-  //  Riemann fluxes
-  __shared__ QReconsShmem flux;
+  // static allocation of all containers (this will call default constructor that does nothing)
+  __shared__ QPrim   q;
+  __shared__ QRecons qm;
+  __shared__ QRecons qp;
+  __shared__ QRecons flux;
+
+  // call constructor at designated address with placement new (only 1 thread in block)
+  if (tx == 0 and ty == 0)
+  {
+    ::new (&q) QPrim(qprim_data_ptr, dim_x, dim_y);
+    ::new (&qm) QRecons(qm_data_ptr, dim_x, dim_y);
+    ::new (&qp) QRecons(qp_data_ptr, dim_x, dim_y);
+    ::new (&flux) QRecons(flux_data_ptr, dim_x, dim_y);
+  }
+  __syncthreads();
 
   // conservative variables
   real_t uIn[NVAR_2D];
-
 
   real_t * gravin = gParams.arrayList[A_GRAV];
 
@@ -95,8 +116,8 @@ kernel_godunov_unsplit_2d_v3(const real_t * __restrict__ Uin,
   //
 
   // clang-format off
-  if (i > 0 and i < imax - 1 and tx > 0 and tx < UNSPLIT_BLOCK_DIMX_2D_V3 - 1 and
-      j > 0 and j < jmax - 1 and ty > 1 and ty < UNSPLIT_BLOCK_DIMY_2D_V3 - 2)
+  if (i > 0 and i < imax - 1 and tx > 0 and tx < dim_x - 1 and
+      j > 0 and j < jmax - 1 and ty > 1 and ty < dim_y - 2)
   // clang-format on
   {
 
@@ -125,8 +146,8 @@ kernel_godunov_unsplit_2d_v3(const real_t * __restrict__ Uin,
   //
 
   // clang-format off
-  if (i > 1 and i < imax - 1 and tx > 1 and tx < UNSPLIT_BLOCK_DIMX_2D_V3 - 1 and
-      j > 1 and j < jmax - 1 and ty > 1 and ty < UNSPLIT_BLOCK_DIMY_2D_V3 - 2)
+  if (i > 1 and i < imax - 1 and tx > 1 and tx < dim_x - 1 and
+      j > 1 and j < jmax - 1 and ty > 1 and ty < dim_y - 2)
   // clang-format on
   {
     const int tx2 = tx - 1;
@@ -142,14 +163,12 @@ kernel_godunov_unsplit_2d_v3(const real_t * __restrict__ Uin,
   //
 
   // clang-format off
-  if (i > 1 and i < imax - 1 and tx > 1 and tx < UNSPLIT_BLOCK_DIMX_2D_V3 - 2 and
-      j > 1 and j < jmax - 1 and ty > 1 and ty < UNSPLIT_BLOCK_DIMY_2D_V3 - 2)
+  if (i > 1 and i < imax - 2 and tx > 1 and tx < dim_x - 2 and
+      j > 1 and j < jmax - 2 and ty > 1 and ty < dim_y - 2)
   // clang-format on
   {
     const int tx2 = tx - 1;
     const int ty2 = ty - 2;
-
-    // PRINTF("flux: p(%d,%d)=%e\n", tx, ty, flux(tx2, ty2, IP, IX));
 
     int offset = elemOffset;
     Uout[offset] += (flux(tx2, ty2, ID, IX) - flux(tx2 + 1, ty2, ID, IX)) * dtdx;
@@ -167,8 +186,8 @@ kernel_godunov_unsplit_2d_v3(const real_t * __restrict__ Uin,
   //
 
   // clang-format off
-  if (i > 0 and i < imax - 1 and tx > 1 and tx < UNSPLIT_BLOCK_DIMX_2D_V3 - 2 and
-      j > 0 and j < jmax - 1 and ty > 0 and ty < UNSPLIT_BLOCK_DIMY_2D_V3 - 1)
+  if (i > 0 and i < imax - 1 and tx > 1 and tx < dim_x - 2 and
+      j > 0 and j < jmax - 1 and ty > 0 and ty < dim_y - 1)
   // clang-format on
   {
 
@@ -197,8 +216,8 @@ kernel_godunov_unsplit_2d_v3(const real_t * __restrict__ Uin,
   //
 
   // clang-format off
-  if (i > 1 and i < imax - 1 and tx > 1 and tx < UNSPLIT_BLOCK_DIMX_2D_V3 - 2 and
-      j > 1 and j < jmax - 1 and ty > 1 and ty < UNSPLIT_BLOCK_DIMY_2D_V3 - 1)
+  if (i > 1 and i < imax - 1 and tx > 1 and tx < dim_x - 2 and
+      j > 1 and j < jmax - 1 and ty > 1 and ty < dim_y - 1)
   // clang-format on
   {
     const int tx2 = tx - 2;
@@ -214,8 +233,8 @@ kernel_godunov_unsplit_2d_v3(const real_t * __restrict__ Uin,
   //
 
   // clang-format off
-  if (i > 1 and i < imax - 1 and tx > 1 and tx < UNSPLIT_BLOCK_DIMX_2D_V3 - 2 and
-      j > 1 and j < jmax - 1 and ty > 1 and ty < UNSPLIT_BLOCK_DIMY_2D_V3 - 2)
+  if (i > 1 and i < imax - 2 and tx > 1 and tx < dim_x - 2 and
+      j > 1 and j < jmax - 2 and ty > 1 and ty < dim_y - 2)
   // clang-format on
   {
     const int tx2 = tx - 2;
