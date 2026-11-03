@@ -3,7 +3,7 @@ message("Using cmake policy CMP0104 NEW (CMAKE_CUDA_ARCHITECTURES must be set)")
 cmake_policy(SET CMP0104 NEW)
 project(RamsesGPU LANGUAGES CXX C)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # custom cmake macros location
@@ -50,7 +50,7 @@ if(USE_CUDA)
   find_package(CUDAToolkit REQUIRED)
 
   if(NOT DEFINED CMAKE_CUDA_STANDARD)
-    set(CMAKE_CUDA_STANDARD 11)
+    set(CMAKE_CUDA_STANDARD 17)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
   endif()
 
