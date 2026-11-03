@@ -16,6 +16,19 @@
 
 /**
  * Primitive variables array (for shared memory storage).
+ *
+ * Example 8x8 ghosted block of cells:
+ * - 2 ghosts cells all arround
+ * - the inner core is 4x4
+ *    _______________
+ *   |_|_|_|_|_|_|_|_|
+ *   |_|_|_|_|_|_|_|_|
+ *   |_|_|x|x|x|x|_|_|
+ *   |_|_|x|x|x|x|_|_|
+ *   |_|_|x|x|x|x|_|_|
+ *   |_|_|x|x|x|x|_|_|
+ *   |_|_|_|_|_|_|_|_|
+ *   |_|_|_|_|_|_|_|_|
  */
 class QShmem
 {
@@ -41,15 +54,43 @@ public:
 /**
  * Reconstructed states array (for shared memory storage).
  *
+ * When doing computing along X axis, we need to reconstruct states on the left and right faces of
+ * all cells marked with symbol "x" and "o". Ghost cells (void) are necessary for computing slopes
+ *    _______________
+ *   |_|_|_|_|_|_|_|_|
+ *   |_|_|_|_|_|_|_|_|
+ *   |_|o|x|x|x|x|o|_|
+ *   |_|o|x|x|x|x|o|_|
+ *   |_|o|x|x|x|x|o|_|
+ *   |_|o|x|x|x|x|o|_|
+ *   |_|_|_|_|_|_|_|_|
+ *   |_|_|_|_|_|_|_|_|
  *
+ * When doing computing along Y axis, we need to reconstruct states on the left and right faces of
+ * all cells marked with symbol "x" and "o". Ghost cells (void) are necessary for computing slopes
+ *    _______________
+ *   |_|_|_|_|_|_|_|_|
+ *   |_|_|o|o|o|o|_|_|
+ *   |_|_|x|x|x|x|_|_|
+ *   |_|_|x|x|x|x|_|_|
+ *   |_|_|x|x|x|x|_|_|
+ *   |_|_|x|x|x|x|_|_|
+ *   |_|_|o|o|o|o|_|_|
+ *   |_|_|_|_|_|_|_|_|
+ *
+ *
+ * The shared memory array has 2 memory layouts depending whether doing computations along X or Y
+ * axis
  */
 class QReconsShmem
 {
 private:
+  // memory layout for computing along X axis
   static const int DIM_X1 = UNSPLIT_BLOCK_INNER_DIMX_2D_V3 + 2;
   static const int DIM_Y1 = UNSPLIT_BLOCK_INNER_DIMY_2D_V3 + 0;
   static const int DIM_XY1 = DIM_X1 * DIM_Y1;
 
+  // memory layout for computing along Y axis
   static const int DIM_X2 = UNSPLIT_BLOCK_INNER_DIMX_2D_V3 + 0;
   static const int DIM_Y2 = UNSPLIT_BLOCK_INNER_DIMY_2D_V3 + 2;
   static const int DIM_XY2 = DIM_X2 * DIM_Y2;
@@ -75,14 +116,14 @@ public:
       return data[tx + DIM_X2 * ty + DIM_XY2 * i_var];
   }
 
-}; // class QreconsShmem
+}; // class QReconsShmem
 
 /**
  * conservative (rho, rho*u, rho*v, e) to primitive variables (rho,
  * u,v,p)
- * @param[in]  u  conservative variables
- * @param[out] q  primitive    variables
- * @param[out] c  local speed of sound
+ * \param[in]  u  conservative variables state in a cell cell
+ * \param[out] q  array of primitive variable states (ghosted block)
+ * \param[out] c  local speed of sound
  */
 __DEVICE__
 void
@@ -138,12 +179,14 @@ constoprim_2D(const real_t u[NVAR_2D], QShmem & q, int tx, int ty, real_t & c)
  * Note that :
  * - hydro slopes computations are done outside this routine
  *
- * \param[in]  q  primitive variable array (shared memory)
+ * \param[in]  q  array of primitive variable in shared memory (ghosted block)
+ * \param[in] tx x coordinate identifying a cell in the ghosted block
+ * \param[in] ty y coordinate identifying a cell in the ghosted block
  * \param[in]  dtdx dt divided by dx
  * \param[in]  dtdy dt divided by dy
- * \param[in]  dir direction (either X or Y)
- * \param[out] qL the reconstructed state from the left
- * \param[out] qR the reconstructed state from the right
+ * \param[in]  dir direction (either IX or IY)
+ * \param[out] qm array of reconstructed states (left face of a cell)
+ * \param[out] qp array of reconstructed state  (right face of a cell)
  */
 __DEVICE__
 void
@@ -237,12 +280,13 @@ trace_unsplit_hydro_2d_by_direction_shmem(QShmem const & q,
  * Riemann solver, equivalent to riemann_hllc in RAMSES (see file
  * godunov_utils.f90 in RAMSES).
  *
- * Hydro ONLY. When doing MHD use hlld (see file riemann_mhd.h) !
+ * Hydro ONLY.
  *
- * @param[in] qleft : input left state
- * @param[in] qright : input right state
- * @param[out] qgdnv : output Godunov state
- * @param[out] flux  : output flux
+ * \param[in] qm array of reconstructed states on the cell left face
+ * \param[in] qp array of reconstructed states on the cell right face
+ * \param[in] tx2 x coordinate identifying a cell in the extended inner core
+ * \param[in] ty2 y coordinate identifying a cell in the extended inner core
+ * \param[out] flux  array of Riemann fluxes (one per face)
  */
 template <size_t dim, int dir>
 __DEVICE__ void
@@ -306,18 +350,6 @@ riemann_hllc(QReconsShmem const & qm,
 
   const real_t   etotr = pr * entho + ecinr;
   real_t const & ptotr = pr;
-
-  // {
-  //   // const int tx2 = tx - 1;
-  //   // const int ty2 = ty - 2;
-  //   PRINTF("pl(%d,%d)=%e pr(%d,%d)=%e\n",
-  //          tx2,
-  //          ty2,
-  //          qm(tx2, ty2, IP, dir),
-  //          tx2,
-  //          ty2,
-  //          qp(tx2 + offset_x, ty2 + offset_y, IP, dir));
-  // }
 
   // Find the largest eigenvalues in the normal direction to the interface
   const real_t cfastl = SQRT(FMAX(gParams.gamma0 * pl / rl, gParams.smallc * gParams.smallc));
@@ -401,16 +433,17 @@ riemann_hllc(QReconsShmem const & qm,
     }
   }
 
-} // riemann_hllc
+} // riemann_hllc_2d
 
 /**
  * Wrapper routine to call the right Riemann solver routine according
  * to the global parameter riemannSolver
  *
- * @param[in] qleft : input left state
- * @param[in] qright : input right state
- * @param[out] qgdnv : output Godunov state
- * @param[out] flux  : output flux vector
+ * \param[in] qm array of reconstructed states on the cell left face
+ * \param[in] qp array of reconstructed states on the cell right face
+ * \param[in] tx2 x coordinate identifying a cell in the extended inner core
+ * \param[in] ty2 y coordinate identifying a cell in the extended inner core
+ * \param[out] flux  array of Riemann fluxes (one per face)
  *
  * template parameter:
  * @tparam NVAR size of state vector (can only be NVAR_2D, NVAR_3D or NVAR_MHD)
