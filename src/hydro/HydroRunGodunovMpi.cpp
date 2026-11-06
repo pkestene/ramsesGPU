@@ -277,7 +277,8 @@ HydroRunGodunovMpi::HydroRunGodunovMpi(ConfigMap & _configMap)
       {
         const auto max_shared_mem_per_SM = cutGetMaxSharedMemoryPerSM();
         const auto required_shared_mem =
-          GodunovUnsplitConfigV3::required_shared_mem_bytes(configMap);
+          dimType == TWO_D ? GodunovUnsplit2dConfigV3::required_shared_mem_bytes(configMap)
+                           : GodunovUnsplit3dConfigV3::required_shared_mem_bytes(configMap);
         std::cout << "Maximum  shared memory is " << max_shared_mem_per_SM / 1000.0 << " kB\n";
         std::cout << "Required shared memory is " << required_shared_mem / 1000.0 << " kB\n";
         if (required_shared_mem > max_shared_mem_per_SM)
@@ -1430,12 +1431,12 @@ HydroRunGodunovMpi::godunov_unsplit_gpu_v3(DeviceArray<real_t> & d_UOld,
       cudaError_t status =
         cudaFuncSetAttribute(kernel_godunov_unsplit_2d_v3,
                              cudaFuncAttributeMaxDynamicSharedMemorySize,
-                             GodunovUnsplitConfigV3::required_shared_mem_bytes(dim_x, dim_y));
+                             GodunovUnsplit2dConfigV3::required_shared_mem_bytes(dim_x, dim_y));
 
       if (status != cudaSuccess)
       {
         std::cerr << "You GPU doesn't support using "
-                  << GodunovUnsplitConfigV3::required_shared_mem_bytes(dim_x, dim_y) / 1000
+                  << GodunovUnsplit2dConfigV3::required_shared_mem_bytes(dim_x, dim_y) / 1000
                   << " kBytes of shared memory required by kernel_godunov_unsplit_2d_v3\n";
       }
 
@@ -1443,7 +1444,7 @@ HydroRunGodunovMpi::godunov_unsplit_gpu_v3(DeviceArray<real_t> & d_UOld,
       dim3 dimGrid(blocksFor(isize, dim_x - 4), blocksFor(jsize, dim_y - 4));
       kernel_godunov_unsplit_2d_v3<<<dimGrid,
                                      dimBlock,
-                                     GodunovUnsplitConfigV3::required_shared_mem_bytes(
+                                     GodunovUnsplit2dConfigV3::required_shared_mem_bytes(
                                        dim_x, dim_y)>>>(d_UOld.data(),
                                                         d_UNew.data(),
                                                         d_UNew.pitch(),
@@ -1453,31 +1454,47 @@ HydroRunGodunovMpi::godunov_unsplit_gpu_v3(DeviceArray<real_t> & d_UOld,
                                                         dt / dy,
                                                         dt,
                                                         gravityEnabled);
-      checkCudaErrorMpi("HydroRunGodunov :: kernel_godunov_unsplit_2d_v3 error", myRank);
+      checkCudaErrorMpi("HydroRunGodunovMPI :: kernel_godunov_unsplit_2d_v3 error", myRank);
 
     } // end compute unsplit v3
   }
   else if (dimType == THREE_D)
   {
+    const auto dim_x = configMap.getInteger("hydro_unsplit_version_3", "dim_x", 8);
+    const auto dim_y = configMap.getInteger("hydro_unsplit_version_3", "dim_y", 8);
+    const auto dim_z = configMap.getInteger("hydro_unsplit_version_3", "dim_z", 8);
 
-    // 3D Godunov unsplit kernel
-    // {
-    //   dim3 dimBlock(UNSPLIT_BLOCK_DIMX_3D_V3, UNSPLIT_BLOCK_DIMY_3D_V3);
-    //   dim3 dimGrid(blocksFor(isize, UNSPLIT_BLOCK_INNER_DIMX_3D_V3),
-    //                blocksFor(jsize, UNSPLIT_BLOCK_INNER_DIMY_3D_V3));
-    //   kernel_godunov_unsplit_3d_v3<<<dimGrid, dimBlock>>>(d_Q.data(),
-    //                                                       d_UNew.data(),
-    //                                                       d_UOld.pitch(),
-    //                                                       d_UOld.dimx(),
-    //                                                       d_UOld.dimy(),
-    //                                                       d_UOld.dimz(),
-    //                                                       dt / dx,
-    //                                                       dt / dy,
-    //                                                       dt / dz,
-    //                                                       dt,
-    //                                                       gravityEnabled);
-    //   checkCudaErrorMpi("HydroRunGodunov :: kernel_godunov_unsplit_3d_v3 error", myRank);
-    // }
+    // make sure the required amount of shared memory is valid for the underlying GPU hardware
+    cudaError_t status = cudaFuncSetAttribute(
+      kernel_godunov_unsplit_3d_v3,
+      cudaFuncAttributeMaxDynamicSharedMemorySize,
+      GodunovUnsplit3dConfigV3::required_shared_mem_bytes(dim_x, dim_y, dim_z));
+
+    if (status != cudaSuccess)
+    {
+      std::cerr << "You GPU doesn't support using "
+                << GodunovUnsplit3dConfigV3::required_shared_mem_bytes(dim_x, dim_y, dim_z) / 1000
+                << " kBytes of shared memory required by kernel_godunov_unsplit_3d_v3\n";
+    }
+
+    dim3 dimBlock(dim_x, dim_y, dim_z);
+    dim3 dimGrid(
+      blocksFor(isize, dim_x - 4), blocksFor(jsize, dim_y - 4), blocksFor(ksize, dim_z - 4));
+    kernel_godunov_unsplit_3d_v3<<<dimGrid,
+                                   dimBlock,
+                                   GodunovUnsplit3dConfigV3::required_shared_mem_bytes(
+                                     dim_x, dim_y, dim_z)>>>(d_UOld.data(),
+                                                             d_UNew.data(),
+                                                             d_UNew.pitch(),
+                                                             d_UNew.dimx(),
+                                                             d_UNew.dimy(),
+                                                             d_UNew.dimz(),
+                                                             dt / dx,
+                                                             dt / dy,
+                                                             dt / dz,
+                                                             dt,
+                                                             gravityEnabled);
+    checkCudaErrorMpi("HydroRunGodunovMpi :: kernel_godunov_unsplit_3d_v3 error", myRank);
   } // end THREE_D
 
   // gravity source term computation

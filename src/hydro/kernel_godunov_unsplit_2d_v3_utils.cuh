@@ -26,9 +26,6 @@
 class QPrim
 {
 public:
-  // static constexpr int    DIM_XY = UNSPLIT_BLOCK_DIMX_2D_V3 * UNSPLIT_BLOCK_DIMY_2D_V3;
-  // static constexpr size_t NUM_ELEMENTS = static_cast<size_t>(DIM_XY * NVAR_2D);
-
   __host__ __device__ static size_t
   required_size_in_bytes(int dim_x, int dim_y)
   {
@@ -181,7 +178,7 @@ public:
  *
  * Example : amount of required shared memory
  */
-class GodunovUnsplitConfigV3
+class GodunovUnsplit2dConfigV3
 {
 public:
   __device__ static size_t
