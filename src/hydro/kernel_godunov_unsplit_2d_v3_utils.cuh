@@ -3,19 +3,6 @@
 #include "utils/config/ConfigMap.h"
 #include <cuda/std/algorithm> // for cuda::std::max
 
-// // 2D-kernel block dimensions
-// #ifdef USE_DOUBLE
-// #  define UNSPLIT_BLOCK_DIMX_2D_V3 64
-// #  define UNSPLIT_BLOCK_INNER_DIMX_2D_V3 (UNSPLIT_BLOCK_DIMX_2D_V3 - 4)
-// #  define UNSPLIT_BLOCK_DIMY_2D_V3 16
-// #  define UNSPLIT_BLOCK_INNER_DIMY_2D_V3 (UNSPLIT_BLOCK_DIMY_2D_V3 - 4)
-// #else // simple precision
-// #  define UNSPLIT_BLOCK_DIMX_2D_V3 16
-// #  define UNSPLIT_BLOCK_INNER_DIMX_2D_V3 (UNSPLIT_BLOCK_DIMX_2D_V3 - 4)
-// #  define UNSPLIT_BLOCK_DIMY_2D_V3 16
-// #  define UNSPLIT_BLOCK_INNER_DIMY_2D_V3 (UNSPLIT_BLOCK_DIMY_2D_V3 - 4)
-// #endif // USE_DOUBLE
-
 // #ifndef MAX
 // #  define MAX(a, b) ((a) > (b) ? (a) : (b))
 // #endif
@@ -121,19 +108,6 @@ public:
 class QRecons
 {
 public:
-  // // memory layout for computing along X axis
-  // static constexpr int DIM_X1 = UNSPLIT_BLOCK_INNER_DIMX_2D_V3 + 2;
-  // static constexpr int DIM_Y1 = UNSPLIT_BLOCK_INNER_DIMY_2D_V3 + 0;
-  // static constexpr int DIM_XY1 = DIM_X1 * DIM_Y1;
-
-  // // memory layout for computing along Y axis
-  // static constexpr int DIM_X2 = UNSPLIT_BLOCK_INNER_DIMX_2D_V3 + 0;
-  // static constexpr int DIM_Y2 = UNSPLIT_BLOCK_INNER_DIMY_2D_V3 + 2;
-  // static constexpr int DIM_XY2 = DIM_X2 * DIM_Y2;
-
-  // static constexpr size_t NUM_ELEMENTS = static_cast<size_t>(std::max(DIM_XY1, DIM_XY2) *
-  // NVAR_2D);
-
   __host__ __device__ static size_t
   required_size_in_bytes(int dim_x, int dim_y)
   {
@@ -244,22 +218,6 @@ public:
     return required_shared_mem_bytes(dim_x, dim_y);
   }
 };
-
-//! compute the total amount of shared memory required by CUDA kernel kernel_godunov_unsplit_2d_v3
-// size_t
-// kernel_godunov_unsplit_2d_v3_required_shared_mem_bytes()
-// {
-//   return (QPrim::NUM_ELEMENTS + 3 * QRecons::NUM_ELEMENTS) * sizeof(real_t);
-// }
-
-//! compute required shared memory for a given shared memory block configuration
-// size_t
-// required_shared_memory_in_bytes(int dim_x, int dim_y)
-// {
-//   const size_t size_qprim = dim_x * dim_y;
-//   const size_t size_qrecons = std::max((dim_x - 4) * (dim_y - 2), (dim_x - 2) * (dim_y - 4));
-//   return static_cast<size_t>((size_qprim + 3 * size_qrecons) * NVAR_2D * sizeof(real_t));
-// }
 
 /**
  * conservative (rho, rho*u, rho*v, e) to primitive variables (rho,
