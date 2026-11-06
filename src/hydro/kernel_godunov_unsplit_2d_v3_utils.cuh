@@ -199,7 +199,7 @@ public:
   __device__ static size_t
   offset_bytes_flux(int dim_x, int dim_y)
   {
-    return offset_bytes_qp(dim_y, dim_y) + QRecons::required_size_in_bytes(dim_x, dim_y);
+    return offset_bytes_qp(dim_x, dim_y) + QRecons::required_size_in_bytes(dim_x, dim_y);
   }
 
   static size_t
