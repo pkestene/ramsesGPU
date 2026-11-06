@@ -83,7 +83,7 @@ kernel_godunov_unsplit_3d_v3(const real_t * __restrict__ Uin,
   __shared__ QRecons3D flux;
 
   // call constructor at designated address with placement new (only 1 thread in block)
-  if (tx == 0 and ty == 0)
+  if (tx == 0 and ty == 0 and tz == 0)
   {
     ::new (&q) QPrim3D(qprim_data_ptr, dim_x, dim_y, dim_z);
     ::new (&qm) QRecons3D(qm_data_ptr, dim_x, dim_y, dim_z);
@@ -111,6 +111,8 @@ kernel_godunov_unsplit_3d_v3(const real_t * __restrict__ Uin,
     uIn[IU] = Uin[offset];
     offset += arraySize;
     uIn[IV] = Uin[offset];
+    offset += arraySize;
+    uIn[IW] = Uin[offset];
 
     // Convert to primitive variables
     constoprim_3D(uIn, q, tx, ty, tz, c);
@@ -331,7 +333,7 @@ kernel_godunov_unsplit_3d_v3(const real_t * __restrict__ Uin,
   __syncthreads();
 
   //
-  // Update along Y
+  // Update along Z
   //
 
   // clang-format off
@@ -345,15 +347,15 @@ kernel_godunov_unsplit_3d_v3(const real_t * __restrict__ Uin,
     const int tz2 = tz - 1;
 
     int offset = elemOffset;
-    Uout[offset] += (flux(tx2, ty2, tz2, ID, IZ) - flux(tx2, ty2 + 1, tz2, ID, IZ)) * dtdy;
+    Uout[offset] += (flux(tx2, ty2, tz2, ID, IZ) - flux(tx2, ty2, tz2 + 1, ID, IZ)) * dtdz;
     offset += arraySize;
-    Uout[offset] += (flux(tx2, ty2, tz2, IP, IZ) - flux(tx2, ty2 + 1, tz2, IP, IZ)) * dtdy;
+    Uout[offset] += (flux(tx2, ty2, tz2, IP, IZ) - flux(tx2, ty2, tz2 + 1, IP, IZ)) * dtdz;
     offset += arraySize;
-    Uout[offset] += (flux(tx2, ty2, tz2, IU, IZ) - flux(tx2, ty2 + 1, tz2, IU, IZ)) * dtdy;
+    Uout[offset] += (flux(tx2, ty2, tz2, IU, IZ) - flux(tx2, ty2, tz2 + 1, IU, IZ)) * dtdz;
     offset += arraySize;
-    Uout[offset] += (flux(tx2, ty2, tz2, IV, IZ) - flux(tx2, ty2 + 1, tz2, IV, IZ)) * dtdy;
+    Uout[offset] += (flux(tx2, ty2, tz2, IV, IZ) - flux(tx2, ty2, tz2 + 1, IV, IZ)) * dtdz;
     offset += arraySize;
-    Uout[offset] += (flux(tx2, ty2, tz2, IW, IZ) - flux(tx2, ty2 + 1, tz2, IW, IZ)) * dtdy;
+    Uout[offset] += (flux(tx2, ty2, tz2, IW, IZ) - flux(tx2, ty2, tz2 + 1, IW, IZ)) * dtdz;
   }
   __syncthreads();
 
