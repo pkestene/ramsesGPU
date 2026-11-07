@@ -337,6 +337,9 @@ constoprim_3D(const real_t u[NVAR_3D],
 
 } // constoprim_3D
 
+/**
+ * Compute slope from primitive array in shared memory.
+ */
 template <int dir>
 __DEVICE__ real_t
 slope_scalar_3d(QPrim3D const & q, int const & tx, int const & ty, int const & tz, int const ivar)
@@ -370,7 +373,6 @@ slope_scalar_3d(QPrim3D const & q, int const & tx, int const & ty, int const & t
   return dq;
 
 } // slope_scalar_3d
-
 
 /**
  * This another implementation of trace computations for 2D data;

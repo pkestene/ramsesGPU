@@ -271,6 +271,42 @@ constoprim_2D(const real_t u[NVAR_2D], QPrim & q, int tx, int ty, real_t & c)
 } // constoprim_2D
 
 /**
+ * Compute slope from primitive array in shared memory.
+ */
+template <int dir>
+__DEVICE__ real_t
+slope_scalar_2d(QPrim const & q, int const & tx, int const & ty, int const ivar)
+{
+  real_t dq = 0.0;
+
+  if (::gParams.slope_type >= 1)
+  {
+    // minmod or average
+
+    constexpr int offset_x = dir == IX ? 1 : 0;
+    constexpr int offset_y = dir == IY ? 1 : 0;
+
+    const auto qc = q(tx, ty, ivar);
+    const auto qm = q(tx - offset_x, ty - offset_y, ivar);
+    const auto qp = q(tx + offset_x, ty + offset_y, ivar);
+
+    const real_t dlft = ::gParams.slope_type * (qc - qm);
+    const real_t drgt = ::gParams.slope_type * (qp - qc);
+    const real_t dcen = HALF_F * (qp - qm);
+    const real_t dsgn = (dcen >= ZERO_F) ? ONE_F : -ONE_F;
+    const real_t slop = FMIN(FABS(dlft), FABS(drgt));
+    real_t       dlim = slop;
+    if ((dlft * drgt) <= ZERO_F)
+      dlim = ZERO_F;
+    dq = dsgn * FMIN(dlim, FABS(dcen));
+
+  } // end slope_type == 1 or 2
+
+  return dq;
+
+} // slope_scalar_2d
+
+/**
  * This another implementation of trace computations for 2D data;
  * slopes are computed outside; it is used when unsplitVersion = 0
  *
@@ -310,16 +346,16 @@ trace_unsplit_hydro_2d_by_direction_shmem(QPrim const &  q,
   real_t v = q(tx, ty, IV);
 
   // Cell centered TVD slopes in X direction
-  real_t drx = slope_scalar(q(tx, ty, ID), q(tx + 1, ty, ID), q(tx - 1, ty, ID));
-  real_t dpx = slope_scalar(q(tx, ty, IP), q(tx + 1, ty, IP), q(tx - 1, ty, IP));
-  real_t dux = slope_scalar(q(tx, ty, IU), q(tx + 1, ty, IU), q(tx - 1, ty, IU));
-  real_t dvx = slope_scalar(q(tx, ty, IV), q(tx + 1, ty, IV), q(tx - 1, ty, IV));
+  real_t drx = slope_scalar_2d<IX>(q, tx, ty, ID);
+  real_t dpx = slope_scalar_2d<IX>(q, tx, ty, IP);
+  real_t dux = slope_scalar_2d<IX>(q, tx, ty, IU);
+  real_t dvx = slope_scalar_2d<IX>(q, tx, ty, IV);
 
   // Cell centered TVD slopes in Y direction
-  real_t dry = slope_scalar(q(tx, ty, ID), q(tx, ty + 1, ID), q(tx, ty - 1, ID));
-  real_t dpy = slope_scalar(q(tx, ty, IP), q(tx, ty + 1, IP), q(tx, ty - 1, IP));
-  real_t duy = slope_scalar(q(tx, ty, IU), q(tx, ty + 1, IU), q(tx, ty - 1, IU));
-  real_t dvy = slope_scalar(q(tx, ty, IV), q(tx, ty + 1, IV), q(tx, ty - 1, IV));
+  real_t dry = slope_scalar_2d<IY>(q, tx, ty, ID);
+  real_t dpy = slope_scalar_2d<IY>(q, tx, ty, IP);
+  real_t duy = slope_scalar_2d<IY>(q, tx, ty, IU);
+  real_t dvy = slope_scalar_2d<IY>(q, tx, ty, IV);
 
   // Hancock term
   const real_t sr0 = (-u * drx - dux * r) * dtdx + (-v * dry - dvy * r) * dtdy;
