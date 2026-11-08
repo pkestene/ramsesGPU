@@ -22,6 +22,32 @@
 // =======================================================
 // =======================================================
 
+__DEVICE__
+real_t
+slope_scalar(const real_t q, const real_t qPlus, const real_t qMinus)
+{
+  real_t dq = 0.0;
+
+  if (::gParams.slope_type >= 1)
+  {
+    // minmod or average
+
+    const real_t dlft = ::gParams.slope_type * (q - qMinus);
+    const real_t drgt = ::gParams.slope_type * (qPlus - q);
+    const real_t dcen = HALF_F * (qPlus - qMinus);
+    const real_t dsgn = (dcen >= ZERO_F) ? ONE_F : -ONE_F;
+    const real_t slop = FMIN(FABS(dlft), FABS(drgt));
+    real_t       dlim = slop;
+    if ((dlft * drgt) <= ZERO_F)
+      dlim = ZERO_F;
+    dq = dsgn * FMIN(dlim, FABS(dcen));
+
+  } // end slope_type == 1 or 2
+
+  return dq;
+
+} // slope_scalar
+
 /************************************************************************
  * DIRECTIONALLY SPLIT
  ************************************************************************/

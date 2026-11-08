@@ -74,7 +74,7 @@ HydroRunGodunovMpi::HydroRunGodunovMpi(ConfigMap & _configMap)
   if (unsplitEnabled)
   {
     unsplitVersion = configMap.getInteger("hydro", "unsplitVersion", 1);
-    if (unsplitVersion != 0 and unsplitVersion != 1 and unsplitVersion != 2)
+    if (unsplitVersion != 0 and unsplitVersion != 1 and unsplitVersion != 2 and unsplitVersion != 3)
     {
       if (myRank == 0)
       {
@@ -270,6 +270,26 @@ HydroRunGodunovMpi::HydroRunGodunovMpi(ConfigMap & _configMap)
 #endif // __CUDACC__
 
     } // end unsplitVersion == 2
+    else if (unsplitVersion == 3)
+    {
+#ifdef __CUDACC__
+      if (myRank == 0)
+      {
+        const auto max_shared_mem_per_SM = cutGetMaxSharedMemoryPerSM();
+        const auto required_shared_mem =
+          dimType == TWO_D ? GodunovUnsplit2dConfigV3::required_shared_mem_bytes(configMap)
+                           : GodunovUnsplit3dConfigV3::required_shared_mem_bytes(configMap);
+        std::cout << "Maximum  shared memory is " << max_shared_mem_per_SM / 1000.0 << " kB\n";
+        std::cout << "Required shared memory is " << required_shared_mem / 1000.0 << " kB\n";
+        if (required_shared_mem > max_shared_mem_per_SM)
+        {
+          std::cerr
+            << "Can't go further. Cuda kernel (unsplit v3) requests too much shared memory\n";
+          MPI_Abort(communicator->getComm(), -1);
+        }
+      }
+#endif // __CUDACC__
+    }
 
   } // end unsplitEnabled
 
@@ -728,24 +748,25 @@ HydroRunGodunovMpi::godunov_unsplit_gpu(DeviceArray<real_t> & d_UOld,
    * put results in h_Q object
    *
    */
-  convertToPrimitives(d_UOld.data());
+  if (unsplitVersion != 3)
+    convertToPrimitives(d_UOld.data());
 
   if (unsplitVersion == 0)
   {
-
     godunov_unsplit_gpu_v0(d_UOld, d_UNew, dt);
   }
   else if (unsplitVersion == 1)
   {
-
     godunov_unsplit_gpu_v1(d_UOld, d_UNew, dt);
   }
   else if (unsplitVersion == 2)
   {
-
     godunov_unsplit_gpu_v2(d_UOld, d_UNew, dt);
-
-  } // end unsplitVersion == 2
+  }
+  else if (unsplitVersion == 3)
+  {
+    godunov_unsplit_gpu_v3(d_UOld, d_UNew, dt);
+  }
 
   TIMER_STOP(timerGodunov);
 
@@ -767,18 +788,20 @@ HydroRunGodunovMpi::godunov_unsplit_gpu_v0(DeviceArray<real_t> & d_UOld,
     // kernel
     //
     // // 2D Godunov unsplit kernel
-    // dim3 dimBlock(UNSPLIT_BLOCK_DIMX_2D,
-    // 		    UNSPLIT_BLOCK_DIMY_2D);
-    // dim3 dimGrid(blocksFor(isize, UNSPLIT_BLOCK_INNER_DIMX_2D),
-    // 		   blocksFor(jsize, UNSPLIT_BLOCK_INNER_DIMY_2D));
-    // kernel_godunov_unsplit_2d<<<dimGrid, dimBlock>>>(d_UOld.data(),
-    // 						       d_UNew.data(),
-    // 						       d_UOld.pitch(),
-    // 						       d_UOld.dimx(),
-    // 						       d_UOld.dimy(),
-    // 						       dt / dx, dt,
-    // 						       gravityEnabled);
-    // checkCudaError("HydroRunGodunov :: kernel_godunov_unsplit_2d error");
+    // {
+    //   dim3 dimBlock(UNSPLIT_BLOCK_DIMX_2D, UNSPLIT_BLOCK_DIMY_2D);
+    //   dim3 dimGrid(blocksFor(isize, UNSPLIT_BLOCK_INNER_DIMX_2D),
+    //                blocksFor(jsize, UNSPLIT_BLOCK_INNER_DIMY_2D));
+    //   kernel_godunov_unsplit_2d<<<dimGrid, dimBlock>>>(d_UOld.data(),
+    //                                                    d_UNew.data(),
+    //                                                    d_UOld.pitch(),
+    //                                                    d_UOld.dimx(),
+    //                                                    d_UOld.dimy(),
+    //                                                    dt / dx,
+    //                                                    dt,
+    //                                                    gravityEnabled);
+    //   checkCudaError("HydroRunGodunov :: kernel_godunov_unsplit_2d error");
+    // }
 
     {
       dim3 dimBlock(UNSPLIT_BLOCK_DIMX_2D_V0, UNSPLIT_BLOCK_DIMY_2D_V0);
@@ -816,21 +839,23 @@ HydroRunGodunovMpi::godunov_unsplit_gpu_v0(DeviceArray<real_t> & d_UOld,
     // checkCudaError("HydroRunGodunov :: kernel_godunov_unsplit_3d error");
 
     // 3D Godunov unsplit kernel
-    dim3 dimBlock(UNSPLIT_BLOCK_DIMX_3D_V0, UNSPLIT_BLOCK_DIMY_3D_V0);
-    dim3 dimGrid(blocksFor(isize, UNSPLIT_BLOCK_INNER_DIMX_3D_V0),
-                 blocksFor(jsize, UNSPLIT_BLOCK_INNER_DIMY_3D_V0));
-    kernel_godunov_unsplit_3d_v0<<<dimGrid, dimBlock>>>(d_Q.data(),
-                                                        d_UNew.data(),
-                                                        d_UOld.pitch(),
-                                                        d_UOld.dimx(),
-                                                        d_UOld.dimy(),
-                                                        d_UOld.dimz(),
-                                                        dt / dx,
-                                                        dt / dy,
-                                                        dt / dz,
-                                                        dt,
-                                                        gravityEnabled);
-    checkCudaErrorMpi("HydroRunGodunov :: kernel_godunov_unsplit_3d_v0 error", myRank);
+    {
+      dim3 dimBlock(UNSPLIT_BLOCK_DIMX_3D_V0, UNSPLIT_BLOCK_DIMY_3D_V0);
+      dim3 dimGrid(blocksFor(isize, UNSPLIT_BLOCK_INNER_DIMX_3D_V0),
+                   blocksFor(jsize, UNSPLIT_BLOCK_INNER_DIMY_3D_V0));
+      kernel_godunov_unsplit_3d_v0<<<dimGrid, dimBlock>>>(d_Q.data(),
+                                                          d_UNew.data(),
+                                                          d_UOld.pitch(),
+                                                          d_UOld.dimx(),
+                                                          d_UOld.dimy(),
+                                                          d_UOld.dimz(),
+                                                          dt / dx,
+                                                          dt / dy,
+                                                          dt / dz,
+                                                          dt,
+                                                          gravityEnabled);
+      checkCudaErrorMpi("HydroRunGodunov :: kernel_godunov_unsplit_3d_v0 error", myRank);
+    }
 
   } // end THREE_D
 
@@ -1380,6 +1405,105 @@ HydroRunGodunovMpi::godunov_unsplit_gpu_v2(DeviceArray<real_t> & d_UOld,
   } // end THREE_D
 
 } // HydroRunGodunovMpi::godunov_unsplit_gpu_v2
+
+// =======================================================
+// =======================================================
+void
+HydroRunGodunovMpi::godunov_unsplit_gpu_v3(DeviceArray<real_t> & d_UOld,
+                                           DeviceArray<real_t> & d_UNew,
+                                           real_t                dt)
+{
+
+  if (dimType == TWO_D)
+  {
+
+    // In this version primitive variables are computed as needed inside
+    // kernel
+    //
+    // 2D Godunov unsplit kernel
+    {
+
+      const auto dim_x = configMap.getInteger("hydro_unsplit_version_3", "dim_x", 16);
+      const auto dim_y = configMap.getInteger("hydro_unsplit_version_3", "dim_y", 16);
+
+
+      // make sure the required amount of shared memory is valid for the underlying GPU hardware
+      cudaError_t status =
+        cudaFuncSetAttribute(kernel_godunov_unsplit_2d_v3,
+                             cudaFuncAttributeMaxDynamicSharedMemorySize,
+                             GodunovUnsplit2dConfigV3::required_shared_mem_bytes(dim_x, dim_y));
+
+      if (status != cudaSuccess)
+      {
+        std::cerr << "You GPU doesn't support using "
+                  << GodunovUnsplit2dConfigV3::required_shared_mem_bytes(dim_x, dim_y) / 1000
+                  << " kBytes of shared memory required by kernel_godunov_unsplit_2d_v3\n";
+      }
+
+      dim3 dimBlock(dim_x, dim_y);
+      dim3 dimGrid(blocksFor(isize, dim_x - 4), blocksFor(jsize, dim_y - 4));
+      kernel_godunov_unsplit_2d_v3<<<dimGrid,
+                                     dimBlock,
+                                     GodunovUnsplit2dConfigV3::required_shared_mem_bytes(
+                                       dim_x, dim_y)>>>(d_UOld.data(),
+                                                        d_UNew.data(),
+                                                        d_UNew.pitch(),
+                                                        d_UNew.dimx(),
+                                                        d_UNew.dimy(),
+                                                        dt / dx,
+                                                        dt / dy,
+                                                        dt,
+                                                        gravityEnabled);
+      checkCudaErrorMpi("HydroRunGodunovMPI :: kernel_godunov_unsplit_2d_v3 error", myRank);
+
+    } // end compute unsplit v3
+  }
+  else if (dimType == THREE_D)
+  {
+    const auto dim_x = configMap.getInteger("hydro_unsplit_version_3", "dim_x", 8);
+    const auto dim_y = configMap.getInteger("hydro_unsplit_version_3", "dim_y", 8);
+    const auto dim_z = configMap.getInteger("hydro_unsplit_version_3", "dim_z", 8);
+
+    // make sure the required amount of shared memory is valid for the underlying GPU hardware
+    cudaError_t status = cudaFuncSetAttribute(
+      kernel_godunov_unsplit_3d_v3,
+      cudaFuncAttributeMaxDynamicSharedMemorySize,
+      GodunovUnsplit3dConfigV3::required_shared_mem_bytes(dim_x, dim_y, dim_z));
+
+    if (status != cudaSuccess)
+    {
+      std::cerr << "You GPU doesn't support using "
+                << GodunovUnsplit3dConfigV3::required_shared_mem_bytes(dim_x, dim_y, dim_z) / 1000
+                << " kBytes of shared memory required by kernel_godunov_unsplit_3d_v3\n";
+    }
+
+    dim3 dimBlock(dim_x, dim_y, dim_z);
+    dim3 dimGrid(
+      blocksFor(isize, dim_x - 4), blocksFor(jsize, dim_y - 4), blocksFor(ksize, dim_z - 4));
+    kernel_godunov_unsplit_3d_v3<<<dimGrid,
+                                   dimBlock,
+                                   GodunovUnsplit3dConfigV3::required_shared_mem_bytes(
+                                     dim_x, dim_y, dim_z)>>>(d_UOld.data(),
+                                                             d_UNew.data(),
+                                                             d_UNew.pitch(),
+                                                             d_UNew.dimx(),
+                                                             d_UNew.dimy(),
+                                                             d_UNew.dimz(),
+                                                             dt / dx,
+                                                             dt / dy,
+                                                             dt / dz,
+                                                             dt,
+                                                             gravityEnabled);
+    checkCudaErrorMpi("HydroRunGodunovMpi :: kernel_godunov_unsplit_3d_v3 error", myRank);
+  } // end THREE_D
+
+  // gravity source term computation
+  if (gravityEnabled)
+  {
+    compute_gravity_source_term(d_UNew, d_UOld, dt);
+  }
+
+} // HydroRunGodunovMpi::godunov_unsplit_gpu_v3
 
 #else // CPU version
 
